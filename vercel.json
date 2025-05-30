@@ -1,13 +1,9 @@
 {
   "version": 2,
   "functions": {
-    "api/photos-animate": {
+    "api/**/*": {
       "memory": 3008,
       "maxDuration": 60
-    },
-    "api/**/*.js": {
-      "memory": 1024,
-      "maxDuration": 30
     }
   },
   "routes": [
