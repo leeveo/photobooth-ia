@@ -1,17 +1,16 @@
 {
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/" }
-  ],
+  "version": 2,
   "functions": {
     "api/photos-animate": {
       "memory": 3008,
       "maxDuration": 60
+    },
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 30
     }
-  }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/" }
+  ]
 }
