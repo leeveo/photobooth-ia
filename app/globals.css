@@ -1204,27 +1204,27 @@ body{
 }
 
 .bg-veev-1{
-  background-image: url(../public/comcon/veev/bg-1.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-veev-2{
-  background-image: url(../public/comcon/veev/bg-2.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-veev-3{
-  background-image: url(../public/comcon/veev/bg-3.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-veev-4{
-  background-image: url(../public/comcon/veev/bg-4.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-veev-5{
-  background-image: url(../public/comcon/veev/bg-5.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
