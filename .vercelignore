@@ -1,19 +1,16 @@
-# Exclure les répertoires volumineux mais garder les fichiers essentiels
-public/iqos/neon
-public/iqos/style
-public/iqos/*.psd
-# Conserver public/iqos/bg.jpeg et public/iqos/border.png
-
-public/gac/style
-public/gac/*.psd
-# Conserver public/gac/bg-depan.jpeg et public/gac/bg-page.jpeg
-
+# Exclure les répertoires volumineux mais pas les images de base
+# Comcon
 public/comcon/visikom
 public/comcon/zyn
-public/comcon/veev
-public/comcon/*.psd
-# Conserver public/comcon/bg-dark.jpg
+# Ne pas exclure public/comcon/veev complètement
+public/comcon/veev/*.zip
+public/comcon/veev/videos
+public/comcon/veev/*.psd
 
+# Autres exclusions
+public/iqos/neon
+public/iqos/style
+public/gac/style
 public/pertamina/style
 public/photobooth-ia/style
 public/tautaufest/style
