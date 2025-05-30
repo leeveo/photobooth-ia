@@ -5,6 +5,14 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import { 
+  RiFilterLine, 
+  RiDownloadLine, 
+  RiCloseFill, 
+  RiArrowLeftLine, 
+  RiImageLine, 
+  RiSettings3Line 
+} from 'react-icons/ri';
 
 export default function ProjectGallery() {
   const [projects, setProjects] = useState([]);
@@ -12,14 +20,9 @@ export default function ProjectGallery() {
   const [projectImages, setProjectImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null); // Add missing success state
+  const [success, setSuccess] = useState(null);
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
-  // Add state for the confirmation modal
   const [moderationConfirm, setModerationConfirm] = useState(null);
-  
-  const supabase = createClientComponentClient();
-  
-  // Add these new states after your existing state declarations
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
@@ -29,150 +32,15 @@ export default function ProjectGallery() {
     show_qr_code: false,
     qr_title: 'Scannez-moi',
     qr_description: 'Retrouvez toutes les photos ici',
-    qr_position: 'center' // can be 'center', 'top-left', 'top-right', etc.
+    qr_position: 'center'
   });
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
-
-  // Charger la liste des projets avec leur nombre de photos
-  useEffect(() => {
-    async function loadProjects() {
-      try {
-        // Fetch projects
-        const { data, error } = await supabase
-          .from('projects')
-          .select('id, name, slug')
-          .order('name', { ascending: true });
-          
-        if (error) throw error;
-        
-        setProjects(data || []);
-        
-        // Fetch photo counts for each project
-        const photoCounts = {};
-        for (const project of data || []) {
-          try {
-            // Call API to count S3 images
-            const response = await fetch(`/api/s3-project-images?projectId=${project.id}&countOnly=true`);
-            if (response.ok) {
-              const countData = await response.json();
-              photoCounts[project.id] = countData.count || 0;
-            }
-          } catch (countError) {
-            console.error(`Error fetching counts for project ${project.id}:`, countError);
-            photoCounts[project.id] = '?';
-          }
-        }
-        
-        setProjectsWithPhotoCount(photoCounts);
-      } catch (err) {
-        console.error('Erreur lors du chargement des projets:', err);
-        setError('Impossible de charger les projets');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadProjects();
-  }, [supabase]); // Add supabase to dependencies
   
-  // Charger les images S3 d'un projet sélectionné
-  useEffect(() => {
-    if (!selectedProject) {
-      setProjectImages([]);
-      return;
-    }
-    
-    async function loadS3Images() {
-      setLoading(true);
-      try {
-        console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
-        
-        // Removed schema checks and table creation attempts
-        
-        // Just call the API to get images
-        const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
-        
-        if (!response.ok) {
-          throw new Error(`Erreur API: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Résultat API S3:', data);
-        
-        if (data.success && data.images) {
-          setProjectImages(data.images);
-        } else {
-          setProjectImages([]);
-        }
-
-        // Also load mosaic settings for this project
-        loadMosaicSettings(selectedProject);
-      } catch (err) {
-        console.error('Erreur lors du chargement des images S3:', err);
-        setError('Impossible de charger les images du projet depuis S3');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadS3Images();
-  }, [selectedProject, loadMosaicSettings]); // Add loadMosaicSettings to dependencies
+  const supabase = createClientComponentClient();
   
-  // Télécharger une image
-  const downloadImage = (url, filename) => {
-    fetch(url)
-      .then(response => response.blob())
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = filename || 'image.jpg';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      });
-  };
-  
-  // Replace the moderateImage function with this updated version
-  const moderateImage = async (id, url) => {
-    // Show confirmation dialog first
-    setModerationConfirm({ id, url });
-  };
-  
-  // Function to handle the actual moderation after confirmation
-  const handleConfirmedModeration = async () => {
-    if (!moderationConfirm) return;
-    
-    const { id, url } = moderationConfirm;
-    
-    // For now, just update the UI without database changes
-    try {
-      // Update UI immediately
-      setProjectImages(projectImages.map(img => 
-        img.id === id 
-          ? {...img, isModerated: true} 
-          : img
-      ));
-      
-      setSuccess("Image modérée visuellement avec succès");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error('Erreur lors de la modération:', err);
-      setError('Erreur lors de la modération. Veuillez réessayer.');
-    } finally {
-      setModerationConfirm(null);
-    }
-  };
-  
-  // Cancel moderation
-  const cancelModeration = () => {
-    setModerationConfirm(null);
-  };
-
-  // Wrap loadMosaicSettings in useCallback to avoid recreation on every render
+  // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
@@ -223,6 +91,143 @@ export default function ProjectGallery() {
       console.error('Error loading mosaic settings:', err);
     }
   }, [supabase]); // Add supabase as dependency
+  
+  // Charger la liste des projets avec leur nombre de photos
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        // Fetch projects
+        const { data, error } = await supabase
+          .from('projects')
+          .select('id, name, slug')
+          .order('name', { ascending: true });
+          
+        if (error) throw error;
+        
+        setProjects(data || []);
+        
+        // Fetch photo counts for each project
+        const photoCounts = {};
+        for (const project of data || []) {
+          try {
+            // Call API to count S3 images
+            const response = await fetch(`/api/s3-project-images?projectId=${project.id}&countOnly=true`);
+            if (response.ok) {
+              const countData = await response.json();
+              photoCounts[project.id] = countData.count || 0;
+            }
+          } catch (countError) {
+            console.error(`Error fetching counts for project ${project.id}:`, countError);
+            photoCounts[project.id] = '?';
+          }
+        }
+        
+        setProjectsWithPhotoCount(photoCounts);
+      } catch (err) {
+        console.error('Erreur lors du chargement des projets:', err);
+        setError('Impossible de charger les projets');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadProjects();
+  }, [supabase]);
+  
+  // Charger les images S3 d'un projet sélectionné
+  useEffect(() => {
+    if (!selectedProject) {
+      setProjectImages([]);
+      return;
+    }
+    
+    async function loadS3Images() {
+      setLoading(true);
+      try {
+        console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
+        
+        // Removed schema checks and table creation attempts
+        
+        // Just call the API to get images
+        const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
+        
+        if (!response.ok) {
+          throw new Error(`Erreur API: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Résultat API S3:', data);
+        
+        if (data.success && data.images) {
+          setProjectImages(data.images);
+        } else {
+          setProjectImages([]);
+        }
+
+        // Also load mosaic settings for this project
+        loadMosaicSettings(selectedProject);
+      } catch (err) {
+        console.error('Erreur lors du chargement des images S3:', err);
+        setError('Impossible de charger les images du projet depuis S3');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadS3Images();
+  }, [selectedProject, loadMosaicSettings]);
+  
+  // Télécharger une image
+  const downloadImage = (url, filename) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename || 'image.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      });
+  };
+  
+  // Fonction pour la modération d'image
+  const moderateImage = async (id, url) => {
+    // Show confirmation dialog first
+    setModerationConfirm({ id, url });
+  };
+  
+  // Function to handle the actual moderation after confirmation
+  const handleConfirmedModeration = async () => {
+    if (!moderationConfirm) return;
+    
+    const { id, url } = moderationConfirm;
+    
+    // For now, just update the UI without database changes
+    try {
+      // Update UI immediately
+      setProjectImages(projectImages.map(img => 
+        img.id === id 
+          ? {...img, isModerated: true} 
+          : img
+      ));
+      
+      setSuccess("Image modérée visuellement avec succès");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Erreur lors de la modération:', err);
+      setError('Erreur lors de la modération. Veuillez réessayer.');
+    } finally {
+      setModerationConfirm(null);
+    }
+  };
+  
+  // Cancel moderation
+  const cancelModeration = () => {
+    setModerationConfirm(null);
+  };
 
   // Add this function to handle background image change
   const handleBgImageChange = (e) => {
@@ -386,30 +391,31 @@ export default function ProjectGallery() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-6 text-black">Galerie des Photobooths</h2>
+      <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+        Galerie des Photobooths
+      </h2>
       
       {error && (
-        <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+        <div className="p-4 mb-4 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
           {error}
         </div>
       )}
       
-      {/* Add success message display */}
       {success && (
-        <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
+        <div className="p-4 mb-4 text-sm text-green-700 bg-green-50 rounded-lg border border-green-200">
           {success}
         </div>
       )}
       
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="mb-6">
+      <div className="bg-white shadow-sm rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
           <label htmlFor="projectSelect" className="block text-sm font-medium text-gray-700 mb-2">
             Sélectionnez un projet
           </label>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-4">
             <select
               id="projectSelect"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-100"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
               onChange={(e) => setSelectedProject(e.target.value)}
               value={selectedProject || ''}
             >
@@ -421,13 +427,12 @@ export default function ProjectGallery() {
               ))}
             </select>
             
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              {/* Mosaïque buttons */}
+            <div className="flex flex-col sm:flex-row gap-2">
               <Link
                 href={selectedProject ? `/photobooth-ia/admin/project-mosaic?projectId=${selectedProject}&fullscreen=true` : '#'}
-                className={`mt-1 inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm ${
+                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm ${
                   selectedProject 
-                    ? 'text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-lg shadow' 
+                    ? 'text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent' 
                     : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
                 }`}
                 onClick={(e) => {
@@ -440,25 +445,21 @@ export default function ProjectGallery() {
                 rel="noopener noreferrer"
                 title="Voir la mosaïque de photos en plein écran"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
+                <RiImageLine className="h-5 w-5 mr-2" />
                 Voir mosaïque
               </Link>
               
               <button
                 onClick={() => setShowMosaicSettings(true)}
-                className={`mt-1 inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm ${
+                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm ${
                   selectedProject 
-                    ? 'text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-lg shadow' 
+                    ? 'text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent' 
                     : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
                 }`}
                 disabled={!selectedProject}
                 title="Personnaliser l'apparence de la mosaïque (couleur, titre, arrière-plan)"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                </svg>
+                <RiSettings3Line className="h-5 w-5 mr-2" />
                 Personnaliser la mosaïque
               </button>
             </div>
@@ -466,22 +467,27 @@ export default function ProjectGallery() {
         </div>
         
         {loading && selectedProject ? (
-          <LoadingSpinner text="Chargement en cours" size="medium" color="indigo" />
+          <div className="p-12 flex flex-col items-center justify-center">
+            <LoadingSpinner text="Chargement des images en cours" size="medium" color="indigo" />
+          </div>
         ) : null}
         
         {!loading && selectedProject && projectImages.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            Aucune image trouvée pour ce projet dans S3
+          <div className="text-center py-16 px-6">
+            <RiImageLine className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-4 text-lg font-medium text-gray-900">Aucune image trouvée</p>
+            <p className="mt-2 text-gray-500">Ce projet n'a pas encore d'images générées</p>
           </div>
         ) : null}
         
         {!loading && selectedProject && projectImages.length > 0 && (
-          <>
-            <div className="mb-4 text-sm flex items-center justify-between">
-              <div className="text-gray-500">
+          <div className="p-6">
+            <div className="mb-4 text-sm flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+              <div className="text-gray-600 flex items-center">
+                <RiFilterLine className="mr-2 h-5 w-5 text-gray-400" />
                 <span className="font-semibold text-gray-700">{projectImages.length}</span> image(s) trouvée(s) dans le dossier S3 du projet
               </div>
-              <div className="text-sm text-indigo-600">
+              <div className="text-sm text-indigo-600 font-medium">
                 {projects.find(p => p.id == selectedProject)?.name || 'Projet'} : {projectsWithPhotoCount[selectedProject] || projectImages.length} photos au total
               </div>
             </div>
@@ -489,13 +495,13 @@ export default function ProjectGallery() {
               {projectImages.map((image, index) => (
                 <div 
                   key={image.id} 
-                  className={`relative border rounded-md overflow-hidden group ${
+                  className={`relative border border-gray-200 rounded-lg overflow-hidden group ${
                     image.isModerated ? 'opacity-50' : ''
                   }`}
                 >
                   <div className="aspect-w-2 aspect-h-3 bg-gray-100 relative" style={{ height: '200px' }}>
                     <Image
-                      src={image.image_url} // Use the original non-watermarked image
+                      src={image.image_url}
                       alt={`Photo ${index}`}
                       fill
                       style={{ objectFit: "cover" }}
@@ -522,22 +528,18 @@ export default function ProjectGallery() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => downloadImage(image.image_url, image.metadata?.fileName)}
-                        className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full"
+                        className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700"
                         title="Télécharger"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
+                        <RiDownloadLine className="h-5 w-5" />
                       </button>
                       {!image.isModerated && (
                         <button
                           onClick={() => moderateImage(image.id, image.image_url)}
-                          className="p-2 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full"
+                          className="p-2 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full hover:from-red-600 hover:to-pink-700"
                           title="Modérer cette image"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                          </svg>
+                          <RiCloseFill className="h-5 w-5" />
                         </button>
                       )}
                     </div>
@@ -545,22 +547,23 @@ export default function ProjectGallery() {
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
       </div>
       
       <div className="flex justify-end mt-6">
         <Link
           href="/photobooth-ia/admin/projects"
-          className="px-4 py-2 border border-transparent text-sm font-medium text-white bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow hover:from-blue-600 hover:to-purple-700"
+          className="px-4 py-2 border border-transparent text-sm font-medium text-white bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-sm hover:from-blue-600 hover:to-purple-700 flex items-center gap-2"
         >
+          <RiArrowLeftLine className="w-4 h-4" />
           Retour aux projets
         </Link>
       </div>
       
       {/* Moderation confirmation modal */}
       {moderationConfirm && (
-        <div className="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div className="fixed z-40 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
             
@@ -609,18 +612,20 @@ export default function ProjectGallery() {
 
       {/* Mosaic Settings Modal */}
       {showMosaicSettings && (
-        <div className="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div className="fixed z-40 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
             
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                <h3 className="text-lg leading-6 font-semibold text-white">
                   Personnaliser la mosaïque
                 </h3>
-                
+              </div>
+              
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="space-y-4">
                   {/* Background Color */}
                   <div>
@@ -791,14 +796,14 @@ export default function ProjectGallery() {
                   type="button"
                   onClick={saveMosaicSettings}
                   disabled={savingMosaicSettings}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gradient-to-br from-blue-500 to-purple-600 text-base font-medium text-white hover:from-blue-600 hover:to-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                  className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-medium text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   {savingMosaicSettings ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowMosaicSettings(false)}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Annuler
                 </button>

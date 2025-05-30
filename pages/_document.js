@@ -2,7 +2,7 @@ import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="fr">
       <Head />
       <body>
         <Main />
@@ -10,9 +10,16 @@ export default function Document() {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              window.addEventListener('error', function(event) {
-                console.log('Global error handler:', event.error);
-              });
+              // Safety net for commonly undefined variables
+              window.id = window.id || '';
+              window.ew = window.ew || {};
+              
+              // Global error handler
+              window.onerror = function(message, source, lineno, colno, error) {
+                console.log('Global error captured:', { message, source, lineno, colno });
+                // Prevent the error from causing a white screen
+                return true;
+              };
             `,
           }}
         />

@@ -1,13 +1,16 @@
-export const metadata = {
-  title: 'Mosaïque de photos',
-}
+'use client';
+
+import { useEffect } from 'react';
 
 export default function MosaicLayout({ children }) {
+  useEffect(() => {
+    // Set document title programmatically since we can't export metadata from client components
+    document.title = 'Mosaïque de photos';
+  }, []);
+
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className="bg-white">
-        {children}
-      </body>
-    </html>
+    <div className="mosaic-container">
+      {children}
+    </div>
   );
 }

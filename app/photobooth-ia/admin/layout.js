@@ -1,9 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { 
+  FiHome, 
+  FiFolder, 
+  FiImage, 
+  FiSettings, 
+  FiBarChart2, 
+  FiLogOut 
+} from 'react-icons/fi';
+
 import './admin.css'; // Importer les styles CSS spécifiques à l'admin
 
 export default function AdminLayout({ children }) {
@@ -11,9 +20,7 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isPhotoboothMenuOpen, setIsPhotoboothMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isFresqueMenuOpen, setIsFresqueMenuOpen] = useState(false);
   
   // Créer le client Supabase avec les variables d'environnement
   const supabase = createClientComponentClient();
@@ -37,18 +44,6 @@ export default function AdminLayout({ children }) {
       
       setUser(session.user);
       setLoading(false);
-      
-      // Auto-expand the Photobooth menu if we're on a photobooth page
-      if (pathname.includes('/photobooth-ia/admin') && 
-          pathname !== '/photobooth-ia/admin/login' &&
-          pathname !== '/photobooth-ia/admin') {
-        setIsPhotoboothMenuOpen(true);
-      }
-
-      // Auto-expand the Fresque menu if on a fresque page
-      if (pathname.startsWith('/fresque/')) {
-        setIsFresqueMenuOpen(true);
-      }
     };
 
     checkUser();
@@ -73,47 +68,55 @@ export default function AdminLayout({ children }) {
     return <>{children}</>;
   }
 
-  // Define photobooth menu items
-  const photoboothMenuItems = [
-    { name: 'Projets', href: '/photobooth-ia/admin/projects' },
-    { name: 'Galerie', href: '/photobooth-ia/admin/project-gallery' },
-    { name: 'Styles', href: '/photobooth-ia/admin/styles' },
-    { name: 'Arrière-plans', href: '/photobooth-ia/admin/backgrounds' },
-  ];
+  const isActive = (path) => {
+    return pathname.includes(path);
+  };
 
-  // Define fresque menu items
-  const fresqueMenuItems = [
-    { name: 'Galerie vidéos', href: '/fresque/gallery' },
- 
-     { name: 'Generation photo fresque', href: '/fresque/photo-wall' },
-    { name: 'Photobooth', href: '/fresque/photobooth' },
-    { name: 'Record', href: '/fresque/record' },
-  ];
-
-  // Main navigation
-  const mainNavigation = [
-    { name: 'Dashboard', href: '/photobooth-ia/admin' },
-    
+  const navItems = [
+    { 
+      name: 'Dashboard', 
+      path: '/photobooth-ia/admin/dashboard', 
+      icon: <FiHome className="w-5 h-5" /> 
+    },
+    { 
+      name: 'Projets', 
+      path: '/photobooth-ia/admin/projects', 
+      icon: <FiFolder className="w-5 h-5" /> 
+    },
+    { 
+      name: 'Galerie', 
+      path: '/photobooth-ia/admin/project-gallery', 
+      icon: <FiImage className="w-5 h-5" /> 
+    },
+    { 
+      name: 'Statistiques', 
+      path: '/photobooth-ia/admin/stats', 
+      icon: <FiBarChart2 className="w-5 h-5" /> 
+    },
+    { 
+      name: 'Paramètres', 
+      path: '/photobooth-ia/admin/settings', 
+      icon: <FiSettings className="w-5 h-5" /> 
+    },
   ];
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar - responsive */}
-      <div 
+      <div
         className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out`}
+        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out`}
       >
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold text-indigo-600">PixMagic</h1>
+        <div className="p-6 border-b border-gray-100">
+          <h1 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">PhotoboothIA</h1>
           <p className="text-sm text-gray-500">Administration</p>
         </div>
-        
-        <nav className="mt-6">
+        <nav className="mt-6 flex flex-col gap-2 text-sm">
           {/* Close button for mobile */}
           <div className="px-6 py-2 lg:hidden">
-            <button 
-              onClick={() => setIsSidebarOpen(false)} 
+            <button
+              onClick={() => setIsSidebarOpen(false)}
               className="text-gray-500 hover:text-gray-700 focus:outline-none"
             >
               <span className="text-sm">Fermer le menu</span>
@@ -121,173 +124,71 @@ export default function AdminLayout({ children }) {
           </div>
           
           {/* Main navigation items */}
-          {mainNavigation.map((item) => (
-            <Link 
-              key={item.name} 
-              href={item.href} 
-              className={`flex items-center px-6 py-3 ${
-                pathname === item.href ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-indigo-50'
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`flex items-center gap-3 px-6 py-3 mx-2 rounded-lg ${
+                isActive(item.path)
+                  ? 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <span className="mx-4">{item.name}</span>
+              {item.icon}
+              <span>{item.name}</span>
             </Link>
           ))}
           
-          {/* Fresque dropdown menu */}
-          <div className="mt-3">
-            <div
-              onClick={() => setIsFresqueMenuOpen(!isFresqueMenuOpen)}
-              className={`flex items-center justify-between px-6 py-3 cursor-pointer ${
-                pathname.startsWith('/fresque/')
-                  ? 'bg-indigo-50 text-indigo-600'
-                  : 'text-gray-700 hover:bg-indigo-50'
-              }`}
-            >
-              <div className="flex items-center">
-                <span className="mx-4 font-medium">Fresque</span>
-              </div>
-              <svg
-                className={`w-5 h-5 transition-transform transform ${
-                  isFresqueMenuOpen ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-            {isFresqueMenuOpen && (
-              <div className="pl-4 bg-gray-50">
-                {fresqueMenuItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`flex items-center px-6 py-2 text-sm ${
-                      pathname === item.href
-                        ? 'text-indigo-600 font-medium'
-                        : 'text-gray-600 hover:text-indigo-600'
-                    }`}
-                  >
-                    <span className="mx-4">{item.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Photobooth IA dropdown menu */}
-          <div className="mt-3">
-            <div
-              onClick={() => setIsPhotoboothMenuOpen(!isPhotoboothMenuOpen)}
-              className={`flex items-center justify-between px-6 py-3 cursor-pointer ${
-                pathname.includes('/photobooth-ia/admin/') &&
-                pathname !== '/photobooth-ia/admin'
-                // pathname !== '/photobooth-ia/admin/settings' &&
-                // pathname !== '/photobooth-ia/admin/s3-check'
-                  ? 'bg-indigo-50 text-indigo-600'
-                  : 'text-gray-700 hover:bg-indigo-50'
-              }`}
-            >
-              <div className="flex items-center">
-                <span className="mx-4 font-medium">Photobooth IA</span>
-              </div>
-              <svg
-                className={`w-5 h-5 transition-transform transform ${
-                  isPhotoboothMenuOpen ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-            
-            {/* Dropdown items */}
-            {isPhotoboothMenuOpen && (
-              <div className="pl-4 bg-gray-50">
-                {photoboothMenuItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`flex items-center px-6 py-2 text-sm ${
-                      pathname === item.href
-                        ? 'text-indigo-600 font-medium'
-                        : 'text-gray-600 hover:text-indigo-600'
-                    }`}
-                  >
-                    <span className="mx-4">{item.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <hr className="my-6 border-gray-200 mx-4" />
           
-          <hr className="my-6 border-gray-200" />
-          
-          <button onClick={handleSignOut} className="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600">
-            <span className="mx-4">Déconnexion</span>
-          </button>
+          <Link
+            href="/"
+            className="flex items-center gap-3 px-6 py-3 mx-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600"
+          >
+            <FiLogOut className="w-5 h-5" />
+            <span>Retour au site</span>
+          </Link>
         </nav>
       </div>
 
       {/* Backdrop overlay for mobile */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow pl-4 lg:pl-0">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm sticky top-0 z-10">
           <div className="px-6 py-4 flex items-center">
-            {/* Mobile hamburger menu button (top header version) - On garde uniquement ce bouton */}
-            <button 
+            {/* Mobile hamburger menu button */}
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="mr-4 lg:hidden"
               aria-label="Toggle menu"
             >
-              <svg 
-                className="h-6 w-6 text-gray-600" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="h-6 w-6 text-gray-600"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4 6h16M4 12h16M4 18h16" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
             </button>
-            
             <h2 className="font-semibold text-xl text-gray-800">
-              {pathname === '/photobooth-ia/admin' && 'Dashboard'}
-              {pathname.includes('/projects') && 'Photobooth IA - Gestion des Projets'}
-              {pathname.includes('/project-gallery') && 'Photobooth IA - Galerie de Projets'}
-              {pathname.includes('/backgrounds') && 'Photobooth IA - Gestion des Arrière-plans'}
-              {pathname.includes('/styles') && 'Photobooth IA - Gestion des Styles'}
-              {pathname.includes('/settings') && 'Paramètres'}
-              {pathname.includes('/s3-check') && 'Vérification S3'}
+              {navItems.find(item => isActive(item.path))?.name || 'Administration'}
             </h2>
           </div>
         </header>
-        
-        <main className="p-6">
+        <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>

@@ -133,17 +133,13 @@ export default function ProjectMosaic() {
     
     loadS3Images();
     
-    // Clean up realtime subscription when component unmounts
+    // Corriger la fonction de nettoyage pour éviter le double return
     return () => {
-      // Store the current value of the ref
-      const currentChannel = realtimeChannel.current;
-      
-      return () => {
-        // Use the stored value instead of accessing the ref directly
-        if (currentChannel) {
-          supabase.removeChannel(currentChannel);
-        }
-      };
+      // Vérifier si un canal existe avant de tenter de le supprimer
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current);
+        realtimeChannel.current = null;
+      }
     };
   }, [projectId, supabase]);
   
@@ -203,26 +199,12 @@ export default function ProjectMosaic() {
   // Gérer le mode plein écran
   useEffect(() => {
     if (wantsFullscreen) {
-      // Attendre que le composant soit monté complètement
-      const timer = setTimeout(() => {
-        try {
-          const docElm = document.documentElement;
-          
-          if (docElm.requestFullscreen) {
-            docElm.requestFullscreen();
-          } else if (docElm.webkitRequestFullscreen) { // Safari
-            docElm.webkitRequestFullscreen();
-          } else if (docElm.msRequestFullscreen) { // IE11
-            docElm.msRequestFullscreen();
-          }
-          
-          console.log("Mode plein écran activé");
-        } catch (err) {
-          console.error("Erreur lors du passage en plein écran:", err);
-        }
-      }, 1000); // Un délai pour s'assurer que tout est chargé
+      // We'll create a button to prompt the user
+      setShowFullscreenButton(true);
       
-      return () => clearTimeout(timer);
+      // Don't try to auto-enter fullscreen mode, 
+      // as browsers require a user gesture
+      console.log("Fullscreen mode requested via URL, showing button");
     }
   }, [wantsFullscreen]);
 
