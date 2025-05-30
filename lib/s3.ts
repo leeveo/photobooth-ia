@@ -44,7 +44,7 @@ export async function uploadToS3(
   };
   
   try {
-    // Télécharger le fichier vers S3
+    // Télécharger  le fichier vers S3
     await s3Client.send(new PutObjectCommand(uploadParams));
     
     // Construire l'URL du fichier téléchargé
