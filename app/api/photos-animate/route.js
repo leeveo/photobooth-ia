@@ -1,8 +1,8 @@
 ```javascript
-// Add this at the top to make it a streaming API which has higher limits
+// Ajouter cette configuration en haut du fichier
 export const config = {
   runtime: 'edge',
-  regions: ['fra1'], // Optionally specify regions
+  regions: ['fra1'],
 };
 
 // ...existing code...

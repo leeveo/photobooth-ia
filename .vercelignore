@@ -1,0 +1,14 @@
+# Exclude large directories that aren't needed in production
+public/iqos/neon
+public/amero/style
+public/iqos/style
+public/veev/style
+public/ggjdm/style
+public/mizuho/style
+public/dexa/style
+public/magnumotion/style
+public/comcon/visikom
+public/hms/style
+
+# Exclude large PSD files
+**/*.psd
