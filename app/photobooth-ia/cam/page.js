@@ -2,7 +2,7 @@
 
 import * as fal from '@fal-ai/serverless-client';
 import { useEffect, useRef, useState, useMemo } from 'react';
-import TopLogoGG from "../../components/TopLogoGG";
+import TopLogoGG from '../../components/TopLogoGG';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
