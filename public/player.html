@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vidéo plein écran</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: black;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <video id="video" autoplay muted loop playsinline></video>
+
+    <script>
+      const params = new URLSearchParams(window.location.search)
+      const src = params.get('src')
+      const video = document.getElementById('video')
+      if (src) {
+        video.src = decodeURIComponent(src)
+        video.requestFullscreen?.()
+      }
+    </script>
+  </body>
+</html>

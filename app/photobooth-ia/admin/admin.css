@@ -1,0 +1,28 @@
+/* Styles globaux pour l'interface d'administration */
+
+/* Assurer que le texte des inputs est noir */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+textarea,
+select {
+  color: #000 !important; /* Force la couleur noire pour tous les inputs */
+  background-color: #fff;
+}
+
+/* Placeholder plus sombre pour plus de lisibilité */
+::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+/* Assurer la visibilité dans les inputs avec fond coloré */
+.bg-indigo-50 input,
+.bg-indigo-100 input,
+.bg-gray-50 input,
+.bg-gray-100 input {
+  color: #111827 !important;
+}
