@@ -3,12 +3,10 @@ import path from 'path'
 import fs from 'fs'
 import { exec } from 'child_process'
 
-// Configurer pour utiliser Edge Runtime afin de réduire la taille
-export const config = {
-  runtime: 'edge'
-};
+// Utiliser la nouvelle syntaxe pour Edge Runtime
+export const runtime = "edge";
 
-// Remplacer toute la fonction existante par une version simplifiée
+// Remplacer par une implémentation simplifiée
 export async function POST(req: Request) {
   try {
     const { step } = await req.json();
@@ -17,8 +15,8 @@ export async function POST(req: Request) {
     if (step === 1) {
       return new Response(
         JSON.stringify({
-          message: "Fonction désactivée sur Vercel: FFmpeg n'est pas disponible en production",
-          blackBgImage: `/placeholder-images/fresque_black_bg.png`,
+          message: "Fonction désactivée en production: FFmpeg n'est pas disponible",
+          blackBgImage: `/placeholder-bg.jpg`,
           totalWidth: 1280,
           maxHeight: 720,
           uploaded: [],
@@ -33,8 +31,8 @@ export async function POST(req: Request) {
     else if (step === 2) {
       return new Response(
         JSON.stringify({
-          message: "Fonction désactivée sur Vercel: FFmpeg n'est pas disponible en production",
-          transparentImage: `/placeholder-images/fresque_transparent.png`,
+          message: "Fonction désactivée en production: FFmpeg n'est pas disponible",
+          transparentImage: `/placeholder-bg.jpg`,
           uploaded: []
         }),
         { 
@@ -46,8 +44,8 @@ export async function POST(req: Request) {
     else if (step === 3) {
       return new Response(
         JSON.stringify({
-          message: "Fonction désactivée sur Vercel: FFmpeg n'est pas disponible en production",
-          video: `/placeholder-images/fresque_scroll.mp4`
+          message: "Fonction désactivée en production: FFmpeg n'est pas disponible",
+          video: `/placeholder-bg.jpg`
         }),
         { 
           status: 200,
@@ -58,7 +56,7 @@ export async function POST(req: Request) {
     else {
       return new Response(
         JSON.stringify({
-          error: "Fonction désactivée sur Vercel: FFmpeg n'est pas disponible en production"
+          error: "Fonction désactivée en production: FFmpeg n'est pas disponible"
         }),
         { 
           status: 400,

@@ -1,6 +1,10 @@
 import Image from 'next/image';
 
 const BtnHexagonTauTau = ({ disabled, onClick}) => {
+  // Utiliser des chemins d'images qui existent dans le déploiement
+  const enabledBtnPath = '/placeholder-bg.jpg'; // Remplacer l'image manquante
+  const disabledBtnPath = '/placeholder-bg.jpg'; // Remplacer l'image manquante
+  
   return (
     <button
       onClick={onClick}
@@ -9,11 +13,7 @@ const BtnHexagonTauTau = ({ disabled, onClick}) => {
       }`}
     >
       <Image
-        src={
-          !disabled
-            ? '/tautaufest/btn-register.png'
-            : '/tautaufest/btn-register-disable.png'
-        }
+        src={!disabled ? enabledBtnPath : disabledBtnPath}
         width={479}
         height={96}
         className='w-full'
