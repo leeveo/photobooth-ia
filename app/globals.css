@@ -1230,7 +1230,7 @@ body{
 }
 
 .bg-zyn{
-  background-image: url(../public/comcon/zyn/bg.jpg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }

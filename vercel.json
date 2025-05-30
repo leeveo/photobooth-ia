@@ -15,7 +15,8 @@
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION": "true"
+      "NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION": "true",
+      "NEXT_PUBLIC_ENABLE_CSS_OPTIMIZATION": "false"
     }
   }
 }
