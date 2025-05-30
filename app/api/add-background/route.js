@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
 import path from 'path';
-import { existsSync } from 'fs';
 
 export async function POST(req) {
   try {
@@ -11,23 +9,18 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Chemins vidéo et arrière-plan requis' }, { status: 400 });
     }
     
-    // Vérifier que les fichiers existent
-    const fullVideoPath = path.join(process.cwd(), 'public', videoPath);
-    const fullBgPath = path.join(process.cwd(), 'public', bgPath);
+    // En production, retourner simplement la vidéo originale
+    console.log("⚠️ FFmpeg désactivé, retour de la vidéo originale");
     
-    if (!existsSync(fullVideoPath) || !existsSync(fullBgPath)) {
-      return NextResponse.json({ error: 'Fichier vidéo ou arrière-plan introuvable' }, { status: 404 });
-    }
-    
-    const outputName = 'merged_with_bg.mp4';
-    const outputPath = path.join(process.cwd(), 'public', 'uploads', outputName);
-    
-    // Désactiver FFmpeg pour Vercel
-    console.log("⚠️ FFmpeg désactivé pour le déploiement Vercel, retour de la vidéo originale");
+    // Enlever le chemin public du videoPath si nécessaire
+    const normalizedVideoPath = videoPath.startsWith('/') 
+      ? videoPath 
+      : `/${videoPath.replace(/^public\//, '')}`;
     
     return NextResponse.json({ 
-      message: "Fonction FFmpeg désactivée pour le déploiement Vercel", 
-      videoPath: videoPath 
+      success: true,
+      message: "FFmpeg désactivé en production", 
+      videoPath: normalizedVideoPath
     });
     
   } catch (error) {

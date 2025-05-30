@@ -9,6 +9,17 @@ public/dexa/style
 public/magnumotion/style
 public/comcon/visikom
 public/hms/style
+public/comcon
+public/pertamina
+public/iqos
+public/gac
+public/photobooth-ia/style
+public/tautaufest/style
+public/haircut/style
+public/pln/style
+public/avatar/base
+public/uploads/*.mp4
+public/uploads/*.webm
 
 # Exclude large PSD files
 **/*.psd

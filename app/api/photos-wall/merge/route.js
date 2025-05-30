@@ -9,23 +9,35 @@ export async function POST(req) {
     const backgroundRemovedDir = path.join(process.cwd(), 'public', 'background_removed_photos');
     
     let files = [];
+    
     try {
       if (!existsSync(backgroundRemovedDir)) {
-        mkdirSync(backgroundRemovedDir, { recursive: true });
-        console.log(`Répertoire créé: ${backgroundRemovedDir}`);
+        try {
+          mkdirSync(backgroundRemovedDir, { recursive: true });
+          console.log(`Répertoire créé: ${backgroundRemovedDir}`);
+        } catch (mkdirError) {
+          console.error("Erreur lors de la création du répertoire:", mkdirError);
+          // Continuer avec un tableau vide
+        }
       }
-      files = readdirSync(backgroundRemovedDir);
-    } catch (dirError) {
-      console.error("Erreur lors de la lecture du répertoire:", dirError);
-      // Continuer avec un tableau vide plutôt que d'échouer
-      files = [];
+      
+      // Essayer de lire le répertoire, mais ne pas échouer si impossible
+      try {
+        files = readdirSync(backgroundRemovedDir);
+      } catch (readError) {
+        console.error("Erreur lors de la lecture du répertoire:", readError);
+        // Continuer avec un tableau vide
+      }
+    } catch (e) {
+      console.error("Erreur lors de la vérification/création du répertoire:", e);
+      // Continuer avec un tableau vide
     }
     
-    // Retourner les données disponibles
+    // Retourner les fichiers (ou un tableau vide en cas d'erreur)
     return NextResponse.json({ 
       success: true, 
       files: files,
-      message: "Liste de fichiers générée avec succès" 
+      message: "Traitement terminé" 
     });
   } catch (error) {
     console.error('Error in photos-wall/merge:', error);
