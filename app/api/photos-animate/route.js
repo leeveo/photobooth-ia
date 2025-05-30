@@ -1,5 +1,5 @@
 ```javascript
-// Ajouter cette configuration en haut du fichier
+// Ajouter en haut du fichier pour utiliser Edge Runtime (limite de taille plus élevée)
 export const config = {
   runtime: 'edge',
   regions: ['fra1'],
