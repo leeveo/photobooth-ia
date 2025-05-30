@@ -1073,12 +1073,12 @@ body{
 
 /* IQOS */
 .bg-iqos{
-  background-image: url(../public/iqos/bg.jpeg);
+  background-image: url('/placeholder-bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-iqos-border{
-  background-image: url(../public/iqos/border.png);
+  background-image: url('/placeholder-border.png');
   background-size: cover;
   background-position: top center;
 }
@@ -1169,12 +1169,12 @@ body{
 
 /* GAC */
 .bg-gac{
-  background-image: url(../public/gac/bg-depan.jpeg);
+  background-image: url('/placeholder-bg-depan.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-gac-page{
-  background-image: url(../public/gac/bg-page.jpeg);
+  background-image: url('/placeholder-bg-page.jpg');
   background-size: cover;
   background-position: top center;
 }
@@ -1182,7 +1182,7 @@ body{
 
 /* -- COMCON -- */
 .bg-comcon-dark{
-  background-image: url(../public/comcon/bg-dark.jpg);
+  background-image: url('/placeholder-bg-dark.jpg');
   background-size: cover;
   background-position: top center;
 }
