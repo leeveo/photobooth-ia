@@ -1336,7 +1336,7 @@ body{
   appearance: none; 
   height: 150px;
   width: 150px;
-  background-image: url(../public/comcon/veev/slidericon.png);
+  background-image: url('/placeholder.png');
   background-size: cover;
   border-radius: 50%;
   border: none;
@@ -1379,7 +1379,7 @@ body{
   appearance: none; 
   height: 70px;
   width: 70px;
-  background-image: url(../public/comcon/veev/slidericon.png);
+  background-image: url('/placeholder.png');
   background-size: cover;
   border-radius: 50%;
   border: none;
