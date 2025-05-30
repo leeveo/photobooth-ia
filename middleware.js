@@ -4,21 +4,29 @@ import { existsSync } from 'fs';
 import path from 'path';
 
 export async function middleware(request) {
-  // Create required directories if they don't exist
-  const dirs = [
-    path.join(process.cwd(), 'public', 'uploads'),
-    path.join(process.cwd(), 'public', 'background_removed_photos')
-  ];
+  try {
+    // Créer des répertoires essentiels au démarrage
+    const dirs = [
+      'public/uploads',
+      'public/background_removed_photos'
+    ];
 
-  for (const dir of dirs) {
-    if (!existsSync(dir)) {
+    for (const dir of dirs) {
       try {
-        await mkdir(dir, { recursive: true });
-        console.log(`Created directory: ${dir}`);
+        // Utiliser path.join et process.cwd() uniquement en développement
+        if (process.env.NODE_ENV !== 'production') {
+          const fullPath = path.join(process.cwd(), dir);
+          if (!existsSync(fullPath)) {
+            await mkdir(fullPath, { recursive: true });
+            console.log(`Répertoire créé: ${dir}`);
+          }
+        }
       } catch (err) {
-        console.error(`Error creating directory ${dir}:`, err);
+        console.error(`Erreur lors de la création du répertoire ${dir}:`, err);
       }
     }
+  } catch (error) {
+    console.error('Middleware error:', error);
   }
 
   return NextResponse.next();

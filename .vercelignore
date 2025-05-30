@@ -1,22 +1,13 @@
-# Exclure les répertoires volumineux mais pas les images de base
-# Comcon
-public/comcon/visikom
-public/comcon/zyn
-# Ne pas exclure public/comcon/veev complètement
-public/comcon/veev/*.zip
-public/comcon/veev/videos
-public/comcon/veev/*.psd
-
-# Autres exclusions
-public/iqos/neon
-public/iqos/style
-public/gac/style
-public/pertamina/style
+# Exclure tous les fichiers lourds
+public/uploads/**/*.mp4
+public/uploads/**/*.webm
+public/**/*.psd
+public/comcon
+public/iqos
+public/gac
+public/pertamina
 public/photobooth-ia/style
 public/tautaufest/style
 public/haircut/style
 public/pln/style
 public/avatar/base
-public/uploads/*.mp4
-public/uploads/*.webm
-public/**/*.psd
