@@ -44,12 +44,12 @@ body {
 
 
 body{
-  background-image: url(../public/bg.jpeg);
+  background-image: url(/bg.jpeg);
   background-size: cover;
 }
 
 .bg{
-  background-image: url(../public/bg.jpeg);
+  background-image: url(/bg.jpeg);
   background-size: cover;
 }
 
@@ -838,7 +838,7 @@ body{
 
 /* AMERO */
 .bg-amero{
-  background-image: url(../public/amero/bg.jpeg);
+  background-image: url(/amero/bg.jpeg);
   background-size: cover;
   background-position: center;
 }
@@ -1083,7 +1083,7 @@ body{
   background-position: top center;
 }
 .bg-iqos-neon{
-  background-image: url(../public/iqos/neon/bgNew.jpg);
+  background-image: url('/iqos/neon/bgNew.jpg');
   background-size: cover;
   background-position: top center;
 }
@@ -1187,12 +1187,12 @@ body{
   background-position: top center;
 }
 .bg-visikom-front{
-  background-image: url(../public/comcon/visikom/bg.jpg);
+  background-image: url('/comcon/visikom/bg.jpg');
   background-size: cover;
   background-position: top center;
 }
 .bg-visikom{
-  background-image: url(../public/comcon/visikom/bg2.jpg);
+  background-image: url('/comcon/visikom/bg2.jpg');
   background-size: cover;
   background-position: top center;
 }
