@@ -1,30 +1,32 @@
 import { NextResponse } from 'next/server';
-import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, mkdirSync } from 'fs';
 import path from 'path';
 
 // Export the route handler function
 export async function POST(req) {
   try {
-    // Ajouter une gestion de sécurité pour le répertoire manquant
+    // Créer le répertoire s'il n'existe pas
     const backgroundRemovedDir = path.join(process.cwd(), 'public', 'background_removed_photos');
     
     let files = [];
     try {
-      // Tenter de lire le répertoire, mais ne pas échouer si impossible
-      if (existsSync(backgroundRemovedDir)) {
-        files = readdirSync(backgroundRemovedDir);
-      } else {
-        console.log("Répertoire manquant, création d'un tableau vide");
+      if (!existsSync(backgroundRemovedDir)) {
+        mkdirSync(backgroundRemovedDir, { recursive: true });
+        console.log(`Répertoire créé: ${backgroundRemovedDir}`);
       }
+      files = readdirSync(backgroundRemovedDir);
     } catch (dirError) {
       console.error("Erreur lors de la lecture du répertoire:", dirError);
-      // Continuer avec un tableau vide
+      // Continuer avec un tableau vide plutôt que d'échouer
+      files = [];
     }
     
-    // Continue with your existing implementation
-    // ...existing code...
-    
-    return NextResponse.json({ success: true, files: files });
+    // Retourner les données disponibles
+    return NextResponse.json({ 
+      success: true, 
+      files: files,
+      message: "Liste de fichiers générée avec succès" 
+    });
   } catch (error) {
     console.error('Error in photos-wall/merge:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
