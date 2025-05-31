@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine } from 'react-icons/ri';
+import StyleTemplates from '../../components/StyleTemplates';
 
 // Composant pour initialiser les variables globales
 function InitializeGlobals({ id }) {
@@ -50,6 +51,7 @@ export default function ProjectDetails({ params }) {
   const [backgroundFile, setBackgroundFile] = useState(null);
   const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
   const [addingBackgroundLoading, setAddingBackgroundLoading] = useState(false);
+  const [showStyleTemplates, setShowStyleTemplates] = useState(false);
 
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -252,14 +254,20 @@ export default function ProjectDetails({ params }) {
         .upload(`public/${backgroundFile.name}`, backgroundFile);
 
       if (backgroundImageError) throw backgroundImageError;
+      
+      // Get the public URL for the uploaded file
+      const publicURL = supabase
+        .storage
+        .from('backgrounds')
+        .getPublicUrl(backgroundImageData.path || `public/${backgroundFile.name}`).data.publicUrl;
 
-      // Add new background
+      // Add new background with the public URL
       const { error: addBackgroundError } = await supabase
         .from('backgrounds')
         .insert({
           project_id: projectId,
           name: newBackground.name,
-          image_url: backgroundImageData.Key
+          image_url: publicURL // Store the complete public URL
         });
 
       if (addBackgroundError) throw addBackgroundError;
@@ -294,6 +302,48 @@ export default function ProjectDetails({ params }) {
   async function handleDeleteBackground(backgroundId) {
     // Implement delete background logic
   }
+
+  // Function to get photobooth type label
+  const getPhotoboothTypeLabel = (type) => {
+    switch (type) {
+      case 'premium':
+        return 'Premium';
+      case 'photobooth2':
+        return 'MiniMax';
+      case 'standard':
+        return 'Standard';
+      default:
+        return 'Standard';
+    }
+  };
+
+  // Ajouter cette fonction pour gérer l'ajout de styles via template
+  const handleStyleTemplatesAdded = (addedStyles) => {
+    // Rafraîchir les styles après l'ajout
+    fetchProjectData();
+    setSuccess(`${addedStyles.length} styles ont été ajoutés avec succès !`);
+  };
+  
+  // Ajouter cette fonction pour gérer les erreurs
+  const handleStyleTemplatesError = (errorMessage) => {
+    setError(errorMessage);
+  };
+
+  // Helper function to ensure we have a full URL
+  const getFullImageUrl = (url) => {
+    if (!url) return null;
+    
+    // Check if it's already a full URL
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If it's just a storage path, convert to public URL
+    return supabase
+      .storage
+      .from('backgrounds')
+      .getPublicUrl(url).data.publicUrl;
+  };
 
   if (loading) {
     return (
@@ -411,14 +461,6 @@ export default function ProjectDetails({ params }) {
                 Paramètres
               </button>
               <button
-                onClick={() => setActiveTab('styles')}
-                className={`border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'styles' ? 'border-indigo-500 text-indigo-600' : ''
-                }`}
-              >
-                Styles <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600">{styles.length}</span>
-              </button>
-              <button
                 onClick={() => setActiveTab('backgrounds')}
                 className={`border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'backgrounds' ? 'border-indigo-500 text-indigo-600' : ''
@@ -432,7 +474,7 @@ export default function ProjectDetails({ params }) {
           {/* Tab content */}
           <div className="p-6">
             {activeTab === 'info' && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Informations du projet</h3>
                 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
@@ -503,6 +545,369 @@ export default function ProjectDetails({ params }) {
                   </div>
                 </div>
 
+                {/* Nouveau sélecteur de type de photobooth */}
+                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-500">Type de Photobooth</h4>
+                  <div className="mt-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from('projects')
+                            .update({ photobooth_type: 'standard' })
+                            .eq('id', project.id);
+                          
+                          if (!error) {
+                            setProject({...project, photobooth_type: 'standard'});
+                            setSuccess('Type de photobooth mis à jour');
+                            // Montrer les templates de styles pour ce type
+                            setShowStyleTemplates(true);
+                          }
+                        }}
+                        className={`flex flex-col items-center p-3 border ${
+                          project.photobooth_type === 'standard' || !project.photobooth_type 
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                        } rounded-lg transition-colors`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span className="text-sm font-medium">Standard</span>
+                      </button>
+                      
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from('projects')
+                            .update({ photobooth_type: 'premium' })
+                            .eq('id', project.id);
+                          
+                          if (!error) {
+                            setProject({...project, photobooth_type: 'premium'});
+                            setSuccess('Type de photobooth mis à jour');
+                          }
+                        }}
+                        className={`flex flex-col items-center p-3 border ${
+                          project.photobooth_type === 'premium' 
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                        } rounded-lg transition-colors`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="text-sm font-medium">Premium</span>
+                      </button>
+                      
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from('projects')
+                            .update({ photobooth_type: 'photobooth2' })
+                            .eq('id', project.id);
+                          
+                          if (!error) {
+                            setProject({...project, photobooth_type: 'photobooth2'});
+                            setSuccess('Type de photobooth mis à jour');
+                          }
+                        }}
+                        className={`flex flex-col items-center p-3 border ${
+                          project.photobooth_type === 'photobooth2' 
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                        } rounded-lg transition-colors`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm font-medium">MiniMax</span>
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Conseils pour le type de photobooth sélectionné */}
+                {project.photobooth_type && (
+                  <div className="mt-3 bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border-l-4 border-blue-500">
+                    <p className="font-medium mb-1">Conseil</p>
+                    <p>
+                      Vous avez sélectionné le type <b>{getPhotoboothTypeLabel(project.photobooth_type || 'standard')}</b>. 
+                      Vous pouvez configurer les styles disponibles pour ce type de photobooth ci-dessous.
+                    </p>
+                  </div>
+                )}
+
+                {/* Section Styles du projet - Intégrée directement dans l'onglet Info */}
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Styles du projet ({styles.length})</h3>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowStyleTemplates(!showStyleTemplates)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        {showStyleTemplates ? 'Masquer les templates' : 'Ajouter depuis templates'}
+                      </button>
+                      
+                      <button
+                        onClick={() => setAddingStyle(true)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                      >
+                        <RiAddLine className="mr-2 h-4 w-4" />
+                        Ajouter style manuellement
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Section des templates de styles */}
+                  {showStyleTemplates && (
+                    <div className="mb-8 border-b border-gray-200 pb-6">
+                      <StyleTemplates 
+                        projectId={projectId} 
+                        photoboothType={project.photobooth_type || 'standard'} 
+                        onStylesAdded={handleStyleTemplatesAdded}
+                        onError={handleStyleTemplatesError}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Formulaire d'ajout de style manuel */}
+                  {addingStyle && (
+                    <div className="mb-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                      <h4 className="text-md font-medium mb-3">Nouveau style</h4>
+                      <form onSubmit={handleAddStyle} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label htmlFor="styleName" className="block text-sm font-medium text-gray-700">
+                              Nom du style *
+                            </label>
+                            <input
+                              type="text"
+                              id="styleName"
+                              value={newStyle.name}
+                              onChange={(e) => setNewStyle({...newStyle, name: e.target.value})}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="styleGender" className="block text-sm font-medium text-gray-700">
+                              Catégorie *
+                            </label>
+                            <select
+                              id="styleGender"
+                              value={newStyle.gender}
+                              onChange={(e) => setNewStyle({...newStyle, gender: e.target.value})}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                              required
+                            >
+                              <option value="">Sélectionner...</option>
+                              <option value="m">Homme</option>
+                              <option value="f">Femme</option>
+                              <option value="ag">Ado Garçon</option>
+                              <option value="af">Ado Fille</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor="styleKey" className="block text-sm font-medium text-gray-700">
+                              Clé de style (s1, s2, etc.) *
+                            </label>
+                            <input
+                              type="text"
+                              id="styleKey"
+                              value={newStyle.style_key}
+                              onChange={(e) => setNewStyle({...newStyle, style_key: e.target.value})}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="styleVariations" className="block text-sm font-medium text-gray-700">
+                              Nombre de variations
+                            </label>
+                            <input
+                              type="number"
+                              id="styleVariations"
+                              min="1"
+                              max="10"
+                              value={newStyle.variations}
+                              onChange={(e) => setNewStyle({...newStyle, variations: e.target.value})}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="styleDescription" className="block text-sm font-medium text-gray-700">
+                            Description
+                          </label>
+                          <textarea
+                            id="styleDescription"
+                            rows={2}
+                            value={newStyle.description}
+                            onChange={(e) => setNewStyle({...newStyle, description: e.target.value})}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Image de prévisualisation *</label>
+                          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div className="space-y-1 text-center">
+                              {styleImagePreview ? (
+                                <div className="flex flex-col items-center">
+                                  <div className="w-40 h-40 mb-3 relative">
+                                    <Image
+                                      src={styleImagePreview}
+                                      alt="Aperçu"
+                                      fill
+                                      style={{ objectFit: "contain" }}
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setStyleFile(null);
+                                      setStyleImagePreview(null);
+                                    }}
+                                    className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
+                                  >
+                                    Supprimer
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  <div className="flex text-sm text-gray-600">
+                                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                      <span>Télécharger un fichier</span>
+                                      <input
+                                        type="file"
+                                        className="sr-only"
+                                        accept="image/*"
+                                        onChange={handleStyleImageChange}
+                                      />
+                                    </label>
+                                  </div>
+                                  <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            type="button"
+                            onClick={() => setAddingStyle(false)}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                          >
+                            Annuler
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
+                            disabled={addingStyleLoading}
+                          >
+                            {addingStyleLoading ? 'Ajout en cours...' : 'Ajouter'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                  
+                  {/* Message si aucun style n'est disponible */}
+                  {styles.length === 0 && !showStyleTemplates && !addingStyle ? (
+                    <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="mt-4 text-gray-500">
+                        Aucun style n&apos;a été ajouté à ce projet.
+                      </p>
+                      <div className="mt-6 flex justify-center space-x-3">
+                        <button
+                          onClick={() => setShowStyleTemplates(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>
+                          Ajouter des styles depuis un template
+                        </button>
+                        
+                        <button
+                          onClick={() => setAddingStyle(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                        >
+                          <RiAddLine className="mr-2 h-4 w-4" />
+                          Ajouter manuellement
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Affichage de la grille des styles existants */}
+                  {styles.length > 0 && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {styles.map((style) => (
+                        <div key={style.id} className="border border-gray-200 rounded-md overflow-hidden text-black">
+                          <div className="h-40 bg-gray-100 relative">
+                            {style.preview_image ? (
+                              <Image
+                                src={style.preview_image}
+                                alt={style.name}
+                                fill
+                                style={{ objectFit: "contain" }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-gray-400">Aucune image</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="p-4">
+                            <h4 className="font-medium text-gray-900">{style.name}</h4>
+                            <div className="mt-1 flex items-center text-sm text-gray-500">
+                              <span>{style.gender === 'm' ? 'Homme' : 
+                                    style.gender === 'f' ? 'Femme' : 
+                                    style.gender === 'ag' ? 'Ado Garçon' : 'Ado Fille'}</span>
+                              <span className="mx-2">•</span>
+                              <span>Style {style.style_key}</span>
+                            </div>
+                            
+                            <div className="mt-4 flex space-x-2">
+                              <button
+                                onClick={() => handleEditStyle(style)}
+                                className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                              >
+                                Modifier
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStyle(style.id)}
+                                className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                              >
+                                Supprimer
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={() => router.push(`/photobooth-ia/admin/projects`)}
@@ -517,9 +922,9 @@ export default function ProjectDetails({ params }) {
 
             {activeTab === 'settings' && (
               <form onSubmit={saveSettings} className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Paramètres du photobooth</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Paramètres du projet</h3>
                 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="default_gender" className="block text-sm font-medium text-gray-700">
                       Genre par défaut
@@ -527,9 +932,9 @@ export default function ProjectDetails({ params }) {
                     <select
                       id="default_gender"
                       name="default_gender"
-                      value={settings.default_gender || 'm'}
+                      value={settings.default_gender}
                       onChange={handleSettingChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option value="m">Homme</option>
                       <option value="f">Femme</option>
@@ -539,310 +944,131 @@ export default function ProjectDetails({ params }) {
                   </div>
                   
                   <div>
+                    <label htmlFor="enable_qr_codes" className="flex items-center">
+                      <input
+                        id="enable_qr_codes"
+                        name="enable_qr_codes"
+                        type="checkbox"
+                        checked={settings.enable_qr_codes}
+                        onChange={handleSettingChange}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Activer les codes QR
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="enable_fullscreen" className="flex items-center">
+                      <input
+                        id="enable_fullscreen"
+                        name="enable_fullscreen"
+                        type="checkbox"
+                        checked={settings.enable_fullscreen}
+                        onChange={handleSettingChange}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Activer le mode plein écran
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="show_countdown" className="flex items-center">
+                      <input
+                        id="show_countdown"
+                        name="show_countdown"
+                        type="checkbox"
+                        checked={settings.show_countdown}
+                        onChange={handleSettingChange}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Afficher le compte à rebours
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <div>
                     <label htmlFor="max_processing_time" className="block text-sm font-medium text-gray-700">
-                      Temps max de traitement (secondes)
+                      Temps de traitement max (en secondes)
                     </label>
                     <input
                       type="number"
-                      name="max_processing_time"
                       id="max_processing_time"
-                      value={settings.max_processing_time || 60}
+                      name="max_processing_time"
+                      value={settings.max_processing_time}
                       onChange={handleSettingChange}
-                      min="30"
-                      max="300"
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4 mt-4 bg-gray-50 p-5 rounded-lg">
-                  <div className="flex items-center">
-                    <input
-                      id="enable_qr_codes"
-                      name="enable_qr_codes"
-                      type="checkbox"
-                      checked={settings.enable_qr_codes}
-                      onChange={handleSettingChange}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="enable_qr_codes" className="ml-2 block text-sm text-gray-900">
-                      Activer les QR codes pour le partage
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <input
-                      id="enable_fullscreen"
-                      name="enable_fullscreen"
-                      type="checkbox"
-                      checked={settings.enable_fullscreen}
-                      onChange={handleSettingChange}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="enable_fullscreen" className="ml-2 block text-sm text-gray-900">
-                      Activer le mode plein écran automatique
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <input
-                      id="show_countdown"
-                      name="show_countdown"
-                      type="checkbox"
-                      checked={settings.show_countdown}
-                      onChange={handleSettingChange}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="show_countdown" className="ml-2 block text-sm text-gray-900">
-                      Afficher le compte à rebours avant la capture
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="mt-6 flex justify-end">
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('info')}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
                   <button
                     type="submit"
-                    className="inline-flex justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
                   >
-                    <RiSaveLine className="mr-2 h-4 w-4" />
                     Enregistrer les paramètres
                   </button>
                 </div>
               </form>
             )}
 
-            {activeTab === 'styles' && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Styles du projet</h3>
-                  <button
-                    onClick={() => setAddingStyle(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                  >
-                    <RiAddLine className="mr-2 h-4 w-4" />
-                    Ajouter un style
-                  </button>
-                </div>
-                
-                {/* Formulaire d'ajout de style */}
-                {addingStyle && (
-                  <div className="mb-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <h4 className="text-md font-medium mb-3">Nouveau style</h4>
-                    <form onSubmit={handleAddStyle} className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                          <label htmlFor="styleName" className="block text-sm font-medium text-gray-700">
-                            Nom du style *
-                          </label>
-                          <input
-                            type="text"
-                            id="styleName"
-                            value={newStyle.name}
-                            onChange={(e) => setNewStyle({...newStyle, name: e.target.value})}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="styleGender" className="block text-sm font-medium text-gray-700">
-                            Catégorie *
-                          </label>
-                          <select
-                            id="styleGender"
-                            value={newStyle.gender}
-                            onChange={(e) => setNewStyle({...newStyle, gender: e.target.value})}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                            required
-                          >
-                            <option value="">Sélectionner...</option>
-                            <option value="m">Homme</option>
-                            <option value="f">Femme</option>
-                            <option value="ag">Ado Garçon</option>
-                            <option value="af">Ado Fille</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label htmlFor="styleKey" className="block text-sm font-medium text-gray-700">
-                            Clé de style (s1, s2, etc.) *
-                          </label>
-                          <input
-                            type="text"
-                            id="styleKey"
-                            value={newStyle.style_key}
-                            onChange={(e) => setNewStyle({...newStyle, style_key: e.target.value})}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="styleVariations" className="block text-sm font-medium text-gray-700">
-                            Nombre de variations
-                          </label>
-                          <input
-                            type="number"
-                            id="styleVariations"
-                            min="1"
-                            max="10"
-                            value={newStyle.variations}
-                            onChange={(e) => setNewStyle({...newStyle, variations: e.target.value})}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="styleDescription" className="block text-sm font-medium text-gray-700">
-                          Description
-                        </label>
-                        <textarea
-                          id="styleDescription"
-                          rows={2}
-                          value={newStyle.description}
-                          onChange={(e) => setNewStyle({...newStyle, description: e.target.value})}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Image de prévisualisation *</label>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                          <div className="space-y-1 text-center">
-                            {styleImagePreview ? (
-                              <div className="flex flex-col items-center">
-                                <div className="w-40 h-40 mb-3 relative">
-                                  <Image
-                                    src={styleImagePreview}
-                                    alt="Aperçu"
-                                    fill
-                                    style={{ objectFit: "contain" }}
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setStyleFile(null);
-                                    setStyleImagePreview(null);
-                                  }}
-                                  className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                <div className="flex text-sm text-gray-600">
-                                  <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
-                                    <span>Télécharger un fichier</span>
-                                    <input
-                                      type="file"
-                                      className="sr-only"
-                                      accept="image/*"
-                                      onChange={handleStyleImageChange}
-                                    />
-                                  </label>
-                                </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => setAddingStyle(false)}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
-                          disabled={addingStyleLoading}
-                        >
-                          {addingStyleLoading ? 'Ajout en cours...' : 'Ajouter'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-                
-                {styles.length === 0 ? (
-                  <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="mt-4 text-gray-500">
-                      Aucun style n&apos;a été ajouté à ce projet. Commencez par en ajouter un !
-                    </p>
-                    <button
-                      onClick={() => setAddingStyle(true)}
-                      className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                    >
-                      <RiAddLine className="mr-2 h-4 w-4" />
-                      Ajouter un style
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {styles.map((style) => (
-                      <div key={style.id} className="border border-gray-200 rounded-md overflow-hidden text-black">
-                        <div className="h-40 bg-gray-100 relative">
-                          {style.preview_image ? (
-                            <Image
-                              src={style.preview_image}
-                              alt={style.name}
-                              fill
-                              style={{ objectFit: "contain" }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <span className="text-gray-400">Aucune image</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="p-4">
-                          <h4 className="font-medium text-gray-900">{style.name}</h4>
-                          <div className="mt-1 flex items-center text-sm text-gray-500">
-                            <span>{style.gender === 'm' ? 'Homme' : 
-                                  style.gender === 'f' ? 'Femme' : 
-                                  style.gender === 'ag' ? 'Ado Garçon' : 'Ado Fille'}</span>
-                            <span className="mx-2">•</span>
-                            <span>Style {style.style_key}</span>
-                          </div>
-                          
-                          <div className="mt-4 flex space-x-2">
-                            <button
-                              onClick={() => handleEditStyle(style)}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                              Modifier
-                            </button>
-                            <button
-                              onClick={() => handleDeleteStyle(style.id)}
-                              className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                            >
-                              Supprimer
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
             {activeTab === 'backgrounds' && (
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Arrière-plans du projet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Arrière-plans du projet</h3>
+                
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {backgrounds.map((background) => (
+                    <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden">
+                      <div className="h-40 bg-gray-100 relative">
+                        {background.image_url ? (
+                          <Image
+                            src={getFullImageUrl(background.image_url)}
+                            alt={background.name}
+                            fill
+                            style={{ objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-gray-400">Aucune image</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-4">
+                        <h4 className="font-medium text-gray-900">{background.name}</h4>
+                        
+                        <div className="mt-4 flex space-x-2">
+                          <button
+                            onClick={() => handleEditBackground(background)}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBackground(background.id)}
+                            className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6">
                   <button
                     onClick={() => setAddingBackground(true)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
@@ -854,12 +1080,12 @@ export default function ProjectDetails({ params }) {
                 
                 {/* Formulaire d'ajout d'arrière-plan */}
                 {addingBackground && (
-                  <div className="mb-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <div className="mt-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <h4 className="text-md font-medium mb-3">Nouvel arrière-plan</h4>
                     <form onSubmit={handleAddBackground} className="space-y-4">
                       <div>
                         <label htmlFor="backgroundName" className="block text-sm font-medium text-gray-700">
-                          Nom de l&apos;arrière-plan *
+                          Nom de l'arrière-plan *
                         </label>
                         <input
                           type="text"
@@ -872,7 +1098,7 @@ export default function ProjectDetails({ params }) {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Image d&apos;arrière-plan *</label>
+                        <label className="block text-sm font-medium text-gray-700">Image de l'arrière-plan *</label>
                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                           <div className="space-y-1 text-center">
                             {backgroundImagePreview ? (
@@ -882,7 +1108,7 @@ export default function ProjectDetails({ params }) {
                                     src={backgroundImagePreview}
                                     alt="Aperçu"
                                     fill
-                                    style={{ objectFit: "contain" }}
+                                    style={{ objectFit: "cover" }}
                                   />
                                 </div>
                                 <button
@@ -936,58 +1162,6 @@ export default function ProjectDetails({ params }) {
                         </button>
                       </div>
                     </form>
-                  </div>
-                )}
-                
-                {backgrounds.length === 0 ? (
-                  <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="mt-4 text-gray-500">
-                      Aucun arrière-plan n&apos;a été ajouté à ce projet. Commencez par en ajouter un !
-                    </p>
-                    <button
-                      onClick={() => setAddingBackground(true)}
-                      className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                    >
-                      <RiAddLine className="mr-2 h-4 w-4" />
-                      Ajouter un arrière-plan
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {backgrounds.map((background) => (
-                      <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden text-black">
-                        <div className="h-40 bg-gray-100 relative">
-                          <Image
-                            src={background.image_url}
-                            alt={background.name}
-                            fill
-                            style={{ objectFit: "cover" }}
-                          />
-                        </div>
-                        
-                        <div className="p-4">
-                          <h4 className="font-medium text-gray-900">{background.name}</h4>
-                          
-                          <div className="mt-4 flex space-x-2">
-                            <button
-                              onClick={() => handleEditBackground(background)}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                              Modifier
-                            </button>
-                            <button
-                              onClick={() => handleDeleteBackground(background.id)}
-                              className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                            >
-                              Supprimer
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>

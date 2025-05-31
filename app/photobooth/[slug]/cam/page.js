@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
+import LoadingOverlay from '../../../components/ui/LoadingOverlay';
 
 // Configuration fal.ai
 fal.config({
@@ -56,6 +57,7 @@ export default function CameraCapture({ params }) {
   const [error, setError] = useState(null);
   const [logs, setLogs] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Initialize webcam
   useWebcam({ videoRef, previewRef });
@@ -234,6 +236,7 @@ export default function CameraCapture({ params }) {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
+    setLoadingProgress(0);
     
     const start = Date.now();
     
@@ -267,12 +270,34 @@ export default function CameraCapture({ params }) {
           onQueueUpdate: (update) => {
             setElapsedTime(Date.now() - start);
             if (update.status === 'IN_PROGRESS' || update.status === 'COMPLETED') {
-              setLogs((update.logs || []).map((log) => log.message));
+              const newLogs = (update.logs || []).map((log) => log.message);
+              setLogs(newLogs);
+              
+              // Estimate progress based on logs and elapsed time
+              const maxTime = (settings?.max_processing_time || 60) * 1000;
+              const timeBasedProgress = Math.min(95, (Date.now() - start) / maxTime * 100);
+              
+              // If we're in the early stages (detected by logs)
+              if (newLogs.some(log => log.includes('Detecting'))) {
+                setLoadingProgress(Math.min(30, timeBasedProgress));
+              } 
+              // If we're processing the image
+              else if (newLogs.some(log => log.includes('Processing'))) {
+                setLoadingProgress(Math.min(70, timeBasedProgress));
+              }
+              // If we're finalizing
+              else if (newLogs.some(log => log.includes('Finalizing') || log.includes('Completed'))) {
+                setLoadingProgress(Math.min(95, timeBasedProgress));
+              }
+              else {
+                setLoadingProgress(timeBasedProgress);
+              }
             }
           },
         }
       );
       
+      setLoadingProgress(100);
       setProcessingStep(2); // Image generated
       
       // Store metadata for debugging
@@ -526,65 +551,18 @@ export default function CameraCapture({ params }) {
         </motion.div>
 
         {/* Processing Overlay */}
-        {processing && (
-          <motion.div 
-            className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center flex-col z-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div 
-              className="py-4 px-6 rounded-lg text-center"
-              style={{ backgroundColor: primaryColor, border: `2px solid ${secondaryColor}` }}
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <h2 className="text-xl mb-2" style={{ color: secondaryColor }}>
-                Création en cours...
-              </h2>
-              <p style={{ color: 'white' }}>
-                Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-              </p>
-              <div className="mt-4 mb-4">
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div 
-                    className="h-2.5 rounded-full" 
-                    style={{ 
-                      width: `${Math.min(100, (elapsedTime / ((settings?.max_processing_time || 60) * 1000)) * 100)}%`,
-                      backgroundColor: secondaryColor
-                    }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div 
-                className="mt-4 h-24 overflow-y-auto text-sm text-left p-2 rounded"
-                style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'white' }}
-              >
-                {logs.length > 0 ? (
-                  logs.map((log, index) => <div key={index}>{log}</div>)
-                ) : (
-                  <div>Initialisation du processus...</div>
-                )}
-              </div>
-              
-              {error && (
-                <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-                  {error}
-                </div>
-              )}
-              
-              <Link 
-                href={`/photobooth/${slug}`}
-                className="mt-6 inline-block px-4 py-2 rounded font-medium"
-                style={{ backgroundColor: secondaryColor, color: primaryColor }}
-              >
-                Annuler
-              </Link>
-            </motion.div>
-          </motion.div>
-        )}
+        <LoadingOverlay
+          isVisible={processing}
+          title="Création en cours..."
+          message={`Processus: ${(elapsedTime / 1000).toFixed(1)} secondes`}
+          progress={loadingProgress}
+          logs={logs}
+          project={project} // Pass the entire project object to use its colors
+          onCancel={() => {
+            setProcessing(false);
+            setError(null);
+          }}
+        />
 
         <motion.div 
           className={`w-full max-w-2xl mx-auto mt-[20vh] ${processing ? 'opacity-20' : ''}`}

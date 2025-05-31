@@ -21,41 +21,7 @@ export default function StyleSelection({ params }) {
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Essayer de charger depuis localStorage pour un rendu plus rapide
-    const cachedProject = localStorage.getItem('projectData');
-    if (cachedProject) {
-      try {
-        const parsedProject = JSON.parse(cachedProject);
-        setProject(parsedProject);
-        
-        // Récupérer les paramètres en cache
-        const cachedSettings = localStorage.getItem('projectSettings');
-        if (cachedSettings) {
-          const parsedSettings = JSON.parse(cachedSettings);
-          setSettings(parsedSettings);
-          // Définir le genre par défaut depuis les paramètres
-          setGender(parsedSettings.default_gender || 'm');
-        }
-        
-        setLoading(false);
-      } catch (e) {
-        console.error("Erreur lors de l'analyse des données en cache:", e);
-      }
-    }
-    
-    // Toujours récupérer les données fraîches
-    fetchProjectData();
-  }, [fetchProjectData]);
-  
-  useEffect(() => {
-    // Charger les styles quand l'ID du projet est disponible et qu'un genre est sélectionné
-    if (project?.id && gender) {
-      fetchStyles();
-    }
-  }, [project?.id, gender, fetchStyles]);
-  
-  // Use useCallback to memoize fetch functions to avoid recreation
+  // Define fetchProjectData first - before it's used in any useEffect
   const fetchProjectData = useCallback(async () => {
     try {
       // Récupérer les données du projet par slug
@@ -100,9 +66,12 @@ export default function StyleSelection({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [slug, supabase]);
+  }, [slug, supabase, gender]);
   
+  // Define fetchStyles - before using it in useEffect
   const fetchStyles = useCallback(async () => {
+    if (!project || !project.id || !gender) return;
+    
     setStylesLoading(true);
     try {
       console.log(`Chargement des styles pour projet=${project.id}, genre=${gender}`);
@@ -129,19 +98,9 @@ export default function StyleSelection({ params }) {
     } finally {
       setStylesLoading(false);
     }
-  }, [supabase]);
-
-  // Fix useEffect missing fetchProjectData dependency
-  useEffect(() => {
-    fetchProjectData();
-  }, [fetchProjectData]); // Add fetchProjectData to dependency array
-
-  // Fix useEffect missing fetchStyles dependency
-  useEffect(() => {
-    fetchStyles();
-  }, [fetchStyles]); // Add fetchStyles to dependency array
-
-  // Updates to use the S3 URL if available when selecting a style
+  }, [supabase, project, gender]);
+  
+  // Define handleStyleSelect - before using it
   const handleStyleSelect = useCallback((style) => {
     setSelectedStyle(style);
     
@@ -156,19 +115,55 @@ export default function StyleSelection({ params }) {
     
     console.log("Style sélectionné:", {
       styleKey: style.style_key,
-      gender: gender,
+      gender,
       previewImage: imageUrl,
       styleId: style.id
     });
-  }, [gender]); // Add gender to dependency array
-
+  }, [gender]);
+  
+  // Define handleContinue - with only the dependencies it needs
   const handleContinue = useCallback(() => {
     if (selectedStyle) {
       router.push(`/photobooth/${slug}/cam`);
     } else {
       setError("Veuillez sélectionner un style");
     }
-  }, [router, slug, selectedStyle, gender, project?.id]); // Add gender and project.id
+  }, [router, slug, selectedStyle]);
+
+  // First useEffect - load from localStorage and fetch project data
+  useEffect(() => {
+    // Essayer de charger depuis localStorage pour un rendu plus rapide
+    const cachedProject = localStorage.getItem('projectData');
+    if (cachedProject) {
+      try {
+        const parsedProject = JSON.parse(cachedProject);
+        setProject(parsedProject);
+        
+        // Récupérer les paramètres en cache
+        const cachedSettings = localStorage.getItem('projectSettings');
+        if (cachedSettings) {
+          const parsedSettings = JSON.parse(cachedSettings);
+          setSettings(parsedSettings);
+          // Définir le genre par défaut depuis les paramètres
+          setGender(parsedSettings.default_gender || 'm');
+        }
+        
+        setLoading(false);
+      } catch (e) {
+        console.error("Erreur lors de l'analyse des données en cache:", e);
+      }
+    }
+    
+    // Always fetch fresh data
+    fetchProjectData();
+  }, [fetchProjectData]);
+  
+  // Second useEffect - fetch styles when project and gender are available
+  useEffect(() => {
+    if (project?.id && gender) {
+      fetchStyles();
+    }
+  }, [project, gender, fetchStyles]);
 
   if (loading) {
     return (

@@ -42,10 +42,14 @@ export default function PhotoboothRedirect({ params }) {
         // Après un délai pour montrer l'animation d'entrée, rediriger
         setTimeout(() => {
           // Rediriger vers le bon type de photobooth
-          if (project.photobooth_type === 'standart') {
+          if (project.photobooth_type === 'standard' || !project.photobooth_type) {
             router.replace(`/photobooth/${slug}`);
+          } else if (project.photobooth_type === 'premium') {
+            router.push(`/photobooth/${slug}/how`);
+          } else if (project.photobooth_type === 'photobooth2') {
+            router.push(`/photobooth/${slug}/how`);
           } else {
-            // Continuer avec le photobooth standard
+            // Fallback pour tout autre type
             router.push(`/photobooth/${slug}/how`);
           }
         }, 5000); // Délai augmenté à 5 secondes pour l'animation
