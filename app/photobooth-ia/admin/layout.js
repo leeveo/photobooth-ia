@@ -10,7 +10,14 @@ import {
   FiImage, 
   FiSettings, 
   FiBarChart2, 
-  FiLogOut 
+  FiLogOut,
+  FiChevronDown,
+  FiExternalLink,
+  FiGrid,
+  FiMusic,
+  FiHelpCircle,
+  FiRotateCcw,
+  FiFilm
 } from 'react-icons/fi';
 
 import './admin.css'; // Importer les styles CSS spécifiques à l'admin
@@ -21,6 +28,8 @@ export default function AdminLayout({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Ajout d'un état pour le menu Photobooth rétractable
+  const [photoboothOpen, setPhotoboothOpen] = useState(true);
   
   // Créer le client Supabase avec les variables d'environnement
   const supabase = createClientComponentClient();
@@ -30,24 +39,28 @@ export default function AdminLayout({ children }) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       console.error('Les variables d\'environnement Supabase ne sont pas définies');
     }
-    
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
-        if (pathname !== '/photobooth-ia/admin/login') {
-          router.push('/photobooth-ia/admin/login');
-        }
+        setUser(null);
         setLoading(false);
-        return;
+      } else {
+        setUser(session.user);
+        setLoading(false);
       }
-      
-      setUser(session.user);
-      setLoading(false);
     };
 
     checkUser();
-  }, [router, supabase.auth, pathname]);
+  }, [supabase.auth]);
+
+  // Redirection login si pas authentifié (dans un effet séparé)
+  useEffect(() => {
+    if (!loading && !user && pathname !== '/photobooth-ia/admin/login') {
+      router.push('/photobooth-ia/admin/login');
+    }
+  }, [loading, user, pathname, router]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -59,8 +72,9 @@ export default function AdminLayout({ children }) {
     return <div className="flex items-center justify-center h-screen">Chargement...</div>;
   }
 
+  // Ne rien rendre si pas authentifié et pas sur la page login (évite le setState dans le render)
   if (!user && pathname !== '/photobooth-ia/admin/login') {
-    return null; // Don't show anything, will redirect
+    return null;
   }
 
   // Don't show navigation on login page
@@ -72,32 +86,46 @@ export default function AdminLayout({ children }) {
     return pathname.includes(path);
   };
 
-  const navItems = [
-    { 
-      name: 'Dashboard', 
-      path: '/photobooth-ia/admin/dashboard', 
-      icon: <FiHome className="w-5 h-5" /> 
+  // Récupérer les liens externes depuis les variables d'environnement
+  const externalApps = [
+    {
+      label: 'Photo mosaique',
+      url: process.env.NEXT_PUBLIC_PHOTO_MOSAIQUE_URL,
+      icon: <FiGrid className="w-5 h-5" />,
+      color: 'bg-indigo-100 text-indigo-700 border-indigo-300'
     },
-    { 
-      name: 'Projets', 
-      path: '/photobooth-ia/admin/projects', 
-      icon: <FiFolder className="w-5 h-5" /> 
+    {
+      label: 'Karaoke',
+      url: process.env.NEXT_PUBLIC_KARAOKE_URL,
+      icon: <FiMusic className="w-5 h-5" />,
+      color: 'bg-pink-100 text-pink-700 border-pink-300'
     },
-    { 
-      name: 'Galerie', 
-      path: '/photobooth-ia/admin/project-gallery', 
-      icon: <FiImage className="w-5 h-5" /> 
+    {
+      label: 'Quizz',
+      url: process.env.NEXT_PUBLIC_QUIZZ_URL,
+      icon: <FiHelpCircle className="w-5 h-5" />,
+      color: 'bg-green-100 text-green-700 border-green-300'
     },
-    { 
-      name: 'Statistiques', 
-      path: '/photobooth-ia/admin/stats', 
-      icon: <FiBarChart2 className="w-5 h-5" /> 
+    {
+      label: 'Roue de la fortune',
+      url: process.env.NEXT_PUBLIC_ROUE_FORTUNE_URL,
+      icon: <FiRotateCcw className="w-5 h-5" />,
+      color: 'bg-yellow-100 text-yellow-700 border-yellow-300'
     },
-    { 
-      name: 'Paramètres', 
-      path: '/photobooth-ia/admin/settings', 
-      icon: <FiSettings className="w-5 h-5" /> 
+    {
+      label: 'Fresque animée',
+      url: process.env.NEXT_PUBLIC_FRESQUE_ANIMEE_URL,
+      icon: <FiFilm className="w-5 h-5" />,
+      color: 'bg-purple-100 text-purple-700 border-purple-300'
     },
+  ];
+
+  // Sidebar navigation regroupée
+  const photoboothLinks = [
+    { name: 'Dashboard', path: '/photobooth-ia/admin/dashboard', icon: <FiHome className="w-5 h-5" /> },
+    { name: 'Projets', path: '/photobooth-ia/admin/projects', icon: <FiFolder className="w-5 h-5" /> },
+    { name: 'Galerie', path: '/photobooth-ia/admin/project-gallery', icon: <FiImage className="w-5 h-5" /> },
+    { name: 'Statistiques', path: '/photobooth-ia/admin/stats', icon: <FiBarChart2 className="w-5 h-5" /> },
   ];
 
   return (
@@ -123,31 +151,95 @@ export default function AdminLayout({ children }) {
             </button>
           </div>
           
-          {/* Main navigation items */}
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`flex items-center gap-3 px-6 py-3 mx-2 rounded-lg ${
-                isActive(item.path)
-                  ? 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
+          {/* Encart coloré pour Photobooth + sous-menu rétractable */}
+          <div className="mx-4 my-2 rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-inner p-2">
+            <button
+              type="button"
+              className="w-full px-4 py-2 font-bold text-gray-700 flex items-center gap-2 focus:outline-none select-none"
+              onClick={() => setPhotoboothOpen((open) => !open)}
+              aria-expanded={photoboothOpen}
+              aria-controls="photobooth-links"
+            >
+              <FiChevronDown
+                className={`w-4 h-4 transition-transform duration-200 ${photoboothOpen ? 'rotate-0' : '-rotate-90'}`}
+              />
+              Photobooth
+            </button>
+            <div
+              id="photobooth-links"
+              className={`flex flex-col transition-all duration-200 overflow-hidden ${
+                photoboothOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              {item.icon}
-              <span>{item.name}</span>
-            </Link>
-          ))}
+              {photoboothLinks.map((item) => (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-8 py-2 mx-2 my-1 rounded-lg transition-all duration-150
+                    ${
+                      isActive(item.path)
+                        ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 font-semibold shadow'
+                        : 'text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow'
+                    }
+                  `}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+          
+          {/* Section Applications externes */}
+          <div className="px-6 py-2 mt-6 font-bold text-gray-700 flex items-center gap-2">
+            <FiExternalLink className="w-4 h-4" />
+            Applications externes
+          </div>
+          <div className="flex flex-col gap-3 px-4">
+            {externalApps.map(app =>
+              app.url ? (
+                <a
+                  key={app.label}
+                  href={app.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${app.color} shadow-sm hover:scale-[1.03] transition-transform`}
+                  style={{ textDecoration: 'none' }}
+                >
+                  {app.icon}
+                  <span className="font-medium">{app.label}</span>
+                </a>
+              ) : null
+            )}
+          </div>
           
           <hr className="my-6 border-gray-200 mx-4" />
-          
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-6 py-3 mx-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600"
-          >
-            <FiLogOut className="w-5 h-5" />
-            <span>Retour au site</span>
-          </Link>
+
+          {/* Encart documentation */}
+          <div className="mx-4 mb-4">
+            <div className="rounded-lg bg-blue-100 border border-blue-200 p-4 flex flex-col items-start">
+              <div className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m0 0H3m9 0a9 9 0 100-18 9 9 0 000 18z" />
+                </svg>
+                Documentation
+              </div>
+              <div className="text-blue-700 text-xs mb-2">
+                Retrouvez guides, API et FAQ pour administrer PhotoboothIA.
+              </div>
+              <a
+                href="https://docs.photoboothia.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-1 px-3 py-1 bg-blue-200 text-blue-800 rounded font-medium text-xs hover:bg-blue-300 transition"
+              >
+                Accéder à la documentation
+              </a>
+            </div>
+          </div>
+          {/* SUPPRESSION du lien "Retour au site" */}
         </nav>
       </div>
 
@@ -184,7 +276,7 @@ export default function AdminLayout({ children }) {
               </svg>
             </button>
             <h2 className="font-semibold text-xl text-gray-800">
-              {navItems.find(item => isActive(item.path))?.name || 'Administration'}
+              {photoboothLinks.find(item => isActive(item.path))?.name || 'Administration'}
             </h2>
           </div>
         </header>

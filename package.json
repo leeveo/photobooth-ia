@@ -44,6 +44,7 @@
     "react-konva-utils": "^1.1.0",
     "react-player": "^2.16.0",
     "react-to-print": "^2.15.1",
+    "recharts": "^2.15.3",
     "replicate": "^0.31.1",
     "sharp": "^0.34.1",
     "socket.io": "^4.7.4",

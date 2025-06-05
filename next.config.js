@@ -77,6 +77,16 @@ const nextConfig = {
     
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/photobooth-ia/admin/dashboard',
+        permanent: true,
+      },
+      // ...autres redirections si besoin...
+    ];
+  },
 };
 
 module.exports = nextConfig;

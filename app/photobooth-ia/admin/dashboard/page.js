@@ -380,39 +380,39 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Feature Cards */}
+      {/* Feature Cards - NOUVEAU CONTENU PLUS PERTINENT */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="p-6 bg-blue-50 border-l-4 border-blue-400 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-blue-800">Arrière-plans</h3>
+            <h3 className="text-lg font-medium text-blue-800">Galerie & Mosaïque</h3>
             <span className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">
-              Configuration
+              Visualisation
             </span>
           </div>
           <p className="mt-2 text-sm text-blue-600">
-            Gérez les images d'arrière-plan de votre photobooth
+            Accédez à la galerie de toutes les photos générées par vos utilisateurs, filtrez par projet et affichez-les en mosaïque interactive pour vos événements ou sur écran géant.
           </p>
         </div>
         <div className="p-6 bg-purple-50 border-l-4 border-purple-400 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-purple-800">Styles</h3>
+            <h3 className="text-lg font-medium text-purple-800">Personnalisation IA & Styles</h3>
             <span className="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-100 rounded-full">
-              Personnalisation
+              Expérience
             </span>
           </div>
           <p className="mt-2 text-sm text-purple-600">
-            Gérez les styles et tenues disponibles pour les utilisateurs
+            Gérez les styles IA disponibles (looks, costumes, effets) pour chaque projet. Proposez des expériences uniques et adaptées à vos utilisateurs grâce à la personnalisation avancée.
           </p>
         </div>
         <div className="p-6 bg-green-50 border-l-4 border-green-400 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-green-800">Paramètres</h3>
+            <h3 className="text-lg font-medium text-green-800">Statistiques & Suivi</h3>
             <span className="px-3 py-1 text-xs font-medium text-green-600 bg-green-100 rounded-full">
-              Options
+              Analyse
             </span>
           </div>
           <p className="mt-2 text-sm text-green-600">
-            Configurez les paramètres globaux de votre application
+            Suivez l'activité de vos photobooths IA : nombre de photos générées, projets les plus actifs, évolution dans le temps. Analysez l'impact de vos animations et optimisez vos événements.
           </p>
         </div>
       </div>
