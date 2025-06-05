@@ -239,7 +239,7 @@ export default function AdminLayout({ children }) {
               </a>
             </div>
           </div>
-          {/* SUPPRESSION du lien "Retour au site" */}
+          {/* SUPPRESSION du lien "Retour au  site" */}
         </nav>
       </div>
 
