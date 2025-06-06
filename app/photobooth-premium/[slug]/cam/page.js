@@ -1,68 +1,131 @@
 'use client';
 
-import Replicate from "replicate";
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Hook webcam with improved error handling and cleanup
+// Hook webcam with improved error handling and retries
 let streamCam = null;
-const useWebcam = ({ videoRef }) => {
+const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
   useEffect(() => {
     let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
     
-    const initializeCamera = async () => {
+    // Function to attempt camera initialization with different constraints
+    const tryInitCamera = async (constraints) => {
       try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          console.log("Requesting camera access...");
-          const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            } 
-          });
-          
-          // Only set the stream if the component is still mounted
-          if (isMounted) {
-            console.log("Camera access granted, initializing stream");
-            streamCam = stream;
-            window.localStream = stream;
-            
-            if (videoRef.current) {
-              videoRef.current.srcObject = stream;
-              
-              // Use try/catch around play() to handle potential AbortError
-              try {
-                // Using a promise to handle the play request
-                await videoRef.current.play();
-                console.log("Camera stream playing successfully");
-              } catch (playError) {
-                console.error("Error playing video stream:", playError);
-                if (playError.name === "AbortError") {
-                  console.warn("Video play was aborted, likely due to component unmounting");
-                }
-              }
-            } else {
-              console.warn("Video element not found when trying to initialize camera");
-            }
-          }
-        } else {
-          console.error("MediaDevices API not supported in this browser");
+        console.log("Requesting camera with constraints:", constraints);
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        if (!isMounted) {
+          // Component unmounted during async call, clean up
+          stream.getTracks().forEach(track => track.stop());
+          return null;
         }
+        
+        console.log("Camera access granted with constraints:", constraints);
+        return stream;
       } catch (err) {
-        console.error("Error accessing camera:", err);
+        console.error(`Camera access failed with constraints:`, constraints, err);
+        return null;
       }
     };
-
+    
+    // Main initialization function with fallbacks
+    const initializeCamera = async () => {
+      console.log("🎥 Initializing camera...");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError("Votre navigateur ne prend pas en charge l'accès à la caméra");
+        return;
+      }
+      
+      // Configuration options from highest to lowest quality
+      const configOptions = [
+        // Option 1: Ideal 16:9 HD
+        { 
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        // Option 2: Minimum resolution with 16:9
+        { 
+          video: { 
+            width: { min: 640 },
+            height: { min: 360 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        // Option 3: Just ask for video with no constraints
+        { video: true },
+        // Option 4: Try a different API approach (for older browsers)
+        { video: { facingMode: "user" } }
+      ];
+      
+      let stream = null;
+      
+      // Try each configuration option until one works
+      for (const config of configOptions) {
+        stream = await tryInitCamera(config);
+        if (stream) break;
+      }
+      
+      if (!stream) {
+        console.error("❌ Could not access camera after multiple attempts");
+        setCameraError("La caméra n'est pas accessible. Vérifiez que vous avez autorisé l'accès.");
+        return;
+      }
+      
+      console.log("✅ Camera stream obtained successfully");
+      
+      // Store the successful stream
+      streamCam = stream;
+      window.localStream = stream;
+      
+      // Apply the stream to video element
+      if (videoRef.current) {
+        console.log("📹 Attaching stream to video element");
+        videoRef.current.srcObject = stream;
+        
+        // Make sure the video element is visible
+        videoRef.current.style.display = 'block';
+        videoRef.current.style.visibility = 'visible';
+        
+        // Play video with error handling
+        try {
+          await videoRef.current.play();
+          console.log("▶️ Camera stream playing successfully");
+          
+          // Set a timeout to allow the video to initialize before marking as loaded
+          setTimeout(() => {
+            if (isMounted) {
+              setCameraLoaded(true);
+              console.log("✅ Camera marked as loaded");
+            }
+          }, 1000);
+          
+        } catch (playError) {
+          console.error("❌ Error playing video stream:", playError);
+          setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
+        }
+      } else {
+        console.warn("❌ Video element not found when trying to initialize camera");
+      }
+    };
+    
+    // Start the initialization process
     initializeCamera();
     
-    // Cleanup function to stop all tracks when component unmounts
+    // Cleanup function
     return () => {
       isMounted = false;
-      console.log("Cleaning up camera resources...");
+      console.log("🧹 Cleaning up camera resources...");
       
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -73,7 +136,7 @@ const useWebcam = ({ videoRef }) => {
           const tracks = streamCam.getTracks();
           tracks.forEach(track => {
             track.stop();
-            console.log(`Stopped track: ${track.kind}`);
+            console.log(`🛑 Stopped track: ${track.kind}`);
           });
           streamCam = null;
           window.localStream = null;
@@ -82,7 +145,7 @@ const useWebcam = ({ videoRef }) => {
         }
       }
     };
-  }, [videoRef]);
+  }, [videoRef, setCameraError, setCameraLoaded]);
 };
 
 export default function CameraCapture({ params }) {
@@ -108,23 +171,226 @@ export default function CameraCapture({ params }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [resultFaceSwap, setResultFaceSwap] = useState(null);
   const [numProses, setNumProses] = useState(0);
-  // Add the missing camera error state
+  
+  // Restore camera error display for better debugging
   const [cameraError, setCameraError] = useState(null);
   
-  // Fonction reset2 définie pour éviter les erreurs
+  // Add missing cameraLoaded state
+  const [cameraLoaded, setCameraLoaded] = useState(false);
+  
+  // Add state for loading progress
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  
+  // Add state for retry attempt
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  
+  // Add state for countdown
+  const [countdownNumber, setCountdownNumber] = useState(3);
+  const [showCountdown, setShowCountdown] = useState(false);
+  
+  // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
+    setLoadingProgress(0);
   };
   
-  // Initialize webcam
-  useWebcam({ videoRef, previewRef });
+  // Initialize webcam with error handling - passing setCameraLoaded as well
+  useWebcam({ videoRef, setCameraError, setCameraLoaded });
   
-  // Properly memoize fetchProjectData with useCallback
+  // Replace the current captureVideo function with a direct implementation
+  // This version directly implements the functionality without relying on other functions
+  const captureVideo = () => {
+    // Don't proceed if countdown is already showing or camera isn't loaded
+    if (showCountdown || !cameraLoaded || cameraError) {
+      return;
+    }
+    
+    console.log("PRENDRE UNE PHOTO clicked - starting countdown sequence");
+    
+    // Start the countdown sequence - exactly like the debug button
+    setShowCountdown(true);
+    setCountdownNumber(3);
+    
+    // Schedule countdown changes with timeouts
+    setTimeout(() => setCountdownNumber(2), 1000);
+    setTimeout(() => setCountdownNumber(1), 2000);
+    setTimeout(() => {
+      setShowCountdown(false);
+      
+      // Perform the capture directly without calling debugCaptureTest
+      // This avoids any potential circular references
+      console.log("Countdown finished, capturing image directly");
+      
+      try {
+        // Set state to show we're processing the capture
+        setEnabled(true);
+        setCaptured(false);
+        
+        const canvas = previewRef.current;
+        const video = videoRef.current;
+        
+        if (!canvas || !video) {
+          console.error("Canvas or video element is null");
+          setCameraError("Élément vidéo ou canvas non trouvé");
+          return;
+        }
+        
+        // Get video dimensions
+        const videoWidth = video.videoWidth || 1280;
+        const videoHeight = video.videoHeight || 720;
+        
+        // Set canvas dimensions
+        canvas.width = 1280;
+        canvas.height = 720;
+        
+        const context = canvas.getContext('2d');
+        if (!context) {
+          console.error("Could not get canvas context");
+          return;
+        }
+        
+        // Clear canvas and draw the image
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
+        context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        
+        // Get the image data and update state
+        const imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+        setImageFile(imageDataURL);
+        localStorage.setItem("faceImage", imageDataURL);
+        
+        console.log("Image captured successfully!");
+      } catch (error) {
+        console.error("Error capturing image:", error);
+        setCameraError(`Erreur lors de la capture: ${error.message}`);
+        setEnabled(false);
+      }
+    }, 3000);
+  };
+  
+  // Keep the simplified debug capture function (just modify any console logs)
+  const debugCaptureTest = () => {
+    console.log("Debug direct capture called");
+    // Directly process the capture
+    processCapture();
+  };
+  
+  // Simplify the processCapture function for debugging
+  const processCapture = () => {
+    console.log("processCapture called");
+    try {
+      // Set state to show we're processing the capture
+      setEnabled(true);
+      setCaptured(false);
+      
+      const canvas = previewRef.current;
+      const video = videoRef.current;
+      
+      if (!canvas || !video) {
+        console.error("Canvas or video element is null");
+        setCameraError("Élément vidéo ou canvas non trouvé");
+        return;
+      }
+      
+      console.log("Video and canvas elements found, processing capture");
+      
+      // Get video dimensions
+      const videoWidth = video.videoWidth || 1280;
+      const videoHeight = video.videoHeight || 720;
+      
+      // Set canvas dimensions
+      canvas.width = 1280;
+      canvas.height = 720;
+      
+      const context = canvas.getContext('2d');
+      if (!context) {
+        console.error("Could not get canvas context");
+        return;
+      }
+      
+      // Clear canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Mirror the image horizontally for selfie mode
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+      
+      // Draw video to canvas
+      context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+      
+      // Reset transform
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      
+      // Get the data URL
+      const imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+      
+      console.log("Image captured successfully, setting state");
+      
+      // Set state with the captured image
+      setImageFile(imageDataURL);
+      
+      // Store in localStorage
+      localStorage.setItem("faceImage", imageDataURL);
+    } catch (error) {
+      console.error("Error in processCapture:", error);
+      setCameraError(`Erreur lors de la capture: ${error.message}`);
+      setEnabled(false);
+    }
+  };
+  
+  // Check when camera is loaded and visible - without conditional hooks
+  useEffect(() => {
+    const checkCamera = () => {
+      if (videoRef.current && videoRef.current.srcObject && 
+          videoRef.current.readyState >= 2) {
+        setCameraLoaded(true);
+        console.log("Camera loaded successfully");
+      }
+    };
+    
+    // Initial check
+    checkCamera();
+    
+    // Set up recurring checks
+    const interval = setInterval(checkCamera, 1000);
+    
+    return () => clearInterval(interval);
+  }, [retryAttempt]); // Only depend on retryAttempt, not on videoRef.current
+  
+  // Function to manually retry camera initialization
+  const retryCamera = useCallback(() => {
+    // Clear error state
+    setCameraError(null);
+    
+    // Reset camera loaded state
+    setCameraLoaded(false);
+    
+    // Stop any existing stream
+    if (streamCam) {
+      try {
+        streamCam.getTracks().forEach(track => track.stop());
+        streamCam = null;
+      } catch (e) {
+        console.error("Error stopping camera tracks:", e);
+      }
+    }
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
+    // Increment retry counter to trigger useEffect
+    setRetryAttempt(prev => prev + 1);
+  }, []); // No dependencies needed for this function
+  
+  // Fix the fetchProjectData function to avoid the 406 error
   const fetchProjectData = useCallback(async () => {
     try {
-      // Add retry logic to handle potential 406 errors
+      // Add retry logic to handle potential errors
       let retryCount = 0;
       const maxRetries = 3;
       
@@ -145,19 +411,34 @@ export default function CameraCapture({ params }) {
           
           setProject(projectData);
           
-          // Use more specific select and handle the 406 error case
+          // FIX: Use single() with separate query instead of filtering by project_id
           try {
-            const { data: settingsData } = await supabase
+            // First get the settings ID that matches the project
+            const { data: settingsIdData } = await supabase
               .from('project_settings')
-              .select('show_countdown, max_processing_time')
+              .select('id')
               .eq('project_id', projectData.id)
               .single();
-            
-            // Handle the case if settings are found
-            if (settingsData) {
-              setSettings(settingsData);
+              
+            if (settingsIdData && settingsIdData.id) {
+              // Then query for specific settings using the settings ID
+              const { data: settingsData } = await supabase
+                .from('project_settings')
+                .select('show_countdown, max_processing_time')
+                .eq('id', settingsIdData.id)
+                .single();
+              
+              if (settingsData) {
+                setSettings(settingsData);
+              } else {
+                // Use default settings if none found
+                setSettings({ 
+                  show_countdown: true,
+                  max_processing_time: 60
+                });
+              }
             } else {
-              // Use default settings if none found
+              // Use default settings if ID not found
               setSettings({ 
                 show_countdown: true,
                 max_processing_time: 60
@@ -165,6 +446,7 @@ export default function CameraCapture({ params }) {
             }
           } catch (settingsError) {
             console.warn('Could not fetch settings, using defaults:', settingsError);
+            // Fall back to defaults on error
             setSettings({ 
               show_countdown: true,
               max_processing_time: 60
@@ -206,118 +488,61 @@ export default function CameraCapture({ params }) {
     }
   }, [slug, supabase]); // Only depend on slug and supabase
   
-  // Fix the useEffect to avoid infinite loops
+  // Fix the useEffect to avoid infinite loops and setState during render
   useEffect(() => {
-    // Load project data and settings from localStorage first for faster rendering
-    const cachedProject = localStorage.getItem('projectData');
-    const cachedSettings = localStorage.getItem('projectSettings');
-    const storedImageUrl = localStorage.getItem('styleFix');
-    const storedGender = localStorage.getItem('styleGenderFix');
+    let isMounted = true;
     
-    let initialLoadDone = false;
-    
-    if (cachedProject) {
-      try {
-        setProject(JSON.parse(cachedProject));
-        initialLoadDone = true;
-      } catch (e) {
-        console.error("Error parsing cached project data:", e);
+    // Async function to load data without setting state directly
+    const loadInitialData = async () => {
+      // Load project data and settings from localStorage first for faster rendering
+      const cachedProject = localStorage.getItem('projectData');
+      const cachedSettings = localStorage.getItem('projectSettings');
+      const storedImageUrl = localStorage.getItem('styleFix');
+      const storedGender = localStorage.getItem('styleGenderFix');
+      
+      let initialLoadDone = false;
+      
+      if (cachedProject && isMounted) {
+        try {
+          const parsedProject = JSON.parse(cachedProject);
+          setProject(parsedProject);
+          initialLoadDone = true;
+        } catch (e) {
+          console.error("Error parsing cached project data:", e);
+        }
       }
-    }
-    
-    if (cachedSettings) {
-      try {
-        setSettings(JSON.parse(cachedSettings));
-      } catch (e) {
-        console.error("Error parsing cached settings:", e);
+      
+      if (cachedSettings && isMounted) {
+        try {
+          setSettings(JSON.parse(cachedSettings));
+        } catch (e) {
+          console.error("Error parsing cached settings:", e);
+        }
       }
-    }
+      
+      if (storedImageUrl && isMounted) {
+        setStyleFix(storedImageUrl);
+      }
+      
+      if (storedGender && isMounted) {
+        setStyleGender(storedGender);
+      }
+      
+      if (initialLoadDone && isMounted) {
+        setLoading(false);
+      }
+    };
     
-    if (storedImageUrl) {
-      setStyleFix(storedImageUrl);
-    }
-    
-    if (storedGender) {
-      setStyleGender(storedGender);
-    }
-    
-    if (initialLoadDone) {
-      setLoading(false);
-    }
+    // Execute the initial load
+    loadInitialData();
     
     // Always fetch fresh data
     fetchProjectData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [fetchProjectData]); // Only depend on the memoized fetchProjectData
-  
-  const captureVideo = () => {
-    // Determine if we should show a countdown based on settings
-    if (settings?.show_countdown) {
-      setCaptured(true);
-      setTimeout(() => {
-        processCapture();
-      }, 3000); // 3 second countdown
-    } else {
-      // Capture immediately without countdown
-      processCapture();
-    }
-  };
-  
-  const processCapture = () => {
-    setEnabled(true);
-    setCaptured(false);
-    
-    const canvas = previewRef.current;
-    const video = videoRef.current;
-    
-    if (canvas === null || video === null) {
-      return;
-    }
-    
-    // Calculate the aspect ratio and crop dimensions for a square
-    const aspectRatio = video.videoWidth / video.videoHeight;
-    let sourceX, sourceY, sourceWidth, sourceHeight;
-    
-    if (aspectRatio > 1) {
-      // Width is greater than height - crop width
-      sourceWidth = video.videoHeight;
-      sourceHeight = video.videoHeight;
-      sourceX = (video.videoWidth - video.videoHeight) / 2;
-      sourceY = 0;
-    } else {
-      // Height is greater than width - crop height
-      sourceWidth = video.videoWidth;
-      sourceHeight = video.videoWidth;
-      sourceX = 0;
-      sourceY = (video.videoHeight - video.videoWidth) / 2;
-    }
-    
-    // Set canvas dimensions to 512x512 for AI processing
-    canvas.width = 384;
-    canvas.height = 384;
-    
-    const context = canvas.getContext('2d');
-    if (context === null) return;
-    
-    // Draw image to canvas
-    context.drawImage(
-      video,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      512,
-      512
-    );
-    
-    // Get the base64 data URL from the canvas
-    const imageDataURL = canvas.toDataURL('image/jpeg');
-    setImageFile(imageDataURL);
-    
-    // Store in localStorage
-    localStorage.setItem("faceImage", imageDataURL);
-  };
   
   const retake = () => {
     setEnabled(false);
@@ -335,28 +560,26 @@ export default function CameraCapture({ params }) {
       reader.readAsDataURL(blob)
     }));
   
-  // Nouvelle fonction utilisant l'API Replicate
- // Remplacez votre fonction generateImageSwap actuelle (lignes 231-381 environ) par celle-ci:
-const generateImageSwap = async () => {
-  setNumProses(2);
-  reset2();
-  setProcessing(true);
-  setProcessingStep(1);
-  setError(null);
-  setLogs([]);
-  setElapsedTime(0);
-  
-  const start = Date.now();
-  
-  // Récupérer le prompt depuis localStorage au lieu d'une image cible
-  const stylePrompt = localStorage.getItem('stylePrompt');
-  if (!stylePrompt) {
-    setError("Prompt de style manquant. Veuillez choisir un style.");
-    setProcessing(false);
-    return;
-  }
-  
-  try {
+  const generateImageSwap = async () => {
+    setNumProses(2);
+    reset2();
+    setProcessing(true);
+    setProcessingStep(1);
+    setError(null);
+    setLogs([]);
+    setElapsedTime(0);
+    
+    const start = Date.now();
+    
+    // Récupérer le prompt depuis localStorage au lieu d'une image cible
+    const stylePrompt = localStorage.getItem('stylePrompt');
+    if (!stylePrompt) {
+      setError("Prompt de style manquant. Veuillez choisir un style.");
+      setProcessing(false);
+      return;
+    }
+    
+    try {
       // Log pour débogage des variables d'entrée
       console.log('Flux transformation input:', {
           prompt: stylePrompt,
@@ -383,10 +606,18 @@ const generateImageSwap = async () => {
           const elapsedSeconds = Math.floor((Date.now() - start) / 1000);
           if (elapsedSeconds === 5) {
               setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+              setLoadingProgress(25);
           } else if (elapsedSeconds === 10) {
               setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+              setLoadingProgress(50);
           } else if (elapsedSeconds === 15) {
               setLogs(prevLogs => [...prevLogs, "Finalisation du rendu..."]);
+              setLoadingProgress(75);
+          } else {
+              // Update loading progress based on elapsed time
+              const maxTime = (settings?.max_processing_time || 60) * 1000;
+              const timeBasedProgress = Math.min(95, (Date.now() - start) / maxTime * 100);
+              setLoadingProgress(timeBasedProgress);
           }
       }, 1000);
       
@@ -435,6 +666,7 @@ const generateImageSwap = async () => {
       console.log('Replicate result:', result);
       setResultFaceSwap(result);
       setLogs(prevLogs => [...prevLogs, "Génération terminée avec succès!"]);
+      setLoadingProgress(100);
       
       // Mettre à jour l'étape de traitement
       setProcessingStep(2);
@@ -519,6 +751,7 @@ const generateImageSwap = async () => {
       setElapsedTime(Date.now() - start);
   }
 };
+
   if (loading) {
     return (
       <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center">
@@ -540,16 +773,22 @@ const generateImageSwap = async () => {
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
       style={{ backgroundColor: primaryColor }}
     >
-      <div className="fixed top-0 mx-auto w-[65%] mt-4">
+      <motion.div 
+        className="fixed top-0 left-0 right-0 flex justify-center mt-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
         {project.logo_url ? (
-          <Image 
-            src={project.logo_url} 
-            width={607} 
-            height={168} 
-            alt={project.name} 
-            className='w-full' 
-            priority 
-          />
+          <div className="w-[250px] h-[100px] relative">
+            <Image 
+              src={project.logo_url} 
+              fill
+              alt={project.name} 
+              className="object-contain" 
+              priority 
+            />
+          </div>
         ) : (
           <h1 
             className="text-xl font-bold text-center" 
@@ -558,148 +797,378 @@ const generateImageSwap = async () => {
             {project.name}
           </h1>
         )}
-      </div>
+      </motion.div>
 
       {/* Processing Overlay */}
-      {processing && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center flex-col z-20">
-          <div 
-            className="py-4 px-6 rounded-lg text-center"
-            style={{ backgroundColor: primaryColor, border: `2px solid ${secondaryColor}` }}
+      <AnimatePresence>
+        {processing && (
+          <motion.div 
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <h2 className="text-xl mb-2" style={{ color: secondaryColor }}>
-              Création en cours...
-            </h2>
-            <p style={{ color: 'white' }}>
-              Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-            </p>
-            <div className="mt-4 mb-4">
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div 
-                  className="h-2.5 rounded-full" 
-                  style={{ 
-                    width: `${Math.min(100, (elapsedTime / ((settings?.max_processing_time || 60) * 1000)) * 100)}%`,
-                    backgroundColor: secondaryColor
-                  }}
-                ></div>
-              </div>
-            </div>
-            
-            <div 
-              className="mt-4 h-24 overflow-y-auto text-sm text-left p-2 rounded"
-              style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'white' }}
+            <motion.div 
+              className="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-xl shadow-2xl max-w-md w-full"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25 }}
             >
-              {logs.length > 0 ? (
-                logs.map((log, index) => <div key={index}>{log}</div>)
-              ) : (
-                <div>Initialisation du processus...</div>
+              <h2 
+                className="text-2xl font-bold mb-2 text-center"
+                style={{ color: secondaryColor }}
+              >
+                Création en cours...
+              </h2>
+              
+              <p className="text-white text-center mb-4">
+                Processus: {(elapsedTime / 1000).toFixed(1)} secondes
+              </p>
+              
+              <div className="mb-6">
+                <div className="w-full bg-gray-700 rounded-full h-3">
+                  <motion.div 
+                    className="h-3 rounded-full" 
+                    style={{ 
+                      width: `${loadingProgress}%`,
+                      backgroundColor: secondaryColor
+                    }}
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${loadingProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  ></motion.div>
+                </div>
+                <div className="mt-1 flex justify-between text-xs text-white/70">
+                  <span>Début</span>
+                  <span>Finalisation</span>
+                </div>
+              </div>
+              
+              <motion.div 
+                className="mt-4 h-32 overflow-y-auto text-sm p-3 rounded bg-black bg-opacity-20 text-white/90"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {logs.length > 0 ? (
+                  logs.map((log, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="mb-1"
+                    >
+                      {log}
+                    </motion.div>
+                  ))
+                ) : (
+                  <div>Initialisation du processus...</div>
+                )}
+              </motion.div>
+              
+              {error && (
+                <motion.div 
+                  className="mt-4 p-3 bg-red-900 bg-opacity-20 border border-red-500 text-red-100 rounded-lg"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {error}
+                </motion.div>
               )}
-            </div>
-            
-            {error && (
-              <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-                {error}
+              
+              <div className="mt-6 flex justify-center">
+                <motion.button
+                  onClick={() => {
+                    setProcessing(false);
+                    router.push(`/photobooth-premium/${slug}`);
+                  }}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium"
+                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Annuler
+                </motion.button>
               </div>
-            )}
-            
-            <Link 
-              href={`/photobooth-premium/${slug}`}
-              className="mt-6 inline-block px-4 py-2 rounded font-medium"
-              style={{ backgroundColor: secondaryColor, color: primaryColor }}
-            >
-              Annuler
-            </Link>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className={`w-full max-w-2xl mx-auto mt-[20vh] ${processing ? 'opacity-20' : ''}`}>
-        <h2 
+      <motion.div 
+        className={`w-full max-w-2xl mx-auto mt-[15vh] ${processing ? 'opacity-20 pointer-events-none' : ''}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: processing ? 0.2 : 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <motion.h2 
           className="text-xl font-bold text-center mb-6"
           style={{ color: secondaryColor }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
         >
           {enabled ? 'Vérifiez votre photo' : 'Prenez une photo'}
-        </h2>
+        </motion.h2>
         
-        {/* Display camera error if one occurs */}
-        {cameraError && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
-            {cameraError}
-            <button 
-              onClick={() => window.location.reload()}
-              className="ml-2 underline font-medium"
-            >
-              Réessayer
-            </button>
-          </div>
-        )}
+        {/* Invisible retry button that can be triggered programmatically */}
+        <div className="hidden">
+          <button id="retryCamera" onClick={retryCamera}>Retry Camera</button>
+        </div>
         
-        <div className="relative aspect-square w-full max-w-md mx-auto">
-          {/* Countdown overlay */}
-          {captured && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50 text-white text-8xl font-bold">
-              <div className="countdown-animation">3</div>
-            </div>
-          )}
-          
-          {/* Video element for camera preview */}
+        {/* Camera viewfinder with improved visibility */}
+        <motion.div 
+          className="relative mx-auto overflow-hidden rounded-lg shadow-xl bg-black"
+          style={{ 
+            width: '100%', 
+            maxWidth: '640px',
+            aspectRatio: '16/9',
+            minHeight: '360px',
+            border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none'
+          }}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+        >
+          {/* Add countdown overlay */}
+          <AnimatePresence>
+            {showCountdown && (
+              <>
+                {/* Left side countdown number */}
+                <motion.div 
+                  className="absolute left-8 inset-y-0 z-20 flex items-center justify-center"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                >
+                  <motion.div
+                    key={`left-${countdownNumber}`}
+                    initial={{ scale: 2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex items-center justify-center w-24 h-24 rounded-full"
+                    style={{ backgroundColor: secondaryColor }}
+                  >
+                    <span className="text-6xl font-bold" style={{ color: primaryColor }}>
+                      {countdownNumber}
+                    </span>
+                  </motion.div>
+                </motion.div>
+                
+                {/* Center countdown animation/overlay */}
+                <motion.div 
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-black bg-opacity-40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    key={`center-${countdownNumber}`}
+                    initial={{ scale: 1.5, opacity: 0 }}
+                    animate={{ 
+                      scale: [1.5, 1, 1, 0.8], 
+                      opacity: [0, 1, 1, 0] 
+                    }}
+                    transition={{ 
+                      duration: 0.9,
+                      times: [0, 0.2, 0.8, 1]
+                    }}
+                    className="flex items-center justify-center w-32 h-32 rounded-full"
+                    style={{ backgroundColor: secondaryColor }}
+                  >
+                    <span className="text-8xl font-bold" style={{ color: primaryColor }}>
+                      {countdownNumber}
+                    </span>
+                  </motion.div>
+                </motion.div>
+                
+                {/* Right side countdown number */}
+                <motion.div 
+                  className="absolute right-8 inset-y-0 z-20 flex items-center justify-center"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 50 }}
+                >
+                  <motion.div
+                    key={`right-${countdownNumber}`}
+                    initial={{ scale: 2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex items-center justify-center w-24 h-24 rounded-full"
+                    style={{ backgroundColor: secondaryColor }}
+                  >
+                    <span className="text-6xl font-bold" style={{ color: primaryColor }}>
+                      {countdownNumber}
+                    </span>
+                  </motion.div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
+          {/* Video element with IMPROVED styling for visibility */}
           <video 
             ref={videoRef} 
-            className={`w-full h-full object-cover rounded-lg ${enabled ? 'hidden' : 'block'}`} 
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ 
+              transform: 'scaleX(-1)', // Mirror effect for selfie mode
+              display: enabled ? 'none' : 'block', // Only hide when showing captured image
+              opacity: 1,
+              zIndex: 10 // Ensure it's above any other elements
+            }} 
             playsInline
             autoPlay
             muted
-            style={{ transform: 'scaleX(-1)' }} // Mirror effect for selfie mode
+            width={640}
+            height={360}
+            onLoadedMetadata={() => {
+              console.log("Video metadata loaded:", {
+                videoWidth: videoRef.current?.videoWidth,
+                videoHeight: videoRef.current?.videoHeight
+              });
+              setCameraLoaded(true);
+            }}
             onError={(e) => {
               console.error("Video element error:", e);
-              setCameraError("Problème d'accès à la caméra. Veuillez vérifier les permissions.");
+              setCameraError("Problème d'accès à la caméra: " + (e.target.error?.message || "Erreur inconnue"));
             }}
           />
           
-          {/* Canvas element for captured photo */}
+          {/* Canvas element */}
           <canvas 
             ref={previewRef} 
-            className={`w-full h-full object-cover rounded-lg ${enabled ? 'block' : 'hidden'}`}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ display: enabled ? 'block' : 'none' }}
           />
           
-          {/* Outline for camera viewfinder */}
-          {!enabled && (
-            <div className="absolute inset-0 border-2 border-dashed rounded-lg pointer-events-none" style={{ borderColor: secondaryColor }}></div>
-          )}
-        </div>
-
-        <div className="mt-8 flex flex-col items-center">
-          {!enabled ? (
-            <button 
-              onClick={captureVideo}
-              className="px-8 py-3 rounded-lg font-bold text-xl"
-              style={{ backgroundColor: secondaryColor, color: primaryColor }}
+          {/* Viewfinder overlay - only show when camera is working */}
+          {!enabled && cameraLoaded && (
+            <motion.div 
+              className="absolute inset-0 border-2 border-dashed rounded-lg pointer-events-none"
+              style={{ borderColor: secondaryColor }}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
             >
-              PRENDRE UNE PHOTO
-            </button>
+              <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 rounded-tl-lg" style={{ borderColor: secondaryColor }}></div>
+              <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 rounded-tr-lg" style={{ borderColor: secondaryColor }}></div>
+              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 rounded-bl-lg" style={{ borderColor: secondaryColor }}></div>
+              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 rounded-br-lg" style={{ borderColor: secondaryColor }}></div>
+            </motion.div>
+          )}
+          
+          {/* Camera not available overlay */}
+          {!cameraLoaded && !cameraError && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-white text-opacity-70 text-center">
+                <motion.div 
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  Activation de la caméra...
+                </motion.div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Action buttons */}
+        <motion.div 
+          className="mt-8 flex flex-col items-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          {!enabled ? (
+            <>
+              {/* Debug info for development */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-3 text-xs text-white/50 text-center">
+                  Camera status: {cameraLoaded ? 'Loaded' : 'Loading'} 
+                  {cameraError ? ` (Error: ${cameraError.substring(0, 30)}...)` : ''}
+                </div>
+              )}
+              
+              {/* SIMPLIFIED camera button with direct approach */}
+              <motion.button
+                onClick={() => {
+                  console.log("🔴 PHOTO button clicked, camera state:", { cameraLoaded, cameraError });
+                  // Direct approach without unnecessary complexity
+                  setShowCountdown(true);
+                  setCountdownNumber(3);
+                  
+                  setTimeout(() => setCountdownNumber(2), 1000);
+                  setTimeout(() => setCountdownNumber(1), 2000);
+                  setTimeout(() => {
+                    setShowCountdown(false);
+                    processCapture(); // Direct call to processCapture
+                  }, 3000);
+                }}
+                className="px-8 py-3 rounded-lg font-bold text-xl relative"
+                style={{ 
+                  backgroundColor: secondaryColor, 
+                  color: primaryColor,
+                  opacity: cameraLoaded && !showCountdown ? 1 : 0.5 
+                }}
+                whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
+                whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
+                disabled={!cameraLoaded || showCountdown}
+              >
+                {showCountdown ? 'PRISE DE PHOTO...' : 
+                 cameraLoaded ? 'PRENDRE UNE PHOTO' : 'ATTENTE DE LA CAMÉRA...'}
+                {cameraLoaded && !showCountdown && (
+                  <motion.span
+                    className="absolute inset-0 rounded-lg border-2"
+                    style={{ borderColor: secondaryColor }}
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  ></motion.span>
+                )}
+              </motion.button>
+            </>
           ) : (
-            <div className="flex space-x-4">
-              <button 
+            <motion.div 
+              className="flex space-x-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <motion.button 
                 onClick={retake}
                 className="px-6 py-3 rounded-lg font-medium"
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.2)', 
-                  color: 'white' 
-                }}
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.3)' }}
+                whileTap={{ scale: 0.95 }}
               >
                 REPRENDRE
-              </button>
-              <button 
+              </motion.button>
+              <motion.button 
                 onClick={generateImageSwap}
                 className="px-8 py-3 rounded-lg font-bold"
                 style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 CONFIRMER
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
-        </div>
-      </div>
+          
+          {/* Back to styles button - always visible */}
+          {!enabled && (
+            <Link 
+              href={`/photobooth-premium/${slug}/style`}
+              className="mt-4 text-white/70 hover:text-white text-sm"
+            >
+              Retour à la sélection de style
+            </Link>
+          )}
+        </motion.div>
+      </motion.div>
     </main>
   );
 }

@@ -7,6 +7,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useQRCode } from 'next-qrcode';
 import { notFound } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 // Logging helper
 const logWithTimestamp = (message, data) => {
@@ -339,7 +340,7 @@ export default function Result({ params }) {
         </div>
       )}
 
-      <div className="w-full max-w-2xl mx-auto mt-[15vh] mb-8">
+      <div className="w-full max-w-full mx-auto mt-[15vh] mb-8">
         <h2 
           className="text-xl font-bold text-center mb-6"
           style={{ color: secondaryColor }}
@@ -359,19 +360,25 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {/* Result Image Display */}
+        {/* Result Image Display - Full Size Container */}
         {imageResultAI ? (
-          <div className="relative mx-auto max-w-sm">
+          <div className="relative mx-auto flex items-center justify-center" style={{ width: '100%' }}>
             <Image 
               src={imageResultAI} 
-              width={500} 
-              height={750} 
+              width={1200} 
+              height={1600} 
               alt="Résultat"
-              className="w-full rounded-lg shadow-lg" 
+              className="w-auto h-auto rounded-lg shadow-2xl" 
               priority
               onError={(e) => {
                 console.error("Error loading image:", e);
                 setError("Impossible de charger l'image");
+              }}
+              style={{
+                maxHeight: '75vh', // Increased to take up more vertical space
+                maxWidth: '100%',
+                objectFit: 'contain',
+                display: 'block' // Ensures no extra space around the image
               }}
             />
           </div>
@@ -381,26 +388,57 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-col space-y-4">
+        {/* Action Buttons - Modern redesign with narrower width */}
+        <div className="mt-8 flex flex-col items-center space-y-4">
           {settings?.enable_qr_codes && imageResultAI && (
-            <button 
+            <motion.button 
               onClick={handleShare}
               disabled={loadingUpload}
-              className={`py-3 rounded-lg font-bold text-center ${loadingUpload ? 'opacity-70' : ''}`}
-              style={{ backgroundColor: secondaryColor, color: primaryColor }}
+              className={`py-3 px-8 rounded-xl font-bold text-center flex items-center justify-center gap-2 max-w-[240px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
+              style={{ 
+                backgroundColor: secondaryColor, 
+                color: primaryColor,
+                boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
+              }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              {loadingUpload ? 'PRÉPARATION...' : 'PARTAGER MA PHOTO'}
-            </button>
+              {loadingUpload ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>PRÉPARATION...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span>PARTAGER MA PHOTO</span>
+                </>
+              )}
+            </motion.button>
           )}
           
-          <Link 
-            href={`/photobooth-premium/${slug}`}
-            onClick={handleStartOver}
-            className="py-3 rounded-lg font-medium text-center bg-white bg-opacity-20 text-white"
+          <motion.div
+            className="w-full max-w-[240px]"
+            whileHover={{ scale: 1.03, y: -1 }}
+            whileTap={{ scale: 0.97 }}
           >
-            RECOMMENCER
-          </Link>
+            <Link 
+              href={`/photobooth-premium/${slug}`}
+              onClick={handleStartOver}
+              className="py-3 px-8 rounded-xl font-medium text-center bg-white bg-opacity-20 hover:bg-opacity-30 text-white transition-all flex items-center justify-center gap-2 w-full backdrop-blur-sm"
+            >
+              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>RECOMMENCER</span>
+            </Link>
+          </motion.div>
         </div>
       </div>
     </main>

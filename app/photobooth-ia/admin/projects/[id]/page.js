@@ -342,11 +342,43 @@ export default function ProjectDetails({ params }) {
     }
   };
 
-  // Ajouter cette fonction pour gérer l'ajout de styles via template
+  // Enhanced function to handle styles added from template popup
   const handleStyleTemplatesAdded = (addedStyles) => {
-    // Rafraîchir les styles après l'ajout
-    fetchProjectData();
+    console.log(`✅ ${addedStyles.length} styles added successfully`, addedStyles);
+    
+    // Close the template popup immediately
+    setShowStyleTemplates(false);
+    
+    // Set a success message
     setSuccess(`${addedStyles.length} styles ont été ajoutés avec succès !`);
+    
+    // Force refresh the styles data with a direct database query
+    const refreshStyles = async () => {
+      try {
+        const { data: freshStyles, error } = await supabase
+          .from('styles')
+          .select('*')
+          .eq('project_id', projectId);
+          
+        if (error) {
+          console.error('Error refreshing styles:', error);
+          return;
+        }
+        
+        console.log(`📋 Refreshed styles from database: ${freshStyles.length} styles found`);
+        setStyles(freshStyles || []);
+      } catch (err) {
+        console.error('Failed to refresh styles:', err);
+      }
+    };
+    
+    // Immediately refresh styles
+    refreshStyles();
+    
+    // Also call the full data refresh for other data
+    setTimeout(() => {
+      fetchProjectData();
+    }, 500);
   };
   
   // Ajouter cette fonction pour gérer les erreurs
@@ -529,14 +561,7 @@ export default function ProjectDetails({ params }) {
               >
                 Paramètres
               </button>
-              <button
-                onClick={() => setActiveTab('backgrounds')}
-                className={`border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'backgrounds' ? 'border-indigo-500 text-indigo-600' : ''
-                }`}
-              >
-                Arrière-plans <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600">{backgrounds.length}</span>
-              </button>
+              {/* Remove the Arrière-plans tab from here */}
             </nav>
           </div>
 
@@ -546,7 +571,7 @@ export default function ProjectDetails({ params }) {
             {activeTab === 'info' && (
               <>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Informations du projet</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 1 : Informations du projet</h3>
                   
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
                     <div>
@@ -616,19 +641,163 @@ export default function ProjectDetails({ params }) {
                     </div>
                   </div>
 
+                  {/* Add the Backgrounds section here as an encart */}
+                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-sm font-medium text-gray-500">Arrière-plans du projet ({backgrounds.length})</h4>
+                      <button
+                        onClick={() => setAddingBackground(true)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                      >
+                        <RiAddLine className="mr-2 h-4 w-4" />
+                        Ajouter un arrière-plan
+                      </button>
+                    </div>
+                    
+                    {backgrounds.length === 0 ? (
+                      <div className="text-center py-6 bg-white bg-opacity-50 rounded-lg border border-dashed border-gray-300">
+                        <p className="text-gray-500">
+                          Aucun arrière-plan n'a été ajouté à ce projet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {backgrounds.map((background) => (
+                          <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden bg-white">
+                            <div className="h-24 bg-gray-100 relative">
+                              {background.image_url ? (
+                                <Image
+                                  src={getFullImageUrl(background.image_url)}
+                                  alt={background.name}
+                                  fill
+                                  style={{ objectFit: "cover" }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-gray-400">Aucune image</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="p-2">
+                              <h4 className="font-medium text-gray-900 text-sm truncate">{background.name}</h4>
+                              
+                              <div className="mt-2 flex space-x-1">
+                                <button
+                                  onClick={() => handleEditBackground(background)}
+                                  className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                  Modifier
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBackground(background.id)}
+                                  className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                                >
+                                  Supprimer
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Background form */}
+                    {addingBackground && (
+                      <div className="mt-6 bg-white p-6 rounded-lg border border-gray-200">
+                        <h4 className="text-md font-medium mb-3">Nouvel arrière-plan</h4>
+                        <form onSubmit={handleAddBackground} className="space-y-4">
+                          <div>
+                            <label htmlFor="backgroundName" className="block text-sm font-medium text-gray-700">
+                              Nom de l'arrière-plan *
+                            </label>
+                            <input
+                              type="text"
+                              id="backgroundName"
+                              value={newBackground.name}
+                              onChange={(e) => setNewBackground({...newBackground, name: e.target.value})}
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Image de l'arrière-plan *</label>
+                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                              <div className="space-y-1 text-center">
+                                {backgroundImagePreview ? (
+                                  <div className="flex flex-col items-center">
+                                    <div className="w-40 h-40 mb-3 relative">
+                                      <Image
+                                        src={backgroundImagePreview}
+                                        alt="Aperçu"
+                                        fill
+                                        style={{ objectFit: "cover" }}
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setBackgroundFile(null);
+                                        setBackgroundImagePreview(null);
+                                      }}
+                                      className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
+                                    >
+                                      Supprimer
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <div className="flex text-sm text-gray-600">
+                                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                        <span>Télécharger un fichier</span>
+                                        <input
+                                          type="file"
+                                          className="sr-only"
+                                          accept="image/*"
+                                          onChange={handleBackgroundImageChange}
+                                        />
+                                      </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              type="button"
+                              onClick={() => setAddingBackground(false)}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
+                              disabled={addingBackgroundLoading}
+                            >
+                              {addingBackgroundLoading ? 'Ajout en cours...' : 'Ajouter'}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add step number to Type de photobooth section */}
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 2 : Type de photobooth</h3>
+                  
                   {/* Nouveau sélecteur de type de photobooth */}
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="text-sm font-medium text-gray-500">Type de Photobooth</h4>
-                      {/* Bouton de validation du type */}
-                      {!typeValidated && project && (
-                        <button
-                          onClick={handleValidatePhotoboothType}
-                          className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
-                        >
-                          Valider le type de photobooth
-                        </button>
-                      )}
+                      {/* Remove the validation button from here */}
                       {typeValidated && (
                         <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
                           Type validé
@@ -727,6 +896,19 @@ export default function ProjectDetails({ params }) {
                           <span className="text-sm font-medium">MiniMax</span>
                         </button>
                       </div>
+                      
+                      {/* Add the validation button here, after the grid and centered */}
+                      {!typeValidated && project && (
+                        <div className="mt-6 flex justify-center">
+                          <button
+                            onClick={handleValidatePhotoboothType}
+                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+                          >
+                            Valider le type de photobooth
+                          </button>
+                        </div>
+                      )}
+                      
                       <p className="mt-2 text-xs text-gray-500">
                         Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
                         {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
@@ -738,17 +920,21 @@ export default function ProjectDetails({ params }) {
                 {/* Styles section - directly integrated into the Info tab */}
                 <div className="mt-8">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">Styles du projet ({styles.length})</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Etape 3 : Styles du projet ({styles.length})</h3>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => setShowStyleTemplates(!showStyleTemplates)}
+                        onClick={() => {
+                          console.log('🔍 Opening style templates');
+                          setShowStyleTemplates(!showStyleTemplates);
+                        }}
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
                         {showStyleTemplates ? 'Masquer les templates' : 'Ajouter depuis templates'}
-                      </button>
+                      </button
+                      >
                       
                       <button
                         onClick={() => setAddingStyle(true)}
@@ -953,51 +1139,152 @@ export default function ProjectDetails({ params }) {
 
                   {/* Affichage de la grille des styles existants */}
                   {styles.length > 0 && (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {styles.map((style) => (
-                        <div key={style.id} className="border border-gray-200 rounded-md overflow-hidden text-black">
-                          <div className="h-40 bg-gray-100 relative">
-                            {style.preview_image ? (
-                              <Image
-                                src={style.preview_image}
-                                alt={style.name}
-                                fill
-                                style={{ objectFit: "contain" }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-gray-400">Aucune image</span>
+                    <div className="mb-8">
+                      {/* Design-oriented multi-column encart with modern styling */}
+                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 shadow-lg border border-indigo-100">
+                        <h4 className="text-lg font-semibold text-indigo-800 mb-6 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+                          </svg>
+                          Galerie des styles séléctionnés ({styles.length})
+                          {/* Add debug button in development */}
+                          {process.env.NODE_ENV === 'development' && (
+                            <button 
+                              onClick={async () => {
+                                console.log('Current styles:', styles);
+                                const { data } = await supabase
+                                  .from('styles')
+                                  .select('*')
+                                  .eq('project_id', projectId);
+                                console.log('Database styles:', data);
+                                setStyles(data || []);
+                              }}
+                              className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                            >
+                              Rafraîchir
+                            </button>
+                          )}
+                        </h4>
+                        
+                        {/* Modern 5-column grid with responsive design */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                          {styles.map((style) => (
+                            <div 
+                              key={style.id} 
+                              className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 border border-gray-200"
+                            >
+                              <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                                {style.preview_image ? (
+                                  <Image
+                                    src={style.preview_image}
+                                    alt={style.name}
+                                    fill
+                                    style={{ objectFit: "cover" }}
+                                    className="transition-transform duration-500 group-hover:scale-110"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                )}
+                                
+                                {/* Gender badge overlay */}
+                                <div className="absolute top-2 right-2">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                    style.gender === 'm' ? 'bg-blue-100 text-blue-800' : 
+                                    style.gender === 'f' ? 'bg-pink-100 text-pink-800' :
+                                    style.gender === 'ag' ? 'bg-green-100 text-green-800' :
+                                    style.gender === 'af' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {style.gender === 'm' ? 'Homme' : 
+                                     style.gender === 'f' ? 'Femme' : 
+                                     style.gender === 'ag' ? 'Ado G' : 
+                                     style.gender === 'af' ? 'Ado F' : 'Général'}
+                                  </span>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                          
-                          <div className="p-4">
-                            <h4 className="font-medium text-gray-900">{style.name}</h4>
-                            <div className="mt-1 flex items-center text-sm text-gray-500">
-                              <span>{style.gender === 'm' ? 'Homme' : 
-                                    style.gender === 'f' ? 'Femme' : 
-                                    style.gender === 'ag' ? 'Ado Garçon' : 'Ado Fille'}</span>
-                              <span className="mx-2">•</span>
-                              <span>Style {style.style_key}</span>
+                              
+                              <div className="p-3">
+                                <h5 className="font-medium text-gray-900 mb-1 truncate">{style.name}</h5>
+                                <div className="flex items-center text-xs text-gray-500 mb-2">
+                                  <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md">
+                                    {style.style_key}
+                                  </span>
+                                  {style.variations > 1 && (
+                                    <span className="ml-2 bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-md">
+                                      {style.variations} var.
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Tags based on gender - Completely replaced to fix schema error */}
+                                <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                                {style.gender === 'm' && (
+                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                    homme
+                                  </span>
+                                )}
+                                {style.gender === 'f' && (
+                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+                                    femme
+                                  </span>
+                                )}
+                                {style.gender === 'ag' && (
+                                  <>
+                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
+                                      ado
+                                    </span>
+                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
+                                      garçon
+                                    </span>
+                                  </>
+                                )}
+                                {style.gender === 'af' && (
+                                  <>
+                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
+                                      ado
+                                    </span>
+                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+                                      fille
+                                    </span>
+                                  </>
+                                )}
+                                {(!style.gender || style.gender === '') && (
+                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                                    général
+                                  </span>
+                                )}
+                              </div>
+                                
+                                <div className="flex space-x-1 mt-2">
+                                  <button
+                                    onClick={() => handleEditStyle(style)}
+                                    className="flex-1 inline-flex justify-center items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                      <path fillRule="evenodd" d="M2 6a2 2 0 002-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                                    </svg>
+                                    Modifier
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteStyle(style.id)}
+                                    className="flex-1 inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    Supprimer
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                            
-                            <div className="mt-4 flex space-x-2">
-                              <button
-                                onClick={() => handleEditStyle(style)}
-                                className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                              >
-                                Modifier
-                              </button>
-                              <button
-                                onClick={() => handleDeleteStyle(style.id)}
-                                className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                              >
-                                Supprimer
-                              </button>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
                   )}
                   
@@ -1119,149 +1406,7 @@ export default function ProjectDetails({ params }) {
               </form>
             )}
 
-            {/* Backgrounds Tab */}
-            {activeTab === 'backgrounds' && (
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Arrière-plans du projet</h3>
-                
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {backgrounds.map((background) => (
-                    <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden">
-                      <div className="h-40 bg-gray-100 relative">
-                        {background.image_url ? (
-                          <Image
-                            src={getFullImageUrl(background.image_url)}
-                            alt={background.name}
-                            fill
-                            style={{ objectFit: "cover" }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-gray-400">Aucune image</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-4">
-                        <h4 className="font-medium text-gray-900">{background.name}</h4>
-                        
-                        <div className="mt-4 flex space-x-2">
-                          <button
-                            onClick={() => handleEditBackground(background)}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBackground(background.id)}
-                            className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6">
-                  <button
-                    onClick={() => setAddingBackground(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                  >
-                    <RiAddLine className="mr-2 h-4 w-4" />
-                    Ajouter un arrière-plan
-                  </button>
-                </div>
-                
-                {/* Formulaire d'ajout d'arrière-plan */}
-                {addingBackground && (
-                  <div className="mt-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <h4 className="text-md font-medium mb-3">Nouvel arrière-plan</h4>
-                    <form onSubmit={handleAddBackground} className="space-y-4">
-                      <div>
-                        <label htmlFor="backgroundName" className="block text-sm font-medium text-gray-700">
-                          Nom de l'arrière-plan *
-                        </label>
-                        <input
-                          type="text"
-                          id="backgroundName"
-                          value={newBackground.name}
-                          onChange={(e) => setNewBackground({...newBackground, name: e.target.value})}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Image de l'arrière-plan *</label>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                          <div className="space-y-1 text-center">
-                            {backgroundImagePreview ? (
-                              <div className="flex flex-col items-center">
-                                <div className="w-40 h-40 mb-3 relative">
-                                  <Image
-                                    src={backgroundImagePreview}
-                                    alt="Aperçu"
-                                    fill
-                                    style={{ objectFit: "cover" }}
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setBackgroundFile(null);
-                                    setBackgroundImagePreview(null);
-                                  }}
-                                  className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                <div className="flex text-sm text-gray-600">
-                                  <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
-                                    <span>Télécharger un fichier</span>
-                                    <input
-                                      type="file"
-                                      className="sr-only"
-                                      accept="image/*"
-                                      onChange={handleBackgroundImageChange}
-                                    />
-                                  </label>
-                                </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => setAddingBackground(false)}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
-                          disabled={addingBackgroundLoading}
-                        >
-                          {addingBackgroundLoading ? 'Ajout en cours...' : 'Ajouter'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Remove the Backgrounds Tab from here since we moved it above */}
           </div>
         </div>
       </div>

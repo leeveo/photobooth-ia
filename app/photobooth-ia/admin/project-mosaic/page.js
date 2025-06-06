@@ -221,10 +221,15 @@ export default function ProjectMosaic() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Add a fullscreen toggle function
+  // Update the fullscreen toggle function to handle layout properly
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
+      // Find the best element to make fullscreen
+      const mosaicContainer = document.querySelector('.mosaic-container-standalone') || 
+                             document.querySelector('.mosaic-container') ||
+                             document.documentElement;
+      
+      mosaicContainer.requestFullscreen().then(() => {
         setIsFullscreen(true);
       }).catch(err => {
         console.error(`Erreur lors du passage en plein écran: ${err.message}`);

@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from "next/image";
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 export default function PhotoboothProject({ params }) {
   const slug = params.slug;
@@ -17,11 +17,8 @@ export default function PhotoboothProject({ params }) {
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [backgroundImage, setBackgroundImage] = useState(null);
-  const [selectedStyle, setSelectedStyle] = useState(null); // État pour le style sélectionné
-  const [error, setError] = useState(null); // État pour les erreurs
-  const [styles, setStyles] = useState([]); // État pour les styles disponibles
-
+  const [error, setError] = useState(null);
+  
   useEffect(() => {
     async function fetchProjectData() {
       setLoading(true);
@@ -65,20 +62,6 @@ export default function PhotoboothProject({ params }) {
               default_gender: 'g'
             });
             
-            // Fetch styles with limited fields
-            const { data: stylesData, error: stylesError } = await supabase
-              .from('styles')
-              .select('id, name, description, preview_image, prompt')
-              .eq('project_id', projectData.id)
-              .eq('is_active', true);
-
-            if (stylesError) {
-              throw stylesError;
-            }
-            
-            // Set available styles
-            setStyles(stylesData || []);
-            
             // Store project data in localStorage for other pages
             localStorage.setItem('currentProjectId', projectData.id);
             localStorage.setItem('currentProjectSlug', slug);
@@ -101,6 +84,7 @@ export default function PhotoboothProject({ params }) {
         }
       } catch (error) {
         console.error('Error loading project:', error);
+        setError('Impossible de charger les données du projet');
         
         // Try to use cached data if available when fetch fails
         const cachedProject = localStorage.getItem('projectData');
@@ -145,22 +129,36 @@ export default function PhotoboothProject({ params }) {
     }
   }, [settings]);
 
-  const handleStyleSelect = (style) => {
-    setSelectedStyle(style);
-    localStorage.setItem('selectedStyleId', style.id);
-    localStorage.setItem('selectedStyleData', JSON.stringify(style)); 
-    
-    // Stocker le prompt pour la génération d'image
-    localStorage.setItem('stylePrompt', style.prompt);
-    
-    // Stocker un genre neutre par défaut
-    localStorage.setItem('styleGender', 'g');
+  const goToInstructions = () => {
+    router.push(`/photobooth-premium/${slug}/how`);
   };
+
+  // Afficher un message d'erreur si nécessaire
+  if (error) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center flex-col text-center px-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-md mb-4">
+          <h2 className="text-lg font-bold mb-2">Erreur</h2>
+          <p>{error}</p>
+        </div>
+        <button 
+          onClick={() => router.push('/')}
+          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Retour à l&apos;accueil
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner 
+          text="Préparation de votre expérience premium..." 
+          size="large" 
+          color="purple" 
+        />
       </div>
     );
   }
@@ -169,10 +167,6 @@ export default function PhotoboothProject({ params }) {
     return notFound();
   }
 
-  const goToInstructions = () => {
-    router.push(`/photobooth-premium/${slug}/how`);
-  };
-
   // Dynamic styles based on project colors
   const primaryColor = project.primary_color || '#811A53';
   const secondaryColor = project.secondary_color || '#E5E40A';
@@ -180,131 +174,116 @@ export default function PhotoboothProject({ params }) {
 
   return (
     <main 
-      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-auto"
       style={{ backgroundColor: primaryColor }}
     >
-      <div className="max-w-6xl mx-auto">
-        {/* Logo or title */}
-        <div className="fixed top-0 mx-auto w-full flex justify-center mt-4">
+      {/* Hidden fullscreen button */}
+      <button 
+        ref={fullscreenButtonRef} 
+        onClick={requestFullscreen} 
+        className="hidden"
+      >
+        Fullscreen
+      </button>
+
+      {/* Header with logo */}
+      <motion.div 
+        className="w-full flex justify-center mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <div className="w-[280px] h-[180px] relative">
           {project.logo_url ? (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="w-[280px] relative"
-            >
-              <Image 
-                src={project.logo_url} 
-                width={280} 
-                height={100} 
-                alt={project.name} 
-                className="w-full object-contain" 
-                priority 
-              />
-            </motion.div>
+            <Image 
+              src={project.logo_url} 
+              fill
+              alt={project.name} 
+              className="object-contain drop-shadow-2xl" 
+              priority 
+            />
           ) : (
-            <motion.h1 
+            <h1 
               className="text-4xl font-bold text-center" 
               style={{ color: secondaryColor }}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
             >
               {project.name}
-            </motion.h1>
+            </h1>
           )}
         </div>
+      </motion.div>
 
+      {/* Main content */}
+      <div className="max-w-6xl mx-auto">
         {/* Welcome message */}
         <motion.div 
-          className="mt-32 text-center mb-10"
+          className="text-center mb-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          <h2 
-            className="text-3xl sm:text-5xl font-bold"
-            style={{ color: secondaryColor }}
+          <motion.h2 
+            className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
           >
             {homeMessage}
-          </h2>
-          <p className="mt-6 text-white text-opacity-90 max-w-3xl mx-auto text-xl">
-            Choisissez un style artistique, prenez une photo et découvrez le résultat généré par l'intelligence artificielle
-          </p>
-        </motion.div>
-        
-        {/* Styles selection - with improved grid layout */}
-        <div className="mb-12">
-          <motion.h3 
-            className="text-xl font-semibold text-center mb-8" 
-            style={{ color: secondaryColor }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-white/90 max-w-3xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Sélectionnez un style artistique
-          </motion.h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {styles.map((style, index) => (
-              <motion.div 
-                key={style.id} 
-                className={`rounded-lg cursor-pointer transition-all duration-300 ease-in-out overflow-hidden backdrop-blur-sm bg-white/10 shadow-lg hover:shadow-xl ${
-                  selectedStyle?.id === style.id ? 'ring-2 ring-white scale-105' : 'hover:scale-[1.03]'
-                }`}
-                onClick={() => handleStyleSelect(style)}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.5 + (index * 0.1) }}
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <Image 
-                    src={style.preview_image} 
-                    width={200} 
-                    height={200} 
-                    alt={style.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-70 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-bold text-white text-lg">{style.name}</h4>
-                  <p className="mt-1 text-white/80 text-sm line-clamp-2">{style.description}</p>
-                </div>
-                
-                {/* Badge de sélection */}
-                {selectedStyle?.id === style.id && (
-                  <div className="absolute top-4 right-4 bg-white/90 text-purple-900 text-sm font-bold px-3 py-1.5 rounded-full">
-                    Sélectionné
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
+            Découvrez une expérience photo unique où l'intelligence artificielle transforme votre portrait.
+          </motion.p>
+        </motion.div>
 
-        {/* Start button */}
+        {/* Start button with modern hover effect */}
         <motion.div 
-          className="relative w-full flex justify-center items-center mt-10"
+          className="flex justify-center items-center mt-12 mb-8"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
         >
-          <motion.div 
-            id="btn-taptostart" 
-            className="relative mx-auto flex w-[75%] max-w-md justify-center items-center cursor-pointer py-5 rounded-xl"
+          <div 
+            className="relative group cursor-pointer"
             onClick={goToInstructions}
-            style={{ backgroundColor: secondaryColor }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
-            <span 
-              className="text-2xl font-bold"
-              style={{ color: primaryColor }}
+            <div 
+              className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
+              style={{ 
+                borderRadius: '0.75rem', 
+              }}
+            ></div>
+            <button 
+              className="relative px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
+              style={{ 
+                backgroundColor: secondaryColor, 
+                color: primaryColor 
+              }}
             >
-              COMMENCER
-            </span>
-          </motion.div>
+              COMMENCER L&apos;EXPÉRIENCE
+            </button>
+          </div>
+        </motion.div>
+        
+        {/* Animation de chargement en bas */}
+        <motion.div 
+          className="mt-12 flex justify-center mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+        >
+          <div className="flex space-x-3 items-center">
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0s' }}></div>
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+            <p className="text-white/80">Préparation de votre expérience photo...</p>
+          </div>
         </motion.div>
       </div>
     </main>

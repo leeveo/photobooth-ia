@@ -1,0 +1,40 @@
+/* Styles for the masonry grid */
+.masonry-grid {
+  column-count: 2;
+  column-gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 768px) {
+  .masonry-grid {
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    column-count: 5;
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-grid {
+    column-count: 6;
+  }
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+/* Animation for hover effect */
+.masonry-item:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+}
