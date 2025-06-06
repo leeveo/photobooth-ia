@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createSupabaseClient } from '../../../lib/supabaseClient';
 
 export default function PhotoboothAvatar({ params }) {
   const { slug } = params;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient(); // Utiliser le client modifié
   const router = useRouter();
   
   const [project, setProject] = useState(null);
@@ -17,11 +17,13 @@ export default function PhotoboothAvatar({ params }) {
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [gender, setGender] = useState("male"); // Default gender selection
   
   useEffect(() => {
     async function fetchProjectAndStyles() {
       try {
+        // Add console log to debug the request
+        console.log('Fetching project data for slug:', slug);
+        
         // Fetch project data by slug
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
@@ -35,6 +37,8 @@ export default function PhotoboothAvatar({ params }) {
           return notFound();
         }
         
+        console.log('Project data fetched successfully:', projectData.id);
+        
         // Fetch styles for this project
         const { data: stylesData, error: stylesError } = await supabase
           .from('styles')
@@ -46,13 +50,16 @@ export default function PhotoboothAvatar({ params }) {
           throw stylesError;
         }
         
+        // Log success
+        console.log(`Fetched ${stylesData?.length || 0} styles for project`);
+        
         // Save project and styles to state and localStorage
         setProject(projectData);
         localStorage.setItem('projectData', JSON.stringify(projectData));
         localStorage.setItem('currentProjectId', projectData.id);
         localStorage.setItem('currentProjectSlug', slug);
         
-        // Set available styles
+        // Set available styles - No more gender filtering
         const availableStyles = stylesData || [];
         setStyles(availableStyles);
       } catch (error) {
@@ -71,19 +78,13 @@ export default function PhotoboothAvatar({ params }) {
     localStorage.setItem('selectedStyleId', style.id);
     localStorage.setItem('selectedStyleData', JSON.stringify(style)); 
     
-    // Store the selected style gender for avatar generation
-    const styleGender = style.gender || "male";
-    localStorage.setItem('styleGender', styleGender);
+    // Store a default neutral gender for avatar generation compatibility
+    localStorage.setItem('styleGender', 'neutral');
     
     // Store prompt for avatar generation
     localStorage.setItem('stylePrompt', style.prompt || "portrait photo");
   };
 
-  const handleGenderChange = (selectedGender) => {
-    setGender(selectedGender);
-    localStorage.setItem('styleGender', selectedGender);
-  };
-  
   const handleStartClick = () => {
     if (!selectedStyle) {
       setError('Veuillez sélectionner un style avant de continuer');
@@ -93,6 +94,20 @@ export default function PhotoboothAvatar({ params }) {
     // Navigate to camera page
     router.push(`/photobooth-avatar/${slug}/cam`);
   };
+  
+  useEffect(() => {
+    // Identifier le type de photobooth
+    console.log('PhotoboothAvatar component loaded');
+    console.log('Slug:', slug);
+    console.log('Project type will be logged when loaded');
+  }, [slug]);
+
+  useEffect(() => {
+    if (project) {
+      console.log('Project loaded:', project.name);
+      console.log('Photobooth type:', project.photobooth_type);
+    }
+  }, [project]);
   
   if (loading) {
     return (
@@ -155,43 +170,11 @@ export default function PhotoboothAvatar({ params }) {
           </p>
         </div>
         
-        {/* Gender selection */}
-        <div className="mb-10">
-          <h3 
-            className="text-xl font-semibold text-center mb-4"
-            style={{ color: secondaryColor }}
-          >
-            Choisissez votre genre
-          </h3>
-          <div className="flex justify-center gap-4">
-            <button
-              className={`px-6 py-2 rounded-full ${gender === 'male' 
-                ? `bg-white text-black font-bold` 
-                : 'bg-white bg-opacity-30 text-white'}`}
-              onClick={() => handleGenderChange('male')}
-            >
-              Homme
-            </button>
-            <button
-              className={`px-6 py-2 rounded-full ${gender === 'female' 
-                ? `bg-white text-black font-bold` 
-                : 'bg-white bg-opacity-30 text-white'}`}
-              onClick={() => handleGenderChange('female')}
-            >
-              Femme
-            </button>
-          </div>
-        </div>
-        
-        {/* Styles grid */}
+        {/* Styles selection */}
         <div className="mb-12">
-          <h3 
-            className="text-xl font-semibold text-center mb-4"
-            style={{ color: secondaryColor }}
-          >
-            Choisissez votre style
+          <h3 className="text-xl font-semibold text-center mb-4" style={{ color: secondaryColor }}>
+            Sélectionnez un style
           </h3>
-          
           {styles.length === 0 ? (
             <p className="text-center text-white">Aucun style disponible</p>
           ) : (
@@ -200,25 +183,17 @@ export default function PhotoboothAvatar({ params }) {
                 <div 
                   key={style.id}
                   className={`cursor-pointer rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
-                    selectedStyle?.id === style.id 
-                      ? 'ring-4 ring-offset-2 ring-offset-transparent' 
-                      : ''
+                    selectedStyle?.id === style.id ? 'ring-2 ring-white' : ''
                   }`}
-                  style={{ 
-                    borderColor: selectedStyle?.id === style.id ? secondaryColor : 'transparent',
-                    boxShadow: selectedStyle?.id === style.id ? `0 0 0 4px ${secondaryColor}` : 'none'
-                  }}
                   onClick={() => handleStyleSelect(style)}
                 >
                   <div className="aspect-h-4 aspect-w-3 bg-gray-200 relative">
                     {style.preview_image ? (
                       <Image 
                         src={style.preview_image}
+                        className="rounded-lg object-cover"
+                        layout="fill"
                         alt={style.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 33vw, 20vw"
-                        priority={false}
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-300">

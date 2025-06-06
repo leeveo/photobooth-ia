@@ -22,17 +22,43 @@ let streamCam = null;
 const useWebcam = ({ videoRef }) => {
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+      navigator.mediaDevices.getUserMedia({ 
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      }).then((stream) => {
+        console.log("Camera access granted, initializing stream");
         streamCam = stream;
         window.localStream = stream;
         if (videoRef.current !== null) {
+          console.log("Setting video source");
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          // Essayer d'appeler play() après un court délai
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play()
+                .then(() => console.log("Video playback started"))
+                .catch(err => console.error("Error starting video playback:", err));
+            }
+          }, 100);
+        } else {
+          console.error("Video ref is null, cannot attach stream");
         }
       }).catch(err => {
         console.error("Error accessing camera:", err);
       });
+    } else {
+      console.error("MediaDevices API not supported in this browser");
     }
+    
+    // Cleanup function to stop all tracks when component unmounts
+    return () => {
+      if (streamCam) {
+        streamCam.getTracks().forEach(track => track.stop());
+        console.log("Camera stream tracks stopped");
+      }
+    };
   }, [videoRef]);
 };
 
@@ -111,32 +137,26 @@ export default function CameraCapture({ params }) {
     // Load project data and settings from localStorage
     const cachedProject = localStorage.getItem('projectData');
     const cachedSettings = localStorage.getItem('projectSettings');
+    
+    // Get style information from localStorage
     const storedImageUrl = localStorage.getItem('styleFix');
     const storedGender = localStorage.getItem('styleGenderFix');
     
-    if (cachedProject) {
-      try {
-        setProject(JSON.parse(cachedProject));
-        setLoading(false);
-      } catch (e) {
-        console.error("Error parsing cached project data:", e);
-      }
-    }
-    
-    if (cachedSettings) {
-      try {
-        setSettings(JSON.parse(cachedSettings));
-      } catch (e) {
-        console.error("Error parsing cached settings:", e);
-      }
-    }
+    console.log('Loaded style data:', {
+      styleImageUrl: storedImageUrl,
+      styleGender: storedGender
+    });
     
     if (storedImageUrl) {
       setStyleFix(storedImageUrl);
+    } else {
+      console.error('No style image URL found in localStorage');
     }
     
     if (storedGender) {
       setStyleGender(storedGender);
+    } else {
+      console.error('No style gender found in localStorage');
     }
     
     // Always fetch fresh data
@@ -239,6 +259,18 @@ export default function CameraCapture({ params }) {
     setLoadingProgress(0);
     
     const start = Date.now();
+    
+    // Verify we have all required data before proceeding
+    if (!styleFix) {
+      setError('Style image missing. Please go back and select a style.');
+      setProcessing(false);
+      return;
+    }
+    
+    console.log('Using style data for fal.ai:', {
+      styleImage: styleFix ? styleFix.substring(0, 30) + '...' : 'missing',
+      styleGender: styleGender || 'missing'
+    });
     
     // Determine gender for fal.ai API
     let gender = "male";
@@ -522,6 +554,7 @@ export default function CameraCapture({ params }) {
     <div className="relative z-10 w-full h-full">
       <main 
         className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
+        style={{ backgroundColor: primaryColor }}
       >
         <motion.div 
           className="fixed top-0 left-0 right-0 flex justify-center mt-4"
@@ -602,11 +635,14 @@ export default function CameraCapture({ params }) {
               </motion.div>
             )}
             
-            {/* Video element for camera preview */}
+            {/* Video element for camera preview - MODIFIED */}
             <video 
               ref={videoRef} 
               className={`w-full h-full object-cover rounded-lg ${enabled ? 'hidden' : 'block'}`} 
               playsInline
+              autoPlay
+              muted
+              style={{ transform: 'scaleX(-1)' }} // Mirror effect for selfie mode
             />
             
             {/* Canvas element for captured photo */}

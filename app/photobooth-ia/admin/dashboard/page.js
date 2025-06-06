@@ -187,7 +187,7 @@ export default function Dashboard() {
       case 'photobooth2':
         return 'MiniMax';
       default:
-        return 'Standard';
+        return 'FaceSwapping';
     }
   };
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 /**
@@ -22,99 +21,106 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'paint-magic',
       name: 'Collection Paint Magic',
       description: 'Des couleurs éclatantes et des motifs uniques',
-      image: '/style-templates/paint-magic.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/paint-magic.jpeg',
       compatibleWith: ['premium'],
       styles: [
         {
-          name: 'Années 50',
-          gender: 'f',
-          style_key: 'vintage_50s',
-          description: 'Look rétro féminin années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-vintage50s.jpg',
-          variations: 3
+          name: 'Peinture à l\'huile',
+          gender: 'g',
+          style_key: 'oil_painting',
+          description: 'Style peinture à l\'huile impressionniste',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/oil-painting.jpg',
+          prompt: 'Transform this portrait into an impressionist oil painting with vibrant colors and visible brushstrokes',
+          variations: 1
         },
         {
-          name: 'Rockabilly',
-          gender: 'm',
-          style_key: 'rockabilly',
-          description: 'Style rockabilly années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/m-rockabilly.jpg',
-          variations: 2
+          name: 'Aquarelle',
+          gender: 'g',
+          style_key: 'watercolor',
+          description: 'Style aquarelle doux et fluide',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/watercolor.jpg',
+          prompt: 'Transform this portrait into a delicate watercolor painting with soft edges and flowing colors',
+          variations: 1
         },
         {
-          name: 'Disco 70s',
-          gender: 'f',
-          style_key: 'disco',
-          description: 'Style disco années 70',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-disco.jpg',
-          variations: 4
-        }
-      ]
-    },
-    {
-      id: 'aquarelle',
-      name: 'Collection aquarelle',
-      description: 'Des couleurs légères et des motifs aquarelle',
-      image: '/style-templates/aquarelle.jpeg',
-      compatibleWith: ['premium'],
-      styles: [
-        {
-          name: 'Années 50',
-          gender: 'f',
-          style_key: 'vintage_50s',
-          description: 'Look rétro féminin années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-vintage50s.jpg',
-          variations: 3
-        },
-        {
-          name: 'Rockabilly',
-          gender: 'm',
-          style_key: 'rockabilly',
-          description: 'Style rockabilly années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/m-rockabilly.jpg',
-          variations: 2
-        },
-        {
-          name: 'Disco 70s',
-          gender: 'f',
-          style_key: 'disco',
-          description: 'Style disco années 70',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-disco.jpg',
-          variations: 4
+          name: 'Pop Art',
+          gender: 'g',
+          style_key: 'pop_art',
+          description: 'Style pop art à la Andy Warhol',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pop-art.jpg',
+          prompt: 'Transform this portrait into a vibrant pop art style like Andy Warhol, with bold colors and strong contrasts',
+          variations: 1
         }
       ]
     },
     {
       id: 'vangogh',
-      name: 'Collection vangogh',
-      description: 'un style inspiré par Van Gogh',
-      image: '/style-templates/vangogh.png',
+      name: 'Collection Van Gogh',
+      description: 'Styles inspirés par Van Gogh',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/vangogh.png',
       compatibleWith: ['premium'],
       styles: [
         {
-          name: 'Années 50',
-          gender: 'f',
-          style_key: 'vintage_50s',
-          description: 'Look rétro féminin années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-vangogh.jpeg',
-          variations: 3
+          name: 'Nuit étoilée',
+          gender: 'g',
+          style_key: 'starry_night',
+          description: 'Style inspiré de la Nuit étoilée',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/starry-night.jpg',
+          prompt: 'Transform this portrait in the style of Van Gogh\'s Starry Night, with swirling patterns and thick brushstrokes',
+          variations: 1
         },
         {
-          name: 'Rockabilly',
-          gender: 'm',
-          style_key: 'rockabilly',
-          description: 'Style rockabilly années 50',
-          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/m-vangogh.jpeg',
-          variations: 2
+          name: 'Autoportrait',
+          gender: 'g',
+          style_key: 'vangogh_portrait',
+          description: 'Style des autoportraits de Van Gogh',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/vangogh-portrait.jpg',
+          prompt: 'Transform this portrait in the style of Van Gogh\'s self-portraits, with thick impasto and expressive brushwork',
+          variations: 1
+        }
+      ]
+    },
+    {
+      id: 'cartoon',
+      name: 'Collection Cartoon',
+      description: 'Styles de dessins animés',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/cartoon.jpg',
+      compatibleWith: ['premium'],
+      styles: [
+        {
+          name: 'Cartoon 90s',
+          gender: 'g',
+          style_key: '90s_cartoon',
+          description: 'Style de dessin animé des années 90',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/90s-cartoon.jpg',
+          prompt: 'Make this a 90s cartoon character with bold outlines and vibrant colors',
+          variations: 1
         },
-        
+        {
+          name: 'Anime',
+          gender: 'g',
+          style_key: 'anime',
+          description: 'Style anime japonais',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/anime.jpg',
+          prompt: 'Transform this portrait into a Japanese anime character with large expressive eyes and stylized features',
+          variations: 1
+        },
+        {
+          name: 'Pixar',
+          gender: 'g',
+          style_key: 'pixar',
+          description: 'Style 3D à la Pixar',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixar.jpg',
+          prompt: 'Transform this portrait into a 3D Pixar-style character with expressive features and polished render',
+          variations: 1
+        }
       ]
     },
     {
       id: 'vintage',
       name: 'Collection Vintage',
       description: 'Styles rétro des années 50-70',
-      image: '/style-templates/vintage.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/vintage.jpg',
       compatibleWith: ['standard'],
       styles: [
         {
@@ -147,7 +153,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'western',
       name: 'Collection Western',
       description: 'Styles country et western',
-      image: '/style-templates/western.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/western.jpg',
       compatibleWith: ['standard'],
       styles: [
         {
@@ -172,7 +178,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'fantasy',
       name: 'Collection Fantaisie',
       description: 'Styles féeriques et fantastiques',
-      image: '/style-templates/fantasy.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/fantasy.jpg',
       compatibleWith: ['standard'],
       styles: [
         {
@@ -205,7 +211,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'business',
       name: 'Collection Business',
       description: 'Styles professionnels',
-      image: '/style-templates/business.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/business.jpg',
       compatibleWith: ['standard'],
       styles: [
         {
@@ -231,7 +237,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-ghibli',
       name: 'Collection Portraits MiniMax',
       description: 'Prompts optimisés pour l\'IA MiniMax',
-      image: '/style-templates/minimax-ghibli.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-ghibli.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -248,7 +254,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-pixar',
       name: 'Collection PIxar MiniMax',
       description: 'Personnages fantastiques via prompts',
-      image: '/style-templates/minimax-pixar.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-pixar.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
        
@@ -265,7 +271,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-manga',
       name: 'Collection Manga',
       description: 'Portraits de Manga via prompts',
-      image: '/style-templates/minimax-manga.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-manga.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -281,7 +287,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-empire',
       name: 'Collection Empire',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-empire.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-empire.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -297,7 +303,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-plastic',
       name: 'Collection plastique',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-plastic.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-plastic.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -313,7 +319,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-caricature',
       name: 'Collection caricature',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-caricature.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-caricature.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -329,7 +335,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-impressionniste',
       name: 'Collection impressionniste',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-impressionnniste.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-impressionnniste.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -345,7 +351,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-painting',
       name: 'Collection painting',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-painting.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-painting.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -361,7 +367,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-clay',
       name: 'Collection clay',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-clay.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-clay.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -377,7 +383,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-milo',
       name: 'Collection milo',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-milo.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-milo.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -393,7 +399,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-drawing',
       name: 'Collection drawing',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-drawing.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-drawing.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -409,7 +415,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-kitchen',
       name: 'Collection kitchen',
       description: 'Styles artistiques via prompts',
-      image: '/style-templates/minimax-kitchen.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-kitchen.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -425,7 +431,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'minimax-psycho',
       name: 'Collection Groupes psycho',
       description: 'Styles pour des photos de groupe',
-      image: '/style-templates/minimax-psycho.jpeg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/minimax-psycho.jpeg',
       compatibleWith: ['photobooth2'],
       styles: [
         {
@@ -442,7 +448,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'avatar-fashion',
       name: 'Collection Avatar Fashion',
       description: 'Styles fashion pour avatar IA',
-      image: '/style-templates/avatar-fashion.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/avatar-fashion.jpg',
       compatibleWith: ['avatar'],
       styles: [
         {
@@ -472,7 +478,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'avatar-fantasy',
       name: 'Collection Avatar Fantasy',
       description: 'Avatars de fantaisie',
-      image: '/style-templates/avatar-fantasy.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/avatar-fantasy.jpg',
       compatibleWith: ['avatar'],
       styles: [
         {
@@ -502,7 +508,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       id: 'avatar-professional',
       name: 'Collection Avatar Pro',
       description: 'Avatars professionnels',
-      image: '/style-templates/avatar-professional.jpg',
+      image: process.env.NEXT_PUBLIC_BASE_URL + '/style-templates/avatar-professional.jpg',
       compatibleWith: ['avatar'],
       styles: [
         {
@@ -533,99 +539,85 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   // Fonction pour ouvrir le popup de détails avec les styles du template
   const openDetailsPopup = (templateId) => {
     const template = styleTemplates.find(t => t.id === templateId);
-    if (!template) return;
-    
-    // Initialiser les styles avec les genres par défaut
-    const styles = template.styles.map(style => ({
-      ...style,
-      // Conserver le genre d'origine comme valeur par défaut mais permettre de le modifier
-      selectedGender: style.gender || 'm'
-    }));
-    
-    setTemplateStyles(styles);
-    setSelectedTemplate(templateId);
-    setShowDetailsPopup(true);
+    if (template) {
+      setSelectedTemplate(template);
+      
+      // Initialiser les styles avec le genre par défaut 'g' (général/neutre) pour le nouveau processus
+      const stylesWithGender = template.styles.map(style => ({
+        ...style,
+        gender: 'g' // Utiliser 'g' comme valeur par défaut pour tous les styles
+      }));
+      
+      setTemplateStyles(stylesWithGender);
+      setShowDetailsPopup(true);
+    }
   };
 
-  // Fonction pour modifier le genre d'un style
+  // Simplifier la fonction de modification du genre car nous utilisons toujours 'g'
   const updateStyleGender = (styleIndex, gender) => {
     const updatedStyles = [...templateStyles];
-    updatedStyles[styleIndex].selectedGender = gender;
+    updatedStyles[styleIndex].gender = gender;
     setTemplateStyles(updatedStyles);
   };
 
-  // Fonction modifiée pour appliquer le template avec les genres personnalisés
+  // Fonction modifiée pour appliquer le template avec les prompts
   const applyTemplate = async () => {
-    if (!selectedTemplate || !templateStyles.length) return;
-    
-    setLoading(true);
+    if (!selectedTemplate) return;
     
     try {
-      // Préparer les styles à ajouter avec les genres personnalisés
-      const stylesToAdd = templateStyles.map(style => {
-        // Objet de base avec les champs communs
-        const baseStyle = {
-          name: style.name,
-          gender: style.selectedGender, // Utiliser le genre sélectionné
-          style_key: style.style_key,
-          description: style.description || '',
-          project_id: projectId,
-          is_active: true
-        };
+      setLoading(true);
+      
+      // Récupérer le type de projet pour validation
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('photobooth_type')
+        .eq('id', projectId)
+        .single();
         
-        // Ajouter prompt pour les types photobooth2
-        if (photoboothType === 'photobooth2' && style.prompt) {
-          baseStyle.prompt = style.prompt;
-        }
-        
-        // Ajouter preview_image et variations pour les types standard/premium
-        if (photoboothType !== 'photobooth2') {
-          baseStyle.preview_image = style.preview_image || '';
-          baseStyle.variations = style.variations || 1;
-        }
-        
-        return baseStyle;
-      });
+      if (projectError) throw projectError;
+      
+      // Vérifier la compatibilité
+      if (!selectedTemplate.compatibleWith.includes(projectData.photobooth_type)) {
+        throw new Error(`Ce template n'est pas compatible avec ce type de photobooth (${projectData.photobooth_type})`);
+      }
+      
+      // Insérer les styles dans la base de données avec leurs prompts
+      const stylesData = templateStyles.map(style => ({
+        project_id: projectId,
+        name: style.name,
+        gender: style.gender || 'g',
+        style_key: style.style_key,
+        preview_image: style.preview_image,
+        description: style.description,
+        prompt: style.prompt, // Ajouter le prompt pour le nouveau modèle
+        is_active: true,
+        variations: style.variations || 1,
+      }));
       
       const { data, error } = await supabase
         .from('styles')
-        .insert(stylesToAdd)
+        .insert(stylesData)
         .select();
-      
+        
       if (error) throw error;
       
-      if (onStylesAdded) {
-        onStylesAdded(data);
-      }
-      
-      setSelectedTemplate(null);
+      onStylesAdded(data);
       setShowDetailsPopup(false);
+      setSelectedTemplate(null);
       
     } catch (error) {
-      console.error('Erreur lors de l\'ajout des styles de template:', error);
-      if (onError) {
-        onError(`Impossible d'appliquer le template de styles: ${error.message}`);
-      }
+      console.error('Error applying template:', error);
+      onError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Options de genre disponibles selon le type de photobooth
+  // Options de genre disponibles - Simplifier pour n'avoir que l'option Groupe/Neutre
   const getGenderOptions = () => {
-    const options = [
-      { value: 'm', label: 'Homme' },
-      { value: 'f', label: 'Femme' },
-      { value: 'ag', label: 'Ado Garçon' },
-      { value: 'af', label: 'Ado Fille' }
+    return [
+      { value: 'g', label: 'Général (tous)' }
     ];
-    
-    // Ajouter l'option Groupe pour certains types de photobooths
-    if (photoboothType === 'photobooth2' || photoboothType === 'premium' || photoboothType === 'avatar') {
-      options.push({ value: 'g', label: 'Groupe' });
-    }
-    
-    return options;
   };
 
   return (
@@ -637,6 +629,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         </p>
       </div>
       
+      {/* Remplacer la section d'affichage des templates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {styleTemplates
           .filter(template => template.compatibleWith.includes(photoboothType))
@@ -651,13 +644,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
               onClick={() => openDetailsPopup(template.id)} // Modifié pour ouvrir le popup
             >
               <div className="h-80 relative">
-                <Image
+                {/* Remplacer Image par img standard */}
+                <img
                   src={template.image}
                   alt={template.name}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="rounded-t-lg"
+                  className="rounded-t-lg w-full h-full object-cover"
                   onError={(e) => {
+                    console.error(`Failed to load image: ${template.image}`);
                     e.target.onerror = null;
                     e.target.src = '/placeholder-style.png';
                   }}
@@ -686,10 +679,10 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                      {styleTemplates.find(t => t.id === selectedTemplate)?.name}
+                      {styleTemplates.find(t => t.id === selectedTemplate?.id)?.name}
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
-                      {styleTemplates.find(t => t.id === selectedTemplate)?.description}
+                      {styleTemplates.find(t => t.id === selectedTemplate?.id)?.description}
                     </p>
                     
                     <div className="max-h-96 overflow-y-auto">
@@ -716,13 +709,15 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {style.preview_image && (
                                   <div className="w-12 h-16 relative">
-                                    <Image
+                                    <img
                                       src={style.preview_image}
                                       alt={style.name}
-                                      fill
-                                      sizes="48px"
-                                      style={{ objectFit: "cover" }}
-                                      className="rounded-sm"
+                                      className="rounded-sm w-full h-full object-cover"
+                                      onError={(e) => {
+                                        console.error(`Failed to load style preview: ${style.preview_image}`);
+                                        e.target.onerror = null;
+                                        e.target.src = '/placeholder-style.png';
+                                      }}
                                     />
                                   </div>
                                 )}
@@ -733,7 +728,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <select
-                                  value={style.selectedGender}
+                                  value={style.gender}
                                   onChange={(e) => updateStyleGender(index, e.target.value)}
                                   className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 >

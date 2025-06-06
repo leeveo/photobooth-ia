@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  reactStrictMode: false, // Désactiver pour éviter les problèmes d'API
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
@@ -42,6 +42,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '**': ['node_modules/**/*.js'],
     },
+    externalDir: true // Ajouter cette option pour les images externes
   },
   typescript: {
     ignoreBuildErrors: true, // Ignorer les erreurs TS pendant le build

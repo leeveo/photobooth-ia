@@ -166,7 +166,7 @@ export default function Result({ params }) {
       console.log("1. Uploading original image to S3 for backup storage");
       
       // Generate a unique file name
-      const fileName = `photobooth-${project.photobooth_type || 'standard'}-${project.id}-${Date.now()}.jpg`;
+      const fileName = `photobooth-${project.photobooth_type || 'faceswapping'}-${project.id}-${Date.now()}.jpg`;
       
       // Fetch the image
       const imageResponse = await fetch(imageResultAI);

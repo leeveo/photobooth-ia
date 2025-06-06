@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine } from 'react-icons/ri';
+import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 
 // Composant pour initialiser les variables globales
@@ -52,6 +52,10 @@ export default function ProjectDetails({ params }) {
   const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
   const [addingBackgroundLoading, setAddingBackgroundLoading] = useState(false);
   const [showStyleTemplates, setShowStyleTemplates] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Ajout d'un état pour savoir si le type de photobooth est validé
+  const [typeValidated, setTypeValidated] = useState(false);
 
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -120,6 +124,27 @@ export default function ProjectDetails({ params }) {
     
     fetchProjectData();
   }, [fetchProjectData, projectId]);
+
+  // Fonction pour valider le type de photobooth
+  const handleValidatePhotoboothType = async () => {
+    try {
+      // Mettre à jour le projet dans Supabase avec l'attribut type_validated = true
+      const { error } = await supabase
+        .from('projects')
+        .update({ type_validated: true })
+        .eq('id', project.id);
+      
+      if (error) throw error;
+      
+      // Mettre à jour l'état local
+      setProject({...project, type_validated: true});
+      setTypeValidated(true);
+      setSuccess('Type de photobooth validé avec succès. Le type ne peut plus être modifié.');
+    } catch (error) {
+      console.error('Erreur lors de la validation du type:', error);
+      setError('Erreur lors de la validation du type de photobooth');
+    }
+  };
 
   async function saveSettings(e) {
     e.preventDefault();
@@ -311,9 +336,9 @@ export default function ProjectDetails({ params }) {
       case 'photobooth2':
         return 'MiniMax';
       case 'standard':
-        return 'Standard';
+        return 'FaceSwapping';
       default:
-        return 'Standard';
+        return 'FaceSwapping';
     }
   };
 
@@ -370,6 +395,43 @@ export default function ProjectDetails({ params }) {
     );
   }
 
+  // Fonction pour supprimer le projet et ses dépendances
+  async function handleDeleteProject() {
+    setDeleteLoading(true);
+    
+    try {
+      console.log(`Début de la suppression du projet ${projectId} (${project.name})`);
+      
+      // Utiliser l'API pour supprimer le projet
+      const response = await fetch('/api/delete-project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Échec de la suppression du projet');
+      }
+      
+      console.log('Projet supprimé avec succès:', result);
+      
+      // Rediriger vers la liste des projets après un court délai
+      setTimeout(() => {
+        router.push('/photobooth-ia/admin/projects');
+      }, 500);
+      
+    } catch (error) {
+      console.error('Erreur lors de la suppression du projet:', error);
+      setError(`Erreur lors de la suppression du projet: ${error.message}`);
+      setDeleteConfirm(false);
+      setDeleteLoading(false);
+    }
+  }
+  
   return (
     <>
       {/* Composant qui initialise les variables globales */}
@@ -425,6 +487,13 @@ export default function ProjectDetails({ params }) {
               <RiArrowLeftLine className="mr-2 h-4 w-4" />
               Retour à la liste
             </Link>
+            <button
+              onClick={() => setDeleteConfirm(true)}
+              className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 shadow-sm"
+            >
+              <RiDeleteBin6Line className="mr-2 h-4 w-4" />
+              Supprimer
+            </button>
           </div>
         </div>
 
@@ -473,175 +542,200 @@ export default function ProjectDetails({ params }) {
 
           {/* Tab content */}
           <div className="p-6">
+            {/* Info Tab */}
             {activeTab === 'info' && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Informations du projet</h3>
-                
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Nom</h4>
-                    <div className="mt-1 text-sm text-gray-900">{project.name}</div>
-                  </div>
+              <>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Informations du projet</h3>
                   
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">URL du projet</h4>
-                    <div className="mt-1 text-sm text-gray-900">/photobooth/{project.slug}</div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Description</h4>
-                    <div className="mt-1 text-sm text-gray-900">{project.description || '-'}</div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Statut</h4>
-                    <div className="mt-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {project.is_active ? 'Actif' : 'Inactif'}
-                      </span>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Nom</h4>
+                      <div className="mt-1 text-sm text-gray-900">{project.name}</div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">URL du projet</h4>
+                      <div className="mt-1 text-sm text-gray-900">/photobooth/{project.slug}</div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Description</h4>
+                      <div className="mt-1 text-sm text-gray-900">{project.description || '-'}</div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Statut</h4>
+                      <div className="mt-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {project.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Couleur principale</h4>
+                      <div className="mt-1 flex items-center">
+                        <div 
+                          className="w-5 h-5 mr-2 rounded-full" 
+                          style={{ backgroundColor: project.primary_color }}
+                        ></div>
+                        <span className="text-sm text-gray-900">{project.primary_color}</span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Couleur secondaire</h4>
+                      <div className="mt-1 flex items-center">
+                        <div 
+                          className="w-5 h-5 mr-2 rounded-full" 
+                          style={{ backgroundColor: project.secondary_color }}
+                        ></div>
+                        <span className="text-sm text-gray-900">{project.secondary_color}</span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Message d&apos;accueil</h4>
+                      <div className="mt-1 text-sm text-gray-900">{project.home_message || '-'}</div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Date de création</h4>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {new Date(project.created_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Couleur principale</h4>
-                    <div className="mt-1 flex items-center">
-                      <div 
-                        className="w-5 h-5 mr-2 rounded-full" 
-                        style={{ backgroundColor: project.primary_color }}
-                      ></div>
-                      <span className="text-sm text-gray-900">{project.primary_color}</span>
+
+                  {/* Nouveau sélecteur de type de photobooth */}
+                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-sm font-medium text-gray-500">Type de Photobooth</h4>
+                      {/* Bouton de validation du type */}
+                      {!typeValidated && project && (
+                        <button
+                          onClick={handleValidatePhotoboothType}
+                          className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+                        >
+                          Valider le type de photobooth
+                        </button>
+                      )}
+                      {typeValidated && (
+                        <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                          Type validé
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Couleur secondaire</h4>
-                    <div className="mt-1 flex items-center">
-                      <div 
-                        className="w-5 h-5 mr-2 rounded-full" 
-                        style={{ backgroundColor: project.secondary_color }}
-                      ></div>
-                      <span className="text-sm text-gray-900">{project.secondary_color}</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Message d&apos;accueil</h4>
-                    <div className="mt-1 text-sm text-gray-900">{project.home_message || '-'}</div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Date de création</h4>
-                    <div className="mt-1 text-sm text-gray-900">
-                      {new Date(project.created_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+
+                    <div className="mt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button
+                          onClick={async () => {
+                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
+                            
+                            const { error } = await supabase
+                              .from('projects')
+                              .update({ photobooth_type: 'standard' })
+                              .eq('id', project.id);
+                            
+                            if (!error) {
+                              setProject({...project, photobooth_type: 'standard'});
+                              setSuccess('Type de photobooth mis à jour');
+                              // Montrer les templates de styles pour ce type
+                              setShowStyleTemplates(true);
+                            }
+                          }}
+                          disabled={typeValidated && project.photobooth_type !== 'standard'}
+                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
+                            project.photobooth_type === 'standard' || !project.photobooth_type 
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                              : typeValidated 
+                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
+                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                          <span className="text-sm font-medium">FaceSwapping</span>
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
+                            
+                            const { error } = await supabase
+                              .from('projects')
+                              .update({ photobooth_type: 'premium' })
+                              .eq('id', project.id);
+                            
+                            if (!error) {
+                              setProject({...project, photobooth_type: 'premium'});
+                              setSuccess('Type de photobooth mis à jour');
+                            }
+                          }}
+                          disabled={typeValidated && project.photobooth_type !== 'premium'}
+                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
+                            project.photobooth_type === 'premium' 
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                              : typeValidated 
+                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
+                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          <span className="text-sm font-medium">Premium</span>
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
+                            
+                            const { error } = await supabase
+                              .from('projects')
+                              .update({ photobooth_type: 'photobooth2' })
+                              .eq('id', project.id);
+                            
+                            if (!error) {
+                              setProject({...project, photobooth_type: 'photobooth2'});
+                              setSuccess('Type de photobooth mis à jour');
+                            }
+                          }}
+                          disabled={typeValidated && project.photobooth_type !== 'photobooth2'}
+                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
+                            project.photobooth_type === 'photobooth2' 
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                              : typeValidated 
+                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
+                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm font-medium">MiniMax</span>
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
+                        {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Nouveau sélecteur de type de photobooth */}
-                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-500">Type de Photobooth</h4>
-                  <div className="mt-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button
-                        onClick={async () => {
-                          const { error } = await supabase
-                            .from('projects')
-                            .update({ photobooth_type: 'standard' })
-                            .eq('id', project.id);
-                          
-                          if (!error) {
-                            setProject({...project, photobooth_type: 'standard'});
-                            setSuccess('Type de photobooth mis à jour');
-                            // Montrer les templates de styles pour ce type
-                            setShowStyleTemplates(true);
-                          }
-                        }}
-                        className={`flex flex-col items-center p-3 border ${
-                          project.photobooth_type === 'standard' || !project.photobooth_type 
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                        } rounded-lg transition-colors`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        <span className="text-sm font-medium">Standard</span>
-                      </button>
-                      
-                      <button
-                        onClick={async () => {
-                          const { error } = await supabase
-                            .from('projects')
-                            .update({ photobooth_type: 'premium' })
-                            .eq('id', project.id);
-                          
-                          if (!error) {
-                            setProject({...project, photobooth_type: 'premium'});
-                            setSuccess('Type de photobooth mis à jour');
-                          }
-                        }}
-                        className={`flex flex-col items-center p-3 border ${
-                          project.photobooth_type === 'premium' 
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                        } rounded-lg transition-colors`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span className="text-sm font-medium">Premium</span>
-                      </button>
-                      
-                      <button
-                        onClick={async () => {
-                          const { error } = await supabase
-                            .from('projects')
-                            .update({ photobooth_type: 'photobooth2' })
-                            .eq('id', project.id);
-                          
-                          if (!error) {
-                            setProject({...project, photobooth_type: 'photobooth2'});
-                            setSuccess('Type de photobooth mis à jour');
-                          }
-                        }}
-                        className={`flex flex-col items-center p-3 border ${
-                          project.photobooth_type === 'photobooth2' 
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                        } rounded-lg transition-colors`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">MiniMax</span>
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500">
-                      Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Conseils pour le type de photobooth sélectionné */}
-                {project.photobooth_type && (
-                  <div className="mt-3 bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border-l-4 border-blue-500">
-                    <p className="font-medium mb-1">Conseil</p>
-                    <p>
-                      Vous avez sélectionné le type <b>{getPhotoboothTypeLabel(project.photobooth_type || 'standard')}</b>. 
-                      Vous pouvez configurer les styles disponibles pour ce type de photobooth ci-dessous.
-                    </p>
-                  </div>
-                )}
-
-                {/* Section Styles du projet - Intégrée directement dans l'onglet Info */}
+                {/* Styles section - directly integrated into the Info tab */}
                 <div className="mt-8">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-medium text-gray-900">Styles du projet ({styles.length})</h3>
@@ -666,7 +760,7 @@ export default function ProjectDetails({ params }) {
                     </div>
                   </div>
                   
-                  {/* Section des templates de styles */}
+                  {/* Templates section */}
                   {showStyleTemplates && (
                     <div className="mb-8 border-b border-gray-200 pb-6">
                       <StyleTemplates 
@@ -678,7 +772,7 @@ export default function ProjectDetails({ params }) {
                     </div>
                   )}
                   
-                  {/* Formulaire d'ajout de style manuel */}
+                  {/* Style form */}
                   {addingStyle && (
                     <div className="mb-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
                       <h4 className="text-md font-medium mb-3">Nouveau style</h4>
@@ -826,7 +920,7 @@ export default function ProjectDetails({ params }) {
                   )}
                   
                   {/* Message si aucun style n'est disponible */}
-                  {styles.length === 0 && !showStyleTemplates && !addingStyle ? (
+                  {styles.length === 0 && !showStyleTemplates && !addingStyle && (
                     <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -855,7 +949,7 @@ export default function ProjectDetails({ params }) {
                         </button>
                       </div>
                     </div>
-                  ) : null}
+                  )}
 
                   {/* Affichage de la grille des styles existants */}
                   {styles.length > 0 && (
@@ -906,20 +1000,21 @@ export default function ProjectDetails({ params }) {
                       ))}
                     </div>
                   )}
+                  
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={() => router.push(`/photobooth-ia/admin/projects`)}
+                      className="inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      <RiArrowLeftLine className="mr-2 h-4 w-4" />
+                      Retour
+                    </button>
+                  </div>
                 </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => router.push(`/photobooth-ia/admin/projects`)}
-                    className="inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    <RiArrowLeftLine className="mr-2 h-4 w-4" />
-                    Retour
-                  </button>
-                </div>
-              </div>
+              </>
             )}
 
+            {/* Settings Tab */}
             {activeTab === 'settings' && (
               <form onSubmit={saveSettings} className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Paramètres du projet</h3>
@@ -1024,6 +1119,7 @@ export default function ProjectDetails({ params }) {
               </form>
             )}
 
+            {/* Backgrounds Tab */}
             {activeTab === 'backgrounds' && (
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Arrière-plans du projet</h3>
@@ -1169,6 +1265,60 @@ export default function ProjectDetails({ params }) {
           </div>
         </div>
       </div>
+
+      {/* Fenêtre modale de confirmation de suppression */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center text-red-600 mb-4">
+              <RiAlertLine className="w-6 h-6 mr-2" />
+              <h3 className="text-lg font-medium">Confirmation de suppression</h3>
+            </div>
+            
+            <p className="mb-4 text-gray-700">
+              Êtes-vous sûr de vouloir supprimer le projet <strong>"{project?.name}"</strong> ?
+              <br /><br />
+              Cette action est irréversible et supprimera également :
+            </p>
+            
+            <ul className="list-disc list-inside mb-4 text-sm text-gray-600">
+              <li>Tous les styles associés ({styles.length})</li>
+              <li>Tous les arrière-plans ({backgrounds.length})</li>
+              <li>Tous les paramètres du projet</li>
+            </ul>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                disabled={deleteLoading}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                disabled={deleteLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
+              >
+                {deleteLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
+                    Supprimer définitivement
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

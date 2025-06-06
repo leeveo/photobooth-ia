@@ -7,8 +7,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-export default function PhotoboothRedirect({ params }) {
-  const slug = params.slug;
+export default function Photobooth({ params }) {
+  const { slug } = params;
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [error, setError] = useState(null);
@@ -16,55 +16,64 @@ export default function PhotoboothRedirect({ params }) {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    async function redirectBasedOnType() {
+    async function fetchProject() {
       try {
-        // Récupérer le type de photobooth pour ce projet ainsi que l'image de fond et la couleur primaire
-        const { data: project, error } = await supabase
-          .from('projects')
-          .select('photobooth_type, background_image, primary_color, logo_url, home_message, secondary_color, name')
-          .eq('slug', slug)
-          .single();
+        console.log('Fetching project data for slug:', slug);
         
-        if (error || !project) {
-          console.error("Projet non trouvé:", error);
-          setError("Projet non trouvé. Vérifiez l'URL ou contactez l'administrateur.");
+        // Fetch project data by slug
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('slug', slug)
+          .eq('is_active', true)
+          .single();
+          
+        if (projectError || !projectData) {
+          console.error('Project not found or inactive:', projectError);
+          setError('Projet non trouvé ou inactif');
           return;
         }
         
-        setProject(project);
+        console.log('Project data fetched successfully:', projectData.id);
         
-        // Stocker les informations de background dans localStorage
-        localStorage.setItem(`photobooth_bg_${slug}`, JSON.stringify({
-          background_image: project.background_image,
-          primary_color: project.primary_color
-        }));
+        // Ensure we have a valid project ID before proceeding
+        if (!projectData.id) {
+          console.error('Project ID is missing');
+          setError('ID du projet manquant');
+          return;
+        }
         
-        // Après un délai pour montrer l'animation d'entrée, rediriger
-        setTimeout(() => {
-          // Rediriger vers le bon type de photobooth
-          if (project.photobooth_type === 'standard' || !project.photobooth_type) {
-            router.replace(`/photobooth/${slug}`);
-          } else if (project.photobooth_type === 'premium') {
-            router.push(`/photobooth/${slug}/how`);
-          } else if (project.photobooth_type === 'photobooth2') {
-            router.push(`/photobooth/${slug}/how`);
-          } else {
-            // Fallback pour tout autre type
-            router.push(`/photobooth/${slug}/how`);
-          }
-        }, 5000); // Délai augmenté à 5 secondes pour l'animation
+        // Save project to state and localStorage
+        setProject(projectData);
+        localStorage.setItem('projectData', JSON.stringify(projectData));
+        localStorage.setItem('currentProjectId', projectData.id);
+        localStorage.setItem('currentProjectSlug', slug);
         
       } catch (error) {
-        console.error('Erreur lors de la redirection:', error);
-        setError("Une erreur est survenue lors du chargement. Veuillez réessayer ultérieurement.");
+        console.error('Error loading project data:', error);
+        setError('Impossible de charger les données du projet');
       } finally {
         setLoading(false);
       }
     }
     
-    redirectBasedOnType();
-  }, [slug, router, supabase]);
+    fetchProject();
+  }, [slug, supabase]);
   
+  const handleStartClick = () => {
+    // Rediriger vers le bon type de photobooth
+    if (project.photobooth_type === 'standard' || !project.photobooth_type) {
+      router.push(`/photobooth/${slug}/style`);
+    } else if (project.photobooth_type === 'premium') {
+      router.push(`/photobooth-premium/${slug}/how`);
+    } else if (project.photobooth_type === 'photobooth2') {
+      router.push(`/photobooth2/${slug}/how`);
+    } else {
+      // Fallback pour tout autre type
+      router.push(`/photobooth/${slug}/style`);
+    }
+  };
+
   // Afficher un message d'erreur si nécessaire
   if (error) {
     return (
@@ -100,42 +109,21 @@ export default function PhotoboothRedirect({ params }) {
   const secondaryColor = project.secondary_color || '#E5E40A';
   const homeMessage = project.home_message || "C'est vous le mannequin !";
   
-  // Style du background
-  const backgroundStyle = {
-    backgroundImage: project.background_image ? `url(${project.background_image})` : 'none',
-    backgroundColor: primaryColor,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-  };
-  
   return (
-    <div 
-      className="flex h-screen w-full items-center justify-center overflow-hidden"
-      style={backgroundStyle}
+    <main 
+      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center"
+      style={{ backgroundColor: primaryColor }}
     >
-      <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
-      
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 flex flex-col items-center justify-center w-full max-w-3xl p-8"
-      >
-        {/* Logo avec animation */}
+      <div className="max-w-6xl mx-auto text-center">
+        {/* Logo ou titre */}
         {project.logo_url && (
           <motion.div 
-            className="mb-8"
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-            transition={{ 
-              duration: 1,
-              delay: 0.3,
-              type: "spring",
-              stiffness: 100 
-            }}
+            className="mb-8 flex justify-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            <div className="w-[280px] h-[280px] relative">
+            <div className="w-[280px] h-[180px] relative">
               <Image 
                 src={project.logo_url} 
                 alt={project.name} 
@@ -153,21 +141,31 @@ export default function PhotoboothRedirect({ params }) {
           className="text-4xl md:text-5xl font-bold text-center mb-8 text-white drop-shadow-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
         >
           {homeMessage}
         </motion.h1>
+        
+        {/* Sous-titre explicatif */}
+        <motion.p
+          className="text-xl text-white/90 mb-12 max-w-2xl mx-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+        >
+          Découvrez une expérience photo unique où l'intelligence artificielle transforme votre portrait.
+        </motion.p>
         
         {/* Bouton de démarrage moderne */}
         <motion.div 
           className="mt-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
+          transition={{ delay: 0.8, duration: 0.8 }}
         >
           <div 
             className="relative group cursor-pointer"
-            onClick={() => router.push(`/photobooth/${slug}/how`)}
+            onClick={handleStartClick}
           >
             <div 
               className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
@@ -187,19 +185,23 @@ export default function PhotoboothRedirect({ params }) {
           </div>
         </motion.div>
         
-        {/* Indicateur de chargement animé au bas de l'écran */}
+        {/* Animation de chargement */}
         <motion.div 
-          className="absolute bottom-10 left-0 right-0 flex justify-center"
+          className="mt-12 flex justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
         >
-          <div className="flex space-x-2 items-center text-white/80 text-sm">
-            <div className="w-2 h-2 rounded-full bg-white animate-ping"></div>
-            <p>Chargement de votre expérience...</p>
+          <div className="flex space-x-3 items-center">
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0s' }}></div>
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+            <p className="text-white/80">Préparation de votre expérience photo...</p>
           </div>
         </motion.div>
-      </motion.div>
-    </div>
+      </div>
+    </main>
   );
 }

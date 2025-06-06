@@ -1,60 +1,52 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import './style.css'; // Importing the CSS from the local directory
 
 export default function StyleSelection({ params }) {
   const slug = params.slug;
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const scrollRef = useRef(null);
   
   const [loading, setLoading] = useState(true);
-  const [stylesLoading, setStylesLoading] = useState(true);
   const [project, setProject] = useState(null);
   const [settings, setSettings] = useState(null);
   const [styles, setStyles] = useState([]);
-  const [gender, setGender] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [error, setError] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(50);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Effect for infinite scroll
   useEffect(() => {
-    // Essayer de charger depuis localStorage pour un rendu plus rapide
-    const cachedProject = localStorage.getItem('projectData');
-    if (cachedProject) {
-      try {
-        const parsedProject = JSON.parse(cachedProject);
-        setProject(parsedProject);
-        
-        // Récupérer les paramètres en cache
-        const cachedSettings = localStorage.getItem('projectSettings');
-        if (cachedSettings) {
-          const parsedSettings = JSON.parse(cachedSettings);
-          setSettings(parsedSettings);
-          // Définir le genre par défaut depuis les paramètres
-          setGender(parsedSettings.default_gender || 'm');
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        if (scrollTop + clientHeight >= scrollHeight - 100) {
+          setVisibleCount(prev => Math.min(prev + 10, styles.length));
         }
-        
-        setLoading(false);
-      } catch (e) {
-        console.error("Erreur lors de l'analyse des données en cache:", e);
       }
+    };
+
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
     }
-    
-    // Toujours récupérer les données fraîches
-    fetchProjectData();
-  }, [fetchProjectData]);
-  
-  useEffect(() => {
-    // Charger les styles quand l'ID du projet est disponible et qu'un genre est sélectionné
-    if (project?.id && gender) {
-      fetchStyles();
-    }
-  }, [project?.id, gender, fetchStyles]);
-  
-  // Wrap fetchProjectData in useCallback to avoid recreation on every render
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [styles.length]);
+
+  // Fetch project data
   const fetchProjectData = useCallback(async () => {
     try {
       // Récupérer les données du projet par slug
@@ -82,289 +74,399 @@ export default function StyleSelection({ params }) {
       const projectSettings = settingsData || { default_gender: 'm' };
       setSettings(projectSettings);
       
-      // Définir le genre par défaut s'il n'est pas déjà sélectionné
-      if (!gender) {
-        setGender(projectSettings.default_gender || 'm');
+      // Fetch styles for this project
+      const { data: stylesData, error: stylesError } = await supabase
+        .from('styles')
+        .select('*')
+        .eq('project_id', projectData.id)
+        .eq('is_active', true);
+        
+      if (stylesError) {
+        console.error("Error fetching styles:", stylesError);
+        throw stylesError;
       }
+
+      // Process styles to ensure valid image URLs
+      const processedStyles = stylesData?.map(style => {
+        if (!style.preview_image) {
+          console.warn(`Style ${style.id} (${style.name}) has no preview_image`);
+          return style;
+        }
+        
+        // Fix URLs that are just paths or references
+        if (style.preview_image && !style.preview_image.startsWith('http')) {
+          // If it looks like a storage path
+          if (style.preview_image.includes('/')) {
+            try {
+              const publicUrl = supabase.storage
+                .from('styles')
+                .getPublicUrl(style.preview_image).data.publicUrl;
+              style.preview_image = publicUrl;
+            } catch (e) {
+              console.error(`Error generating URL for ${style.name}:`, e);
+            }
+          } else {
+            // Maybe it's just a filename
+            try {
+              const publicUrl = `https://leeveostockage.s3.eu-west-3.amazonaws.com/style/${style.preview_image}`;
+              style.preview_image = publicUrl;
+            } catch (e) {
+              console.error(`Error creating URL for ${style.name}:`, e);
+            }
+          }
+        }
+        
+        return style;
+      }) || [];
       
-      // Stocker les infos du projet dans localStorage
+      console.log(`Fetched ${processedStyles.length} styles for project`);
+      setStyles(processedStyles);
+      
+      // Store project info in localStorage
       localStorage.setItem('currentProjectId', projectData.id);
       localStorage.setItem('currentProjectSlug', slug);
       localStorage.setItem('projectData', JSON.stringify(projectData));
       localStorage.setItem('projectSettings', JSON.stringify(projectSettings));
       
     } catch (error) {
-      console.error('Erreur lors du chargement du projet:', error);
+      console.error('Error loading project:', error);
       setError("Impossible de charger les données du projet");
     } finally {
       setLoading(false);
     }
   }, [slug, supabase]);
   
-  // Wrap fetchStyles in useCallback
-  const fetchStyles = useCallback(async () => {
-    setStylesLoading(true);
-    try {
-      console.log(`Chargement des styles pour projet=${project.id}, genre=${gender}`);
-      
-      // Récupérer les styles pour ce projet et ce genre
-      const { data, error } = await supabase
-        .from('styles')
-        .select('*')
-        .eq('project_id', project.id)
-        .eq('gender', gender)
-        .eq('is_active', true)
-        .order('style_key');
-        
-      if (error) {
-        console.error("Erreur lors du chargement des styles:", error);
-        throw error;
-      }
-      
-      console.log(`${data?.length || 0} styles trouvés`);
-      setStyles(data || []);
-    } catch (error) {
-      console.error('Erreur lors du chargement des styles:', error);
-      setError("Impossible de charger les styles");
-    } finally {
-      setStylesLoading(false);
-    }
-  }, [slug, supabase]);
-
-  // Fix lines 48 and 55 - Add missing dependencies
   useEffect(() => {
-    // Charger les styles quand l'ID du projet est disponible et qu'un genre est sélectionné
-    if (project?.id && gender) {
-      fetchStyles();
-    }
-  }, [project?.id, gender, fetchStyles]); // Add fetchStyles to dependencies
-
-  // Fix line 102 - Add gender dependency
-  const handleSelectStyle = useCallback((styleId) => {
-    const style = styles.find(s => s.id === styleId);
-    if (style) {
-      setSelectedStyle(style);
-      
-      // Prefer S3 URL if available, otherwise use the main preview_image
-      const imageUrl = style.s3_url || style.preview_image;
-      
-      // Stocker dans localStorage pour la page caméra
-      localStorage.setItem('styleGeneral', style.style_key);
-      localStorage.setItem('styleGenderFix', gender);
-      localStorage.setItem('styleFix', imageUrl);
-      localStorage.setItem('selectedStyleId', style.id);
-      
-      console.log("Style sélectionné:", {
-        styleKey: style.style_key,
-        gender: gender,
-        previewImage: imageUrl,
-        styleId: style.id
-      });
-    }
-  }, [router, slug, gender]); // Add missing dependency
-
-  function handleContinue() {
-    if (selectedStyle) {
-      router.push(`/photobooth2/${slug}/cam`);
-    } else {
-      setError("Veuillez sélectionner un style");
-    }
-  }
-
-  // Fix line 132 - Add gender and project.id dependencies
-  const handleSkip = useCallback(() => {
-    // Logique pour passer l'étape de sélection de style
-    router.push(`/photobooth2/${slug}/cam`);
-  }, [router, gender, project?.id]); // Add missing dependencies
-
-  // Filter styles by gender, memoized to avoid unnecessary recalculations
-  const filterStylesByGender = useCallback(() => {
-    if (!styles || styles.length === 0) return [];
+    fetchProjectData();
+  }, [fetchProjectData]);
+  
+  const handleStyleSelect = (style) => {
+    setSelectedStyle(style);
+    localStorage.setItem('selectedStyleId', style.id);
+    localStorage.setItem('selectedStyleData', JSON.stringify(style)); 
     
-    return styles.filter(style => style.gender === gender);
-  }, [styles]); // Add missing dependency
-
-  // Fix line 178 - Add router and slug to useCallback dependency array
-  // Redirect to results page with selected style
-  const handleGoToResults = useCallback(() => {
-    if (selectedStyle) {
-      const imageUrl = selectedStyle.s3_url || selectedStyle.preview_image;
-      
-      // Stocker dans localStorage pour la page résultats
-      localStorage.setItem('finalStyle', selectedStyle.style_key);
-      localStorage.setItem('finalGender', gender);
-      localStorage.setItem('finalImage', imageUrl);
-      
-      router.push(`/photobooth2/${slug}/results`);
-    } else {
-      setError("Veuillez sélectionner un style");
+    // Ensure we have a valid image URL for the selected style
+    let styleImageUrl = style.preview_image;
+    
+    // Store style image URL for fal.ai processing
+    localStorage.setItem('styleFix', styleImageUrl);
+    
+    // Store style gender for processing (using 'g' as default if not specified)
+    localStorage.setItem('styleGenderFix', style.gender || 'g');
+    localStorage.setItem('styleGender', style.gender || 'g');
+    
+    // Store style prompt if available
+    if (style.prompt) {
+      localStorage.setItem('stylePrompt', style.prompt);
     }
-  }, [router, slug]); // Add missing dependencies
-
+    
+    // Show confirmation modal
+    setShowConfirmModal(true);
+  };
+  
+  const handleStartClick = () => {
+    if (!selectedStyle) {
+      setError('Veuillez sélectionner un style avant de continuer');
+      return;
+    }
+    
+    // Navigate to camera page
+    router.push(`/photobooth2/${slug}/cam`);
+  };
+  
+  // Function to close the modal
+  const closeModal = () => {
+    setShowConfirmModal(false);
+  };
+  
   if (loading) {
     return (
-      <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
-
+  
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+  
   if (!project) {
     return notFound();
   }
-
-  // Styles dynamiques basés sur les couleurs du projet
+  
+  // Dynamic styles based on project colors
   const primaryColor = project.primary_color || '#811A53';
   const secondaryColor = project.secondary_color || '#E5E40A';
 
   return (
     <main 
-      className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
+      className="min-h-screen flex flex-col"
       style={{ backgroundColor: primaryColor }}
+      ref={scrollRef}
     >
-      <div className="fixed top-0 mx-auto w-[65%] mt-4">
-        {project.logo_url ? (
-          <Image 
-            src={project.logo_url} 
-            width={607} 
-            height={168} 
-            alt={project.name} 
-            className='w-full' 
-            priority 
-          />
-        ) : (
-          <h1 
-            className="text-4xl font-bold text-center" 
-            style={{ color: secondaryColor }}
-          >
-            {project.name}
-          </h1>
-        )}
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-20 mb-4 w-4/5 mx-auto">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
-      <div className="w-full mt-[20vh]">
-        {/* Sélection du genre */}
-        <div className="mb-8">
-          <h2 
-            className="text-xl font-bold text-center mb-6"
-            style={{ color: secondaryColor }}
-          >
-            Choisissez votre catégorie
-          </h2>
+      <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 lg:py-12 flex flex-col flex-grow">
+        {/* Logo et message d'accueil */}
+        <div className="flex flex-col items-center mb-10">
+          {project.logo_url ? (
+            <img 
+              src={project.logo_url} 
+              alt={project.name} 
+              className="max-w-xs w-full mb-8 drop-shadow-2xl"
+            />
+          ) : (
+            <h1 className="text-3xl font-bold text-white mb-8">{project.name}</h1>
+          )}
           
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 max-w-3xl mx-auto">
-            <button 
-              onClick={() => setGender('m')}
-              className={`p-3 rounded-lg transition-all ${gender === 'm' ? 'ring-4' : 'opacity-70'}`}
-              style={{ 
-                backgroundColor: gender === 'm' ? secondaryColor : 'rgba(255,255,255,0.2)',
-                color: gender === 'm' ? primaryColor : 'white',
-                ringColor: 'white'
-              }}
-            >
-              Homme
-            </button>
-            <button 
-              onClick={() => setGender('f')}
-              className={`p-3 rounded-lg transition-all ${gender === 'f' ? 'ring-4' : 'opacity-70'}`}
-              style={{ 
-                backgroundColor: gender === 'f' ? secondaryColor : 'rgba(255,255,255,0.2)',
-                color: gender === 'f' ? primaryColor : 'white',
-                ringColor: 'white'
-              }}
-            >
-              Femme
-            </button>
-            <button 
-              onClick={() => setGender('ag')}
-              className={`p-3 rounded-lg transition-all ${gender === 'ag' ? 'ring-4' : 'opacity-70'}`}
-              style={{ 
-                backgroundColor: gender === 'ag' ? secondaryColor : 'rgba(255,255,255,0.2)',
-                color: gender === 'ag' ? primaryColor : 'white',
-                ringColor: 'white'
-              }}
-            >
-              Ado Garçon
-            </button>
-            <button 
-              onClick={() => setGender('af')}
-              className={`p-3 rounded-lg transition-all ${gender === 'af' ? 'ring-4' : 'opacity-70'}`}
-              style={{ 
-                backgroundColor: gender === 'af' ? secondaryColor : 'rgba(255,255,255,0.2)',
-                color: gender === 'af' ? primaryColor : 'white',
-                ringColor: 'white'
-              }}
-            >
-              Ado Fille
-            </button>
-          </div>
+          <h2 
+            className="text-3xl sm:text-5xl font-bold text-center"
+            style={{ color: secondaryColor }}
+          >
+            {project.home_message || "Choisissez votre style préféré"}
+          </h2>
+          <p className="mt-6 text-white text-opacity-90 text-center max-w-3xl text-xl">
+            Sélectionnez un style parmi ceux disponibles ci-dessous pour créer votre portrait personnalisé
+          </p>
         </div>
         
-        {/* Sélection du style */}
-        <div className="mb-8">
-          <h2 
-            className="text-xl font-bold text-center mb-6"
-            style={{ color: secondaryColor }}
-          >
-            Choisissez votre style
-          </h2>
-          
-          {stylesLoading ? (
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-            </div>
-          ) : styles.length === 0 ? (
-            <p className="text-center text-white">Aucun style disponible pour cette catégorie</p>
+        {/* Styles selection - with masonry layout */}
+        <div className="mb-16 flex-grow flex flex-col items-center justify-center">
+          <h3 className="text-2xl font-semibold text-center mb-8" style={{ color: secondaryColor }}>
+            Nos styles disponibles
+          </h3>
+          {styles.length === 0 ? (
+            <p className="text-center text-white text-xl">Aucun style disponible pour ce projet</p>
           ) : (
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3 max-w-4xl mx-auto">
-              {styles.map((style) => (
-                <div 
-                  key={style.id} 
-                  onClick={() => handleSelectStyle(style.id)}
-                  className={`cursor-pointer rounded-lg overflow-hidden transition-all ${selectedStyle?.id === style.id ? 'ring-4 ring-white' : ''}`}
-                >
-                  <div className="aspect-[3/4] relative">
-                    <Image
-                      src={style.preview_image}
-                      alt={style.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div 
-                    className="p-2 text-center"
-                    style={{ backgroundColor: secondaryColor, color: primaryColor }}
+            <div className="w-full max-w-[1800px] mx-auto">
+              {/* Masonry layout using CSS columns */}
+              <div className="masonry-grid">
+                {styles.slice(0, visibleCount).map((style, index) => (
+                  <motion.div 
+                    key={style.id}
+                    className="masonry-item mb-4 inline-block w-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
-                    {style.name}
-                  </div>
-                </div>
-              ))}
+                    <div 
+                      className={`cursor-pointer overflow-hidden rounded-2xl backdrop-blur-sm bg-white/10 shadow-lg hover:shadow-xl transition-all transform duration-300 border-2 ${
+                        selectedStyle?.id === style.id 
+                          ? 'border-white scale-105 shadow-xl' 
+                          : 'border-transparent hover:scale-[1.03]'
+                      }`}
+                      onClick={() => handleStyleSelect(style)}
+                    >
+                      {/* Image with random heights for masonry effect */}
+                      <div 
+                        className="relative overflow-hidden"
+                        style={{ 
+                          height: `${Math.floor(Math.random() * 100) + 250}px` 
+                        }}
+                      >
+                        {style.preview_image ? (
+                          <>
+                            <img 
+                              src={style.preview_image}
+                              alt={style.name}
+                              className="object-cover w-full h-full transition-transform duration-700 hover:scale-110"
+                              onError={(e) => {
+                                console.error(`Failed to load image for style ${style.name}`);
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-70 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                              <button className="px-8 py-3 bg-white rounded-full text-purple-900 font-bold shadow-lg transform hover:scale-105 transition-transform text-lg">
+                                Sélectionner
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                            <span className="text-gray-500 text-lg">Pas d&apos;image</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Informations du style */}
+                      <div className="p-5">
+                        <h4 className="font-bold text-white text-xl tracking-tight">
+                          {style.name}
+                        </h4>
+                        {style.description && (
+                          <p className="mt-2 text-white/80 text-base line-clamp-2">
+                            {style.description}
+                          </p>
+                        )}
+                        {/* Show prompt info for photobooth2 styles if available */}
+                        {style.prompt && (
+                          <div className="mt-2 p-2 rounded-md bg-white/10">
+                            <p className="text-white/60 text-xs line-clamp-2">
+                              Prompt: {style.prompt.substring(0, 80)}...
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Badge de sélection */}
+                      {selectedStyle?.id === style.id && (
+                        <div className="absolute top-4 right-4 bg-white/90 text-purple-900 text-sm font-bold px-3 py-1.5 rounded-full">
+                          Sélectionné
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Bouton Continuer */}
-      <div className="fixed bottom-10 w-full">
-        <div className="w-[70%] mx-auto">
-          <button 
-            onClick={handleContinue}
-            disabled={!selectedStyle}
-            className={`w-full py-4 font-bold text-xl rounded-lg transition-all ${!selectedStyle ? 'opacity-50 cursor-not-allowed' : ''}`}
-            style={{ 
-              backgroundColor: secondaryColor, 
-              color: primaryColor 
-            }}
-          >
-            CONTINUER
-          </button>
-        </div>
+        
+        {/* Bouton "Charger plus" si tous les styles ne sont pas affichés */}
+        {visibleCount < styles.length && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setVisibleCount(prev => Math.min(prev + 10, styles.length))}
+              className="px-8 py-4 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl font-medium transition-colors text-lg"
+            >
+              Afficher plus de styles ({styles.length - visibleCount} restants)
+            </button>
+          </div>
+        )}
+        
+        {/* Fenêtre modale de confirmation - Version redesignée */}
+        <AnimatePresence>
+          {showConfirmModal && selectedStyle && (
+            <motion.div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+            >
+              {/* Fond flouté avec effet glassmorphism */}
+              <motion.div 
+                className="absolute inset-0 backdrop-blur-md bg-black/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              ></motion.div>
+              
+              {/* Contenu du popup */}
+              <motion.div 
+                className="relative max-w-md w-full rounded-2xl overflow-hidden shadow-2xl"
+                initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                transition={{ 
+                  type: "spring", 
+                  damping: 25, 
+                  stiffness: 300,
+                  duration: 0.3
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header avec dégradé coloré */}
+                <div 
+                  className="w-full h-2" 
+                  style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+                ></div>
+                
+                {/* Image du style avec overlay et effet d'échelle */}
+                <div className="relative w-full h-64 bg-gray-900">
+                  {selectedStyle.preview_image ? (
+                    <>
+                      <motion.img 
+                        src={selectedStyle.preview_image}
+                        alt={selectedStyle.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        initial={{ scale: 1.1 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 1.5 }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-800">
+                      <span className="text-gray-400">Pas d'image disponible</span>
+                    </div>
+                  )}
+                  
+                  {/* Badge du style */}
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                    >
+                      <h3 className="text-white text-2xl font-bold mb-1 drop-shadow-md">
+                        {selectedStyle.name}
+                      </h3>
+                      {selectedStyle.description && (
+                        <p className="text-white/80 text-sm line-clamp-2 drop-shadow-md">
+                          {selectedStyle.description}
+                        </p>
+                      )}
+                    </motion.div>
+                  </div>
+                </div>
+                
+                {/* Corps du popup */}
+                <div className="bg-white p-6">
+                  <motion.div
+                    className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                  >
+                    <h4 className="text-gray-800 font-semibold mb-2">Confirmation du style</h4>
+                    <p className="text-gray-600">
+                      Vous avez sélectionné <span className="font-semibold">{selectedStyle.name}</span>. 
+                      Prêt à commencer l'expérience photo?
+                    </p>
+                  </motion.div>
+                  
+                  {/* Boutons d'action - Restructuré pour mettre le bouton COMMENCER en valeur */}
+                  <div className="flex flex-col items-center gap-4">
+                    {/* Bouton COMMENCER repositionné et aggrandi */}
+                    <motion.button
+                      onClick={handleStartClick}
+                      className="w-full px-8 py-4 rounded-xl font-bold text-xl flex items-center justify-center gap-2 shadow-lg"
+                      style={{ backgroundColor: secondaryColor, color: primaryColor }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                    >
+                      <span>COMMENCER</span>
+                      <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </motion.button>
+                    
+                    {/* Bouton Annuler en dessous et plus discret */}
+                    <motion.button
+                      onClick={closeModal}
+                      className="px-5 py-2.5 rounded-lg text-gray-700 font-medium text-sm flex items-center gap-1 hover:bg-gray-100 transition-colors"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                      </svg>
+                      Annuler
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </main>
   );

@@ -1,29 +1,87 @@
 'use client';
 
 import Replicate from "replicate";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 
-// Hook webcam
+// Hook webcam with improved error handling and cleanup
 let streamCam = null;
 const useWebcam = ({ videoRef }) => {
   useEffect(() => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-        streamCam = stream;
-        window.localStream = stream;
-        if (videoRef.current !== null) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
+    let isMounted = true;
+    
+    const initializeCamera = async () => {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          console.log("Requesting camera access...");
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            } 
+          });
+          
+          // Only set the stream if the component is still mounted
+          if (isMounted) {
+            console.log("Camera access granted, initializing stream");
+            streamCam = stream;
+            window.localStream = stream;
+            
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              
+              // Use try/catch around play() to handle potential AbortError
+              try {
+                // Using a promise to handle the play request
+                await videoRef.current.play();
+                console.log("Camera stream playing successfully");
+              } catch (playError) {
+                console.error("Error playing video stream:", playError);
+                if (playError.name === "AbortError") {
+                  console.warn("Video play was aborted, likely due to component unmounting");
+                }
+              }
+            } else {
+              console.warn("Video element not found when trying to initialize camera");
+            }
+          }
+        } else {
+          console.error("MediaDevices API not supported in this browser");
         }
-      }).catch(err => {
+      } catch (err) {
         console.error("Error accessing camera:", err);
-      });
-    }
+      }
+    };
+
+    initializeCamera();
+    
+    // Cleanup function to stop all tracks when component unmounts
+    return () => {
+      isMounted = false;
+      console.log("Cleaning up camera resources...");
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      
+      if (streamCam) {
+        try {
+          const tracks = streamCam.getTracks();
+          tracks.forEach(track => {
+            track.stop();
+            console.log(`Stopped track: ${track.kind}`);
+          });
+          streamCam = null;
+          window.localStream = null;
+        } catch (cleanupError) {
+          console.error("Error during camera cleanup:", cleanupError);
+        }
+      }
+    };
   }, [videoRef]);
 };
 
@@ -50,6 +108,8 @@ export default function CameraCapture({ params }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [resultFaceSwap, setResultFaceSwap] = useState(null);
   const [numProses, setNumProses] = useState(0);
+  // Add the missing camera error state
+  const [cameraError, setCameraError] = useState(null);
   
   // Fonction reset2 définie pour éviter les erreurs
   const reset2 = () => {
@@ -61,17 +121,105 @@ export default function CameraCapture({ params }) {
   // Initialize webcam
   useWebcam({ videoRef, previewRef });
   
+  // Properly memoize fetchProjectData with useCallback
+  const fetchProjectData = useCallback(async () => {
+    try {
+      // Add retry logic to handle potential 406 errors
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          // Fetch project data by slug with more specific select
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('id, name, slug, logo_url, primary_color, secondary_color, is_active')
+            .eq('slug', slug)
+            .eq('is_active', true)
+            .single();
+
+          if (projectError || !projectData) {
+            console.error('Project not found or inactive:', projectError);
+            return notFound();
+          }
+          
+          setProject(projectData);
+          
+          // Use more specific select and handle the 406 error case
+          try {
+            const { data: settingsData } = await supabase
+              .from('project_settings')
+              .select('show_countdown, max_processing_time')
+              .eq('project_id', projectData.id)
+              .single();
+            
+            // Handle the case if settings are found
+            if (settingsData) {
+              setSettings(settingsData);
+            } else {
+              // Use default settings if none found
+              setSettings({ 
+                show_countdown: true,
+                max_processing_time: 60
+              });
+            }
+          } catch (settingsError) {
+            console.warn('Could not fetch settings, using defaults:', settingsError);
+            setSettings({ 
+              show_countdown: true,
+              max_processing_time: 60
+            });
+          }
+          
+          // Store project info in localStorage
+          localStorage.setItem('currentProjectId', projectData.id);
+          localStorage.setItem('currentProjectSlug', slug);
+          localStorage.setItem('projectData', JSON.stringify(projectData));
+          
+          // Successfully completed request, break the retry loop
+          break;
+        } catch (retryError) {
+          retryCount++;
+          console.warn(`Fetch attempt ${retryCount} failed:`, retryError);
+          
+          if (retryCount >= maxRetries) {
+            throw retryError;
+          }
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading project:', error);
+      // Try to use cached data as fallback
+      const cachedProject = localStorage.getItem('projectData');
+      if (cachedProject) {
+        try {
+          setProject(JSON.parse(cachedProject));
+        } catch (e) {
+          console.error("Error parsing cached project data:", e);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [slug, supabase]); // Only depend on slug and supabase
+  
+  // Fix the useEffect to avoid infinite loops
   useEffect(() => {
-    // Load project data and settings from localStorage
+    // Load project data and settings from localStorage first for faster rendering
     const cachedProject = localStorage.getItem('projectData');
     const cachedSettings = localStorage.getItem('projectSettings');
     const storedImageUrl = localStorage.getItem('styleFix');
     const storedGender = localStorage.getItem('styleGenderFix');
     
+    let initialLoadDone = false;
+    
     if (cachedProject) {
       try {
         setProject(JSON.parse(cachedProject));
-        setLoading(false);
+        initialLoadDone = true;
       } catch (e) {
         console.error("Error parsing cached project data:", e);
       }
@@ -93,53 +241,13 @@ export default function CameraCapture({ params }) {
       setStyleGender(storedGender);
     }
     
-    // Always fetch fresh data
-    fetchProjectData();
-  }, [fetchProjectData]);
-  
-  async function fetchProjectData() {
-    try {
-      // Fetch project data by slug
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single();
-
-      if (projectError || !projectData) {
-        console.error('Project not found or inactive:', projectError);
-        return notFound();
-      }
-      
-      setProject(projectData);
-      
-      // Fetch project settings
-      const { data: settingsData } = await supabase
-        .from('project_settings')
-        .select('*')
-        .eq('project_id', projectData.id)
-        .single();
-      
-      const projectSettings = settingsData || { 
-        show_countdown: true,
-        max_processing_time: 60
-      };
-      
-      setSettings(projectSettings);
-      
-      // Store project info in localStorage
-      localStorage.setItem('currentProjectId', projectData.id);
-      localStorage.setItem('currentProjectSlug', slug);
-      localStorage.setItem('projectData', JSON.stringify(projectData));
-      localStorage.setItem('projectSettings', JSON.stringify(projectSettings));
-      
-    } catch (error) {
-      console.error('Error loading project:', error);
-    } finally {
+    if (initialLoadDone) {
       setLoading(false);
     }
-  }
+    
+    // Always fetch fresh data
+    fetchProjectData();
+  }, [fetchProjectData]); // Only depend on the memoized fetchProjectData
   
   const captureVideo = () => {
     // Determine if we should show a countdown based on settings
@@ -240,27 +348,20 @@ const generateImageSwap = async () => {
   
   const start = Date.now();
   
-  // Récupérer la target_image depuis localStorage
-  const targetImageUrl = localStorage.getItem('styleFix');
-  if (!targetImageUrl) {
-    setError("Image cible manquante. Veuillez choisir un style.");
+  // Récupérer le prompt depuis localStorage au lieu d'une image cible
+  const stylePrompt = localStorage.getItem('stylePrompt');
+  if (!stylePrompt) {
+    setError("Prompt de style manquant. Veuillez choisir un style.");
     setProcessing(false);
     return;
   }
   
-  // Déterminer le genre en fonction du styleGenderFix
-  let gender = "male"; // Par défaut
-  const styleGenderFix = localStorage.getItem('styleGenderFix');
-  if (styleGenderFix === 'f' || styleGenderFix === 'af') {
-      gender = "female";
-  }
-  
   try {
       // Log pour débogage des variables d'entrée
-      console.log('Face swap input:', {
-          image: 'base64_image...',
-          image_to_become: targetImageUrl.substring(0, 100) + '...',
-          number_of_images: 1
+      console.log('Flux transformation input:', {
+          prompt: stylePrompt,
+          input_image: imageFile ? 'base64_image present' : 'image missing',
+          output_format: 'jpg'
       });
       
       // Ajouter à la liste des logs
@@ -274,7 +375,7 @@ const generateImageSwap = async () => {
       // Ajouter un log pour suivre la progression
       setLogs(prevLogs => [...prevLogs, "Initialisation de la requête API..."]);
       
-      // Timer pour simuler la progression (puisque Replicate n'a pas de streaming des logs comme fal.ai)
+      // Timer pour simuler la progression
       const progressTimer = setInterval(() => {
           setElapsedTime(Date.now() - start);
           
@@ -292,24 +393,36 @@ const generateImageSwap = async () => {
       // Utiliser l'API proxy Next.js au lieu d'appeler Replicate directement
       setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur..."]);
       
-  const response = await fetch('/api/replicate', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-body: JSON.stringify({
-  model: "fofr/become-image:8d0b076a2aff3904dfcec3253c778e0310a68f78483c4699c7fd800f3051d2b3",
-  input: {
-    image: imageFile,
-    image_to_become: targetImageUrl,
-    number_of_images: 1,
-     num_inference_steps: 20,
-  guidance_scale: 5  // Valeur par défaut est 7.5
-  }
-}),
-});
+      // Ensure the model parameter is correct and data is well-formatted
+      const requestBody = {
+        model: "black-forest-labs/flux-kontext-pro",
+        input: {
+          prompt: stylePrompt,
+          input_image: imageFile,
+          output_format: "jpg"
+        }
+      };
+      
+      console.log('Sending request to Replicate with model:', requestBody.model);
+      
+      const response = await fetch('/api/replicate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+      
+      // Check if the request was successful
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Replicate API responded with error:', response.status, errorText);
+        throw new Error(`Erreur du serveur Replicate: ${response.status} ${errorText}`);
+      }
       
       const data = await response.json();
+      console.log('Replicate API response:', data);
+      
       if (!data.success) {
         throw new Error(data.error || "Erreur lors de la génération de l'image");
       }
@@ -326,24 +439,26 @@ body: JSON.stringify({
       // Mettre à jour l'étape de traitement
       setProcessingStep(2);
       
-      // Déterminer l'URL de l'image résultante
-      const resultImageUrl = result[0]; // Replicate retourne un tableau d'URLs
+      // Le résultat du modèle est directement l'URL de l'image ou les données binaires de l'image
+      // Nous devons l'adapter selon la réponse exacte du modèle
+      const resultImageUrl = typeof result === 'string' ? result : 
+                            Array.isArray(result) ? result[0] : 
+                            result.url || result.image || result;
       
       if (!resultImageUrl) {
           console.error("URL d'image non trouvée dans la réponse:", result);
           throw new Error("URL d'image non trouvée dans la réponse");
       }
       
-      // Le reste de votre code reste inchangé
       // Stocker les métadonnées de génération pour débogage
       const generationMetadata = {
           requestTime: new Date().toISOString(),
           processingTime: Date.now() - start,
-          modelUsed: 'fofr/become-image',
+          modelUsed: 'black-forest-labs/flux-kontext-pro',
           parameters: {
-              image: '[BASE64_IMAGE]',
-              image_to_become: targetImageUrl,
-              number_of_images: 1
+              prompt: stylePrompt,
+              input_image: '[BASE64_IMAGE]',
+              output_format: 'jpg'
           },
           projectId: project?.id,
           styleId: localStorage.getItem('selectedStyleId')
@@ -506,6 +621,19 @@ body: JSON.stringify({
           {enabled ? 'Vérifiez votre photo' : 'Prenez une photo'}
         </h2>
         
+        {/* Display camera error if one occurs */}
+        {cameraError && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
+            {cameraError}
+            <button 
+              onClick={() => window.location.reload()}
+              className="ml-2 underline font-medium"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
+        
         <div className="relative aspect-square w-full max-w-md mx-auto">
           {/* Countdown overlay */}
           {captured && (
@@ -519,6 +647,13 @@ body: JSON.stringify({
             ref={videoRef} 
             className={`w-full h-full object-cover rounded-lg ${enabled ? 'hidden' : 'block'}`} 
             playsInline
+            autoPlay
+            muted
+            style={{ transform: 'scaleX(-1)' }} // Mirror effect for selfie mode
+            onError={(e) => {
+              console.error("Video element error:", e);
+              setCameraError("Problème d'accès à la caméra. Veuillez vérifier les permissions.");
+            }}
           />
           
           {/* Canvas element for captured photo */}

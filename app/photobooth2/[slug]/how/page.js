@@ -15,29 +15,7 @@ export default function HowToUse({ params }) {
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
 
-  useEffect(() => {
-    // Try to load from localStorage first for faster rendering
-    const cachedProject = localStorage.getItem('projectData');
-    if (cachedProject) {
-      try {
-        setProject(JSON.parse(cachedProject));
-        setLoading(false);
-      } catch (e) {
-        console.error("Error parsing cached project data:", e);
-      }
-    }
-    
-    // Always fetch fresh data from the server to ensure it's up-to-date
-    fetchProjectData();
-  }, [fetchProjectData]);
-  
-  // Move the useCallback outside of any conditional logic to prevent Rules of Hooks violation
-  const handleGoToCam = useCallback(() => {
-    // Implement the handler logic here
-    router.push(`/photobooth2/${slug}/cam`);
-  }, [router, slug]); // Add slug to dependency array
-
-  // Use useCallback to memoize fetchProjectData
+  // Define fetchProjectData with useCallback BEFORE any useEffect that depends on it
   const fetchProjectData = useCallback(async () => {
     try {
       // Fetch project data by slug
@@ -65,12 +43,34 @@ export default function HowToUse({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [params.slug, supabase]);
+  }, [slug, supabase]); // Keep only the real dependencies
+  
+  // Define goToStyles before using it
+  const goToStyles = useCallback(() => {
+    router.push(`/photobooth2/${slug}/style`);
+  }, [router, slug]);
 
-  // Add fetchProjectData to the useEffect dependency array
+  // Handle go to camera
+  const handleGoToCam = useCallback(() => {
+    router.push(`/photobooth2/${slug}/cam`);
+  }, [router, slug]);
+
+  // useEffect hooks after all useCallbacks are defined
   useEffect(() => {
+    // Try to load from localStorage first for faster rendering
+    const cachedProject = localStorage.getItem('projectData');
+    if (cachedProject) {
+      try {
+        setProject(JSON.parse(cachedProject));
+        setLoading(false);
+      } catch (e) {
+        console.error("Error parsing cached project data:", e);
+      }
+    }
+    
+    // Always fetch fresh data
     fetchProjectData();
-  }, [fetchProjectData]); // Add fetchProjectData dependency
+  }, [fetchProjectData]); // Now fetchProjectData is defined before being used here
 
   if (loading) {
     return (
@@ -87,10 +87,6 @@ export default function HowToUse({ params }) {
   // Dynamic styles based on project colors
   const primaryColor = project.primary_color || '#811A53';
   const secondaryColor = project.secondary_color || '#E5E40A';
-
-  const goToStyles = () => {
-    router.push(`/photobooth2/${slug}/style`);
-  };
 
   return (
     <main 
@@ -175,7 +171,6 @@ export default function HowToUse({ params }) {
         </div>
       </div>
 
-      {/* Fix unescaped apostrophe */}
       <p className="text-gray-600 text-center mt-6">
         L&apos;appareil photo s&apos;ouvrira à l&apos;étape suivante. Vous pourrez alors prendre une photo.
       </p>
