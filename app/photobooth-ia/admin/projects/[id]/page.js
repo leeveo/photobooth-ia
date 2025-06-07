@@ -56,6 +56,8 @@ export default function ProjectDetails({ params }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   // Ajout d'un état pour savoir si le type de photobooth est validé
   const [typeValidated, setTypeValidated] = useState(false);
+  const [activeStep, setActiveStep] = useState(1); // Étape active pour le wizard
+  const [isSubmitting, setIsSubmitting] = useState(false); // État de soumission pour le bouton
 
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -400,6 +402,32 @@ export default function ProjectDetails({ params }) {
       .storage
       .from('backgrounds')
       .getPublicUrl(url).data.publicUrl;
+  };
+
+  // Function to handle project field changes
+  const handleProjectChange = (e) => {
+    const { name, value } = e.target;
+    setProject({
+      ...project,
+      [name]: value
+    });
+  };
+
+  // Add this function to handle project name changes
+  const handleProjectNameChange = (e) => {
+    const newName = e.target.value;
+    setProject({
+      ...project,
+      name: newName
+    });
+  };
+
+  // Add this function right after the existing state declarations
+  const handleNameChange = (e) => {
+    setProject({
+      ...project,
+      name: e.target.value
+    });
   };
 
   if (loading) {
