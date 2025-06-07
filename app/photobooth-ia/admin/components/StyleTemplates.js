@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { RiAddLine, RiCheckboxCircleLine, RiInformationLine } from 'react-icons/ri';
+import { RiAddLine, RiCheckboxCircleLine, RiInformationLine, RiRefreshLine } from 'react-icons/ri';
 
 /**
  * Composant de sélection de templates de styles prédéfinis
  */
-export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError }) {
+export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError, existingStyles = [] }) {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -17,6 +17,19 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   const [templateStyles, setTemplateStyles] = useState([]);
   // Nouvel état pour les styles sélectionnés
   const [selectedStyles, setSelectedStyles] = useState([]);
+  // Nouvel état pour gérer le rafraîchissement
+  const [refreshing, setRefreshing] = useState(false);
+  // État pour stocker les clés de style existants (pour éviter les doublons)
+  const [existingStyleKeys, setExistingStyleKeys] = useState(new Set());
+
+  // Effect to build a set of existing style keys when component mounts or existingStyles changes
+  useEffect(() => {
+    const styleKeys = new Set();
+    existingStyles.forEach(style => {
+      styleKeys.add(`${style.style_key}_${style.gender || 'g'}`);
+    });
+    setExistingStyleKeys(styleKeys);
+  }, [existingStyles]);
 
   // Helper function to determine tags for a specific style
   const getTagsForStyle = (templateId, styleName) => {
@@ -32,6 +45,38 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
     }
     
     return defaultTags;
+  };
+
+  // Helper function to get tags for a template (aggregating all style tags)
+  const getTagsForTemplate = (templateId) => {
+    // Most templates support all tags
+    const allTags = ["homme", "femme", "groupe"];
+    
+    // Collections that don't support group photos
+    const noGroupCollections = ["sciencefiction", "digital", "medieval", "post-apocalyptic"];
+    
+    // Return ["homme", "femme"] for these collections, all tags otherwise
+    if (noGroupCollections.includes(templateId)) {
+      return ["homme", "femme"];
+    }
+    
+    return allTags;
+  };
+
+  // Fonction pour rafraîchir les données
+  const refreshData = () => {
+    setRefreshing(true);
+    // Simuler un rafraîchissement des données
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  // Fonction pour mettre à jour le genre d'un style
+  const updateStyleGender = (index, gender) => {
+    const updatedStyles = [...templateStyles];
+    updatedStyles[index].gender = gender;
+    setTemplateStyles(updatedStyles);
   };
 
   // Définition des templates de styles
@@ -927,6 +972,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
           style_key: 'witch',
           description: 'Style sorcière',
           preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/f-witch.jpg',
+          prompt: 'Transform this portrait into a witch with magical elements, a dark forest background, and a mysterious aura.',
           variations: 2
         }
       ]
@@ -2688,16 +2734,26 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       setSelectedTemplate(template);
       
       // Initialiser les styles avec le genre par défaut 'g' (général/neutre) pour le nouveau processus
-      const stylesWithGender = template.styles.map(style => ({
-        ...style,
-        gender: 'g', // Utiliser 'g' comme valeur par défaut pour tous les styles
-        selected: true, // Présélectionner tous les styles par défaut
-        tags: style.tags || getTagsForStyle(template.id, style.name) // Utiliser la fonction helper pour déterminer les tags
-      }));
+      const stylesWithGender = template.styles.map(style => {
+        // Check if this style already exists in the project
+        const styleExists = existingStyleKeys.has(`${style.style_key}_g`);
+        
+        return {
+          ...style,
+          gender: 'g', // Utiliser 'g' comme valeur par défaut pour tous les styles
+          selected: !styleExists, // Présélectionner seulement les styles qui n'existent pas déjà
+          disabled: styleExists, // Désactiver les styles qui existent déjà
+          tags: style.tags || getTagsForStyle(template.id, style.name) // Utiliser la fonction helper pour déterminer les tags
+        };
+      });
       
       setTemplateStyles(stylesWithGender);
-      // Initialiser les styles sélectionnés avec tous les styles
-      setSelectedStyles(stylesWithGender.map((_, index) => index));
+      // Initialiser les styles sélectionnés avec tous les styles non désactivés
+      setSelectedStyles(
+        stylesWithGender
+          .map((style, index) => style.disabled ? null : index)
+          .filter(index => index !== null)
+      );
       setShowDetailsPopup(true);
     }
   };
@@ -2705,6 +2761,12 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   // Fonction pour gérer la sélection d'un style
   const toggleStyleSelection = (index) => {
     const updatedStyles = [...templateStyles];
+    
+    // Ne pas permettre la sélection si le style est désactivé
+    if (updatedStyles[index].disabled) {
+      return;
+    }
+    
     updatedStyles[index].selected = !updatedStyles[index].selected;
     setTemplateStyles(updatedStyles);
     
@@ -2717,20 +2779,29 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
 
   // Fonction pour sélectionner/désélectionner tous les styles
   const toggleSelectAll = () => {
-    const allSelected = templateStyles.every(style => style.selected);
+    // Vérifier si tous les styles non désactivés sont sélectionnés
+    const allSelectableSelected = templateStyles
+      .filter(style => !style.disabled)
+      .every(style => style.selected);
+    
+    // Mettre à jour seulement les styles qui ne sont pas désactivés
     const updatedStyles = templateStyles.map(style => ({
       ...style,
-      selected: !allSelected
+      selected: style.disabled ? false : !allSelectableSelected
     }));
     
     setTemplateStyles(updatedStyles);
     
-    if (allSelected) {
+    if (allSelectableSelected) {
       // Tout désélectionner
       setSelectedStyles([]);
     } else {
-      // Tout sélectionner
-      setSelectedStyles(updatedStyles.map((_, index) => index));
+      // Sélectionner tous les styles non désactivés
+      setSelectedStyles(
+        updatedStyles
+          .map((style, index) => style.disabled ? null : (style.selected ? index : null))
+          .filter(index => index !== null)
+      );
     }
   };
 
@@ -2755,72 +2826,78 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         throw new Error(`Ce template n'est pas compatible avec ce type de photobooth (${projectData.photobooth_type})`);
       }
       
+      // Récupérer les styles existants pour éviter les doublons
+      const { data: existingStyles } = await supabase
+        .from('styles')
+        .select('style_key, gender')
+        .eq('project_id', projectId);
+      
+      // Créer un ensemble de clés existantes pour vérification rapide
+      const existingStyleKeys = new Set();
+      existingStyles?.forEach(style => {
+        existingStyleKeys.add(`${style.style_key}_${style.gender}`);
+      });
+      
       // Insérer uniquement les styles sélectionnés dans la base de données
       const selectedStylesData = templateStyles
-        .filter(style => style.selected)
-        .map(style => ({
-          project_id: projectId,
-          name: style.name,
-          gender: style.gender || 'g',
-          style_key: style.style_key,
-          preview_image: style.preview_image,
-          description: style.description,
-          prompt: style.prompt, // Ajouter le prompt pour le nouveau modèle
-          is_active: true,
-          variations: style.variations || 1,
-          // tags: style.tags || getTagsForStyle(selectedTemplate.id, style.name) // Utiliser les tags définis ou calculer les bons tags
-        }));
+        .filter(style => style.selected && !style.disabled) // Exclure les styles désactivés
+        .filter(style => {
+          // Exclure les styles avec la même combinaison style_key et gender
+          const styleKey = `${style.style_key}_${style.gender}`;
+          if (existingStyleKeys.has(styleKey)) {
+            console.log(`Style déjà existant, ignoré: ${style.name} (${style.style_key}, ${style.gender})`);
+            return false;
+          }
+          return true;
+        })
+        .map(style => {
+          return {
+            project_id: projectId,
+            name: style.name,
+            gender: style.gender || 'g', // Use gender field directly (not JSON)
+            style_key: style.style_key,
+            preview_image: style.preview_image,
+            description: style.description,
+            prompt: style.prompt,
+            is_active: true,
+            variations: style.variations || 1
+            // Remove tags from database insertion - tags column doesn't exist
+          };
+        });
       
       if (selectedStylesData.length === 0) {
-        throw new Error("Veuillez sélectionner au moins un style");
+        throw new Error("Aucun nouveau style à ajouter ou tous les styles sont déjà présents");
       }
+      
+      console.log(`Ajout de ${selectedStylesData.length} nouveaux styles`);
       
       const { data, error } = await supabase
         .from('styles')
         .insert(selectedStylesData)
         .select();
         
-      if (error) throw error;
+      if (error) {
+        // Gérer spécifiquement l'erreur de contrainte unique
+        if (error.code === '23505' && error.message.includes('unique_gender_style_key')) {
+          throw new Error("Un ou plusieurs styles existent déjà avec la même combinaison de genre et clé de style.");
+        }
+        throw error;
+      }
       
       // When styles are successfully added, make sure to call the callback:
-      // Example of what your add function might look like:
-      const handleAddStyles = async (templateStyles) => {
-        try {
-          setAddingStyles(true);
-          setError(null);
-          
-          console.log(`Adding ${templateStyles.length} styles from template`);
-          
-          // Your existing code to add styles to the database
-          // ...
-          
-          // After successful addition of styles
-          console.log('Successfully added styles to database');
-          
-          // Important: Call the callback with the added styles
-          if (typeof onStylesAdded === 'function') {
-            onStylesAdded(templateStyles);
-          }
-          
-        } catch (error) {
-          console.error('Error adding styles:', error);
-          setError(error.message || 'Une erreur est survenue lors de l\'ajout des styles');
-          
-          // Call error callback if provided
-          if (typeof onError === 'function') {
-            onError(error.message || 'Une erreur est survenue lors de l\'ajout des styles');
-          }
-        } finally {
-          setAddingStyles(false);
-        }
-      };
+      if (typeof onStylesAdded === 'function') {
+        onStylesAdded(data);
+      }
       
+      // Fermer automatiquement le popup après l'ajout réussi
       setShowDetailsPopup(false);
       setSelectedTemplate(null);
       
     } catch (error) {
       console.error('Error applying template:', error);
-      onError(error.message);
+      if (typeof onError === 'function') {
+        onError(error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -2836,13 +2913,23 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   return (
     <div className="mt-6 space-y-6">
       <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900">Templates de styles prédéfinis</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">Templates de styles prédéfinis</h3>
+          <button 
+            onClick={refreshData}
+            className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800 transition"
+            disabled={refreshing}
+          >
+            <RiRefreshLine className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Rafraîchir</span>
+          </button>
+        </div>
         <p className="text-sm text-gray-500 mt-1">
           Sélectionnez un ensemble de styles prédéfinis pour votre projet ({photoboothType})
         </p>
       </div>
       
-      {/* Remplacer la section d'affichage des templates */}
+      {/* Section d'affichage des templates avec les tags ajoutés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {styleTemplates
           .filter(template => template.compatibleWith.includes(photoboothType))
@@ -2854,10 +2941,9 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                   ? 'ring-2 ring-indigo-500 border-indigo-500' 
                   : 'hover:shadow-md'
               }`}
-              onClick={() => openDetailsPopup(template.id)} // Modifié pour ouvrir le popup
+              onClick={() => openDetailsPopup(template.id)}
             >
               <div className="h-80 relative">
-                {/* Remplacer Image par img standard */}
                 <img
                   src={template.image}
                   alt={template.name}
@@ -2873,6 +2959,22 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                 <h4 className="font-medium text-gray-900">{template.name}</h4>
                 <p className="text-sm text-gray-500 mt-1">{template.description}</p>
                 <p className="text-xs text-gray-400 mt-2">{template.styles.length} styles</p>
+                
+                {/* Affichage des tags du template */}
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {getTagsForTemplate(template.id).map((tag, tagIndex) => (
+                    <span 
+                      key={tagIndex} 
+                      className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                        tag === 'homme' ? 'bg-blue-100 text-blue-700 border border-blue-300' :
+                        tag === 'femme' ? 'bg-pink-100 text-pink-700 border border-pink-300' :
+                        'bg-purple-100 text-purple-700 border border-purple-300'
+                      }`}
+                    >
+                      {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
@@ -2910,6 +3012,8 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                     <span className="text-gray-300">{templateStyles.length} styles disponibles</span>
                     <span className="mx-2">•</span>
                     <span className="text-gray-300">{selectedStyles.length} sélectionnés</span>
+                    <span className="mx-2">•</span>
+                    <span className="text-gray-300">{templateStyles.filter(s => s.disabled).length} déjà ajoutés</span>
                   </div>
                   
                   {/* Select all button */}
@@ -2918,13 +3022,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                     className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded-lg transition-colors flex items-center"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      {templateStyles.every(style => style.selected) ? (
+                      {templateStyles.filter(s => !s.disabled).every(style => style.selected) ? (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       ) : (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       )}
                     </svg>
-                    {templateStyles.every(style => style.selected) ? 'Tout désélectionner' : 'Tout sélectionner'}
+                    {templateStyles.filter(s => !s.disabled).every(style => style.selected) ? 'Tout désélectionner' : 'Tout sélectionner'}
                   </button>
                 </div>
                 
@@ -2934,12 +3038,19 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                       key={index} 
                       className={`relative bg-gray-800 rounded-xl overflow-hidden transition-all border ${
                         style.selected ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-gray-700'
-                      }`}
+                      } ${style.disabled ? 'opacity-50 grayscale' : ''}`}
                     >
+                      {/* Badge pour styles déjà ajoutés */}
+                      {style.disabled && (
+                        <div className="absolute top-0 left-0 right-0 z-20 bg-gray-800 bg-opacity-90 text-gray-300 py-1 px-3 text-sm text-center">
+                          Déjà ajouté
+                        </div>
+                      )}
+                      
                       {/* Checkbox pour sélection */}
                       <div 
-                        className="absolute top-2 right-2 z-10 p-1 bg-black bg-opacity-60 rounded-md cursor-pointer"
-                        onClick={() => toggleStyleSelection(index)}
+                        className={`absolute top-2 right-2 z-10 p-1 bg-black bg-opacity-60 rounded-md ${style.disabled ? 'opacity-50' : 'cursor-pointer'}`}
+                        onClick={() => !style.disabled && toggleStyleSelection(index)}
                       >
                         <div className={`w-5 h-5 flex items-center justify-center rounded ${
                           style.selected ? 'bg-indigo-600' : 'bg-gray-700'
@@ -2954,8 +3065,8 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                       
                       {/* Aperçu du style - Hauteur augmentée de h-40 à h-56 */}
                       <div 
-                        className="h-56 cursor-pointer" 
-                        onClick={() => toggleStyleSelection(index)}
+                        className={`h-56 ${!style.disabled ? 'cursor-pointer' : ''}`} 
+                        onClick={() => !style.disabled && toggleStyleSelection(index)}
                       >
                         {style.preview_image ? (
                           <img
@@ -2995,12 +3106,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                           ))}
                         </div>
                         
-                        {/* Genre selection if needed */}
+                        {/* Genre selection if needed - disabled for already added styles */}
                         <div className="mt-3">
                           <select
                             value={style.gender}
                             onChange={(e) => updateStyleGender(index, e.target.value)}
-                            className="w-full py-1 px-2 text-xs bg-gray-700 text-white border border-gray-600 rounded focus:ring-1 focus:ring-indigo-500"
+                            className={`w-full py-1 px-2 text-xs bg-gray-700 text-white border border-gray-600 rounded focus:ring-1 focus:ring-indigo-500 ${style.disabled ? 'cursor-not-allowed' : ''}`}
+                            disabled={style.disabled}
                           >
                             {getGenderOptions().map(option => (
                               <option key={option.value} value={option.value}>{option.label}</option>
