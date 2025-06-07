@@ -278,7 +278,6 @@ export default function PhotoboothStyles({ params }) {
   return (
     <main 
       className="min-h-screen flex flex-col"
-      style={{ backgroundColor: primaryColor }}
       ref={scrollRef}
     >
       <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 lg:py-12 flex flex-col flex-grow">

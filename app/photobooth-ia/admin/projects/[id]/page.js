@@ -273,42 +273,48 @@ export default function ProjectDetails({ params }) {
   async function handleAddBackground(e) {
     e.preventDefault();
     setAddingBackgroundLoading(true);
+    setError(null);
+    
     try {
-      // Upload background image
-      const { data: backgroundImageData, error: backgroundImageError } = await supabase
-        .storage
-        .from('backgrounds')
-        .upload(`public/${backgroundFile.name}`, backgroundFile);
-
-      if (backgroundImageError) throw backgroundImageError;
+      if (!backgroundFile) {
+        setError("Veuillez sélectionner une image");
+        setAddingBackgroundLoading(false);
+        return;
+      }
       
-      // Get the public URL for the uploaded file
-      const publicURL = supabase
-        .storage
-        .from('backgrounds')
-        .getPublicUrl(backgroundImageData.path || `public/${backgroundFile.name}`).data.publicUrl;
-
-      // Add new background with the public URL
-      const { error: addBackgroundError } = await supabase
-        .from('backgrounds')
-        .insert({
-          project_id: projectId,
-          name: newBackground.name,
-          image_url: publicURL // Store the complete public URL
-        });
-
-      if (addBackgroundError) throw addBackgroundError;
-
-      setAddingBackground(false);
-      setNewBackground({
-        name: '',
+      // Create FormData to send the file and metadata
+      const formData = new FormData();
+      formData.append('projectId', projectId);
+      formData.append('name', newBackground.name || 'Arrière-plan sans nom');
+      formData.append('isActive', 'true');
+      formData.append('file', backgroundFile);
+      
+      // Use the API endpoint instead of direct Supabase calls
+      const response = await fetch('/api/admin/add-background', {
+        method: 'POST',
+        body: formData
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'ajout de l'arrière-plan");
+      }
+      
+      const { data } = await response.json();
+      
+      // Update local state with the new background
+      setBackgrounds([...backgrounds, data[0]]);
+      
+      // Reset form
+      setAddingBackground(false);
+      setNewBackground({ name: '' });
       setBackgroundFile(null);
       setBackgroundImagePreview(null);
-      fetchProjectData(); // Refresh data
+      
+      setSuccess("Arrière-plan ajouté avec succès");
     } catch (error) {
-      console.error('Error adding background:', error);
-      setError('Erreur lors de l\'ajout de l\'arrière-plan');
+      console.error("Error adding background:", error);
+      setError(error.message);
     } finally {
       setAddingBackgroundLoading(false);
     }
@@ -955,12 +961,12 @@ export default function ProjectDetails({ params }) {
                           console.log('🔍 Opening style templates');
                           setShowStyleTemplates(!showStyleTemplates);
                         }}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                        className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
-                        {showStyleTemplates ? 'Masquer les templates' : 'Ajouter depuis templates'}
+                        Ajouter des styles depuis un template
                       </button
                       >
                       

@@ -174,8 +174,7 @@ export default function PhotoboothProject({ params }) {
 
   return (
     <main 
-      className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-auto"
-      style={{ backgroundColor: primaryColor }}
+      className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-auto relative z-10"
     >
       {/* Hidden fullscreen button */}
       <button 
@@ -186,9 +185,12 @@ export default function PhotoboothProject({ params }) {
         Fullscreen
       </button>
 
+      {/* Semi-transparent content background for better readability */}
+      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-0"></div>
+
       {/* Header with logo */}
       <motion.div 
-        className="w-full flex justify-center mb-8"
+        className="w-full flex justify-center mb-8 relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -214,7 +216,7 @@ export default function PhotoboothProject({ params }) {
       </motion.div>
 
       {/* Main content */}
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Welcome message */}
         <motion.div 
           className="text-center mb-16"

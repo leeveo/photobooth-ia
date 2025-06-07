@@ -270,7 +270,8 @@ export default function Result({ params }) {
   return (
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
-      style={{ backgroundColor: primaryColor }}
+      // Remove the backgroundColor style to allow the background image to show through
+      // style={{ backgroundColor: primaryColor }}
     >
       <div className="fixed top-0 mx-auto w-[65%] mt-4">
         {project.logo_url ? (

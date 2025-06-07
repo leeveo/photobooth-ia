@@ -88,7 +88,6 @@ export default function HowToUse({ params }) {
   return (
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5"
-      style={{ backgroundColor: primaryColor }}
     >
       <motion.div 
         className="fixed top-0 left-0 right-0 flex justify-center mt-4"
