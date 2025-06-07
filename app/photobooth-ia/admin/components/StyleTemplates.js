@@ -2851,17 +2851,18 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
           return true;
         })
         .map(style => {
+          // Create style object with required fields
           return {
             project_id: projectId,
             name: style.name,
-            gender: style.gender || 'g', // Use gender field directly (not JSON)
+            gender: style.gender || 'g',
             style_key: style.style_key,
             preview_image: style.preview_image,
-            description: style.description,
-            prompt: style.prompt,
+            description: style.description || '',
+            prompt: style.prompt || '',
             is_active: true,
             variations: style.variations || 1
-            // Remove tags from database insertion - tags column doesn't exist
+            // Remove any fields that don't exist in the database schema
           };
         });
       
@@ -2869,20 +2870,24 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         throw new Error("Aucun nouveau style à ajouter ou tous les styles sont déjà présents");
       }
       
-      console.log(`Ajout de ${selectedStylesData.length} nouveaux styles`);
+      console.log(`Ajout de ${selectedStylesData.length} nouveaux styles:`, selectedStylesData);
       
+      // Insert styles with explicit columns to avoid schema issues
       const { data, error } = await supabase
         .from('styles')
         .insert(selectedStylesData)
         .select();
         
       if (error) {
+        console.error("Error adding styles:", error);
         // Gérer spécifiquement l'erreur de contrainte unique
         if (error.code === '23505' && error.message.includes('unique_gender_style_key')) {
           throw new Error("Un ou plusieurs styles existent déjà avec la même combinaison de genre et clé de style.");
         }
         throw error;
       }
+      
+      console.log("Styles added successfully:", data);
       
       // When styles are successfully added, make sure to call the callback:
       if (typeof onStylesAdded === 'function') {
