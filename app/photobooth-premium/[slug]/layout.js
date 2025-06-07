@@ -191,10 +191,11 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     fetchBackground();
   }, [slug, supabase]);
 
-  // Don't apply the background on the redirect page
-  if (pathname === `/photobooth-premium/${slug}`) {
-    return children;
-  }
+  // Apply background to all pages including the main page
+  // Previously this was skipping the main page with:
+  // if (pathname === `/photobooth-premium/${slug}`) {
+  //   return children;
+  // }
 
   return (
     <>
@@ -250,49 +251,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       <div style={{ position: 'relative', zIndex: 3 }}>
         {children}
       </div>
-      
-      {/* Debug panel */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          bottom: 10,
-          right: 10,
-          background: 'rgba(0,0,0,0.8)',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 9999,
-          maxWidth: '80%'
-        }}>
-          <div><strong>Background URL:</strong> {backgroundInfo.url || 'None'}</div>
-          <div><strong>Background Color:</strong> {backgroundInfo.color || 'None'}</div>
-          <button 
-            onClick={() => {
-              if (backgroundInfo.url) {
-                // Try to force the background in multiple ways
-                document.getElementById('debug-background-container').style.cssText = `
-                  position: fixed;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  z-index: 0;
-                  background-image: url('${backgroundInfo.url}') !important;
-                  background-size: cover !important;
-                  background-position: center !important;
-                  background-repeat: no-repeat !important;
-                `;
-                // Also try document.body
-                document.body.style.backgroundImage = `url('${backgroundInfo.url}')`;
-                document.body.style.backgroundSize = 'cover';
-              }
-            }}
-          >
-            Force Apply Background
-          </button>
-        </div>
-      )}
     </>
   );
 }

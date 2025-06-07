@@ -173,9 +173,7 @@ export default function PhotoboothProject({ params }) {
   const homeMessage = project.home_message || "Transformez votre photo avec l'IA !";
 
   return (
-    <main 
-      className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 overflow-auto relative z-10"
-    >
+    <div className="relative z-10 w-full h-full">
       {/* Hidden fullscreen button */}
       <button 
         ref={fullscreenButtonRef} 
@@ -185,109 +183,108 @@ export default function PhotoboothProject({ params }) {
         Fullscreen
       </button>
 
-      {/* Semi-transparent content background for better readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-0"></div>
-
-      {/* Header with logo */}
-      <motion.div 
-        className="w-full flex justify-center mb-8 relative z-10"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="w-[280px] h-[180px] relative">
-          {project.logo_url ? (
-            <Image 
-              src={project.logo_url} 
-              fill
-              alt={project.name} 
-              className="object-contain drop-shadow-2xl" 
-              priority 
-            />
-          ) : (
-            <h1 
-              className="text-4xl font-bold text-center" 
-              style={{ color: secondaryColor }}
-            >
-              {project.name}
-            </h1>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* Welcome message */}
+      <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative z-10">
+        {/* Header with logo */}
         <motion.div 
-          className="text-center mb-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          className="w-full flex justify-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
         >
-          <motion.h2 
-            className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-          >
-            {homeMessage}
-          </motion.h2>
-          <motion.p 
-            className="text-xl text-white/90 max-w-3xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-          >
-            Découvrez une expérience photo unique où l'intelligence artificielle transforme votre portrait.
-          </motion.p>
+          <div className="w-[280px] h-[180px] relative">
+            {project.logo_url ? (
+              <Image 
+                src={project.logo_url} 
+                fill
+                alt={project.name} 
+                className="object-contain drop-shadow-2xl" 
+                priority 
+              />
+            ) : (
+              <h1 
+                className="text-4xl font-bold text-center" 
+                style={{ color: secondaryColor }}
+              >
+                {project.name}
+              </h1>
+            )}
+          </div>
         </motion.div>
 
-        {/* Start button with modern hover effect */}
-        <motion.div 
-          className="flex justify-center items-center mt-12 mb-8"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.9 }}
-        >
-          <div 
-            className="relative group cursor-pointer"
-            onClick={goToInstructions}
+        {/* Main content */}
+        <div className="max-w-6xl mx-auto">
+          {/* Welcome message */}
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            <motion.h2 
+              className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              {homeMessage}
+            </motion.h2>
+            <motion.p 
+              className="text-xl text-white/90 max-w-3xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
+              Découvrez une expérience photo unique où l'intelligence artificielle transforme votre portrait.
+            </motion.p>
+          </motion.div>
+
+          {/* Start button with modern hover effect */}
+          <motion.div 
+            className="flex justify-center items-center mt-12 mb-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
           >
             <div 
-              className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
-              style={{ 
-                borderRadius: '0.75rem', 
-              }}
-            ></div>
-            <button 
-              className="relative px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
-              style={{ 
-                backgroundColor: secondaryColor, 
-                color: primaryColor 
-              }}
+              className="relative group cursor-pointer"
+              onClick={() => router.push(`/photobooth-premium/${slug}/how`)}
             >
-              COMMENCER L&apos;EXPÉRIENCE
-            </button>
-          </div>
-        </motion.div>
-        
-        {/* Animation de chargement en bas */}
-        <motion.div 
-          className="mt-12 flex justify-center mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-        >
-          <div className="flex space-x-3 items-center">
-            <div className="flex space-x-1">
-              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0s' }}></div>
-              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div 
+                className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
+                style={{ 
+                  borderRadius: '0.75rem', 
+                }}
+              ></div>
+              <button 
+                className="relative px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
+                style={{ 
+                  backgroundColor: secondaryColor, 
+                  color: primaryColor 
+                }}
+              >
+                COMMENCER L&apos;EXPÉRIENCE
+              </button>
             </div>
-            <p className="text-white/80">Préparation de votre expérience photo...</p>
-          </div>
-        </motion.div>
-      </div>
-    </main>
+          </motion.div>
+          
+          {/* Animation de chargement en bas */}
+          <motion.div 
+            className="mt-12 flex justify-center mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.6 }}
+          >
+            <div className="flex space-x-3 items-center">
+              <div className="flex space-x-1">
+                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+              <p className="text-white/80">Préparation de votre expérience photo...</p>
+            </div>
+          </motion.div>
+        </div>
+      </main>
+    </div>
   );
 }

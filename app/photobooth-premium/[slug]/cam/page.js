@@ -1091,47 +1091,56 @@ export default function CameraCapture({ params }) {
                   {cameraError ? ` (Error: ${cameraError.substring(0, 30)}...)` : ''}
                 </div>
               )}
-
-              {cameraError ? (
-                <div className="mb-4 text-center">
-                  <div className="bg-red-800 bg-opacity-50 text-white rounded-lg p-3 mb-3 max-w-md mx-auto">
-                    <p>Problème d'accès à la caméra: {cameraError}</p>
-                  </div>
-                  <button
-                    onClick={retryCamera}
-                    className="px-6 py-2 rounded-lg text-sm font-medium bg-white bg-opacity-20 text-white"
-                  >
-                    Réessayer
-                  </button>
-                </div>
-              ) : (
-                <motion.button 
-                  onClick={captureVideo}
-                  disabled={!cameraLoaded || showCountdown}
-                  className={`px-8 py-3 rounded-lg font-bold text-xl ${!cameraLoaded || showCountdown ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                  whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
-                  whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
-                >
-                  PRENDRE UNE PHOTO
-                </motion.button>
-              )}
+              
+              {/* SIMPLIFIED camera button with direct approach */}
+              <motion.button
+                onClick={() => {
+                  console.log("🔴 PHOTO button clicked, camera state:", { cameraLoaded, cameraError });
+                  // Direct approach without unnecessary complexity
+                  setShowCountdown(true);
+                  setCountdownNumber(3);
+                  
+                  setTimeout(() => setCountdownNumber(2), 1000);
+                  setTimeout(() => setCountdownNumber(1), 2000);
+                  setTimeout(() => {
+                    setShowCountdown(false);
+                    processCapture(); // Direct call to processCapture
+                  }, 3000);
+                }}
+                className="px-8 py-3 rounded-lg font-bold text-xl relative"
+                style={{ 
+                  backgroundColor: secondaryColor, 
+                  color: primaryColor,
+                  opacity: cameraLoaded && !showCountdown ? 1 : 0.5 
+                }}
+                whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
+                whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
+                disabled={!cameraLoaded || showCountdown}
+              >
+                {showCountdown ? 'PRISE DE PHOTO...' : 
+                 cameraLoaded ? 'PRENDRE UNE PHOTO' : 'ATTENTE DE LA CAMÉRA...'}
+                {cameraLoaded && !showCountdown && (
+                  <motion.span
+                    className="absolute inset-0 rounded-lg border-2"
+                    style={{ borderColor: secondaryColor }}
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  ></motion.span>
+                )}
+              </motion.button>
             </>
           ) : (
             <motion.div 
               className="flex space-x-4"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
             >
               <motion.button 
                 onClick={retake}
                 className="px-6 py-3 rounded-lg font-medium"
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.2)', 
-                  color: 'white' 
-                }}
-                whileHover={{ scale: 1.05 }}
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.3)' }}
                 whileTap={{ scale: 0.95 }}
               >
                 REPRENDRE
@@ -1146,6 +1155,16 @@ export default function CameraCapture({ params }) {
                 CONFIRMER
               </motion.button>
             </motion.div>
+          )}
+          
+          {/* Back to styles button - always visible */}
+          {!enabled && (
+            <Link 
+              href={`/photobooth-premium/${slug}/style`}
+              className="mt-4 text-white/70 hover:text-white text-sm"
+            >
+              Retour à la sélection de style
+            </Link>
           )}
         </motion.div>
       </motion.div>
