@@ -2496,6 +2496,187 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         }
       ]
     },
+    // Add the new Grand Peintre collection here
+    {
+      id: 'grandpeintre',
+      name: 'Collection Grands Peintres',
+      description: 'Styles inspirés des plus grands maîtres de la peinture',
+      image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grandpeintre.jpg',
+      compatibleWith: ['premium'],
+      styles: [
+        {
+          name: 'Van Gogh',
+          gender: 'g',
+          style_key: 'van_gogh',
+          description: 'Style expressionniste avec coups de pinceau tourbillonnants',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/van_gogh.jpg',
+          prompt: 'Make this into a painting in the style of Vincent van Gogh, with swirling brushstrokes, bold outlines, and emotional colors.',
+          variations: 1
+        },
+        {
+          name: 'Pablo Picasso',
+          gender: 'g',
+          style_key: 'picasso',
+          description: 'Interprétation cubiste avec fragmentation géométrique',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/picasso.jpg',
+          prompt: 'Make this into a cubist interpretation inspired by Pablo Picasso, with geometric fragmentation and multiple perspectives.',
+          variations: 1
+        },
+        {
+          name: 'Salvador Dalí',
+          gender: 'g',
+          style_key: 'dali',
+          description: 'Scène surréaliste avec formes fondantes et logique onirique',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/dali.jpg',
+          prompt: 'Make this into a surreal scene in the style of Salvador Dalí, with melting forms, dream logic, and eerie shadows.',
+          variations: 1
+        },
+        {
+          name: 'Claude Monet',
+          gender: 'g',
+          style_key: 'monet',
+          description: 'Style impressionniste avec touche légère et atmosphère naturelle',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/monet.jpg',
+          prompt: 'Make this into an impressionist canvas inspired by Claude Monet, with soft dabs of light, flowing color, and natural atmosphere.',
+          variations: 1
+        },
+        {
+          name: 'Henri Matisse',
+          gender: 'g',
+          style_key: 'matisse',
+          description: 'Pièce fauviste vibrante avec couleurs non-naturalistes',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/matisse.jpg',
+          prompt: 'Make this into a vibrant fauvist piece like Henri Matisse, using wild, non-naturalistic colors and expressive forms.'
+        },
+        {
+          name: 'Johannes Vermeer',
+          gender: 'g',
+          style_key: 'vermeer',
+          description: 'Scène réaliste et poétique avec éclairage délicat',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/vermeer.jpg',
+          prompt: 'Make this into a realistic yet poetic scene in the style of Johannes Vermeer, with delicate lighting and intimate interiors.',
+          variations: 1
+        },
+        {
+          name: 'Caravaggio',
+          gender: 'g',
+          style_key: 'caravaggio',
+          description: 'Composition sombre et dramatique avec clair-obscur intense',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/caravaggio.jpg',
+          prompt: 'Make this into a dark and dramatic composition inspired by Caravaggio, with intense chiaroscuro and emotional realism.',
+          variations: 1
+        },
+        {
+          name: 'Leonardo da Vinci',
+          gender: 'g',
+          style_key: 'davinci',
+          description: 'Pièce Renaissance détaillée avec anatomie parfaite',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/davinci.jpg',
+          prompt: 'Make this into a detailed Renaissance piece in the style of Leonardo da Vinci, with perfect anatomy and subtle sfumato.',
+          variations: 1
+        },
+        {
+          name: 'Gustav Klimt',
+          gender: 'g',
+          style_key: 'klimt',
+          description: 'Peinture symboliste avec textures dorées et motifs décoratifs',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/klimt.jpg',
+          prompt: 'Make this into a symbolist painting like Gustav Klimt, with golden textures, decorative patterns, and mystical energy.',
+          variations: 1
+        },
+        {
+          name: 'Jacques-Louis David',
+          gender: 'g',
+          style_key: 'david',
+          description: 'Pièce dynamique avec héroïsme néoclassique',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/david.jpg',
+          prompt: 'Make this into a dynamic action-filled piece like Jacques-Louis David, with neoclassical heroism and sharp realism.',
+          variations: 1
+        },
+        {
+          name: 'Jackson Pollock',
+          gender: 'g',
+          style_key: 'pollock',
+          description: 'Toile expressionniste abstraite avec éclaboussures énergiques',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pollock.jpg',
+          prompt: 'Make this into an abstract expressionist canvas in the style of Jackson Pollock, with energetic splatters and chaotic rhythm.',
+          variations: 1
+        },
+        {
+          name: 'Edvard Munch',
+          gender: 'g',
+          style_key: 'munch',
+          description: 'Scène existentielle avec formes distordues et couleurs angoissées',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/munch.jpg',
+          prompt: 'Make this into a moody, existential scene in the style of Edvard Munch, with distorted forms and anxious color palettes.',
+          variations: 1
+        },
+        {
+          name: 'Henri Rousseau',
+          gender: 'g',
+          style_key: 'rousseau',
+          description: 'Composition audacieuse et simplifiée avec perspective naïve',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/rousseau.jpg',
+          prompt: 'Make this into a bold and simplified composition like Henri Rousseau, with naïve perspective and jungle fantasy.',
+          variations: 1
+        },
+        {
+          name: 'Paul Gauguin',
+          gender: 'g',
+          style_key: 'gauguin',
+          description: 'Pièce post-impressionniste vive avec aplats de couleur',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/gauguin.jpg',
+          prompt: 'Make this into a vivid post-impressionist piece in the style of Paul Gauguin, with flat fields of color and exotic themes.',
+          variations: 1
+        },
+        {
+          name: 'Giorgio de Chirico',
+          gender: 'g',
+          style_key: 'dechirico',
+          description: 'Rêve mécanique surréaliste avec ombres métaphysiques',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/dechirico.jpg',
+          prompt: 'Make this into a precise surreal mechanical dream like Giorgio de Chirico, with metaphysical shadows and timeless architecture.',
+          variations: 1
+        },
+       
+        {
+          name: 'Mark Rothko',
+          gender: 'g',
+          style_key: 'rothko',
+          description: 'Peinture minimaliste avec grands dégradés et tons émotionnels',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/rothko.jpg',
+          prompt: 'Make this into a minimalist color field painting like Mark Rothko, with large gradients and deep emotional tones.',
+          variations: 1
+        },
+        {
+          name: 'Marc Chagall',
+          gender: 'g',
+          style_key: 'chagall',
+          description: 'Vision onirique colorée avec figures flottantes et symboles folkloriques',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/chagall.jpg',
+          prompt: 'Make this into a dreamlike pastel-colored vision like Marc Chagall, with floating figures and folkloric symbols.',
+          variations: 1
+        },
+        {
+          name: 'Peter Paul Rubens',
+          gender: 'g',
+          style_key: 'rubens',
+          description: 'Composition baroque avec grand mouvement et formes musclées',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/rubens.jpg',
+          prompt: 'Make this into a baroque composition in the style of Peter Paul Rubens, with grand movement, muscular forms, and ornate beauty.',
+          variations: 1
+        },
+        {
+          name: 'Roy Lichtenstein',
+          gender: 'g',
+          style_key: 'lichtenstein',
+          description: 'Composition pop art avec points de style bande dessinée',
+          preview_image: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lichtenstein.jpg',
+          prompt: 'Make this into a bold pop art composition inspired by Roy Lichtenstein, with comic-style dots, bright colors, and graphic drama.',
+          variations: 1
+        }
+      ]
+    },
     
     // ...existing code...
   ];

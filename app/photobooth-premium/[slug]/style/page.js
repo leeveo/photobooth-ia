@@ -319,7 +319,7 @@ export default function PhotoboothStyles({ params }) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            Select a style from those available below to create your personalized portrait
+            Choisissez un style pour votre expérience photo.
           </motion.p>
         </div>
         
@@ -337,7 +337,7 @@ export default function PhotoboothStyles({ params }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
           >
-            Our Available Styles
+            Les styles disponibles
           </motion.h3>
           
           {stylesLoading ? (
@@ -349,7 +349,7 @@ export default function PhotoboothStyles({ params }) {
               />
             </div>
           ) : styles.length === 0 ? (
-            <p className="text-center text-white text-xl">No styles available for this project</p>
+            <p className="text-center text-white text-xl">Aucun style disponible pour ce projet</p>
           ) : (
             <div className="w-full max-w-[1800px] mx-auto">
               {/* Masonry layout using CSS columns */}
@@ -391,13 +391,13 @@ export default function PhotoboothStyles({ params }) {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-70 group-hover:opacity-100 transition-opacity"></div>
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                               <button className="px-8 py-3 bg-white rounded-full text-purple-900 font-bold shadow-lg transform hover:scale-105 transition-transform text-lg">
-                                Select
+                                Choisissez ce style
                               </button>
                             </div>
                           </>
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-                            <span className="text-gray-500 text-lg">No image</span>
+                            <span className="text-gray-500 text-lg">Aucune image</span>
                           </div>
                         )}
                       </div>
@@ -417,7 +417,7 @@ export default function PhotoboothStyles({ params }) {
                       {/* Selection badge */}
                       {selectedStyle?.id === style.id && (
                         <div className="absolute top-4 right-4 bg-white/90 text-purple-900 text-sm font-bold px-3 py-1.5 rounded-full">
-                          Selected
+                          Sélectionné
                         </div>
                       )}
                     </div>
@@ -440,7 +440,7 @@ export default function PhotoboothStyles({ params }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 1 }}
             >
-              Show more styles ({styles.length - visibleCount} remaining)
+              Afficher plus de styles ({styles.length - visibleCount} restants)
             </motion.button>
           </div>
         )}
@@ -499,7 +499,7 @@ export default function PhotoboothStyles({ params }) {
                     </>
                   ) : (
                     <div className="flex items-center justify-center h-full bg-gray-800">
-                      <span className="text-gray-400">No image available</span>
+                      <span className="text-gray-400">Aucune image disponible</span>
                     </div>
                   )}
                   
@@ -530,10 +530,10 @@ export default function PhotoboothStyles({ params }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
                   >
-                    <h4 className="text-gray-800 font-semibold mb-2">Style Confirmation</h4>
+                    <h4 className="text-gray-800 font-semibold mb-2">Confirmation du style</h4>
                     <p className="text-gray-600">
-                      You have selected <span className="font-semibold">{selectedStyle.name}</span>. 
-                      Ready to start the photo experience?
+                      Vous avez sélectionné <span className="font-semibold">{selectedStyle.name}</span>. 
+                      Prêt à commencer l'expérience photo ?
                     </p>
                   </motion.div>
                   
@@ -550,7 +550,7 @@ export default function PhotoboothStyles({ params }) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.5 }}
                     >
-                      <span>START</span>
+                      <span>COMMENCER</span>
                       <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
@@ -566,7 +566,7 @@ export default function PhotoboothStyles({ params }) {
                       <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                       </svg>
-                      Cancel
+                      Annuler
                     </motion.button>
                   </div>
                 </div>
