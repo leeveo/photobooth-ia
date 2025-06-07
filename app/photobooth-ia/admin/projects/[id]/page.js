@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
+import BackgroundTemplates from '../../components/BackgroundTemplates';
 
 // Composant pour initialiser les variables globales
 function InitializeGlobals({ id }) {
@@ -52,6 +53,8 @@ export default function ProjectDetails({ params }) {
   const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
   const [addingBackgroundLoading, setAddingBackgroundLoading] = useState(false);
   const [showStyleTemplates, setShowStyleTemplates] = useState(false);
+  // New state for background templates popup
+  const [showBackgroundTemplates, setShowBackgroundTemplates] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   // Ajout d'un état pour savoir si le type de photobooth est validé
@@ -101,11 +104,12 @@ export default function ProjectDetails({ params }) {
       if (stylesError) throw stylesError;
       setStyles(stylesData || []);
 
-      // Fetch project backgrounds
+      // Fetch project backgrounds - update this function to filter for active backgrounds
       const { data: backgroundsData, error: backgroundsError } = await supabase
         .from('backgrounds')
         .select('*')
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .eq('is_active', true); // Only fetch active backgrounds
 
       if (backgroundsError) throw backgroundsError;
       setBackgrounds(backgroundsData || []);
@@ -302,8 +306,8 @@ export default function ProjectDetails({ params }) {
       
       const { data } = await response.json();
       
-      // Update local state with the new background
-      setBackgrounds([...backgrounds, data[0]]);
+      // Update local state with only the new background (replacing old ones)
+      setBackgrounds(data);
       
       // Reset form
       setAddingBackground(false);
@@ -329,11 +333,32 @@ export default function ProjectDetails({ params }) {
   }
 
   async function handleEditBackground(background) {
-    // Implement edit background logic
+    // This function is no longer needed but we'll keep it for now to avoid breaking any existing references
+    console.log("Edit background feature has been removed");
   }
 
   async function handleDeleteBackground(backgroundId) {
-    // Implement delete background logic
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet arrière-plan ?")) {
+      return;
+    }
+    
+    try {
+      setError(null);
+      // Delete the background from the database
+      const { error } = await supabase
+        .from('backgrounds')
+        .delete()
+        .eq('id', backgroundId);
+        
+      if (error) throw error;
+      
+      // Update the local state
+      setBackgrounds(backgrounds.filter(bg => bg.id !== backgroundId));
+      setSuccess("Arrière-plan supprimé avec succès");
+    } catch (error) {
+      console.error('Error deleting background:', error);
+      setError(`Erreur lors de la suppression de l'arrière-plan: ${error.message}`);
+    }
   }
 
   // Function to get photobooth type label
@@ -389,11 +414,30 @@ export default function ProjectDetails({ params }) {
     }, 500);
   };
   
+  // Updated function to handle backgrounds added from templates
+  const handleBackgroundTemplatesAdded = (addedBackgrounds) => {
+    console.log(`✅ Background updated successfully`, addedBackgrounds);
+    
+    // Close the template popup
+    setShowBackgroundTemplates(false);
+    
+    // Set a success message
+    setSuccess(`Arrière-plan du projet mis à jour avec succès !`);
+    
+    // Replace the backgrounds with only the newly added background
+    setBackgrounds(addedBackgrounds);
+    
+    // Also call the full data refresh for other data
+    setTimeout(() => {
+      fetchProjectData();
+    }, 500);
+  };
+  
   // Ajouter cette fonction pour gérer les erreurs
-  const handleStyleTemplatesError = (errorMessage) => {
+  const handleBackgroundTemplatesError = (errorMessage) => {
     setError(errorMessage);
   };
-
+  
   // Helper function to ensure we have a full URL
   const getFullImageUrl = (url) => {
     if (!url) return null;
@@ -679,13 +723,24 @@ export default function ProjectDetails({ params }) {
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="text-sm font-medium text-gray-500">Arrière-plans du projet ({backgrounds.length})</h4>
-                      <button
-                        onClick={() => setAddingBackground(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                      >
-                        <RiAddLine className="mr-2 h-4 w-4" />
-                        Ajouter un arrière-plan
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setShowBackgroundTemplates(true)}
+                          className="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-lg shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>
+                          Ajouter depuis templates
+                        </button>
+                        <button
+                          onClick={() => setAddingBackground(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                        >
+                          <RiAddLine className="mr-2 h-4 w-4" />
+                          Ajouter un arrière-plan
+                        </button>
+                      </div>
                     </div>
                     
                     {backgrounds.length === 0 ? (
@@ -716,13 +771,7 @@ export default function ProjectDetails({ params }) {
                             <div className="p-2">
                               <h4 className="font-medium text-gray-900 text-sm truncate">{background.name}</h4>
                               
-                              <div className="mt-2 flex space-x-1">
-                                <button
-                                  onClick={() => handleEditBackground(background)}
-                                  className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                                >
-                                  Modifier
-                                </button>
+                              <div className="mt-2 flex justify-end">
                                 <button
                                   onClick={() => handleDeleteBackground(background.id)}
                                   className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
@@ -868,7 +917,7 @@ export default function ProjectDetails({ params }) {
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                          </svg>
+                        </svg>
                           <span className="text-sm font-medium">FaceSwapping</span>
                         </button>
                         
@@ -1497,6 +1546,18 @@ export default function ProjectDetails({ params }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Background templates popup */}
+      {showBackgroundTemplates && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <BackgroundTemplates
+            projectId={projectId}
+            onBackgroundsAdded={handleBackgroundTemplatesAdded}
+            onError={handleBackgroundTemplatesError}
+            onClose={() => setShowBackgroundTemplates(false)}
+          />
         </div>
       )}
     </>

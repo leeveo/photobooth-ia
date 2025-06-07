@@ -1,0 +1,52 @@
+{
+  "templates": [
+    {
+      "id": "neymar",
+      "name": "Neymar",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/neymar.png",
+      "category": "Sports"
+    },
+    {
+      "id": "blue-gradient",
+      "name": "Dégradé Bleu",
+      "url": "https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=1000",
+      "category": "Abstrait"
+    },
+    {
+      "id": "green-nature",
+      "name": "Nature Verte",
+      "url": "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?q=80&w=1000",
+      "category": "Nature"
+    },
+    {
+      "id": "cityscape",
+      "name": "Ville Nocturne",
+      "url": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1000",
+      "category": "Urbain"
+    },
+    {
+      "id": "beach",
+      "name": "Plage Tropicale",
+      "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1000",
+      "category": "Vacances"
+    },
+    {
+      "id": "mountains",
+      "name": "Montagnes",
+      "url": "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=1000",
+      "category": "Nature"
+    },
+    {
+      "id": "purple-abstract",
+      "name": "Abstrait Violet",
+      "url": "https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=1000",
+      "category": "Abstrait"
+    },
+    {
+      "id": "wood-texture",
+      "name": "Texture Bois",
+      "url": "https://images.unsplash.com/photo-1566312922667-4c018862b5b5?q=80&w=1000",
+      "category": "Texture"
+    }
+  ]
+}

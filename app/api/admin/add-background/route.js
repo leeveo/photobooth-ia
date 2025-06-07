@@ -1,66 +1,90 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Initialize Supabase admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 export async function POST(request) {
   try {
-    // Extract background data from request body
-    const backgroundData = await request.formData();
+    // Process the form data
+    const formData = await request.formData();
+    const file = formData.get('file');
+    const projectId = formData.get('projectId');
+    const name = formData.get('name') || 'Arrière-plan';
     
-    const projectId = backgroundData.get('projectId');
-    const name = backgroundData.get('name') || 'Arrière-plan sans nom';
-    const isActive = backgroundData.get('isActive') === 'true';
-    const file = backgroundData.get('file');
-    
-    if (!projectId || !file) {
-      return NextResponse.json({ error: 'Project ID and file are required' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
     
-    // Generate a unique filename with project ID prefix for better organization
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${projectId}/${Date.now()}.${fileExt}`;
+    if (!projectId) {
+      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+    }
     
-    // Upload the file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    // Convert file to buffer
+    const fileBuffer = await file.arrayBuffer();
+    const fileBlob = new Blob([fileBuffer]);
+    
+    // Create filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `upload_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+    const filePath = `templates/${fileName}`;
+
+    // Create a Supabase client with the service role key to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    // Upload the file to storage
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
       .from('backgrounds')
-      .upload(fileName, file);
-      
+      .upload(filePath, fileBlob, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      console.error('Error uploading file:', uploadError);
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
     
-    // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabaseAdmin.storage
+    // Get the public URL
+    const { data: publicUrlData } = supabase
+      .storage
       .from('backgrounds')
-      .getPublicUrl(fileName);
+      .getPublicUrl(filePath);
     
-    // Create a record in the backgrounds table
-    const { data, error } = await supabaseAdmin
+    // First, deactivate all existing backgrounds for this project
+    const { error: deactivateError } = await supabase
       .from('backgrounds')
-      .insert([
-        {
-          project_id: projectId,
-          name: name,
-          image_url: publicUrl,
-          is_active: isActive
-        }
-      ])
+      .update({ is_active: false })
+      .eq('project_id', projectId);
+    
+    if (deactivateError) {
+      console.error('Error deactivating existing backgrounds:', deactivateError);
+      return NextResponse.json({ error: deactivateError.message }, { status: 500 });
+    }
+    
+    // Add the new background to the database with the service role to bypass RLS
+    const { data, error } = await supabase
+      .from('backgrounds')
+      .insert({
+        project_id: projectId,
+        name: name,
+        image_url: filePath,
+        is_active: true
+      })
       .select();
     
     if (error) {
-      console.error('Database error:', error);
+      console.error('Error inserting background:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     
-    return NextResponse.json({ data });
+    return NextResponse.json({ 
+      success: true,
+      data: data
+    });
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Error in add-background route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
