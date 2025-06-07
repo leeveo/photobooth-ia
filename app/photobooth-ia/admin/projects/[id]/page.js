@@ -433,8 +433,13 @@ export default function ProjectDetails({ params }) {
     }, 500);
   };
   
-  // Ajouter cette fonction pour gérer les erreurs
+  // Ajouter cette fonction pour gérer les erreurs des templates d'arrière-plan
   const handleBackgroundTemplatesError = (errorMessage) => {
+    setError(errorMessage);
+  };
+
+  // Ajouter cette fonction pour gérer les erreurs des templates de style
+  const handleStyleTemplatesError = (errorMessage) => {
     setError(errorMessage);
   };
   
@@ -1526,6 +1531,7 @@ export default function ProjectDetails({ params }) {
               </button>
               <button
                 onClick={handleDeleteProject}
+               
                 disabled={deleteLoading}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
               >
