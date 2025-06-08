@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Composant pour initialiser les variables globales
 function InitializeGlobals({ id }) {
@@ -61,7 +62,9 @@ export default function ProjectDetails({ params }) {
   const [typeValidated, setTypeValidated] = useState(false);
   const [activeStep, setActiveStep] = useState(1); // Étape active pour le wizard
   const [isSubmitting, setIsSubmitting] = useState(false); // État de soumission pour le bouton
-
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
     setLoading(true);
@@ -486,10 +489,199 @@ export default function ProjectDetails({ params }) {
 
   // Add this function right after the existing state declarations
   const handleNameChange = (e) => {
+    // Limit to 30 characters
+    const newName = e.target.value.slice(0, 30);
     setProject({
       ...project,
-      name: e.target.value
+      name: newName
     });
+  };
+
+  // Add this function to save the project name
+  const saveProjectName = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ name: project.name })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      setSuccess("Nom du projet mis à jour avec succès");
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Error updating project name:', error);
+      setError("Erreur lors de la mise à jour du nom du projet");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add these handlers for description and home message
+  const handleDescriptionChange = (e) => {
+    // Limit to 200 characters
+    const newDescription = e.target.value.slice(0, 200);
+    setProject({
+      ...project,
+      description: newDescription
+    });
+  };
+
+  const handleHomeMessageChange = (e) => {
+    // Limit to 100 characters
+    const newHomeMessage = e.target.value.slice(0, 100);
+    setProject({
+      ...project,
+      home_message: newHomeMessage
+    });
+  };
+
+  // Function to save description
+  const saveProjectDescription = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ description: project.description })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      setSuccess("Description du projet mise à jour avec succès");
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Error updating project description:', error);
+      setError("Erreur lors de la mise à jour de la description");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to save home message
+  const saveProjectHomeMessage = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ home_message: project.home_message })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      setSuccess("Message d'accueil mis à jour avec succès");
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Error updating home message:', error);
+      setError("Erreur lors de la mise à jour du message d'accueil");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to copy URL to clipboard
+  const copyProjectUrl = () => {
+    const fullUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      setSuccess("URL copiée dans le presse-papiers");
+    }).catch((err) => {
+      console.error('Failed to copy URL:', err);
+      setError("Impossible de copier l'URL");
+    });
+  };
+
+  // Add handlers for color fields
+  const handleColorChange = (colorType, value) => {
+    setProject({
+      ...project,
+      [colorType]: value
+    });
+  };
+
+  // Function to save color changes
+  const saveColorChange = async (colorType) => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ [colorType]: project[colorType] })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      setSuccess(`Couleur ${colorType === 'primary_color' ? 'principale' : 'secondaire'} mise à jour avec succès`);
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error(`Error updating ${colorType}:`, error);
+      setError(`Erreur lors de la mise à jour de la couleur ${colorType === 'primary_color' ? 'principale' : 'secondaire'}`);
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add handler for event date change
+  const handleEventDateChange = (e) => {
+    setProject({
+      ...project,
+      event_date: e.target.value
+    });
+  };
+
+  // Function to save event date
+  const saveEventDate = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({ event_date: project.event_date })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      setSuccess("Date de l'événement mise à jour avec succès");
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Error updating event date:', error);
+      setError("Erreur lors de la mise à jour de la date de l'événement");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add a unified save function for all project fields
+  const saveProjectInfo = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          name: project.name,
+          description: project.description,
+          home_message: project.home_message,
+          primary_color: project.primary_color,
+          secondary_color: project.secondary_color,
+          event_date: project.event_date
+        })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      // Instead of setting success message, show the popup
+      setSuccessMessage("Informations du projet mises à jour avec succès");
+      setShowSuccessPopup(true);
+      
+      // Auto-hide the popup after 3 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+      
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Error updating project info:', error);
+      setError("Erreur lors de la mise à jour des informations du projet");
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -663,58 +855,208 @@ export default function ProjectDetails({ params }) {
                 <div className="space-y-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 1 : Informations du projet</h3>
                   
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 bg-gray-50 p-5 rounded-lg">
-                    <div>
+                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div className="sm:col-span-2">
                       <h4 className="text-sm font-medium text-gray-500">Nom</h4>
-                      <div className="mt-1 text-sm text-gray-900">{project.name}</div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">URL du projet</h4>
-                      <div className="mt-1 text-sm text-gray-900">/photobooth/{project.slug}</div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Description</h4>
-                      <div className="mt-1 text-sm text-gray-900">{project.description || '-'}</div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Statut</h4>
                       <div className="mt-1">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {project.is_active ? 'Actif' : 'Inactif'}
-                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={project.name}
+                            onChange={handleNameChange}
+                            maxLength={30}
+                            className="block w-full rounded-md border-gray-300 py-3 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
+                            placeholder="Nom du projet"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                          <span>Maximum 30 caractères</span>
+                          <span className={`${project.name.length >= 25 ? 'text-orange-500' : ''} ${project.name.length >= 30 ? 'text-red-500 font-bold' : ''}`}>
+                            {project.name.length}/30
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">URL du projet</h4>
+                      <div className="mt-1">
+                        <div className="relative">
+                          <div className="flex items-center">
+                            <div className="relative flex-grow">
+                              <input
+                                type="text"
+                                value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project?.slug}`}
+                                readOnly
+                                className="block w-full rounded-md border-gray-300 bg-gray-50 py-2.5 px-4 text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              />
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                              </div>
+                            </div>
+                            <button
+                              onClick={copyProjectUrl}
+                              className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                              Copier
+                            </button>
+                          </div>
+                          
+                          {/* QR Code directly embedded in the page */}
+                          <div className="mt-4 flex flex-col items-center">
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                              {project && (
+                                <QRCodeSVG
+                                  value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`}
+                                  size={150}
+                                  level="M"
+                                  bgColor="#FFFFFF"
+                                  fgColor="#000000"
+                                />
+                              )}
+                            </div>
+                            <p className="mt-2 text-xs text-gray-500 text-center">
+                              Scannez ce QR code pour accéder directement au photobooth
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">Description</h4>
+                      <div className="mt-1">
+                        <div className="relative">
+                          <textarea
+                            value={project.description || ''}
+                            onChange={handleDescriptionChange}
+                            maxLength={200}
+                            rows={3}
+                            className="block w-full rounded-md border-gray-300 py-2 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
+                            placeholder="Description du projet (optionnel)"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                          <span>Maximum 200 caractères</span>
+                          <span className={`${(project.description?.length || 0) >= 180 ? 'text-orange-500' : ''} ${(project.description?.length || 0) >= 200 ? 'text-red-500 font-bold' : ''}`}>
+                            {project.description?.length || 0}/200
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <h4 className="text-sm font-medium text-gray-500">Message d&apos;accueil</h4>
+                      <div className="mt-1">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={project.home_message || ''}
+                            onChange={handleHomeMessageChange}
+                            maxLength={100}
+                            className="block w-full rounded-md border-gray-300 py-3 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
+                            placeholder="Message d'accueil (optionnel)"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                          <span>Maximum 100 caractères</span>
+                          <span className={`${(project.home_message?.length || 0) >= 80 ? 'text-orange-500' : ''} ${(project.home_message?.length || 0) >= 100 ? 'text-red-500 font-bold' : ''}`}>
+                            {project.home_message?.length || 0}/100
+                          </span>
+                        </p>
                       </div>
                     </div>
                     
                     <div>
                       <h4 className="text-sm font-medium text-gray-500">Couleur principale</h4>
-                      <div className="mt-1 flex items-center">
-                        <div 
-                          className="w-5 h-5 mr-2 rounded-full" 
-                          style={{ backgroundColor: project.primary_color }}
-                        ></div>
-                        <span className="text-sm text-gray-900">{project.primary_color}</span>
+                      <div className="mt-1">
+                        <div className="flex items-center space-x-2">
+                          <div className="relative">
+                            <div 
+                              className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300"
+                              style={{ backgroundColor: project.primary_color }}
+                            >
+                              <input 
+                                type="color" 
+                                value={project.primary_color} 
+                                onChange={(e) => handleColorChange('primary_color', e.target.value)}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                aria-label="Choisir couleur principale"
+                              />
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={project.primary_color}
+                            onChange={(e) => handleColorChange('primary_color', e.target.value)}
+                            className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            placeholder="#RRGGBB"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Cliquez sur le carré pour ouvrir le sélecteur de couleur
+                        </p>
                       </div>
                     </div>
                     
                     <div>
                       <h4 className="text-sm font-medium text-gray-500">Couleur secondaire</h4>
-                      <div className="mt-1 flex items-center">
-                        <div 
-                          className="w-5 h-5 mr-2 rounded-full" 
-                          style={{ backgroundColor: project.secondary_color }}
-                        ></div>
-                        <span className="text-sm text-gray-900">{project.secondary_color}</span>
+                      <div className="mt-1">
+                        <div className="flex items-center space-x-2">
+                          <div className="relative">
+                            <div 
+                              className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300"
+                              style={{ backgroundColor: project.secondary_color }}
+                            >
+                              <input 
+                                type="color" 
+                                value={project.secondary_color} 
+                                onChange={(e) => handleColorChange('secondary_color', e.target.value)}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                aria-label="Choisir couleur secondaire"
+                              />
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={project.secondary_color}
+                            onChange={(e) => handleColorChange('secondary_color', e.target.value)}
+                            className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            placeholder="#RRGGBB"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Cliquez sur le carré pour ouvrir le sélecteur de couleur
+                        </p>
                       </div>
                     </div>
                     
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Message d&apos;accueil</h4>
-                      <div className="mt-1 text-sm text-gray-900">{project.home_message || '-'}</div>
+                      <h4 className="text-sm font-medium text-gray-500">Date de l&apos;événement</h4>
+                      <div className="mt-1">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="datetime-local"
+                            value={project.event_date ? new Date(project.event_date).toISOString().slice(0, 16) : ''}
+                            onChange={handleEventDateChange}
+                            className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {project.event_date ? new Date(project.event_date).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : 'Aucune date définie'}
+                        </p>
+                      </div>
                     </div>
                     
                     <div>
@@ -729,6 +1071,43 @@ export default function ProjectDetails({ params }) {
                         })}
                       </div>
                     </div>
+                    
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Statut</h4>
+                      <div className="mt-1">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {project.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Add a single save button for all fields */}
+                    <div className="sm:col-span-2 mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={saveProjectInfo}
+                        disabled={isSubmitting}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Enregistrement...
+                          </>
+                        ) : (
+                          <>
+                            <RiSaveLine className="mr-2 h-4 w-4" />
+                            Enregistrer les modifications
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Add the Backgrounds section here as an encart */}
@@ -741,7 +1120,7 @@ export default function ProjectDetails({ params }) {
                           className="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-lg shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5M11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                           </svg>
                           Ajouter depuis templates
                         </button>
@@ -896,7 +1275,7 @@ export default function ProjectDetails({ params }) {
                         <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                        </svg>
                           Type validé et verrouillé
                         </div>
                       )}
@@ -1230,7 +1609,7 @@ export default function ProjectDetails({ params }) {
                           >
                             {addingStyleLoading ? 'Ajout en cours...' : 'Ajouter'}
                           </button>
-                        </div>
+                                                                      </div>
                       </form>
                     </div>
                   )}
@@ -1239,8 +1618,8 @@ export default function ProjectDetails({ params }) {
                   {styles.length === 0 && !showStyleTemplates && !addingStyle && (
                     <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <p className="mt-4 text-gray-500">
                         Aucun style n&apos;a été ajouté à ce projet.
@@ -1278,22 +1657,6 @@ export default function ProjectDetails({ params }) {
                           </svg>
                           Galerie des styles séléctionnés ({styles.length})
                           {/* Add debug button in development */}
-                          {process.env.NODE_ENV === 'development' && (
-                            <button 
-                              onClick={async () => {
-                                console.log('Current styles:', styles);
-                                const { data } = await supabase
-                                  .from('styles')
-                                  .select('*')
-                                  .eq('project_id', projectId);
-                                console.log('Database styles:', data);
-                                setStyles(data || []);
-                              }}
-                              className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                            >
-                              Rafraîchir
-                            </button>
-                          )}
                         </h4>
                         
                         {/* Modern 5-column grid with responsive design */}
@@ -1608,6 +1971,53 @@ export default function ProjectDetails({ params }) {
           />
         </div>
       )}
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="animate-fadeIn bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 border-l-4 border-green-500 pointer-events-auto">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-green-100 rounded-full p-2">
+                <svg className="h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="ml-4 flex-1">
+                <p className="text-sm font-medium text-gray-900">Succès!</p>
+                <p className="mt-1 text-sm text-gray-500">{successMessage}</p>
+              </div>
+              <button 
+                onClick={() => setShowSuccessPopup(false)}
+                className="ml-4 text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
+}
+
+// Add this CSS animation at the top of your file
+const globalStyles = `
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+`;
+
+// Add the global styles to the document
+// This should be before the ProjectDetails function
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = globalStyles;
+  document.head.appendChild(style);
 }
