@@ -73,6 +73,10 @@ export default function ProjectDetails({ params }) {
   const [successMessage, setSuccessMessage] = useState('');
   // Add state variable for canvas layout
   const [canvasLayout, setCanvasLayout] = useState(null);
+  // Add these state variables near the other state declarations
+  const [deleteStyleConfirm, setDeleteStyleConfirm] = useState(false);
+  const [styleToDelete, setStyleToDelete] = useState(null);
+  const [deleteStyleLoading, setDeleteStyleLoading] = useState(false);
   
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -325,7 +329,7 @@ export default function ProjectDetails({ params }) {
       
       const { data } = await response.json();
       
-      // Update local state with only the new background (replacing old ones)
+      // Update local state with the backgrounds
       setBackgrounds(data);
       
       // Reset form
@@ -347,8 +351,61 @@ export default function ProjectDetails({ params }) {
     // Implement edit style logic
   }
 
+  // Replace the handleDeleteStyle function with this new version
   async function handleDeleteStyle(styleId) {
-    // Implement delete style logic
+    // Find the style to delete for showing in the confirmation popup
+    const style = styles.find(s => s.id === styleId);
+    if (style) {
+      setStyleToDelete(style);
+      setDeleteStyleConfirm(true);
+    }
+  }
+
+  // Add this new function to actually perform the deletion
+  async function confirmDeleteStyle() {
+    if (!styleToDelete) return;
+    
+    setDeleteStyleLoading(true);
+    
+    try {
+      setError(null);
+      
+      // Delete the style from the database
+      const { error } = await supabase
+        .from('styles')
+        .delete()
+        .eq('id', styleToDelete.id);
+        
+      if (error) throw error;
+      
+      // Update the local state to remove the style
+      const updatedStyles = styles.filter(s => s.id !== styleToDelete.id);
+      setStyles(updatedStyles);
+      
+      // Show success message
+      setSuccess(`Style "${styleToDelete.name}" supprimé avec succès`);
+      
+      // If style templates component is open, refresh to make the style selectable again
+      if (showStyleTemplates) {
+        // This will cause the StyleTemplates component to re-evaluate existing styles
+        // and make the deleted style selectable again
+        const { data: freshStyles, error: refreshError } = await supabase
+          .from('styles')
+          .select('*')
+          .eq('project_id', projectId);
+          
+        if (!refreshError) {
+          setStyles(freshStyles || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting style:', error);
+      setError(`Erreur lors de la suppression du style: ${error.message}`);
+    } finally {
+      setDeleteStyleLoading(false);
+      setDeleteStyleConfirm(false);
+      setStyleToDelete(null);
+    }
   }
 
   async function handleEditBackground(background) {
@@ -1232,7 +1289,7 @@ export default function ProjectDetails({ params }) {
                                 ) : (
                                   <>
                                     <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                     <div className="flex text-sm text-gray-600">
                                       <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
@@ -1428,7 +1485,7 @@ export default function ProjectDetails({ params }) {
                         disabled={!typeValidated}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
                         Ajouter des styles depuis un template
                       </button
@@ -1583,8 +1640,8 @@ export default function ProjectDetails({ params }) {
                               ) : (
                                 <>
                                   <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                                   <div className="flex text-sm text-gray-600">
                                     <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
                                       <span>Télécharger un fichier</span>
@@ -1763,18 +1820,8 @@ export default function ProjectDetails({ params }) {
                                 
                                 <div className="flex space-x-1 mt-2">
                                   <button
-                                    onClick={() => handleEditStyle(style)}
-                                    className="flex-1 inline-flex justify-center items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                      <path fillRule="evenodd" d="M2 6a2 2 0 002-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
-                                    </svg>
-                                    Modifier
-                                  </button>
-                                  <button
                                     onClick={() => handleDeleteStyle(style.id)}
-                                    className="flex-1 inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                                    className="w-full inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -1993,7 +2040,7 @@ export default function ProjectDetails({ params }) {
                 ) : (
                   <>
                     <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                    Supprimer définitivement
+                    Supprimer ce style de la galerie
                   </>
                 )}
               </button>
@@ -2035,6 +2082,85 @@ export default function ProjectDetails({ params }) {
                 <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Style delete confirmation popup */}
+      {deleteStyleConfirm && styleToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn">
+            <div className="flex items-center text-red-600 mb-4">
+              <RiAlertLine className="w-6 h-6 mr-2" />
+              <h3 className="text-lg font-medium">Confirmer la suppression</h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Êtes-vous sûr de vouloir supprimer le style <strong>"{styleToDelete.name}"</strong> de votre galerie?
+              </p>
+              
+              {styleToDelete.preview_image && (
+                <div className="flex justify-center mb-4">
+                  <div className="w-24 h-24 relative border border-gray-200 rounded-md overflow-hidden">
+                    <Image
+                      src={styleToDelete.preview_image}
+                      alt={styleToDelete.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 text-sm">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-orange-700">
+                      Vous pourrez ajouter ce style depuis les templates 
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setDeleteStyleConfirm(false);
+                  setStyleToDelete(null);
+                }}
+                disabled={deleteStyleLoading}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDeleteStyle}
+                disabled={deleteStyleLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
+              >
+                {deleteStyleLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
+                    Supprimer de la galerie des styles
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -52,39 +52,32 @@ export default function Backgrounds() {
     setSuccess(null);
 
     try {
-      // Upload to Storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${Date.now()}.${fileExt}`;
+      // Create FormData to send the file and metadata
+      const formData = new FormData();
+      formData.append('name', newBackgroundName);
+      formData.append('isActive', 'true');
+      formData.append('file', file);
       
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('backgrounds')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('backgrounds')
-        .getPublicUrl(filePath);
-
-      // Insert into backgrounds table
-      const { error: insertError } = await supabase
-        .from('backgrounds')
-        .insert({
-          name: newBackgroundName,
-          image_url: urlData.publicUrl,
-          storage_path: filePath
-        });
-
-      if (insertError) throw insertError;
-
+      // Use the API endpoint instead of direct Supabase calls
+      const response = await fetch('/api/admin/add-background', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'ajout de l'arrière-plan");
+      }
+      
+      const { data } = await response.json();
+      
       setSuccess('Arrière-plan ajouté avec succès !');
       setNewBackgroundName('');
       setFile(null);
       fetchBackgrounds();
     } catch (error) {
       console.error('Error uploading background:', error);
-      setError('Erreur lors du téléchargement. Veuillez réessayer.');
+      setError(`Erreur lors du téléchargement: ${error.message}`);
     } finally {
       setUploading(false);
     }

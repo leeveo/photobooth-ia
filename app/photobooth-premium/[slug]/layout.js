@@ -143,10 +143,32 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           // Use a random background from the backgrounds table
           const randomIndex = Math.floor(Math.random() * backgroundsData.length);
           backgroundUrl = backgroundsData[randomIndex].image_url;
+          
+          // Handle case where the URL might be a relative path
+          if (backgroundUrl && !backgroundUrl.startsWith('http')) {
+            // Try to get the full URL
+            const { data: urlData } = supabase.storage
+              .from('backgrounds')
+              .getPublicUrl(backgroundUrl);
+            
+            backgroundUrl = urlData.publicUrl;
+          }
+          
           console.log('🎯 Selected background URL:', backgroundUrl);
         } else if (projectData.background_image) {
           // Fallback to project's background image
           backgroundUrl = projectData.background_image;
+          
+          // Handle case where the URL might be a relative path
+          if (backgroundUrl && !backgroundUrl.startsWith('http')) {
+            // Try to get the full URL
+            const { data: urlData } = supabase.storage
+              .from('backgrounds')
+              .getPublicUrl(backgroundUrl);
+            
+            backgroundUrl = urlData.publicUrl;
+          }
+          
           console.log('🎯 Using project background URL:', backgroundUrl);
         }
         
