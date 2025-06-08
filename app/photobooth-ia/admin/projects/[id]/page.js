@@ -9,6 +9,13 @@ import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine, RiDeleteBin
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
 import { QRCodeSVG } from 'qrcode.react';
+import dynamic from 'next/dynamic';
+
+// Import CanvasEditorWrapper with dynamic import to prevent SSR
+const CanvasEditor = dynamic(
+  () => import('../components/CanvasEditorWrapper'),
+  { ssr: false }
+);
 
 // Composant pour initialiser les variables globales
 function InitializeGlobals({ id }) {
@@ -64,6 +71,8 @@ export default function ProjectDetails({ params }) {
   const [isSubmitting, setIsSubmitting] = useState(false); // État de soumission pour le bouton
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  // Add state variable for canvas layout
+  const [canvasLayout, setCanvasLayout] = useState(null);
   
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -1609,7 +1618,7 @@ export default function ProjectDetails({ params }) {
                           >
                             {addingStyleLoading ? 'Ajout en cours...' : 'Ajouter'}
                           </button>
-                                                                      </div>
+                        </div>
                       </form>
                     </div>
                   )}
@@ -1789,6 +1798,39 @@ export default function ProjectDetails({ params }) {
                       <RiArrowLeftLine className="mr-2 h-4 w-4" />
                       Retour
                     </button>
+                  </div>
+                </div>
+                
+                {/* Ajout de l'étape 4: Éditeur de Canvas */}
+                <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 4 : Éditeur de Canvas</h3>
+                  
+                  {/* Message de guide si le type n'est pas validé */}
+                  {!typeValidated && (
+                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <RiAlertLine className="h-5 w-5 text-orange-400" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-orange-700">
+                            Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir utiliser l'éditeur de canvas.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Canvas Editor Component */}
+                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <CanvasEditor 
+                      projectId={projectId} 
+                      onSave={(layoutData) => {
+                        setCanvasLayout(layoutData);
+                        setSuccess("Layout de canvas enregistré avec succès!");
+                      }}
+                      initialData={canvasLayout}
+                    />
                   </div>
                 </div>
               </>
