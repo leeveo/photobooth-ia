@@ -1,8 +1,15 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Stage, Layer, Rect, Image as KonvaImage, Transformer, Text } from 'react-konva';
+import { 
+  Stage, Layer, Rect, Image as KonvaImage, Transformer, Text,
+  Arc, Arrow, Circle, Ellipse, Line, Path, RegularPolygon, Ring, Star, Wedge
+} from 'react-konva';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import ElementsTab from './ElementsTab';
+import TextTab from './TextTab';
+import UnsplashTab from './UnsplashTab';
+import LayoutTab from './LayoutTab';
 
 // List of fonts that are commonly available on most systems
 const availableFonts = [
@@ -321,14 +328,16 @@ const checkBucketExists = useCallback(async (bucketName) => {
   const checkSize = useCallback(() => {
     if (containerRef.current) {
       const containerWidth = containerRef.current.offsetWidth;
+      const containerHeight = window.innerHeight * 0.6; // Use 60% of viewport height as max height
       const format = formats.find(f => f.id === selectedFormat) || formats[0];
       
-      // Calculer l'échelle pour ajuster le canvas au conteneur
-      const scale = Math.min(1, containerWidth / format.pixelWidth);
+      // Calculate the scale that fits both width and height constraints while maintaining aspect ratio
+      const scaleByWidth = containerWidth / format.pixelWidth;
+      const scaleByHeight = containerHeight / format.pixelHeight;
+      const scale = Math.min(1, scaleByWidth, scaleByHeight); // Never scale up beyond 1
       
-      // Utilisez une fonction pour éviter les boucles infinies
       setStageSize(prevSize => {
-        // Si la taille n'a pas changé, ne pas déclencher de mise à jour
+        // If the size hasn't changed, don't trigger a re-render
         if (prevSize.width === format.pixelWidth && 
             prevSize.height === format.pixelHeight && 
             prevSize.scale === scale) {
@@ -342,7 +351,7 @@ const checkBucketExists = useCallback(async (bucketName) => {
         };
       });
     }
-  }, [formats, selectedFormat]); // Formats devrait être stable maintenant
+  }, [formats, selectedFormat]);
   
   // Resize handler for responsive canvas
   useEffect(() => {
@@ -431,7 +440,8 @@ const checkBucketExists = useCallback(async (bucketName) => {
     setElements(updatedElements);
   };
   
-  const addElement = (type, src = null, name = 'New Element') => {
+  // Mise à jour de la fonction addElement pour supporter les propriétés personnalisées
+  const addElement = (type, src = null, name = 'New Element', customProps = null) => {
     if (type === 'image') {
       // Pour les images, créer un élément Image qui s'adapte au format du canvas
       const img = new window.Image();
@@ -492,20 +502,137 @@ const checkBucketExists = useCallback(async (bucketName) => {
         setSelectedId(fallbackElement.id);
       };
     } else {
-      // Pour les autres types d'éléments (rectangle, texte, etc.)
-      const newElement = {
+      // Create a new element based on type
+      let newElement = {
         id: `${type}-${Date.now()}`,
         type,
-        x: stageSize.width / 2 - 50,
-        y: stageSize.height / 2 - 50,
-        width: 100,
-        height: 100,
+        x: stageSize.width / 2,
+        y: stageSize.height / 2,
         rotation: 0,
-        text: type === 'text' ? 'Text Element' : '',
-        fill: type === 'rect' ? '#3498db' : undefined,
-        fontSize: type === 'text' ? 20 : undefined,
+        name
       };
-      
+
+      // Add type-specific properties
+      switch (type) {
+        case 'rect':
+          newElement = {
+            ...newElement,
+            width: 100,
+            height: 100,
+            fill: '#3498db'
+          };
+          break;
+        case 'circle':
+          newElement = {
+            ...newElement,
+            radius: 50,
+            fill: '#2ecc71'
+          };
+          break;
+        case 'ellipse':
+          newElement = {
+            ...newElement,
+            radiusX: 70,
+            radiusY: 40,
+            fill: '#9b59b6'
+          };
+          break;
+        case 'arc':
+          newElement = {
+            ...newElement,
+            innerRadius: 40,
+            outerRadius: 70,
+            angle: 60,
+            fill: '#f1c40f',
+            stroke: '#f39c12',
+            strokeWidth: 2
+          };
+          break;
+        case 'arrow':
+          newElement = {
+            ...newElement,
+            points: [0, 0, 100, 0],
+            pointerLength: 10,
+            pointerWidth: 10,
+            fill: '#e74c3c',
+            stroke: '#e74c3c',
+            strokeWidth: 4
+          };
+          break;
+        case 'star':
+          newElement = {
+            ...newElement,
+            numPoints: 5,
+            innerRadius: 30,
+            outerRadius: 70,
+            fill: '#f39c12'
+          };
+          break;
+        case 'ring':
+          newElement = {
+            ...newElement,
+            innerRadius: 40,
+            outerRadius: 70,
+            fill: '#1abc9c'
+          };
+          break;
+        case 'regularPolygon':
+          newElement = {
+            ...newElement,
+            sides: 6,
+            radius: 70,
+            fill: '#3498db'
+          };
+          break;
+        case 'line':
+          newElement = {
+            ...newElement,
+            points: [0, 0, 100, 0],
+            stroke: '#2c3e50',
+            strokeWidth: 4
+          };
+          break;
+        case 'wedge':
+          newElement = {
+            ...newElement,
+            radius: 70,
+            angle: 60,
+            fill: '#e67e22'
+          };
+          break;
+        case 'text':
+          if (customProps) {
+            // Utiliser les propriétés personnalisées si fournies
+            newElement = {
+              ...newElement,
+              text: customProps.text || 'Nouveau texte',
+              fontSize: customProps.fontSize || 20,
+              fontFamily: customProps.fontFamily || 'Arial',
+              fill: customProps.fill || '#000000',
+              width: customProps.width || 200,
+              align: customProps.align || 'center',
+              fontStyle: customProps.fontStyle || 'normal',
+              letterSpacing: customProps.letterSpacing || 0,
+              lineHeight: customProps.lineHeight || 1,
+              textDecoration: customProps.textDecoration || '',
+              textTransform: customProps.textTransform || 'none'
+            };
+          } else {
+            newElement = {
+              ...newElement,
+              text: 'Nouveau texte',
+              fontSize: 20,
+              fontFamily: 'Arial',
+              fill: '#000000',
+              width: 200,
+              align: 'center'
+            };
+          }
+          break;
+        default:
+          break;
+      }
+    
       setElements([...elements, newElement]);
       setSelectedId(newElement.id);
     }
@@ -646,7 +773,7 @@ const handleColorSelect = useCallback((color) => {
     }));
   } else if (colorPickerTarget === 'stroke') {
     // Update stroke color for shapes
-    setElements(prevElements => prevElements.map(el => {
+    setElements(prevElements => prevElements.map((el) => {
       if (el.id === selectedId) {
         return {
           ...el,
@@ -662,17 +789,38 @@ const handleColorSelect = useCallback((color) => {
   setShowColorPicker(false);
 }, [selectedId, colorPickerTarget]);
 
+// Add a function to handle text property changes
+const handleTextPropertyChange = useCallback((property, value) => {
+  if (!selectedId) return;
+  
+  setElements(prevElements => prevElements.map(el => {
+    if (el.id === selectedId && el.type === 'text') {
+      return {
+        ...el,
+        [property]: value
+      };
+    }
+    return el;
+  }));
+  
+  // Also update textProps state to keep UI in sync
+  setTextProps(prev => ({
+    ...prev,
+    [property]: value
+  }));
+}, [selectedId]);
+
   // Attention: ne pas appeler des fonctions qui modifient l'état directement dans le rendu
   // Assurez-vous que toutes les fonctions appelées dans le JSX sont des gestionnaires d'événements
   
   // Modifier le bouton de test URL directe pour utiliser la fonction définie
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
         <h3 className="text-lg font-medium text-gray-900">Éditeur de Canvas</h3>
-        <div className="flex space-x-2">
-          {/* Ajout de la liste déroulante des formats */}
-          <div className="mr-4">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
+          {/* Format selection dropdown */}
+          <div className="w-full sm:w-auto">
             <label htmlFor="format-select" className="block text-sm font-medium text-gray-700 mb-1">
               Format
             </label>
@@ -690,46 +838,288 @@ const handleColorSelect = useCallback((color) => {
             </select>
           </div>
           
-          <button
-            onClick={removeSelected}
-            disabled={!selectedId}
-            className={`px-3 py-1.5 text-sm rounded-md ${
-              selectedId 
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Supprimer la sélection
-          </button>
-          
-          <div className="flex items-center border border-gray-300 rounded-md">
-            <input
-              type="text"
-              value={layoutName}
-              onChange={(e) => setLayoutName(e.target.value)}
-              placeholder="Nom du layout"
-              className="px-3 py-1.5 text-sm border-none focus:ring-0 w-40"
-            />
+          <div className="flex space-x-2 w-full sm:w-auto">
             <button
-              onClick={saveLayout}
-              disabled={!layoutName.trim()}
-              className={`px-3 py-1.5 text-sm rounded-r-md ${
-                layoutName.trim() 
-                  ? 'bg-green-600 text-white hover:bg-green-700' 
+              onClick={removeSelected}
+              disabled={!selectedId}
+              className={`px-3 py-1.5 text-sm rounded-md flex-1 sm:flex-none ${
+                selectedId 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
-              Enregistrer
+              Supprimer la sélection
             </button>
+            
+            <div className="flex items-center border border-gray-300 rounded-md flex-1 sm:flex-none">
+              <input
+                type="text"
+                value={layoutName}
+                onChange={(e) => setLayoutName(e.target.value)}
+                placeholder="Nom du layout"
+                className="px-3 py-1.5 text-sm border-none focus:ring-0 w-full"
+              />
+              <button
+                onClick={saveLayout}
+                disabled={!layoutName.trim()}
+                className={`px-3 py-1.5 text-sm rounded-r-md whitespace-nowrap ${
+                  layoutName.trim() 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Enregistrer
+              </button>
+            </div>
           </div>
         </div>
       </div>
       
-      {/* Canvas and Toolbar */}
-      <div className="flex space-x-4">
-        {/* Canvas avec cadre d'impression */}
-        <div className="flex-grow">
-          <div className="mb-2 text-sm text-gray-500 flex justify-between items-center">
+      {/* New 3-column layout */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Column 1: Vertical tabs */}
+        <div className="w-full lg:w-16 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-lg flex lg:flex-col shadow-lg">
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'elements' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('elements')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className="text-xs font-medium">Éléments</span>
+          </button>
+          
+          {/* New Text Tab Button */}
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'text' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('text')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+            <span className="text-xs font-medium">Texte</span>
+          </button>
+          
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'uploads' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('uploads')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span className="text-xs font-medium">Uploads</span>
+          </button>
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'library' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('library')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs font-medium">Bibliothèque</span>
+          </button>
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'layouts' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('layouts')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span className="text-xs font-medium">Layouts</span>
+          </button>
+          {/* Nouvel onglet Unsplash */}
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'unsplash' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('unsplash')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs font-medium">Images</span>
+          </button>
+        </div>
+        
+        {/* Column 2: Tab content */}
+        <div className="w-full lg:w-74 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
+          <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+            {activeTab === 'elements' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Éléments
+              </>
+            )}
+            {activeTab === 'text' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+                Texte
+              </>
+            )}
+            {activeTab === 'uploads' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Uploads
+              </>
+            )}
+            {activeTab === 'library' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Bibliothèque
+              </>
+            )}
+            {activeTab === 'layouts' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Layouts
+              </>
+            )}
+            {activeTab === 'unsplash' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Images Unsplash
+              </>
+            )}
+          </h4>
+          
+          <div className="flex-grow overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-20rem)]">
+            {activeTab === 'elements' && (
+              <ElementsTab 
+                addElement={addElement}
+                elements={elements}
+                selectedId={selectedId}
+                handleColorSelect={handleColorSelect}
+                showColorPicker={showColorPicker}
+                setShowColorPicker={setShowColorPicker}
+                selectedColor={selectedColor}
+                setSelectedColor={setSelectedColor}
+                colorPickerTarget={colorPickerTarget}
+                setColorPickerTarget={setColorPickerTarget}
+                presetColors={presetColors}
+              />
+            )}
+            
+            {activeTab === 'text' && (
+              <TextTab 
+                addElement={addElement}
+                elements={elements}
+                selectedId={selectedId}
+                handleTextPropertyChange={handleTextPropertyChange}
+                showColorPicker={showColorPicker}
+                setShowColorPicker={setShowColorPicker}
+                selectedColor={selectedColor}
+                setSelectedColor={setSelectedColor}
+                colorPickerTarget={colorPickerTarget}
+                setColorPickerTarget={setColorPickerTarget}
+                handleColorSelect={handleColorSelect}
+                presetColors={presetColors}
+                availableFonts={availableFonts}
+              />
+            )}
+            
+            {/* Uploads tab content */}
+            {activeTab === 'uploads' && (
+              <div className="space-y-4">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Télécharger des fichiers
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    {/* ...existing uploads content... */}
+                    <div>Uploads content</div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Images téléchargées</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* ...existing uploaded images grid... */}
+                    <div>Uploaded images grid</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Library tab content */}
+            {activeTab === 'library' && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Bibliothèque d'images</h4>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  {/* ...existing library images grid... */}
+                  <div>Library images grid</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Layouts tab content */}
+            {activeTab === 'layouts' && (
+              <LayoutTab 
+                projectId={projectId}
+                savedLayouts={savedLayouts}
+                loadLayout={(layoutId, customElements) => {
+                  if (layoutId) {
+                    loadLayout(layoutId);
+                  } else if (customElements) {
+                    // Appliquer directement les éléments personnalisés
+                    setElements(customElements);
+                    setSelectedId(null);
+                  }
+                }}
+                saveLayout={saveLayout}
+                setLayoutName={setLayoutName}
+                layoutName={layoutName}
+                elements={elements}
+                stageSize={stageSize}
+              />
+            )}
+            
+            {/* Unsplash tab content */}
+            {activeTab === 'unsplash' && (
+              <UnsplashTab 
+                addElement={addElement}
+              />
+            )}
+          </div>
+        </div>
+        
+        {/* Column 3: Canvas */}
+        <div className="w-full lg:flex-grow">
+          <div className="mb-2 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-1 sm:space-y-0">
             <span>
               Format: {formats.find(f => f.id === selectedFormat)?.name}
             </span>
@@ -740,12 +1130,18 @@ const handleColorSelect = useCallback((color) => {
           
           <div 
             ref={containerRef} 
-            className="border border-gray-300 rounded-lg bg-gray-100 overflow-hidden flex justify-center p-4"
+            className="border border-gray-300 rounded-lg bg-gray-100 overflow-hidden flex justify-center items-center p-2 md:p-4"
+            style={{
+              minHeight: '300px',
+              height: 'auto',
+              maxHeight: 'calc(70vh - 100px)',
+              aspectRatio: formats.find(f => f.id === selectedFormat)?.ratio || 1.5
+            }}
           >
             {/* Conteneur pour le stage avec mise à l'échelle */}
             <div style={{ 
               transform: `scale(${stageSize.scale})`, 
-              transformOrigin: 'top left',
+              transformOrigin: 'center center',
               width: stageSize.width,
               height: stageSize.height
             }}>
@@ -816,12 +1212,195 @@ const handleColorSelect = useCallback((color) => {
                           x={element.x}
                           y={element.y}
                           fontSize={element.fontSize || 20}
-                          fontFamily={element.fontFamily || 'Arial'} // Support font family
+                          fontFamily={element.fontFamily || 'Arial'} 
                           fill={element.fill || '#000000'}
-                          fontStyle={element.fontStyle || 'normal'} // Support font style
-                          align={element.align || 'left'} // Support text alignment
+                          fontStyle={element.fontStyle || 'normal'} 
+                          align={element.align || 'left'} 
                           width={element.width}
                           padding={element.padding}
+                          letterSpacing={element.letterSpacing || 0}
+                          lineHeight={element.lineHeight || 1}
+                          textDecoration={element.textDecoration || ''}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'circle') {
+                      return (
+                        <Circle
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          radius={element.radius}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'ellipse') {
+                      return (
+                        <Ellipse
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          radiusX={element.radiusX}
+                          radiusY={element.radiusY}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'arc') {
+                      return (
+                        <Arc
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          innerRadius={element.innerRadius}
+                          outerRadius={element.outerRadius}
+                          angle={element.angle}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'arrow') {
+                      const points = element.points || [0, 0, 100, 0];
+                      return (
+                        <Arrow
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          points={points}
+                          pointerLength={element.pointerLength}
+                          pointerWidth={element.pointerWidth}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'star') {
+                      return (
+                        <Star
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          numPoints={element.numPoints}
+                          innerRadius={element.innerRadius}
+                          outerRadius={element.outerRadius}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'ring') {
+                      return (
+                        <Ring
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          innerRadius={element.innerRadius}
+                          outerRadius={element.outerRadius}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'regularPolygon') {
+                      return (
+                        <RegularPolygon
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          sides={element.sides}
+                          radius={element.radius}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'line') {
+                      return (
+                        <Line
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          points={element.points}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
+                          rotation={element.rotation}
+                          draggable
+                          onClick={() => handleSelectElement(element.id)}
+                          onTap={() => handleSelectElement(element.id)}
+                          onDragEnd={(e) => handleDragEnd(e, element.id)}
+                          onTransformEnd={() => handleTransformEnd(element.id)}
+                        />
+                      );
+                    } else if (element.type === 'wedge') {
+                      return (
+                        <Wedge
+                          key={element.id}
+                          id={element.id}
+                          x={element.x}
+                          y={element.y}
+                          radius={element.radius}
+                          angle={element.angle}
+                          fill={element.fill}
+                          stroke={element.stroke}
+                          strokeWidth={element.strokeWidth}
                           rotation={element.rotation}
                           draggable
                           onClick={() => handleSelectElement(element.id)}
@@ -857,572 +1436,7 @@ const handleColorSelect = useCallback((color) => {
             </p>
           </div>
         </div>
-        
-        {/* Toolbar avec hauteur adaptative */}
-        <div className="w-64 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200 mb-4">
-          
-            <button
-              className={`py-2 text-xs font-medium ${
-                activeTab === 'elements' 
-                  ? 'text-indigo-600 border-b-2 border-indigo-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('elements')}
-            >
-              Éléments
-            </button>
-            <button
-              className={`py-2 text-xs font-medium ${
-                activeTab === 'uploads' 
-                  ? 'text-indigo-600 border-b-2 border-indigo-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('uploads')}
-            >
-              Uploads
-            </button>
-            <button
-              className={`py-2 text-xs font-medium ${
-                activeTab === 'library' 
-                  ? 'text-indigo-600 border-b-2 border-indigo-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('library')}
-            >
-              Bibliothèque
-            </button>
-            <button
-              className={`py-2 text-xs font-medium ${
-                activeTab === 'layouts' 
-                  ? 'text-indigo-600 border-b-2 border-indigo-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('layouts')}
-            >
-              Layouts
-            </button>
-          </div>
-          
-          {/* Tab Content - Remplacer h-96 par flex-grow pour une hauteur adapative */}
-          <div className="flex-grow overflow-y-auto">
-            {activeTab === 'backgrounds' && (
-              <div className="grid grid-cols-2 gap-2">
-                {backgrounds.map(bg => (
-                  <div 
-                    key={bg.id}
-                    className="aspect-square border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:border-indigo-500"
-                    onClick={() => addElement('image', bg.image_url, bg.name)}
-                  >
-                    <img 
-                      src={bg.image_url} 
-                      alt={bg.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-                {backgrounds.length === 0 && (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
-                    Aucun arrière-plan disponible
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {activeTab === 'elements' && (
-              <div className="space-y-3"> {/* Réduire l'espace vertical de 4 à 3 */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Formes</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => addElement('rect', null, 'Rectangle')}
-                      className="p-3 border border-gray-200 rounded-md hover:bg-gray-100"
-                    >
-                      <div className="bg-blue-500 w-full h-6 rounded"></div>
-                      <span className="text-xs mt-1 block">Rectangle</span>
-                    </button>
-                    <button
-                      onClick={() => addElement('text', null, 'Texte')}
-                      className="p-3 border border-gray-200 rounded-md hover:bg-gray-100"
-                    >
-                      <div className="w-full h-6 flex items-center justify-center">
-                        <span className="text-sm">ABC</span>
-                      </div>
-                      <span className="text-xs mt-1 block">Texte</span>
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Show properties for selected element - version plus compacte */}
-                {selectedId && (
-                  <div className="mt-3 border-t pt-3 border-gray-200"> {/* Réduire les marges */}
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      Propriétés de {elements.find(el => el.id === selectedId)?.type === 'text' ? 'texte' : 'forme'}
-                    </h4>
-                    
-                    {/* Text properties - version plus compacte */}
-                    {elements.find(el => el.id === selectedId)?.type === 'text' && (
-                      <div className="space-y-2"> {/* Réduire l'espace vertical */}
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-0.5">Texte</label> {/* Réduire la marge */}
-                          <input
-                            type="text"
-                            value={elements.find(el => el.id === selectedId)?.text || ''}
-                            onChange={(e) => {
-                              setElements(prevElements => prevElements.map(el => {
-                                if (el.id === selectedId) {
-                                  return {
-                                    ...el,
-                                    text: e.target.value
-                                  };
-                                }
-                                return el;
-                              }));
-                            }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                          />
-                        </div>
-                        
-                        {/* Regrouper police et taille sur la même ligne */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-0.5">Police</label>
-                            <select
-                              value={elements.find(el => el.id === selectedId)?.fontFamily || 'Arial'}
-                              onChange={(e) => {
-                                setElements(prevElements => prevElements.map(el => {
-                                  if (el.id === selectedId) {
-                                    return {
-                                      ...el,
-                                      fontFamily: e.target.value
-                                    };
-                                  }
-                                  return el;
-                                }));
-                              }}
-                              className="w-full px-1 py-0.5 text-sm border border-gray-300 rounded"
-                            >
-                              {availableFonts.map(font => (
-                                <option key={font} value={font} style={{ fontFamily: font }}>
-                                  {font}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-0.5">Taille</label>
-                            <input
-                              type="number"
-                              min="8"
-                              max="120"
-                              value={elements.find(el => el.id === selectedId)?.fontSize || 20}
-                              onChange={(e) => {
-                                setElements(prevElements => prevElements.map(el => {
-                                  if (el.id === selectedId) {
-                                    return {
-                                      ...el,
-                                      fontSize: Number(e.target.value)
-                                    };
-                                  }
-                                  return el;
-                                }));
-                              }}
-                              className="w-full px-1 py-0.5 text-sm border border-gray-300 rounded"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-0.5">Couleur</label>
-                            <div 
-                              className="w-8 h-8 rounded-full border border-gray-300 cursor-pointer"
-                              style={{ backgroundColor: elements.find(el => el.id === selectedId)?.fill || '#000000' }}
-                              onClick={() => {
-                                setColorPickerTarget('text');
-                                setSelectedColor(elements.find(el => el.id === selectedId)?.fill || '#000000');
-                                setShowColorPicker(true);
-                              }}
-                            ></div>
-                          </div>
-                          
-                          <div className="flex-grow">
-                            <label className="block text-xs text-gray-500 mb-0.5">Style</label>
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => {
-                                  setElements(prevElements => prevElements.map(el => {
-                                    if (el.id === selectedId) {
-                                      return {
-                                        ...el,
-                                        fontStyle: el.fontStyle === 'bold' ? 'normal' : 'bold'
-                                      };
-                                    }
-                                    return el;
-                                  }));
-                                }}
-                                className={`px-2 py-0.5 text-xs rounded ${
-                                  elements.find(el => el.id === selectedId)?.fontStyle === 'bold' 
-                                    ? 'bg-indigo-500 text-white' 
-                                    : 'bg-gray-200 text-gray-700'
-                                }`}
-                              >
-                                B
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setElements(prevElements => prevElements.map(el => {
-                                    if (el.id === selectedId) {
-                                      return {
-                                        ...el,
-                                        fontStyle: el.fontStyle === 'italic' ? 'normal' : 'italic'
-                                      };
-                                    }
-                                    return el;
-                                  }));
-                                }}
-                                className={`px-2 py-0.5 text-xs rounded italic ${
-                                  elements.find(el => el.id === selectedId)?.fontStyle === 'italic' 
-                                    ? 'bg-indigo-500 text-white' 
-                                    : 'bg-gray-200 text-gray-700'
-                                }`}
-                              >
-                                I
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-0.5">Alignement</label>
-                          <div className="flex space-x-1">
-                            <button
-                              onClick={() => {
-                                setElements(prevElements => prevElements.map(el => {
-                                  if (el.id === selectedId) {
-                                    return {
-                                      ...el,
-                                      align: 'left'
-                                    };
-                                  }
-                                  return el;
-                                }));
-                              }}
-                              className={`flex-1 px-2 py-0.5 text-xs rounded ${
-                                elements.find(el => el.id === selectedId)?.align === 'left' 
-                                  ? 'bg-indigo-500 text-white' 
-                                  : 'bg-gray-200 text-gray-700'
-                              }`}
-                            >
-                              ←
-                            </button>
-                            <button
-                              onClick={() => {
-                                setElements(prevElements => prevElements.map(el => {
-                                  if (el.id === selectedId) {
-                                    return {
-                                      ...el,
-                                      align: 'center'
-                                    };
-                                  }
-                                  return el;
-                                }));
-                              }}
-                              className={`flex-1 px-2 py-0.5 text-xs rounded ${
-                                elements.find(el => el.id === selectedId)?.align === 'center' 
-                                  ? 'bg-indigo-500 text-white' 
-                                  : 'bg-gray-200 text-gray-700'
-                              }`}
-                            >
-                              ↔
-                            </button>
-                            <button
-                              onClick={() => {
-                                setElements(prevElements => prevElements.map(el => {
-                                  if (el.id === selectedId) {
-                                    return {
-                                      ...el,
-                                      align: 'right'
-                                    };
-                                  }
-                                  return el;
-                                }));
-                              }}
-                              className={`flex-1 px-2 py-0.5 text-xs rounded ${
-                                elements.find(el => el.id === selectedId)?.align === 'right' 
-                                  ? 'bg-indigo-500 text-white' 
-                                  : 'bg-gray-200 text-gray-700'
-                              }`}
-                            >
-                              →
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Color Picker - plus compact */}
-                        {showColorPicker && colorPickerTarget === 'text' && (
-                          <div className="mt-2 p-2 border border-gray-200 rounded-lg bg-white shadow-md">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs font-medium">Couleur du texte</span>
-                              <button 
-                                onClick={() => setShowColorPicker(false)}
-                                className="text-gray-500 hover:text-gray-700 text-xs"
-                              >
-                                ×
-                              </button>
-                            </div>
-                            
-                            <div className="grid grid-cols-5 gap-1 mb-1">
-                              {presetColors.map((color) => (
-                                <div
-                                  key={color}
-                                  className="w-5 h-5 rounded-full cursor-pointer border border-gray-300 flex items-center justify-center"
-                                  style={{ backgroundColor: color }}
-                                  onClick={() => handleColorSelect(color)}
-                                >
-                                  {color === selectedColor && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            
-                            <div className="mt-1">
-                              <input
-                                type="color"
-                                value={selectedColor}
-                                onChange={(e) => setSelectedColor(e.target.value)}
-                                className="w-full h-5"
-                              />
-                              <button
-                                onClick={() => handleColorSelect(selectedColor)}
-                                className="w-full mt-1 px-2 py-0.5 bg-indigo-500 text-white text-xs rounded hover:bg-indigo-600"
-                              >
-                                Appliquer
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Shape properties - version plus compacte */}
-                    {elements.find(el => el.id === selectedId)?.type === 'rect' && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-8 h-8 rounded-full border border-gray-300 cursor-pointer"
-                            style={{ backgroundColor: elements.find(el => el.id === selectedId)?.fill || '#3498db' }}
-                            onClick={() => {
-                              setColorPickerTarget('fill');
-                              setSelectedColor(elements.find(el => el.id === selectedId)?.fill || '#3498db');
-                              setShowColorPicker(true);
-                            }}
-                          ></div>
-                          <span className="text-xs text-gray-500">Couleur de remplissage</span>
-                        </div>
-                        
-                        {/* Color Picker for shape fill - version compacte */}
-                        {showColorPicker && colorPickerTarget === 'fill' && (
-                          <div className="mt-2 p-2 border border-gray-200 rounded-lg bg-white shadow-md">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs font-medium">Couleur de remplissage</span>
-                              <button 
-                                onClick={() => setShowColorPicker(false)}
-                                className="text-gray-500 hover:text-gray-700 text-xs"
-                              >
-                                ×
-                              </button>
-                            </div>
-                            
-                            <div className="grid grid-cols-5 gap-1 mb-1">
-                              {presetColors.map((color) => (
-                                <div
-                                  key={color}
-                                  className="w-5 h-5 rounded-full cursor-pointer border border-gray-300 flex items-center justify-center"
-                                  style={{ backgroundColor: color }}
-                                  onClick={() => handleColorSelect(color)}
-                                >
-                                  {color === selectedColor && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            
-                            <div className="mt-1">
-                              <input
-                                type="color"
-                                value={selectedColor}
-                                onChange={(e) => setSelectedColor(e.target.value)}
-                                className="w-full h-5"
-                              />
-                              <button
-                                onClick={() => handleColorSelect(selectedColor)}
-                                className="w-full mt-1 px-2 py-0.5 bg-indigo-500 text-white text-xs rounded hover:bg-indigo-600"
-                              >
-                                Appliquer
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Nouvel onglet Uploads */}
-            {activeTab === 'uploads' && (
-              <div className="space-y-4">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Télécharger des fichiers
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="file-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
-                        >
-                          <span>Sélectionner des fichiers</span>
-                          <input
-                            id="file-upload"
-                            name="file-upload"
-                            type="file"
-                            multiple
-                            className="sr-only"
-                            onChange={handleFileUpload}
-                            accept=".png,.jpg,.jpeg"
-                            ref={fileInputRef}
-                            disabled={uploading}
-                          />
-                        </label>
-                        <p className="pl-1">ou glisser-déposer</p>
-                      </div>
-                      <p className="text-xs text-gray-500">PNG, JPG jusqu'à 10MB</p>
-                      
-                      {uploading && (
-                        <div className="mt-2">
-                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-indigo-600 transition-all duration-300"
-                              style={{ width: `${uploadProgress}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">{uploadProgress}% téléchargé</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Images téléchargées</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {uploadedImages.map(img => (
-                      <div 
-                        key={img.id}
-                        className="aspect-square border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:border-indigo-500"
-                        onClick={() => addElement('image', img.src, img.name)}
-                      >
-                        <img 
-                          src={img.src} 
-                          alt={img.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                    {uploadedImages.length === 0 && (
-                      <div className="col-span-2 text-center py-8 text-gray-500">
-                        Aucune image téléchargée
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Nouvel onglet Bibliothèque avec info sur le chemin d'accès */}
-            {activeTab === 'library' && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Bibliothèque d'images</h4>
-                
-                {/* Grille d'images simplifiée */}
-                <div className="grid grid-cols-2 gap-2">
-                  {libraryImages.map(img => (
-                    <div 
-                      key={img.id}
-                      className="border border-gray-200 rounded-md overflow-hidden hover:border-indigo-500 cursor-pointer"
-                      onClick={() => addElement('image', img.src_nocache || img.src, img.name)}
-                    >
-                      <div className="aspect-square">
-                        <img 
-                          src={img.src_nocache || img.src} 
-                          alt={img.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="px-2 py-1 bg-gray-50 text-xs">
-                        <span className="font-medium">{img.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {libraryImages.length === 0 && (
-                    <div className="col-span-2 text-center py-8 text-gray-500">
-                      <p>Aucune image dans la bibliothèque</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'layouts' && (
-              <div className="space-y-2">
-                {savedLayouts.map(layout => (
-                  <div 
-                    key={layout.id}
-                    className="p-3 border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer"
-                    onClick={() => loadLayout(layout.id)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{layout.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(layout.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {savedLayouts.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    Aucun layout enregistré
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
-      
-      {/* Supprimer la section Propriétés en double et le sélecteur de couleur ici */}
     </div>
   );
 };
