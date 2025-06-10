@@ -65,7 +65,7 @@ const KonvaImageElement = ({ element, isSelected, onSelect, onDragEnd, onTransfo
   );
 };
 
-const CanvasEditor = ({ projectId, onSave, initialData = null }) => {
+const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = false }) => {
   // Formats ne devrait pas changer, donc on le déplace hors du composant ou on le mémorise
   const formats = useMemo(() => [
     { 
@@ -129,47 +129,96 @@ const CanvasEditor = ({ projectId, onSave, initialData = null }) => {
     async function loadAssets() {
       setLoading(true);
       try {
-        // Load backgrounds
+        // Skip loading assets from project if in template mode
+        if (isTemplateMode) {
+          console.log('Mode template activé, chargement des assets génériques');
+          // Initialisation avec des données initiales si fournies
+          if (initialData && initialData.elements) {
+            console.log('Initialisation avec les données sauvegardées');
+            setElements(initialData.elements);
+            if (initialData.stageSize) {
+              setStageSize(initialData.stageSize);
+            }
+          }
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Chargement des assets pour le projet:', projectId);
+        
+        // Vérifier que le client Supabase est correctement initialisé
+        if (!supabase) {
+          console.error('Client Supabase non initialisé');
+          throw new Error('Client Supabase non initialisé');
+        }
+        
+        // Tester la connexion Supabase avant de faire des requêtes
+        try {
+          const { data: testData, error: testError } = await supabase.from('projects').select('id').limit(1);
+          if (testError) {
+            console.error('Erreur de connexion Supabase:', testError);
+            throw testError;
+          }
+          console.log('Connexion Supabase OK');
+        } catch (testErr) {
+          console.error('Erreur lors du test de connexion Supabase:', testErr);
+          throw testErr;
+        }
+
+        // Load backgrounds with improved error handling
+        console.log('Chargement des arrière-plans...');
         const { data: bgData, error: bgError } = await supabase
           .from('backgrounds')
           .select('*')
           .eq('project_id', projectId)
           .eq('is_active', true);
           
-        if (bgError) throw bgError;
+        if (bgError) {
+          console.error('Erreur lors du chargement des arrière-plans:', bgError);
+          throw bgError;
+        }
+        console.log(`${bgData?.length || 0} arrière-plans chargés`);
         setBackgrounds(bgData || []);
         
-        // Load styles/images
+        // Load styles/images with improved error handling
+        console.log('Chargement des styles...');
         const { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
           .eq('project_id', projectId);
           
-        if (styleError) throw styleError;
+        if (styleError) {
+          console.error('Erreur lors du chargement des styles:', styleError);
+          throw styleError;
+        }
+        console.log(`${styleData?.length || 0} styles chargés`);
         
-        const processedImages = styleData.map(style => ({
+        const processedImages = styleData?.map(style => ({
           id: style.id,
           src: style.preview_image,
           name: style.name
-        }));
+        })) || [];
         
         setImages(processedImages);
         
-        // Load saved layouts
+        // Load saved layouts with improved error handling
+        console.log('Chargement des layouts...');
         const { data: layoutData, error: layoutError } = await supabase
           .from('canvas_layouts')
           .select('*')
           .eq('project_id', projectId);
           
-        if (!layoutError) {
+        if (layoutError) {
+          console.error('Erreur lors du chargement des layouts:', layoutError);
+          // Don't throw here, just log the error since layouts are optional
+        } else {
+          console.log(`${layoutData?.length || 0} layouts chargés`);
           setSavedLayouts(layoutData || []);
         }
         
-        // Ces appels de fonctions peuvent causer des problèmes
-        // Les déplacer hors de cette fonction d'effet
-        
         // Initialize with saved data if provided
         if (initialData && initialData.elements) {
+          console.log('Initialisation avec les données sauvegardées');
           setElements(initialData.elements);
           if (initialData.stageSize) {
             setStageSize(initialData.stageSize);
@@ -178,15 +227,28 @@ const CanvasEditor = ({ projectId, onSave, initialData = null }) => {
         
       } catch (error) {
         console.error('Error loading canvas assets:', error);
+        // Si nous sommes en mode template, ne pas afficher d'erreur pour l'ID du projet
+        if (isTemplateMode && error.message.includes('projet')) {
+          console.log('Erreur ignorée en mode template:', error.message);
+        } else {
+          // Afficher un message d'erreur ou logger pour debug
+          console.log('Details:', {
+            message: error.message,
+            hint: error.hint,
+            details: error.details,
+            stack: error.stack
+          });
+        }
       } finally {
         setLoading(false);
       }
     }
     
-    if (projectId) {
+    // En mode template, on charge toujours les assets, même sans projectId
+    if (projectId || isTemplateMode) {
       loadAssets();
     }
-  }, [projectId, supabase, initialData]);
+  }, [projectId, supabase, initialData, isTemplateMode]);
   
   // Ajoutons une fonction de diagnostic pour le bucket
 const checkBucketExists = useCallback(async (bucketName) => {
@@ -210,6 +272,19 @@ const checkBucketExists = useCallback(async (bucketName) => {
   // Fonction améliorée pour charger les images du bucket 'assets'
   const loadLibraryImages = useCallback(async () => {
     try {
+      // Ne pas charger les images si nous sommes en mode template et qu'il n'y a pas d'ID de projet valide
+      if (isTemplateMode && (!projectId || projectId === 'template-editor')) {
+        console.log('Mode template: chargement d\'images génériques');
+        // Charger des images génériques pour le mode template
+        const genericImages = [
+          { id: 'generic-1', name: 'Image 1', src: '/images/templates/placeholder-1.jpg' },
+          { id: 'generic-2', name: 'Image 2', src: '/images/templates/placeholder-2.jpg' },
+          { id: 'generic-3', name: 'Image 3', src: '/images/templates/placeholder-3.jpg' }
+        ];
+        setLibraryImages(genericImages);
+        return;
+      }
+      
       console.log('Tentative de chargement des images depuis le bucket assets...');
       
       // URL de base confirmée fonctionnelle
@@ -236,11 +311,18 @@ const checkBucketExists = useCallback(async (bucketName) => {
       console.error('Erreur lors du chargement des images:', error);
       setLibraryImages([]);
     }
-  }, []);
+  }, [isTemplateMode, projectId]);
 
   // Fonction pour charger les images téléchargées par l'utilisateur
   const loadUploadedImages = useCallback(async () => {
     try {
+      // Ne pas charger les images uploadées si nous sommes en mode template
+      if (isTemplateMode) {
+        console.log('Mode template: pas de chargement d\'images téléchargées');
+        setUploadedImages([]);
+        return;
+      }
+      
       const { data, error } = await supabase
         .storage
         .from('uploads')
@@ -266,7 +348,7 @@ const checkBucketExists = useCallback(async (bucketName) => {
     } catch (error) {
       console.error('Error loading uploaded images:', error);
     }
-  }, [projectId, supabase]); // Ajout des dépendances
+  }, [projectId, supabase, isTemplateMode]); // Ajout des dépendances
   
   // Fonction pour gérer l'upload de fichiers
   const handleFileUpload = async (e) => {
@@ -645,7 +727,20 @@ const checkBucketExists = useCallback(async (bucketName) => {
     setSelectedId(null);
   };
   
+  // Fonction pour sauvegarder le layout
   const saveLayout = async () => {
+    // En mode template, on ne sauvegarde pas dans la base de données
+    // mais on appelle directement la fonction onSave
+    if (isTemplateMode) {
+      if (onSave) {
+        onSave({
+          elements,
+          stageSize
+        });
+      }
+      return;
+    }
+    
     if (!layoutName.trim()) return;
     
     try {
@@ -679,18 +774,70 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }
   };
   
-  const loadLayout = async (layoutId) => {
+  // Modifiez la fonction loadLayout pour accepter directement les éléments et la taille du stage
+  const loadLayout = useCallback(async (layoutId, customElements, customStageSize) => {
+    console.log('🔍 loadLayout appelé avec:', { layoutId, hasCustomElements: !!customElements, hasCustomStageSize: !!customStageSize });
+    
     try {
-      const layout = savedLayouts.find(l => l.id === layoutId);
-      
-      if (layout) {
-        setElements(JSON.parse(layout.elements));
-        setStageSize(JSON.parse(layout.stage_size));
+      if (layoutId && !customElements) {
+        // Cas 1: On a un ID mais pas d'éléments personnalisés -> Charger depuis la BD
+        console.log('📋 Chargement du layout depuis la BD:', layoutId);
+        const layout = savedLayouts.find(l => l.id === layoutId);
+        
+        if (layout) {
+          console.log('📥 Layout trouvé dans les layouts sauvegardés');
+          
+          // Correction: Vérifier et extraire les éléments et la taille du stage
+          let parsedElements, parsedStageSize;
+          
+          if (typeof layout.elements === 'string') {
+            parsedElements = JSON.parse(layout.elements || '[]');
+          } else if (layout.elements) {
+            parsedElements = layout.elements;
+          } else {
+            parsedElements = [];
+          }
+          
+          if (typeof layout.stage_size === 'string') {
+            parsedStageSize = JSON.parse(layout.stage_size || '{}');
+          } else if (layout.stage_size) {
+            parsedStageSize = layout.stage_size;
+          } else {
+            parsedStageSize = {};
+          }
+          
+          // Appliquer les éléments et la taille du stage
+          setElements(parsedElements);
+          setStageSize(parsedStageSize);
+          // Désélectionner tout élément
+          setSelectedId(null);
+          
+          console.log(`✅ Layout "${layout.name}" chargé avec ${parsedElements.length} éléments`);
+        } else {
+          console.error('❌ Layout non trouvé avec ID:', layoutId);
+        }
+      } else if (customElements) {
+        // Cas 2: On a des éléments personnalisés -> Les utiliser directement
+        console.log('📥 Chargement des éléments personnalisés:', customElements.length);
+        
+        // Appliquer les éléments
+        setElements(customElements);
+        
+        // Si une taille de stage personnalisée est fournie, l'appliquer aussi
+        if (customStageSize) {
+          console.log('📐 Application de la taille personnalisée:', customStageSize);
+          setStageSize(customStageSize);
+        }
+        
+        // Désélectionner tout élément
+        setSelectedId(null);
+        
+        console.log('✅ Éléments personnalisés chargés');
       }
     } catch (error) {
-      console.error('Error loading layout:', error);
+      console.error('❌ Erreur lors du chargement du layout:', error);
     }
-  };
+  }, [savedLayouts]);
   
   // Ajouter cette fonction qui était référencée mais pas implémentée
   const testDirectUrl = useCallback(() => {
@@ -964,7 +1111,7 @@ const handleTextPropertyChange = useCallback((property, value) => {
         </div>
         
         {/* Column 2: Tab content */}
-        <div className="w-full lg:w-74 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
+        <div className="w-full lg:w-68 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
           <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
             {activeTab === 'elements' && (
               <>
@@ -1103,8 +1250,9 @@ const handleTextPropertyChange = useCallback((property, value) => {
                 saveLayout={saveLayout}
                 setLayoutName={setLayoutName}
                 layoutName={layoutName}
-                elements={elements}
-                stageSize={stageSize}
+                elements={elements}  // Assurez-vous que ces props sont bien passées
+                stageSize={stageSize} // Assurez-vous que ces props sont bien passées
+                setSavedLayouts={setSavedLayouts}
               />
             )}
             
@@ -1172,6 +1320,7 @@ const handleTextPropertyChange = useCallback((property, value) => {
                     fill="transparent"
                   />
                   
+                  {/* Rendu des éléments du canvas */}
                   {elements.map((element) => {
                     if (element.type === 'rect') {
                       return (
