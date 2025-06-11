@@ -124,6 +124,7 @@ export default function AdminLayout({ children }) {
   const photoboothLinks = [
     { name: 'Dashboard', path: '/photobooth-ia/admin/dashboard', icon: <FiHome className="w-5 h-5" /> },
     { name: 'Projets', path: '/photobooth-ia/admin/projects', icon: <FiFolder className="w-5 h-5" /> },
+    { name: 'Creation de Template', path: '/photobooth-ia/admin/templates', icon: <FiSettings className="w-5 h-5" /> },
     { name: 'Galerie', path: '/photobooth-ia/admin/project-gallery', icon: <FiImage className="w-5 h-5" /> },
     { name: 'Statistiques', path: '/photobooth-ia/admin/stats', icon: <FiBarChart2 className="w-5 h-5" /> },
   ];

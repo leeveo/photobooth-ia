@@ -4,6 +4,7 @@ import { FiGrid, FiMusic, FiHelpCircle, FiRotateCcw, FiFilm } from 'react-icons/
 const photoboothLinks = [
   { href: '/photobooth-ia/admin/dashboard', label: 'Dashboard' },
   { href: '/photobooth-ia/admin/projet', label: 'Projet' },
+  { href: '/photobooth-ia/admin/templates', label: 'Creation de Template' },
   { href: '/photobooth-ia/admin/galerie', label: 'Galerie' },
   { href: '/photobooth-ia/admin/statistiques', label: 'Statistiques' },
 ];

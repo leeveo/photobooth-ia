@@ -30,6 +30,110 @@ const presetColors = [
   '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'
 ];
 
+// New component for Templates tab
+const TemplatesTab = ({ onSelectTemplate }) => {
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const supabase = createClientComponentClient();
+
+  // Fetch templates on component mount
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('layout_templates')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setTemplates(data || []);
+      } catch (err) {
+        console.error('Error fetching templates:', err);
+        setError('Impossible de charger les templates');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemplates();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+        <span className="ml-2 text-sm text-gray-600">Chargement des templates...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-sm text-red-700 bg-red-100 rounded-md">
+        {error}
+      </div>
+    );
+  }
+
+  if (templates.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <p className="mt-4 text-gray-500">
+          Aucun template disponible.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600 mb-2">
+        Sélectionnez un template pour l'utiliser comme base
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        {templates.map(template => (
+          <div 
+            key={template.id}
+            onClick={() => onSelectTemplate(template)}
+            className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all bg-white"
+          >
+            <div className="h-24 bg-gray-50 flex items-center justify-center">
+              {template.thumbnail_url ? (
+                <img 
+                  src={template.thumbnail_url} 
+                  alt={template.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2NjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41Ij48L2NpcmNsZT48cG9seWxpbmUgcG9pbnRzPSIyMSAxNSAxNiAxMCA1IDIxIj48L3BvbHlsaW5lPjwvc3ZnPg==';
+                  }}
+                />
+              ) : (
+                <div className="text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="p-2">
+              <h3 className="text-sm font-medium text-gray-900 truncate">{template.name}</h3>
+              {template.category && (
+                <p className="text-xs text-gray-500">{template.category}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Define the ElementsTab component
 const ElementsTab = ({ 
   addElement, 
@@ -364,7 +468,8 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
   const [elements, setElements] = useState(initialData?.elements || []);
   const [selectedId, setSelectedId] = useState(null);
   const [stageSize, setStageSize] = useState(initialData?.stageSize || { width: 970, height: 651, scale: 1 });
-  const [activeTab, setActiveTab] = useState('elements');
+  const [activeTab, setActiveTab] = useState('templates'); // Set templates as default tab
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
   
   // States for color picker
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -747,13 +852,94 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     setSelectedId(null);
   };
   
-  // Fonction pour sauvegarder le template
+  // Fonction améliorée pour générer une miniature PNG haute qualité
+  const generateThumbnail = useCallback(() => {
+    if (!stageRef.current) return null;
+    
+    try {
+      console.log('Génération de la miniature PNG pour S3...');
+      
+      // Mémoriser l'échelle actuelle
+      const originalScale = stageSize.scale;
+      
+      // Réinitialiser l'échelle à 1 pour capturer en pleine résolution
+      stageRef.current.scale({ x: 1, y: 1 });
+      
+      // Forcer un rendu avant la capture
+      stageRef.current.batchDraw();
+      
+      // Créer une URL de données à partir du stage
+      const dataURL = stageRef.current.toDataURL({
+        pixelRatio: 2,       // Résolution x2 pour meilleure qualité
+        mimeType: 'image/png', // Spécifier PNG pour S3
+        quality: 1,          // Qualité maximale
+        x: 0,
+        y: 0,
+        width: stageSize.width,
+        height: stageSize.height
+      });
+      
+      // Restaurer l'échelle d'origine
+      stageRef.current.scale({ x: originalScale, y: originalScale });
+      stageRef.current.batchDraw();
+      
+      console.log('Miniature PNG générée avec succès pour S3');
+      setThumbnailUrl(dataURL);
+      return dataURL;
+    } catch (error) {
+      console.error('Erreur lors de la génération de la miniature:', error);
+      return null;
+    }
+  }, [stageSize]);
+  
+  // Effect to generate thumbnail when elements change
+  useEffect(() => {
+    // Only generate thumbnail if we have elements
+    if (elements.length > 0) {
+      // Use a small delay to ensure all elements are properly rendered
+      const timer = setTimeout(() => {
+        generateThumbnail();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [elements, generateThumbnail]);
+  
+  // Fonction modifiée pour sauvegarder avec miniature
   const saveTemplate = () => {
     if (onSave) {
-      onSave({
-        elements,
-        stageSize
-      });
+      console.log('Sauvegarde du template avec miniature PNG...');
+      
+      try {
+        // Générer une nouvelle miniature avant sauvegarde
+        const thumbnail = generateThumbnail();
+        
+        if (!thumbnail) {
+          console.error('Échec de la génération de la miniature PNG');
+          // Continuer sans miniature
+          onSave({
+            elements,
+            stageSize
+          });
+          return;
+        }
+        
+        // Inclure la miniature dans les données de retour
+        onSave({
+          elements,
+          stageSize,
+          thumbnailUrl: thumbnail
+        });
+        
+        console.log('Template et miniature PNG sauvegardés avec succès');
+      } catch (error) {
+        console.error('Erreur lors de la sauvegarde du template:', error);
+        // Sauvegarder sans miniature en cas d'erreur
+        onSave({
+          elements,
+          stageSize
+        });
+      }
     }
   };
   
@@ -808,12 +994,57 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     }
   };
   
+  // Handle template selection
+  const handleSelectTemplate = (template) => {
+    try {
+      // Parse elements if they're stored as a string
+      let templateElements = [];
+      if (typeof template.elements === 'string') {
+        templateElements = JSON.parse(template.elements);
+      } else if (Array.isArray(template.elements)) {
+        templateElements = template.elements;
+      }
+
+      // Parse stage size if it's stored as a string
+      let templateStageSize = { width: 970, height: 651, scale: 1 };
+      if (typeof template.stage_size === 'string') {
+        templateStageSize = JSON.parse(template.stage_size);
+      } else if (template.stage_size && typeof template.stage_size === 'object') {
+        templateStageSize = template.stage_size;
+      }
+
+      // Update state with template data
+      setElements(templateElements);
+      setStageSize(prev => ({
+        ...templateStageSize,
+        scale: prev.scale // Keep current scale
+      }));
+      setSelectedId(null);
+      
+      // Switch to elements tab after loading template
+      setActiveTab('elements');
+    } catch (error) {
+      console.error('Error loading template:', error);
+      alert('Erreur lors du chargement du template');
+    }
+  };
+  
   return (
     <div className="bg-white shadow-sm rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
           <h3 className="text-lg font-medium text-gray-900">Éditeur de Template</h3>
           <div className="flex space-x-2">
+            {thumbnailUrl && (
+              <div className="hidden md:block">
+                <div className="text-xs text-gray-500 mb-1 text-center">Aperçu miniature</div>
+                <img 
+                  src={thumbnailUrl} 
+                  alt="Aperçu" 
+                  className="h-10 w-15 object-cover border border-gray-200 rounded"
+                />
+              </div>
+            )}
             <button
               onClick={removeSelected}
               disabled={!selectedId}
@@ -840,6 +1071,21 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Panneau des outils */}
           <div className="w-full lg:w-16 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-lg flex lg:flex-col shadow-lg">
+            {/* New Template tab button */}
+            <button
+              className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+                activeTab === 'templates' 
+                  ? 'bg-white bg-opacity-20 text-white' 
+                  : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+              }`}
+              onClick={() => setActiveTab('templates')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+              <span className="text-xs font-medium">Templates</span>
+            </button>
+
             <button
               className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
                 activeTab === 'elements' 
@@ -900,6 +1146,14 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
           {/* Contenu des onglets */}
           <div className="w-full lg:w-64 border border-gray-300 rounded-lg p-4 bg-gray-50">
             <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+              {activeTab === 'templates' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                  Templates
+                </>
+              )}
               {activeTab === 'elements' && (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -935,6 +1189,10 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
             </h4>
             
             <div className="flex-grow overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-20rem)]">
+              {activeTab === 'templates' && (
+                <TemplatesTab onSelectTemplate={handleSelectTemplate} />
+              )}
+              
               {activeTab === 'elements' && (
                 <ElementsTab 
                   addElement={addElement}

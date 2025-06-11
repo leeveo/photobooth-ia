@@ -77,10 +77,6 @@ export default function ProjectDetails({ params }) {
   const [deleteStyleConfirm, setDeleteStyleConfirm] = useState(false);
   const [styleToDelete, setStyleToDelete] = useState(null);
   const [deleteStyleLoading, setDeleteStyleLoading] = useState(false);
-  const [savedLayouts, setSavedLayouts] = useState([]); // State for saved layouts
-  const [layoutName, setLayoutName] = useState(''); // State for layout name
-  const [elements, setElements] = useState([]); // State for custom elements
-  const [stageSize, setStageSize] = useState({ width: 800, height: 600 }); // State for stage size
   
   // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
@@ -1631,7 +1627,6 @@ export default function ProjectDetails({ params }) {
                                     />
                                   </div>
                                   <button
-
                                     type="button"
                                     onClick={() => {
                                       setStyleFile(null);
@@ -1828,7 +1823,7 @@ export default function ProjectDetails({ params }) {
                                     onClick={() => handleDeleteStyle(style.id)}
                                     className="w-full inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
                                     Supprimer
@@ -2193,25 +2188,4 @@ if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.innerHTML = globalStyles;
   document.head.appendChild(style);
-}
-
-// Ajoutez ces styles CSS supplémentaires
-const additionalStyles = `
-.highlight-section {
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5);
-  animation: pulseShadow 1.5s ease-in-out;
-}
-
-@keyframes pulseShadow {
-  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-}
-`;
-
-// Ajouter les styles au document
-if (typeof document !== 'undefined') {
-  const styleElement = document.createElement('style');
-  styleElement.innerHTML = globalStyles + additionalStyles;
-  document.head.appendChild(styleElement);
 }

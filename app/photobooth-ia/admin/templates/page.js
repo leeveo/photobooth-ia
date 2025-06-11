@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { RiAddLine, RiDeleteBin6Line, RiEdit2Line, RiArrowLeftLine, RiRefreshLine } from 'react-icons/ri';
 import dynamic from 'next/dynamic';
+import { uploadThumbnail, updateTemplateThumbnail, migrateExistingThumbnails } from '../utils/thumbnailUtils';
 
 // IMPORTANT: Importer TemplateEditor au lieu de CanvasEditor
 const TemplateEditor = dynamic(
@@ -36,6 +37,8 @@ export default function LayoutTemplates() {
   const [templateToDelete, setTemplateToDelete] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false); // État pour indiquer que la sauvegarde est en cours
+  const [thumbnailData, setThumbnailData] = useState(null); // État pour les données de l'aperçu
+  const [imageTimestamp, setImageTimestamp] = useState(Date.now()); // Add state for image timestamp
 
   // Fonction améliorée pour récupérer les templates
   const fetchTemplates = async () => {
@@ -101,26 +104,30 @@ export default function LayoutTemplates() {
       
       console.log('Utilisateur authentifié:', user.id);
       
+      // Créer un ID temporaire pour le template
+      const tempId = Date.now().toString();
+      
+      // Télécharger l'aperçu si disponible (using the utility function)
+      let thumbnailUrl = null;
+      if (thumbnailData) {
+        thumbnailUrl = await uploadThumbnail(thumbnailData, tempId);
+        console.log('Thumbnail uploaded with URL:', thumbnailUrl);
+      }
+      
       // Préparer les données pour l'insertion
       const templateToInsert = {
         name: templateData.name,
-        layout_name: templateData.name, // Important: utiliser le même nom pour layout_name
+        layout_name: templateData.name,
         description: templateData.description || '',
         category: templateData.category || '',
         elements: canvasLayout.elements,
         stage_size: canvasLayout.stageSize,
         is_public: templateData.is_public,
-        created_by: user.id
+        created_by: user.id,
+        thumbnail_url: thumbnailUrl
       };
       
-      console.log('Données à insérer:', {
-        name: templateToInsert.name,
-        layout_name: templateToInsert.layout_name,
-        category: templateToInsert.category,
-        elementCount: templateToInsert.elements.length
-      });
-
-      // Insérer directement dans la table layout_templates
+      // Insert the template
       const { data, error } = await supabase
         .from('layout_templates')
         .insert(templateToInsert)
@@ -140,6 +147,7 @@ export default function LayoutTemplates() {
       resetForm();
       setShowCreateForm(false);
       setShowEditor(false);
+      setThumbnailData(null);
       
     } catch (error) {
       console.error('Erreur lors de la création du template:', error);
@@ -230,25 +238,31 @@ export default function LayoutTemplates() {
 
     try {
       console.log('Mise à jour du template:', currentTemplate.id);
-      console.log('Données à mettre à jour:', {
-        name: templateData.name,
-        layout_name: templateData.name,
-        elementCount: canvasLayout.elements.length,
-        stageSize: canvasLayout.stageSize
-      });
       
+      // Upload thumbnail if available (using the utility function)
+      let thumbnailUrl = currentTemplate.thumbnail_url;
+      if (thumbnailData) {
+        const newThumbnailUrl = await uploadThumbnail(thumbnailData, currentTemplate.id);
+        if (newThumbnailUrl) {
+          thumbnailUrl = newThumbnailUrl;
+          console.log('New thumbnail URL:', thumbnailUrl);
+        }
+      }
+      
+      // Prepare update data
       const updateData = {
         name: templateData.name,
-        layout_name: templateData.name, // Important: also update layout_name
+        layout_name: templateData.name,
         description: templateData.description,
         elements: canvasLayout.elements,
         stage_size: canvasLayout.stageSize,
         category: templateData.category,
         is_public: templateData.is_public,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        thumbnail_url: thumbnailUrl
       };
       
-      // Update the template in the database
+      // Update the template
       const { data, error } = await supabase
         .from('layout_templates')
         .update(updateData)
@@ -262,13 +276,14 @@ export default function LayoutTemplates() {
 
       console.log('Template updated successfully:', data);
       
-      // Update the template in the local state
+      // Update local state
       setTemplates(templates.map(t => t.id === currentTemplate.id ? data[0] : t));
       
       setSuccess('Template mis à jour avec succès');
       resetForm();
       setShowEditForm(false);
       setShowEditor(false);
+      setThumbnailData(null);
     } catch (error) {
       console.error('Error updating template:', error);
       setError(`Erreur lors de la mise à jour du template: ${error.message}`);
@@ -321,6 +336,7 @@ export default function LayoutTemplates() {
     });
     setCurrentTemplate(null);
     setShowEditor(false);
+    setThumbnailData(null);
   };
 
   // Fonction pour gérer la sauvegarde depuis l'éditeur de template - AMÉLIORÉE
@@ -338,6 +354,11 @@ export default function LayoutTemplates() {
       ? layoutData.stageSize 
       : { width: 970, height: 651, scale: 1 };
     
+    // Save the thumbnail data if available
+    if (layoutData.thumbnailUrl) {
+      setThumbnailData(layoutData.thumbnailUrl);
+    }
+    
     setCanvasLayout({
       elements: elementsToSave,
       stageSize: stageSizeToSave
@@ -345,6 +366,44 @@ export default function LayoutTemplates() {
     
     setSuccess('Éléments du template enregistrés dans l\'éditeur');
     setShowEditor(false);
+  };
+
+  // Function to force update a template's thumbnail - NEW FUNCTION
+  const updateTemplateThumbnailById = async (templateId) => {
+    if (!templateId) return;
+    
+    try {
+      setLoading(true);
+      const template = templates.find(t => t.id === templateId);
+      
+      if (!template || !template.thumbnail_url) {
+        throw new Error('Template or thumbnail not found');
+      }
+      
+      // Check if the thumbnail URL is a data URL
+      if (template.thumbnail_url.startsWith('data:image/')) {
+        // Upload the data URL to Supabase
+        const newThumbnailUrl = await uploadThumbnail(template.thumbnail_url, templateId);
+        
+        if (newThumbnailUrl) {
+          // Update the template in the database
+          const success = await updateTemplateThumbnail(supabase, templateId, newThumbnailUrl);
+          
+          if (success) {
+            // Update the local state
+            setTemplates(templates.map(t => 
+              t.id === templateId ? {...t, thumbnail_url: newThumbnailUrl} : t
+            ));
+            setSuccess('Miniature mise à jour avec succès');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating template thumbnail:', error);
+      setError(`Erreur lors de la mise à jour de la miniature: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Categories options
@@ -357,6 +416,178 @@ export default function LayoutTemplates() {
     { id: 'other', name: 'Autre' }
   ];
 
+  // Add a utility function to check if a URL is valid
+  const isValidHttpUrl = (string) => {
+    try {
+      const url = new URL(string);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // Add function to force refresh images
+  const forceRefreshImages = () => {
+    setImageTimestamp(Date.now());
+    setSuccess("Rafraîchissement des miniatures en cours...");
+    setTimeout(() => {
+      if (success === "Rafraîchissement des miniatures en cours...") {
+        setSuccess(null);
+      }
+    }, 2000);
+  };
+
+  // Add a new function to handle migration
+  const handleMigrateThumbnails = async () => {
+    setLoading(true);
+    setSuccess('Migration des miniatures en cours...');
+    
+    try {
+      await migrateExistingThumbnails();
+      setSuccess('Migration des miniatures terminée. Actualisation de la liste...');
+      await fetchTemplates(); // Refresh the list after migration
+    } catch (error) {
+      console.error('Error during thumbnail migration:', error);
+      setError(`Erreur lors de la migration: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour tester l'upload du bucket
+  const testBucketUpload = async () => {
+    setLoading(true);
+    setSuccess("Test d'upload vers le bucket en cours...");
+    
+    try {
+      const supabase = createClientComponentClient();
+      
+      // 1. Vérifier que le bucket existe
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        throw new Error(`Erreur lors de la liste des buckets: ${bucketsError.message}`);
+      }
+      
+      const templatesBucket = buckets.find(b => b.name === 'templates-thumbnails');
+      
+      if (!templatesBucket) {
+        throw new Error('Le bucket templates-thumbnails n\'existe pas. Veuillez exécuter le script SQL.');
+      }
+      
+      console.log('Bucket templates-thumbnails trouvé:', templatesBucket);
+      
+      // 2. Créer une petite image PNG pour tester
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+      
+      // Dessiner un dégradé et du texte
+      const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+      gradient.addColorStop(0, '#3498db');
+      gradient.addColorStop(1, '#9b59b6');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 200, 100);
+      
+      ctx.fillStyle = 'white';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Test Upload PNG', 100, 50);
+      
+      // Convertir en PNG data URL
+      const testImageDataUrl = canvas.toDataURL('image/png');
+      
+      // 3. Tester l'upload avec notre fonction
+      const uploadResult = await uploadThumbnail(testImageDataUrl, 'test-upload');
+      
+      if (!uploadResult || uploadResult === testImageDataUrl) {
+        throw new Error('L\'upload a échoué ou a retourné l\'URL de données d\'origine');
+      }
+      
+      console.log('Upload réussi! URL:', uploadResult);
+      setSuccess(`Test réussi! Image uploadée à: ${uploadResult}`);
+      
+      // 4. Afficher un aperçu de l'image uploadée
+      const previewImage = document.createElement('img');
+      previewImage.src = uploadResult;
+      previewImage.style.maxWidth = '300px';
+      previewImage.style.border = '1px solid #ccc';
+      
+      // Ajouter à la page pour visualisation temporaire
+      const previewContainer = document.getElementById('upload-test-result');
+      if (previewContainer) {
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(previewImage);
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors du test d\'upload:', error);
+      setError(`Test d'upload échoué: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour tester l'upload S3
+  const testS3Upload = async () => {
+    setLoading(true);
+    setSuccess("Test d'upload vers AWS S3 en cours...");
+    
+    try {
+      // 1. Créer une petite image PNG pour tester
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+      
+      // Dessiner un dégradé et du texte
+      const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+      gradient.addColorStop(0, '#3498db');
+      gradient.addColorStop(1, '#9b59b6');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 200, 100);
+      
+      ctx.fillStyle = 'white';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Test Upload S3', 100, 50);
+      ctx.fillText(new Date().toLocaleTimeString(), 100, 70);
+      
+      // Convertir en PNG data URL
+      const testImageDataUrl = canvas.toDataURL('image/png');
+      
+      // 2. Tester l'upload avec notre fonction
+      const uploadResult = await uploadThumbnail(testImageDataUrl, 'test-s3-upload');
+      
+      if (!uploadResult || uploadResult === testImageDataUrl) {
+        throw new Error('L\'upload S3 a échoué ou a retourné l\'URL de données d\'origine');
+      }
+      
+      console.log('Upload S3 réussi! URL:', uploadResult);
+      setSuccess(`Test S3 réussi! Image uploadée à: ${uploadResult}`);
+      
+      // 3. Afficher un aperçu de l'image uploadée
+      const previewImage = document.createElement('img');
+      previewImage.src = uploadResult;
+      previewImage.style.maxWidth = '300px';
+      previewImage.style.border = '1px solid #ccc';
+      
+      // Ajouter à la page pour visualisation temporaire
+      const previewContainer = document.getElementById('upload-test-result');
+      if (previewContainer) {
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(previewImage);
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors du test d\'upload S3:', error);
+      setError(`Test d'upload S3 échoué: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-8 flex justify-between items-center">
@@ -365,14 +596,6 @@ export default function LayoutTemplates() {
           <p className="text-gray-600 mt-1">Créez et gérez vos templates de layout pour vos projets</p>
         </div>
         <div className="flex space-x-3">
-          <button
-            onClick={fetchTemplates}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
-            disabled={loading}
-          >
-            <RiRefreshLine className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Rafraîchir
-          </button>
           <Link
             href="/photobooth-ia/admin/dashboard"
             className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
@@ -484,11 +707,27 @@ export default function LayoutTemplates() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8">
                     <div className="text-center mb-4">
-                      <p className="text-gray-500 mb-2">
-                        {canvasLayout.elements.length > 0 
-                          ? `Ce template contient ${canvasLayout.elements.length} éléments` 
-                          : 'Aucun élément dans ce template pour le moment'}
-                      </p>
+                      {thumbnailData ? (
+                        <div className="mb-3">
+                          <p className="text-gray-500 mb-2">Aperçu du template:</p>
+                          <div className="mx-auto w-40 h-28 overflow-hidden border border-gray-300 rounded">
+                            <img 
+                              src={thumbnailData} 
+                              alt="Aperçu du template" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      ) : canvasLayout.elements.length > 0 ? (
+                        <p className="text-gray-500 mb-2">
+                          Ce template contient {canvasLayout.elements.length} éléments
+                        </p>
+                      ) : (
+                        <p className="text-gray-500 mb-2">
+                          Aucun élément dans ce template pour le moment
+                        </p>
+                      )}
+                      
                       {canvasLayout.stageSize && (
                         <p className="text-xs text-gray-400">
                           Dimensions: {canvasLayout.stageSize.width}×{canvasLayout.stageSize.height} pixels
@@ -579,85 +818,121 @@ export default function LayoutTemplates() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-            {templates.map((template) => (
-              <div key={template.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-                <div className="h-40 bg-gray-100 relative">
-                  {template.thumbnail_url ? (
-                    <Image
-                      src={template.thumbnail_url}
-                      alt={template.name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
-                      <div className="text-center text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                        </svg>
-                        <p className="text-sm mt-1">Aperçu non disponible</p>
+            {templates.map((template) => {
+              // Log thumbnail URL for debugging
+              console.log(`Template ${template.id} thumbnail:`, template.thumbnail_url);
+              
+              // Check if we have a valid URL or data URL
+              const hasValidThumbnail = template.thumbnail_url && 
+                (isValidHttpUrl(template.thumbnail_url) || template.thumbnail_url.startsWith('data:image/'));
+              
+              return (
+                <div key={template.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div className="h-40 bg-gray-100 relative">
+                    {hasValidThumbnail ? (
+                      <div className="w-full h-full">
+                        {/* Use standard img tag for better compatibility */}
+                        <img
+                          src={template.thumbnail_url}
+                          alt={template.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error("Error loading image:", template.thumbnail_url);
+                            e.target.onerror = null;
+                            // Fallback to placeholder
+                            e.target.style.display = 'none';
+                            e.target.parentNode.classList.add('flex', 'items-center', 'justify-center');
+                            e.target.parentNode.innerHTML = `
+                              <div class="text-center text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                </svg>
+                                <p class="text-sm mt-1">Erreur de chargement</p>
+                              </div>
+                            `;
+                          }}
+                        />
                       </div>
-                    </div>
-                  )}
-                  
-                  {/* Category badge overlay */}
-                  {template.category && (
-                    <div className="absolute top-2 left-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white bg-opacity-90 text-gray-800 shadow-sm">
-                        {categories.find(c => c.id === template.category)?.name || template.category}
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+                        <div className="text-center text-gray-400">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                          </svg>
+                          <p className="text-sm mt-1">Aperçu non disponible</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Category badge overlay */}
+                    {template.category && (
+                      <div className="absolute top-2 left-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white bg-opacity-90 text-gray-800 shadow-sm">
+                          {categories.find(c => c.id === template.category)?.name || template.category}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Public/Private badge overlay */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                        template.is_public 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {template.is_public ? 'Public' : 'Privé'}
                       </span>
                     </div>
-                  )}
+                  </div>
                   
-                  {/* Public/Private badge overlay */}
-                  <div className="absolute top-2 right-2">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                      template.is_public 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {template.is_public ? 'Public' : 'Privé'}
-                    </span>
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 text-lg mb-1">{template.name}</h3>
+                    {template.description && (
+                      <p className="text-gray-500 text-sm mb-3 line-clamp-2">{template.description}</p>
+                    )}
+                    
+                    <div className="flex flex-wrap text-xs text-gray-500 mb-4">
+                      <span className="mr-2">
+                        Créé le: {new Date(template.created_at).toLocaleDateString()}
+                      </span>
+                      <span>
+                        Éléments: {(template.elements?.length || 0)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <button
+                        onClick={() => editTemplate(template)}
+                        className="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded-md shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
+                      >
+                        <RiEdit2Line className="mr-1 h-3.5 w-3.5" />
+                        Modifier
+                      </button>
+                      <button 
+                        onClick={() => updateTemplateThumbnailById(template.id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-green-300 text-xs font-medium rounded-md shadow-sm text-green-700 bg-white hover:bg-green-50"
+                        title="Mettre à jour la miniature"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Actualiser
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTemplateToDelete(template);
+                          setDeleteConfirm(true);
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50"
+                      >
+                        <RiDeleteBin6Line className="mr-1 h-3.5 w-3.5" />
+                        Supprimer
+                      </button>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900 text-lg mb-1">{template.name}</h3>
-                  {template.description && (
-                    <p className="text-gray-500 text-sm mb-3 line-clamp-2">{template.description}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap text-xs text-gray-500 mb-4">
-                    <span className="mr-2">
-                      Créé le: {new Date(template.created_at).toLocaleDateString()}
-                    </span>
-                    <span>
-                      Éléments: {(template.elements?.length || 0)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <button
-                      onClick={() => editTemplate(template)}
-                      className="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded-md shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
-                    >
-                      <RiEdit2Line className="mr-1 h-3.5 w-3.5" />
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTemplateToDelete(template);
-                        setDeleteConfirm(true);
-                      }}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50"
-                    >
-                      <RiDeleteBin6Line className="mr-1 h-3.5 w-3.5" />
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

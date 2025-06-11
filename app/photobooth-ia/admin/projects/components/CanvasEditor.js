@@ -6,10 +6,19 @@ import {
   Arc, Arrow, Circle, Ellipse, Line, Path, RegularPolygon, Ring, Star, Wedge
 } from 'react-konva';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import ElementsTab from './ElementsTab';
-import TextTab from './TextTab';
-import UnsplashTab from './UnsplashTab';
-import LayoutTab from './LayoutTab';
+import TabComponentWrapper from './TabComponentWrapper';
+
+// Import tab components - handle safely in case they have issues
+let ElementsTab, TextTab, UnsplashTab, LayoutTab;
+try {
+  ElementsTab = require('./ElementsTab').default;
+  TextTab = require('./TextTab').default;
+  UnsplashTab = require('./UnsplashTab').default;
+  LayoutTab = require('./LayoutTab').default;
+} catch (error) {
+  console.error("Error importing tab components:", error);
+  // We'll handle the missing components in the TabComponentWrapper
+}
 
 // List of fonts that are commonly available on most systems
 const availableFonts = [
@@ -1165,7 +1174,9 @@ const handleTextPropertyChange = useCallback((property, value) => {
           
           <div className="flex-grow overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-20rem)]">
             {activeTab === 'elements' && (
-              <ElementsTab 
+              <TabComponentWrapper
+                component={ElementsTab}
+                componentName="ElementsTab" 
                 addElement={addElement}
                 elements={elements}
                 selectedId={selectedId}
@@ -1181,7 +1192,9 @@ const handleTextPropertyChange = useCallback((property, value) => {
             )}
             
             {activeTab === 'text' && (
-              <TextTab 
+              <TabComponentWrapper
+                component={TextTab}
+                componentName="TextTab"
                 addElement={addElement}
                 elements={elements}
                 selectedId={selectedId}
@@ -1235,30 +1248,39 @@ const handleTextPropertyChange = useCallback((property, value) => {
             
             {/* Layouts tab content */}
             {activeTab === 'layouts' && (
-              <LayoutTab 
+              <TabComponentWrapper
+                component={LayoutTab}
+                componentName="LayoutTab"
                 projectId={projectId}
                 savedLayouts={savedLayouts}
-                loadLayout={(layoutId, customElements) => {
+                loadLayout={(layoutId, customElements, customStageSize) => {
+                  console.log('Loading layout from LayoutTab:', layoutId, customElements);
                   if (layoutId) {
+                    // Call the function with just the ID
                     loadLayout(layoutId);
                   } else if (customElements) {
-                    // Appliquer directement les éléments personnalisés
+                    // Handle direct elements application
                     setElements(customElements);
+                    if (customStageSize) {
+                      setStageSize(customStageSize);
+                    }
                     setSelectedId(null);
                   }
                 }}
                 saveLayout={saveLayout}
                 setLayoutName={setLayoutName}
                 layoutName={layoutName}
-                elements={elements}  // Assurez-vous que ces props sont bien passées
-                stageSize={stageSize} // Assurez-vous que ces props sont bien passées
+                elements={elements}
+                stageSize={stageSize}
                 setSavedLayouts={setSavedLayouts}
               />
             )}
             
             {/* Unsplash tab content */}
             {activeTab === 'unsplash' && (
-              <UnsplashTab 
+              <TabComponentWrapper
+                component={UnsplashTab}
+                componentName="UnsplashTab"
                 addElement={addElement}
               />
             )}
