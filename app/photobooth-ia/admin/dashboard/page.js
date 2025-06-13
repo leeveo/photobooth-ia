@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine } from 'react-icons/ri';
+import Loader from '../../../components/ui/Loader';
 
 export default function Dashboard() {
   const supabase = createClientComponentClient();
@@ -207,6 +208,18 @@ export default function Dashboard() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader 
+          size="large" 
+          message="Chargement du tableau de bord..." 
+          variant="premium" 
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Stats Card */}
@@ -268,9 +281,8 @@ export default function Dashboard() {
         
         <div className="divide-y divide-gray-200">
           {loading ? (
-            <div className="p-6 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-              <p className="mt-2 text-sm text-gray-500">Chargement des projets...</p>
+            <div className="p-6 flex justify-center">
+              <Loader size="default" message="Chargement des projets..." variant="premium" />
             </div>
           ) : projects.length === 0 ? (
             <div className="p-6 text-center">
@@ -380,7 +392,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Feature Cards - NOUVEAU CONTENU PLUS PERTINENT */}
+      {/* Feature Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="p-6 bg-blue-50 border-l-4 border-blue-400 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
