@@ -47,23 +47,6 @@ const StyleManager = ({
     e.preventDefault();
     setAddingStyleLoading(true);
     try {
-      // Make sure the storage bucket exists
-      try {
-        const { data: bucketData, error: bucketError } = await supabase
-          .storage
-          .getBucket('styles');
-          
-        if (bucketError && bucketError.code === 'PGRST116') {
-          // Bucket doesn't exist, create it
-          await supabase.storage.createBucket('styles', {
-            public: true
-          });
-        }
-      } catch (bucketCheckError) {
-        console.warn('Error checking bucket:', bucketCheckError);
-        // Continue anyway
-      }
-      
       // Upload style image
       const { data: styleImageData, error: styleImageError } = await supabase
         .storage
@@ -428,7 +411,7 @@ const StyleManager = ({
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
               Ajouter des styles depuis un template
             </button>

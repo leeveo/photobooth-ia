@@ -51,7 +51,9 @@
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
     "swiper": "^11.1.14",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "@ffmpeg/ffmpeg": "^0.11.6",
+    "@ffmpeg/core": "^0.11.0"
   },
   "devDependencies": {
     "@next/third-parties": "^14.1.0",

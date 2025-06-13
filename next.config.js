@@ -76,6 +76,12 @@ const nextConfig = {
     // Avoid lambda function serialization issues
     config.externals = [...(config.externals || []), 'canvas', 'jsdom'];
     
+    // Add support for WebAssembly
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    };
+    
     return config;
   },
   async redirects() {
