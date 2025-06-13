@@ -42,7 +42,8 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '**': ['node_modules/**/*.js'],
     },
-    externalDir: true // Ajouter cette option pour les images externes
+    externalDir: true, // Ajouter cette option pour les images externes
+    serverComponentsExternalPackages: [],
   },
   typescript: {
     ignoreBuildErrors: true, // Ignorer les erreurs TS pendant le build
