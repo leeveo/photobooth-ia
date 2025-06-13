@@ -10,6 +10,8 @@ import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
 import { QRCodeSVG } from 'qrcode.react';
 import dynamic from 'next/dynamic';
+// Import the Loader component
+import Loader from '../../../../components/ui/Loader';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -752,9 +754,12 @@ export default function ProjectDetails({ params }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        <span className="ml-3 text-gray-600">Chargement...</span>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader 
+          size="large" 
+          message="Chargement du projet..." 
+          variant="premium" 
+        />
       </div>
     );
   }
@@ -919,252 +924,303 @@ export default function ProjectDetails({ params }) {
             {activeTab === 'info' && (
               <>
                 <div className="space-y-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 1 : Informations du projet</h3>
+                  <div className="flex items-center mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                      <span className="text-white font-semibold">1</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Informations du projet</h3>
+                  </div>
                   
-                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                    <div className="sm:col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">Nom</h4>
-                      <div className="mt-1">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={project.name}
-                            onChange={handleNameChange}
-                            maxLength={30}
-                            className="block w-full rounded-md border-gray-300 py-3 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
-                            placeholder="Nom du projet"
-                          />
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    {/* Header section with essential info */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Project name */}
+                        <div>
+                          <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 mb-1">
+                            Nom du projet
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 005 10a6 6 0 0012 0c0-.358-.035-.709-.104-1.047A5.001 5.001 0 0010 11z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <input
+                              type="text"
+                              id="projectName"
+                              value={project.name}
+                              onChange={handleNameChange}
+                              maxLength={30}
+                              className="pl-10 block w-full rounded-md border-gray-300 py-3 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-md transition-all duration-200"
+                              placeholder="Nom du projet"
+                            />
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                            <span>Maximum 30 caractères</span>
+                            <span className={`${project.name.length >= 25 ? 'text-orange-500' : ''} ${project.name.length >= 30 ? 'text-red-500 font-bold' : ''}`}>
+                              {project.name.length}/30
+                            </span>
+                          </p>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                          <span>Maximum 30 caractères</span>
-                          <span className={`${project.name.length >= 25 ? 'text-orange-500' : ''} ${project.name.length >= 30 ? 'text-red-500 font-bold' : ''}`}>
-                            {project.name.length}/30
-                          </span>
-                        </p>
+
+                           <div>
+                            <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700">
+                              Date de l'événement
+                            </label>
+                            <div className="relative mt-1">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <input
+                                type="datetime-local"
+                                id="eventDate"
+                                value={project.event_date ? new Date(project.event_date).toISOString().slice(0, 16) : ''}
+                                onChange={handleEventDateChange}
+                                className="pl-10 block w-full rounded-md border-gray-300 py-2 focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200"
+                              />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">
+                              {project.event_date ? new Date(project.event_date).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'Aucune date définie'}
+                            </p>
+                          </div>
+
+                        
+                        {/* Status & event date */}
+                        <div>
+                          <div className="flex justify-between mb-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700">Statut</h4>
+                              <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {project.is_active ? 'Actif' : 'Inactif'}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700">Créé le</h4>
+                              <p className="text-sm text-gray-600">
+                                {new Date(project.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          
+                       
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="sm:col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">URL du projet</h4>
-                      <div className="mt-1">
-                        <div className="relative">
-                          <div className="flex items-center">
-                            <div className="relative flex-grow">
+                    {/* Main content section */}
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Left column: Description & Home message */}
+                        <div className="md:col-span-2 space-y-6">
+                          <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                              Description
+                            </label>
+                            <div className="relative">
+                              <textarea
+                                id="description"
+                                value={project.description || ''}
+                                onChange={handleDescriptionChange}
+                                maxLength={200}
+                                rows={3}
+                                className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200"
+                                placeholder="Description du projet (optionnel)"
+                              />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                              <span>Maximum 200 caractères</span>
+                              <span className={`${(project.description?.length || 0) >= 180 ? 'text-orange-500' : ''} ${(project.description?.length || 0) >= 200 ? 'text-red-500 font-bold' : ''}`}>
+                                {project.description?.length || 0}/200
+                              </span>
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="homeMessage" className="block text-sm font-medium text-gray-700 mb-1">
+                              Message d'accueil
+                            </label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v2M7 7h10" clipRule="evenodd" />
+                                </svg>
+                              </div>
                               <input
                                 type="text"
-                                value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project?.slug}`}
-                                readOnly
-                                className="block w-full rounded-md border-gray-300 bg-gray-50 py-2.5 px-4 text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                id="homeMessage"
+                                value={project.home_message || ''}
+                                onChange={handleHomeMessageChange}
+                                maxLength={100}
+                                className="pl-10 block w-full rounded-md border border-gray-300 py-3 focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200"
+                                placeholder="Message d'accueil affiché aux utilisateurs (optionnel)"
                               />
-                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500 flex justify-between">
+                              <span>Maximum 100 caractères</span>
+                              <span className={`${(project.home_message?.length || 0) >= 80 ? 'text-orange-500' : ''} ${(project.home_message?.length || 0) >= 100 ? 'text-red-500 font-bold' : ''}`}>
+                                {project.home_message?.length || 0}/100
+                              </span>
+                            </p>
+                          </div>
+                          
+                          {/* Color selection with preview */}
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Couleurs du thème</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-600 mb-1">
+                                  Couleur principale
+                                </label>
+                                <div className="flex items-center space-x-2">
+                                  <div className="relative">
+                                    <div 
+                                      className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
+                                      style={{ backgroundColor: project.primary_color }}
+                                    >
+                                      <input 
+                                        type="color" 
+                                        id="primaryColor"
+                                        value={project.primary_color} 
+                                        onChange={(e) => handleColorChange('primary_color', e.target.value)}
+                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                        aria-label="Choisir couleur principale"
+                                      />
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={project.primary_color}
+                                    onChange={(e) => handleColorChange('primary_color', e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    placeholder="#RRGGBB"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="secondaryColor" className="block text-sm font-medium text-gray-600 mb-1">
+                                  Couleur secondaire
+                                </label>
+                                <div className="flex items-center space-x-2">
+                                  <div className="relative">
+                                    <div 
+                                      className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
+                                      style={{ backgroundColor: project.secondary_color }}
+                                    >
+                                      <input 
+                                        type="color" 
+                                        id="secondaryColor"
+                                        value={project.secondary_color} 
+                                        onChange={(e) => handleColorChange('secondary_color', e.target.value)}
+                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                        aria-label="Choisir couleur secondaire"
+                                      />
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={project.secondary_color}
+                                    onChange={(e) => handleColorChange('secondary_color', e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    placeholder="#RRGGBB"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Color preview section */}
+                            <div className="mt-3 flex items-center justify-center">
+                              <div className="w-full h-12 rounded-lg overflow-hidden flex shadow-sm border border-gray-200">
+                                <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color }}>
+                                  <span className="font-medium text-white text-shadow text-sm">Primaire</span>
+                                </div>
+                                <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color }}>
+                                  <span className="font-medium text-white text-shadow text-sm">Secondaire</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Right column: URL and QR code */}
+                        <div className="md:col-span-1">
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">URL du projet</h4>
+                            
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
                               </div>
+                              <input
+                                type="text"
+                                value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project?.slug}`}
+                                readOnly
+                                className="pl-8 block w-full rounded-md border-gray-300 bg-white py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              />
                             </div>
+                            
                             <button
                               onClick={copyProjectUrl}
-                              className="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                              className="mt-2 inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2v2M7 7h10" />
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12  4h.02" />
                               </svg>
-                              Copier
+                              Copier l'URL
                             </button>
-                          </div>
-                          
-                          {/* QR Code directly embedded in the page */}
-                          <div className="mt-4 flex flex-col items-center">
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            
+                            <div className="flex-1 mt-4 flex flex-col items-center justify-center bg-white p-4 rounded-lg border border-gray-200">
+                              <div className="text-center mb-2">
+                                <span className="text-xs font-medium text-gray-500">QR Code</span>
+                              </div>
                               {project && (
                                 <QRCodeSVG
                                   value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`}
-                                  size={150}
+                                  size={140}
                                   level="M"
                                   bgColor="#FFFFFF"
                                   fgColor="#000000"
+                                  className="mb-2"
                                 />
                               )}
-                            </div>
-                            <p className="mt-2 text-xs text-gray-500 text-center">
-                              Scannez ce QR code pour accéder directement au photobooth
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="sm:col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">Description</h4>
-                      <div className="mt-1">
-                        <div className="relative">
-                          <textarea
-                            value={project.description || ''}
-                            onChange={handleDescriptionChange}
-                            maxLength={200}
-                            rows={3}
-                            className="block w-full rounded-md border-gray-300 py-2 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
-                            placeholder="Description du projet (optionnel)"
-                          />
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                          <span>Maximum 200 caractères</span>
-                          <span className={`${(project.description?.length || 0) >= 180 ? 'text-orange-500' : ''} ${(project.description?.length || 0) >= 200 ? 'text-red-500 font-bold' : ''}`}>
-                            {project.description?.length || 0}/200
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="sm:col-span-2">
-                      <h4 className="text-sm font-medium text-gray-500">Message d&apos;accueil</h4>
-                      <div className="mt-1">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={project.home_message || ''}
-                            onChange={handleHomeMessageChange}
-                            maxLength={100}
-                            className="block w-full rounded-md border-gray-300 py-3 px-4 text-base shadow-md focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-lg transition-all duration-200"
-                            placeholder="Message d'accueil (optionnel)"
-                          />
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                          <span>Maximum 100 caractères</span>
-                          <span className={`${(project.home_message?.length || 0) >= 80 ? 'text-orange-500' : ''} ${(project.home_message?.length || 0) >= 100 ? 'text-red-500 font-bold' : ''}`}>
-                            {project.home_message?.length || 0}/100
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Couleur principale</h4>
-                      <div className="mt-1">
-                        <div className="flex items-center space-x-2">
-                          <div className="relative">
-                            <div 
-                              className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300"
-                              style={{ backgroundColor: project.primary_color }}
-                            >
-                              <input 
-                                type="color" 
-                                value={project.primary_color} 
-                                onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                aria-label="Choisir couleur principale"
-                              />
+                              <p className="mt-1 text-xs text-gray-500 text-center">
+                                Scannez ce code pour accéder directement au photobooth
+                              </p>
                             </div>
                           </div>
-                          <input
-                            type="text"
-                            value={project.primary_color}
-                            onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                            className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            placeholder="#RRGGBB"
-                          />
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Cliquez sur le carré pour ouvrir le sélecteur de couleur
-                        </p>
                       </div>
                     </div>
                     
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Couleur secondaire</h4>
-                      <div className="mt-1">
-                        <div className="flex items-center space-x-2">
-                          <div className="relative">
-                            <div 
-                              className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300"
-                              style={{ backgroundColor: project.secondary_color }}
-                            >
-                              <input 
-                                type="color" 
-                                value={project.secondary_color} 
-                                onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                aria-label="Choisir couleur secondaire"
-                              />
-                            </div>
-                          </div>
-                          <input
-                            type="text"
-                            value={project.secondary_color}
-                            onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                            className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            placeholder="#RRGGBB"
-                          />
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Cliquez sur le carré pour ouvrir le sélecteur de couleur
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Date de l&apos;événement</h4>
-                      <div className="mt-1">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="datetime-local"
-                            value={project.event_date ? new Date(project.event_date).toISOString().slice(0, 16) : ''}
-                            onChange={handleEventDateChange}
-                            className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          />
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500">
-                          {project.event_date ? new Date(project.event_date).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : 'Aucune date définie'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Date de création</h4>
-                      <div className="mt-1 text-sm text-gray-900">
-                        {new Date(project.created_at).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
-                    </div>
-                    
-
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Statut</h4>
-                      <div className="mt-1">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {project.is_active ? 'Actif' : 'Inactif'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Add a single save button for all fields */}
-                    <div className="sm:col-span-2 mt-4 flex justify-end">
+                    {/* Footer with save button */}
+                    <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
                       <button
                         type="button"
                         onClick={saveProjectInfo}
                         disabled={isSubmitting}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
                       >
                         {isSubmitting ? (
                           <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Enregistrement...
+                            <Loader size="small" message="" variant="premium" />
+                            <span className="ml-2">Enregistrement...</span>
                           </>
                         ) : (
                           <>
@@ -1175,7 +1231,7 @@ export default function ProjectDetails({ params }) {
                       </button>
                     </div>
                   </div>
-
+                  
                   {/* Add the Backgrounds section here as an encart */}
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-4">
@@ -1186,7 +1242,7 @@ export default function ProjectDetails({ params }) {
                           className="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-lg shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5M11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                           </svg>
                           Ajouter depuis templates
                         </button>
@@ -1331,7 +1387,15 @@ export default function ProjectDetails({ params }) {
                   </div>
 
                   {/* Add step number to Type de photobooth section */}
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 2 : Type de photobooth</h3>
+
+                  <div className="flex items-center mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                      <span className="text-white font-semibold">2</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Type de photobooth</h3>
+                  </div>
+
+                 
                   
                   {/* Nouveau sélecteur de type de photobooth */}
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
@@ -1462,8 +1526,12 @@ export default function ProjectDetails({ params }) {
                 {/* Styles section - directly integrated into the Info tab */}
                 <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
                   <div className="flex justify-between items-center mb-4 relative">
-                    <h3 className="text-lg font-medium text-gray-900">Etape 3 : Styles du projet ({styles.length})</h3>
-                    
+                     <div className="flex items-center mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                      <span className="text-white font-semibold">3</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Choix du modèle</h3>
+                  </div>
                     {!typeValidated && (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-70 rounded-lg z-10">
                         <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200 text-center">
@@ -1640,7 +1708,7 @@ export default function ProjectDetails({ params }) {
                               ) : (
                                 <>
                                   <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                                   <div className="flex text-sm text-gray-600">
                                     <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
@@ -1823,7 +1891,7 @@ export default function ProjectDetails({ params }) {
                                     onClick={() => handleDeleteStyle(style.id)}
                                     className="w-full inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
                                     Supprimer
@@ -1850,8 +1918,12 @@ export default function ProjectDetails({ params }) {
                 
                 {/* Ajout de l'étape 4: Éditeur de Canvas */}
                 <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Etape 4 : Éditeur de Canvas</h3>
-                  
+                   <div className="flex items-center mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                      <span className="text-white font-semibold">4</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Editeur de cadres photos</h3>
+                  </div>
                   {/* Message de guide si le type n'est pas validé */}
                   {!typeValidated && (
                     <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
@@ -1926,7 +1998,6 @@ export default function ProjectDetails({ params }) {
                   <div>
                     <label htmlFor="enable_fullscreen" className="flex items-center">
                       <input
-
                         id="enable_fullscreen"
                         name="enable_fullscreen"
                         type="checkbox"

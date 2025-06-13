@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { RiAddLine, RiFolder2Line, RiErrorWarningLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
+import Loader from '../../../components/ui/Loader';
 
 export default function ProjectsPage() {
   const supabase = createClientComponentClient();
@@ -16,6 +17,10 @@ export default function ProjectsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(null);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     console.log("Fetching projects from Supabase...");
@@ -48,6 +53,7 @@ export default function ProjectsPage() {
 
   async function handleCreateProject() {
     try {
+      setCreatingProject(true);
       const newProject = {
         name: 'Nouveau projet',
         slug: `project-${Date.now()}`,
@@ -69,12 +75,15 @@ export default function ProjectsPage() {
     } catch (error) {
       console.error('Error creating project:', error);
       setError('Erreur lors de la création du projet');
+    } finally {
+      setCreatingProject(false);
     }
   }
 
   async function handleDeleteProject(projectId, projectName) {
     try {
       setDeleteLoading(true);
+      setDeletingProject(true);
       console.log(`Début de la suppression du projet ${projectId} (${projectName})`);
       
       // Utiliser l'API pour supprimer le projet
@@ -104,8 +113,22 @@ export default function ProjectsPage() {
       setError(`Erreur lors de la suppression du projet: ${error.message}`);
     } finally {
       setDeleteLoading(false);
+      setDeletingProject(false);
       setDeleteConfirm(null);
     }
+  }
+
+  // Replace any existing loading state like this:
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader 
+          size="large" 
+          message="Chargement des projets..." 
+          variant="premium" 
+        />
+      </div>
+    );
   }
 
   return (
@@ -191,12 +214,7 @@ export default function ProjectsPage() {
       )}
 
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
-        {loading ? (
-          <div className="p-6 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mb-2"></div>
-            <p className="text-sm text-gray-500">Chargement des projets...</p>
-          </div>
-        ) : projects.length === 0 ? (
+        {projects.length === 0 ? (
           <div className="p-10 text-center border border-dashed border-gray-300 rounded-xl m-6">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <RiFolder2Line className="w-8 h-8 text-indigo-500" />
