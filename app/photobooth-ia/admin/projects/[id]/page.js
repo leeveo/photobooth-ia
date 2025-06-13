@@ -5,13 +5,18 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { RiAddLine, RiExternalLinkLine, RiArrowLeftLine, RiSaveLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
+import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
-import { QRCodeSVG } from 'qrcode.react';
 import dynamic from 'next/dynamic';
-// Import the Loader component
 import Loader from '../../../../components/ui/Loader';
+
+// Import the components we created
+import ProjectInfoForm from '../components/ProjectInfoForm';
+import PhotoboothTypeManager from '../components/PhotoboothTypeManager';
+import StyleManager from '../components/StyleManager';
+import BackgroundManager from '../components/BackgroundManager';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -44,43 +49,15 @@ export default function ProjectDetails({ params }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
-  const [addingStyle, setAddingStyle] = useState(false);
-  const [newStyle, setNewStyle] = useState({
-    name: '',
-    gender: '',
-    style_key: '',
-    variations: 1,
-    description: '',
-  });
-  const [styleFile, setStyleFile] = useState(null);
-  const [styleImagePreview, setStyleImagePreview] = useState(null);
-  const [addingStyleLoading, setAddingStyleLoading] = useState(false);
-  const [addingBackground, setAddingBackground] = useState(false);
-  const [newBackground, setNewBackground] = useState({
-    name: '',
-  });
-  const [backgroundFile, setBackgroundFile] = useState(null);
-  const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
-  const [addingBackgroundLoading, setAddingBackgroundLoading] = useState(false);
   const [showStyleTemplates, setShowStyleTemplates] = useState(false);
-  // New state for background templates popup
   const [showBackgroundTemplates, setShowBackgroundTemplates] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  // Ajout d'un état pour savoir si le type de photobooth est validé
   const [typeValidated, setTypeValidated] = useState(false);
-  const [activeStep, setActiveStep] = useState(1); // Étape active pour le wizard
-  const [isSubmitting, setIsSubmitting] = useState(false); // État de soumission pour le bouton
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  // Add state variable for canvas layout
   const [canvasLayout, setCanvasLayout] = useState(null);
-  // Add these state variables near the other state declarations
-  const [deleteStyleConfirm, setDeleteStyleConfirm] = useState(false);
-  const [styleToDelete, setStyleToDelete] = useState(null);
-  const [deleteStyleLoading, setDeleteStyleLoading] = useState(false);
   
-  // CORRECTION: Supprimer 'id' des dépendances, utiliser seulement projectId
   const fetchProjectData = useCallback(async () => {
     setLoading(true);
     try {
@@ -122,12 +99,12 @@ export default function ProjectDetails({ params }) {
       if (stylesError) throw stylesError;
       setStyles(stylesData || []);
 
-      // Fetch project backgrounds - update this function to filter for active backgrounds
+      // Fetch project backgrounds
       const { data: backgroundsData, error: backgroundsError } = await supabase
         .from('backgrounds')
         .select('*')
         .eq('project_id', projectId)
-        .eq('is_active', true); // Only fetch active backgrounds
+        .eq('is_active', true);
 
       if (backgroundsError) throw backgroundsError;
       setBackgrounds(backgroundsData || []);
@@ -138,7 +115,7 @@ export default function ProjectDetails({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, projectId]); // CORRECTION: 'id' supprimé des dépendances
+  }, [supabase, projectId]);
 
   useEffect(() => {
     // Initialiser window.id si nécessaire (pour éviter l'erreur)
@@ -155,27 +132,6 @@ export default function ProjectDetails({ params }) {
       setTypeValidated(!!project.type_validated);
     }
   }, [project]);
-
-  // Fonction pour valider le type de photobooth
-  const handleValidatePhotoboothType = async () => {
-    try {
-      // Mettre à jour le projet dans Supabase avec l'attribut type_validated = true
-      const { error } = await supabase
-        .from('projects')
-        .update({ type_validated: true })
-        .eq('id', project.id);
-      
-      if (error) throw error;
-      
-      // Mettre à jour l'état local
-      setProject({...project, type_validated: true});
-      setTypeValidated(true);
-      setSuccess('Type de photobooth validé avec succès. Le type ne peut plus être modifié.');
-    } catch (error) {
-      console.error('Erreur lors de la validation du type:', error);
-      setError('Erreur lors de la validation du type de photobooth');
-    }
-  };
 
   async function saveSettings(e) {
     e.preventDefault();
@@ -221,137 +177,40 @@ export default function ProjectDetails({ params }) {
     }
   }
 
-  function handleSettingChange(e) {
-    const { name, value, type, checked } = e.target;
-    setSettings({
-      ...settings,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  }
-
-  function handleStyleImageChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      setStyleFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setStyleImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  function handleBackgroundImageChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      setBackgroundFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBackgroundImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  async function handleAddStyle(e) {
-    e.preventDefault();
-    setAddingStyleLoading(true);
+  // Fonction pour valider le type de photobooth
+  const handleValidatePhotoboothType = async () => {
     try {
-      // Upload style image
-      const { data: styleImageData, error: styleImageError } = await supabase
-        .storage
-        .from('styles')
-        .upload(`public/${styleFile.name}`, styleFile);
-
-      if (styleImageError) throw styleImageError;
-
-      // Add new style
-      const { error: addStyleError } = await supabase
-        .from('styles')
-        .insert({
-          project_id: projectId,
-          name: newStyle.name,
-          gender: newStyle.gender,
-          style_key: newStyle.style_key,
-          variations: newStyle.variations,
-          description: newStyle.description,
-          preview_image: styleImageData.Key
-        });
-
-      if (addStyleError) throw addStyleError;
-
-      setAddingStyle(false);
-      setNewStyle({
-        name: '',
-        gender: '',
-        style_key: '',
-        variations: 1,
-        description: '',
-      });
-      setStyleFile(null);
-      setStyleImagePreview(null);
-      fetchProjectData(); // Refresh data
+      // Mettre à jour le projet dans Supabase avec l'attribut type_validated = true
+      const { error } = await supabase
+        .from('projects')
+        .update({ type_validated: true })
+        .eq('id', project.id);
+      
+      if (error) throw error;
+      
+      // Mettre à jour l'état local
+      setProject({...project, type_validated: true});
+      setTypeValidated(true);
+      setSuccess('Type de photobooth validé avec succès. Le type ne peut plus être modifié.');
     } catch (error) {
-      console.error('Error adding style:', error);
-      setError('Erreur lors de l\'ajout du style');
-    } finally {
-      setAddingStyleLoading(false);
+      console.error('Erreur lors de la validation du type:', error);
+      setError('Erreur lors de la validation du type de photobooth');
     }
-  }
+  };
 
-  async function handleAddBackground(e) {
-    e.preventDefault();
-    setAddingBackgroundLoading(true);
-    setError(null);
-    
-    try {
-      if (!backgroundFile) {
-        setError("Veuillez sélectionner une image");
-        setAddingBackgroundLoading(false);
-        return;
-      }
-      
-      // Create FormData to send the file and metadata
-      const formData = new FormData();
-      formData.append('projectId', projectId);
-      formData.append('name', newBackground.name || 'Arrière-plan sans nom');
-      formData.append('isActive', 'true');
-      formData.append('file', backgroundFile);
-      
-      // Use the API endpoint instead of direct Supabase calls
-      const response = await fetch('/api/admin/add-background', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de l'ajout de l'arrière-plan");
-      }
-      
-      const { data } = await response.json();
-      
-      // Update local state with the backgrounds
-      setBackgrounds(data);
-      
-      // Reset form
-      setAddingBackground(false);
-      setNewBackground({ name: '' });
-      setBackgroundFile(null);
-      setBackgroundImagePreview(null);
-      
-      setSuccess("Arrière-plan ajouté avec succès");
-    } catch (error) {
-      console.error("Error adding background:", error);
-      setError(error.message);
-    } finally {
-      setAddingBackgroundLoading(false);
+  // Function to get photobooth type label
+  const getPhotoboothTypeLabel = (type) => {
+    switch (type) {
+      case 'premium':
+        return 'Premium';
+      case 'photobooth2':
+        return 'MiniMax';
+      case 'standard':
+        return 'FaceSwapping';
+      default:
+        return 'FaceSwapping';
     }
-  }
-
-  async function handleEditStyle(style) {
-    // Implement edit style logic
-  }
+  };
 
   // Replace the handleDeleteStyle function with this new version
   async function handleDeleteStyle(styleId) {
@@ -410,11 +269,6 @@ export default function ProjectDetails({ params }) {
     }
   }
 
-  async function handleEditBackground(background) {
-    // This function is no longer needed but we'll keep it for now to avoid breaking any existing references
-    console.log("Edit background feature has been removed");
-  }
-
   async function handleDeleteBackground(backgroundId) {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet arrière-plan ?")) {
       return;
@@ -439,20 +293,6 @@ export default function ProjectDetails({ params }) {
     }
   }
 
-  // Function to get photobooth type label
-  const getPhotoboothTypeLabel = (type) => {
-    switch (type) {
-      case 'premium':
-        return 'Premium';
-      case 'photobooth2':
-        return 'MiniMax';
-      case 'standard':
-        return 'FaceSwapping';
-      default:
-        return 'FaceSwapping';
-    }
-  };
-
   // Enhanced function to handle styles added from template popup
   const handleStyleTemplatesAdded = (addedStyles) => {
     console.log(`✅ ${addedStyles.length} styles added successfully`, addedStyles);
@@ -463,7 +303,7 @@ export default function ProjectDetails({ params }) {
     // Set a success message
     setSuccess(`${addedStyles.length} styles ont été ajoutés avec succès !`);
     
-    // Force refresh the styles data with a direct database query
+    // Force refresh the styles data
     const refreshStyles = async () => {
       try {
         const { data: freshStyles, error } = await supabase
@@ -483,7 +323,6 @@ export default function ProjectDetails({ params }) {
       }
     };
     
-    // Immediately refresh styles
     refreshStyles();
     
     // Also call the full data refresh for other data
@@ -496,289 +335,23 @@ export default function ProjectDetails({ params }) {
   const handleBackgroundTemplatesAdded = (addedBackgrounds) => {
     console.log(`✅ Background updated successfully`, addedBackgrounds);
     
-    // Close the template popup
     setShowBackgroundTemplates(false);
-    
-    // Set a success message
     setSuccess(`Arrière-plan du projet mis à jour avec succès !`);
-    
-    // Replace the backgrounds with only the newly added background
     setBackgrounds(addedBackgrounds);
     
-    // Also call the full data refresh for other data
     setTimeout(() => {
       fetchProjectData();
     }, 500);
   };
   
-  // Ajouter cette fonction pour gérer les erreurs des templates d'arrière-plan
+  // Functions to handle template errors
   const handleBackgroundTemplatesError = (errorMessage) => {
     setError(errorMessage);
   };
 
-  // Ajouter cette fonction pour gérer les erreurs des templates de style
   const handleStyleTemplatesError = (errorMessage) => {
     setError(errorMessage);
   };
-  
-  // Helper function to ensure we have a full URL
-  const getFullImageUrl = (url) => {
-    if (!url) return null;
-    
-    // Check if it's already a full URL
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    
-    // If it's just a storage path, convert to public URL
-    return supabase
-      .storage
-      .from('backgrounds')
-      .getPublicUrl(url).data.publicUrl;
-  };
-
-  // Function to handle project field changes
-  const handleProjectChange = (e) => {
-    const { name, value } = e.target;
-    setProject({
-      ...project,
-      [name]: value
-    });
-  };
-
-  // Add this function to handle project name changes
-  const handleProjectNameChange = (e) => {
-    const newName = e.target.value;
-    setProject({
-      ...project,
-      name: newName
-    });
-  };
-
-  // Add this function right after the existing state declarations
-  const handleNameChange = (e) => {
-    // Limit to 30 characters
-    const newName = e.target.value.slice(0, 30);
-    setProject({
-      ...project,
-      name: newName
-    });
-  };
-
-  // Add this function to save the project name
-  const saveProjectName = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({ name: project.name })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      setSuccess("Nom du projet mis à jour avec succès");
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Error updating project name:', error);
-      setError("Erreur lors de la mise à jour du nom du projet");
-      setIsSubmitting(false);
-    }
-  };
-
-  // Add these handlers for description and home message
-  const handleDescriptionChange = (e) => {
-    // Limit to 200 characters
-    const newDescription = e.target.value.slice(0, 200);
-    setProject({
-      ...project,
-      description: newDescription
-    });
-  };
-
-  const handleHomeMessageChange = (e) => {
-    // Limit to 100 characters
-    const newHomeMessage = e.target.value.slice(0, 100);
-    setProject({
-      ...project,
-      home_message: newHomeMessage
-    });
-  };
-
-  // Function to save description
-  const saveProjectDescription = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({ description: project.description })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      setSuccess("Description du projet mise à jour avec succès");
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Error updating project description:', error);
-      setError("Erreur lors de la mise à jour de la description");
-      setIsSubmitting(false);
-    }
-  };
-
-  // Function to save home message
-  const saveProjectHomeMessage = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({ home_message: project.home_message })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      setSuccess("Message d'accueil mis à jour avec succès");
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Error updating home message:', error);
-      setError("Erreur lors de la mise à jour du message d'accueil");
-      setIsSubmitting(false);
-    }
-  };
-
-  // Function to copy URL to clipboard
-  const copyProjectUrl = () => {
-    const fullUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`;
-    navigator.clipboard.writeText(fullUrl).then(() => {
-      setSuccess("URL copiée dans le presse-papiers");
-    }).catch((err) => {
-      console.error('Failed to copy URL:', err);
-      setError("Impossible de copier l'URL");
-    });
-  };
-
-  // Add handlers for color fields
-  const handleColorChange = (colorType, value) => {
-    setProject({
-      ...project,
-      [colorType]: value
-    });
-  };
-
-  // Function to save color changes
-  const saveColorChange = async (colorType) => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({ [colorType]: project[colorType] })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      setSuccess(`Couleur ${colorType === 'primary_color' ? 'principale' : 'secondaire'} mise à jour avec succès`);
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error(`Error updating ${colorType}:`, error);
-      setError(`Erreur lors de la mise à jour de la couleur ${colorType === 'primary_color' ? 'principale' : 'secondaire'}`);
-      setIsSubmitting(false);
-    }
-  };
-
-  // Add handler for event date change
-  const handleEventDateChange = (e) => {
-    setProject({
-      ...project,
-      event_date: e.target.value
-    });
-  };
-
-  // Function to save event date
-  const saveEventDate = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({ event_date: project.event_date })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      setSuccess("Date de l'événement mise à jour avec succès");
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Error updating event date:', error);
-      setError("Erreur lors de la mise à jour de la date de l'événement");
-      setIsSubmitting(false);
-    }
-  };
-
-  // Add a unified save function for all project fields
-  const saveProjectInfo = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          name: project.name,
-          description: project.description,
-          home_message: project.home_message,
-          primary_color: project.primary_color,
-          secondary_color: project.secondary_color,
-          event_date: project.event_date
-        })
-        .eq('id', projectId);
-        
-      if (error) throw error;
-      
-      // Instead of setting success message, show the popup
-      setSuccessMessage("Informations du projet mises à jour avec succès");
-      setShowSuccessPopup(true);
-      
-      // Auto-hide the popup after 3 seconds
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-      }, 3000);
-      
-      setIsSubmitting(false);
-    } catch (error) {
-      console.error('Error updating project info:', error);
-      setError("Erreur lors de la mise à jour des informations du projet");
-      setIsSubmitting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader 
-          size="large" 
-          message="Chargement du projet..." 
-          variant="premium" 
-        />
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Projet non trouvé</h3>
-        <p className="text-gray-500 mb-6">Le projet que vous recherchez n&apos;existe pas ou a été supprimé.</p>
-        <Link 
-          href="/photobooth-ia/admin/projects" 
-          className="text-indigo-600 hover:text-indigo-500 font-medium flex items-center justify-center gap-2"
-        >
-          <RiArrowLeftLine className="w-4 h-4" />
-          Retour à la liste des projets
-        </Link>
-      </div>
-    );
-  }
 
   // Fonction pour supprimer le projet et ses dépendances
   async function handleDeleteProject() {
@@ -815,6 +388,34 @@ export default function ProjectDetails({ params }) {
       setDeleteConfirm(false);
       setDeleteLoading(false);
     }
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader 
+          size="large" 
+          message="Chargement du projet..." 
+          variant="premium" 
+        />
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Projet non trouvé</h3>
+        <p className="text-gray-500 mb-6">Le projet que vous recherchez n&apos;existe pas ou a été supprimé.</p>
+        <Link 
+          href="/photobooth-ia/admin/projects" 
+          className="text-indigo-600 hover:text-indigo-500 font-medium flex items-center justify-center gap-2"
+        >
+          <RiArrowLeftLine className="w-4 h-4" />
+          Retour à la liste des projets
+        </Link>
+      </div>
+    );
   }
   
   return (
@@ -914,7 +515,6 @@ export default function ProjectDetails({ params }) {
               >
                 Paramètres
               </button>
-              {/* Remove the Arrière-plans tab from here */}
             </nav>
           </div>
 
@@ -924,1032 +524,82 @@ export default function ProjectDetails({ params }) {
             {activeTab === 'info' && (
               <>
                 <div className="space-y-6">
-                  <div className="flex items-center mb-6">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                      <span className="text-white font-semibold">1</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Informations du projet</h3>
-                  </div>
+                  {/* Project Info Section */}
+                  <ProjectInfoForm 
+                    project={project} 
+                    setProject={setProject} 
+                    setError={setError} 
+                    setSuccess={setSuccess}
+                    setShowSuccessPopup={setShowSuccessPopup}
+                    setSuccessMessage={setSuccessMessage}
+                  />
                   
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-                    {/* Header section with essential info */}
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Project name */}
-                        <div>
-                          <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Nom du projet
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 005 10a6 6 0 0012 0c0-.358-.035-.709-.104-1.047A5.001 5.001 0 0010 11z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <input
-                              type="text"
-                              id="projectName"
-                              value={project.name}
-                              onChange={handleNameChange}
-                              maxLength={30}
-                              className="pl-10 block w-full rounded-md border-gray-300 py-3 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 focus:shadow-md transition-all duration-200"
-                              placeholder="Nom du projet"
-                            />
-                          </div>
-                          <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                            <span>Maximum 30 caractères</span>
-                            <span className={`${project.name.length >= 25 ? 'text-orange-500' : ''} ${project.name.length >= 30 ? 'text-red-500 font-bold' : ''}`}>
-                              {project.name.length}/30
-                            </span>
-                          </p>
-                        </div>
+                  {/* Background Manager Section */}
+                  <BackgroundManager
+                    projectId={projectId}
+                    backgrounds={backgrounds}
+                    setBackgrounds={setBackgrounds}
+                    setError={setError}
+                    setSuccess={setSuccess}
+                  />
 
-                           <div>
-                            <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700">
-                              Date de l'événement
-                            </label>
-                            <div className="relative mt-1">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                              <input
-                                type="datetime-local"
-                                id="eventDate"
-                                value={project.event_date ? new Date(project.event_date).toISOString().slice(0, 16) : ''}
-                                onChange={handleEventDateChange}
-                                className="pl-10 block w-full rounded-md border-gray-300 py-2 focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200"
-                              />
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">
-                              {project.event_date ? new Date(project.event_date).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : 'Aucune date définie'}
-                            </p>
-                          </div>
+                  {/* Photobooth Type Manager Section */}
+                  <PhotoboothTypeManager
+                    project={project}
+                    setProject={setProject}
+                    typeValidated={typeValidated}
+                    setTypeValidated={setTypeValidated}
+                    setError={setError}
+                    setSuccess={setSuccess}
+                  />
 
-                        
-                        {/* Status & event date */}
-                        <div>
-                          <div className="flex justify-between mb-4">
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700">Statut</h4>
-                              <span className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                project.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                                {project.is_active ? 'Actif' : 'Inactif'}
-                              </span>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700">Créé le</h4>
-                              <p className="text-sm text-gray-600">
-                                {new Date(project.created_at).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                          
-                       
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Main content section */}
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Left column: Description & Home message */}
-                        <div className="md:col-span-2 space-y-6">
-                          <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                              Description
-                            </label>
-                            <div className="relative">
-                              <textarea
-                                id="description"
-                                value={project.description || ''}
-                                onChange={handleDescriptionChange}
-                                maxLength={200}
-                                rows={3}
-                                className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200"
-                                placeholder="Description du projet (optionnel)"
-                              />
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                              <span>Maximum 200 caractères</span>
-                              <span className={`${(project.description?.length || 0) >= 180 ? 'text-orange-500' : ''} ${(project.description?.length || 0) >= 200 ? 'text-red-500 font-bold' : ''}`}>
-                                {project.description?.length || 0}/200
-                              </span>
-                            </p>
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="homeMessage" className="block text-sm font-medium text-gray-700 mb-1">
-                              Message d'accueil
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v2M7 7h10" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                              <input
-                                type="text"
-                                id="homeMessage"
-                                value={project.home_message || ''}
-                                onChange={handleHomeMessageChange}
-                                maxLength={100}
-                                className="pl-10 block w-full rounded-md border border-gray-300 py-3 focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200"
-                                placeholder="Message d'accueil affiché aux utilisateurs (optionnel)"
-                              />
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500 flex justify-between">
-                              <span>Maximum 100 caractères</span>
-                              <span className={`${(project.home_message?.length || 0) >= 80 ? 'text-orange-500' : ''} ${(project.home_message?.length || 0) >= 100 ? 'text-red-500 font-bold' : ''}`}>
-                                {project.home_message?.length || 0}/100
-                              </span>
-                            </p>
-                          </div>
-                          
-                          {/* Color selection with preview */}
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">Couleurs du thème</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-600 mb-1">
-                                  Couleur principale
-                                </label>
-                                <div className="flex items-center space-x-2">
-                                  <div className="relative">
-                                    <div 
-                                      className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
-                                      style={{ backgroundColor: project.primary_color }}
-                                    >
-                                      <input 
-                                        type="color" 
-                                        id="primaryColor"
-                                        value={project.primary_color} 
-                                        onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                        aria-label="Choisir couleur principale"
-                                      />
-                                    </div>
-                                  </div>
-                                  <input
-                                    type="text"
-                                    value={project.primary_color}
-                                    onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    placeholder="#RRGGBB"
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <label htmlFor="secondaryColor" className="block text-sm font-medium text-gray-600 mb-1">
-                                  Couleur secondaire
-                                </label>
-                                <div className="flex items-center space-x-2">
-                                  <div className="relative">
-                                    <div 
-                                      className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
-                                      style={{ backgroundColor: project.secondary_color }}
-                                    >
-                                      <input 
-                                        type="color" 
-                                        id="secondaryColor"
-                                        value={project.secondary_color} 
-                                        onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                        aria-label="Choisir couleur secondaire"
-                                      />
-                                    </div>
-                                  </div>
-                                  <input
-                                    type="text"
-                                    value={project.secondary_color}
-                                    onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    placeholder="#RRGGBB"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Color preview section */}
-                            <div className="mt-3 flex items-center justify-center">
-                              <div className="w-full h-12 rounded-lg overflow-hidden flex shadow-sm border border-gray-200">
-                                <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color }}>
-                                  <span className="font-medium text-white text-shadow text-sm">Primaire</span>
-                                </div>
-                                <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color }}>
-                                  <span className="font-medium text-white text-shadow text-sm">Secondaire</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Right column: URL and QR code */}
-                        <div className="md:col-span-1">
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">URL du projet</h4>
-                            
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                </svg>
-                              </div>
-                              <input
-                                type="text"
-                                value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project?.slug}`}
-                                readOnly
-                                className="pl-8 block w-full rounded-md border-gray-300 bg-white py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                              />
-                            </div>
-                            
-                            <button
-                              onClick={copyProjectUrl}
-                              className="mt-2 inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12  4h.02" />
-                              </svg>
-                              Copier l'URL
-                            </button>
-                            
-                            <div className="flex-1 mt-4 flex flex-col items-center justify-center bg-white p-4 rounded-lg border border-gray-200">
-                              <div className="text-center mb-2">
-                                <span className="text-xs font-medium text-gray-500">QR Code</span>
-                              </div>
-                              {project && (
-                                <QRCodeSVG
-                                  value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`}
-                                  size={140}
-                                  level="M"
-                                  bgColor="#FFFFFF"
-                                  fgColor="#000000"
-                                  className="mb-2"
-                                />
-                              )}
-                              <p className="mt-1 text-xs text-gray-500 text-center">
-                                Scannez ce code pour accéder directement au photobooth
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Footer with save button */}
-                    <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={saveProjectInfo}
-                        disabled={isSubmitting}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader size="small" message="" variant="premium" />
-                            <span className="ml-2">Enregistrement...</span>
-                          </>
-                        ) : (
-                          <>
-                            <RiSaveLine className="mr-2 h-4 w-4" />
-                            Enregistrer les modifications
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  {/* Style Manager Section */}
+                  <StyleManager
+                    projectId={projectId}
+                    styles={styles}
+                    setStyles={setStyles}
+                    setError={setError}
+                    setSuccess={setSuccess}
+                    typeValidated={typeValidated}
+                    photoboothType={project.photobooth_type}
+                  />
                   
-                  {/* Add the Backgrounds section here as an encart */}
-                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-sm font-medium text-gray-500">Arrière-plans du projet ({backgrounds.length})</h4>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setShowBackgroundTemplates(true)}
-                          className="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-lg shadow-sm text-indigo-700 bg-white hover:bg-indigo-50"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                          </svg>
-                          Ajouter depuis templates
-                        </button>
-                        <button
-                          onClick={() => setAddingBackground(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                        >
-                          <RiAddLine className="mr-2 h-4 w-4" />
-                          Ajouter un arrière-plan
-                        </button>
+                  {/* Canvas Editor Section */}
+                  <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
+                    <div className="flex items-center mb-6">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                        <span className="text-white font-semibold">4</span>
                       </div>
+                      <h3 className="text-xl font-semibold text-gray-900">Editeur de cadres photos</h3>
                     </div>
                     
-                    {backgrounds.length === 0 ? (
-                      <div className="text-center py-6 bg-white bg-opacity-50 rounded-lg border border-dashed border-gray-300">
-                        <p className="text-gray-500">
-                          Aucun arrière-plan n'a été ajouté à ce projet.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {backgrounds.map((background) => (
-                          <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden bg-white">
-                            <div className="h-24 bg-gray-100 relative">
-                              {background.image_url ? (
-                                <Image
-                                  src={getFullImageUrl(background.image_url)}
-                                  alt={background.name}
-                                  fill
-                                  style={{ objectFit: "cover" }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <span className="text-gray-400">Aucune image</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="p-2">
-                              <h4 className="font-medium text-gray-900 text-sm truncate">{background.name}</h4>
-                              
-                              <div className="mt-2 flex justify-end">
-                                <button
-                                  onClick={() => handleDeleteBackground(background.id)}
-                                  className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Background form */}
-                    {addingBackground && (
-                      <div className="mt-6 bg-white p-6 rounded-lg border border-gray-200">
-                        <h4 className="text-md font-medium mb-3">Nouvel arrière-plan</h4>
-                        <form onSubmit={handleAddBackground} className="space-y-4">
-                          <div>
-                            <label htmlFor="backgroundName" className="block text-sm font-medium text-gray-700">
-                              Nom de l'arrière-plan *
-                            </label>
-                            <input
-                              type="text"
-                              id="backgroundName"
-                              value={newBackground.name}
-                              onChange={(e) => setNewBackground({...newBackground, name: e.target.value})}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                              required
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Image de l'arrière-plan *</label>
-                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                              <div className="space-y-1 text-center">
-                                {backgroundImagePreview ? (
-                                  <div className="flex flex-col items-center">
-                                    <div className="w-40 h-40 mb-3 relative">
-                                      <Image
-                                        src={backgroundImagePreview}
-                                        alt="Aperçu"
-                                        fill
-                                        style={{ objectFit: "cover" }}
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setBackgroundFile(null);
-                                        setBackgroundImagePreview(null);
-                                      }}
-                                      className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                                    >
-                                      Supprimer
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <div className="flex text-sm text-gray-600">
-                                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
-                                        <span>Télécharger un fichier</span>
-                                        <input
-                                          type="file"
-                                          className="sr-only"
-                                          accept="image/*"
-                                          onChange={handleBackgroundImageChange}
-                                        />
-                                      </label>
-                                    </div>
-                                    <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-end space-x-3">
-                            <button
-                              type="button"
-                              onClick={() => setAddingBackground(false)}
-                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                            >
-                              Annuler
-                            </button>
-                            <button
-                              type="submit"
-                              className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
-                              disabled={addingBackgroundLoading}
-                            >
-                              {addingBackgroundLoading ? 'Ajout en cours...' : 'Ajouter'}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Add step number to Type de photobooth section */}
-
-                  <div className="flex items-center mb-6">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                      <span className="text-white font-semibold">2</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Type de photobooth</h3>
-                  </div>
-
-                 
-                  
-                  {/* Nouveau sélecteur de type de photobooth */}
-                  <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-sm font-medium text-gray-500">Type de Photobooth</h4>
-                      {typeValidated && (
-                        <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                          Type validé et verrouillé
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button
-                          onClick={async () => {
-                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
-                            
-                            const { error } = await supabase
-                              .from('projects')
-                              .update({ photobooth_type: 'standard' })
-                              .eq('id', project.id);
-                            
-                            if (!error) {
-                              setProject({...project, photobooth_type: 'standard'});
-                              setSuccess('Type de photobooth mis à jour');
-                              // Montrer les templates de styles pour ce type
-                              setShowStyleTemplates(true);
-                            }
-                          }}
-                          disabled={typeValidated && project.photobooth_type !== 'standard'}
-                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                            project.photobooth_type === 'standard' || !project.photobooth_type 
-                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                              : typeValidated 
-                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                          }`}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                          <span className="text-sm font-medium">FaceSwapping</span>
-                        </button>
-                        
-                        <button
-                          onClick={async () => {
-                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
-                            
-                            const { error } = await supabase
-                              .from('projects')
-                              .update({ photobooth_type: 'premium' })
-                              .eq('id', project.id);
-                            
-                            if (!error) {
-                              setProject({...project, photobooth_type: 'premium'});
-                              setSuccess('Type de photobooth mis à jour');
-                            }
-                          }}
-                          disabled={typeValidated && project.photobooth_type !== 'premium'}
-                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                            project.photobooth_type === 'premium' 
-                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                              : typeValidated 
-                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                          }`}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span className="text-sm font-medium">Premium</span>
-                        </button>
-                        
-                        <button
-                          onClick={async () => {
-                            if (typeValidated) return; // Ne rien faire si le type est déjà validé
-                            
-                            const { error } = await supabase
-                              .from('projects')
-                              .update({ photobooth_type: 'photobooth2' })
-                              .eq('id', project.id);
-                            
-                            if (!error) {
-                              setProject({...project, photobooth_type: 'photobooth2'});
-                              setSuccess('Type de photobooth mis à jour');
-                            }
-                          }}
-                          disabled={typeValidated && project.photobooth_type !== 'photobooth2'}
-                          className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                            project.photobooth_type === 'photobooth2' 
-                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                              : typeValidated 
-                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                                : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                          }`}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-sm font-medium">MiniMax</span>
-                        </button>
-                      </div>
-                      
-                      {/* Add the validation button here, after the grid and centered */}
-                      {!typeValidated && project && (
-                        <div className="mt-6 flex justify-center">
-                          <button
-                            onClick={handleValidatePhotoboothType}
-                            className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
-                          >
-                            Valider le type de photobooth
-                          </button>
-                        </div>
-                      )}
-                      
-                      <p className="mt-2 text-xs text-gray-500">
-                        Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
-                        {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Styles section - directly integrated into the Info tab */}
-                <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                  <div className="flex justify-between items-center mb-4 relative">
-                     <div className="flex items-center mb-6">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                      <span className="text-white font-semibold">3</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Choix du modèle</h3>
-                  </div>
                     {!typeValidated && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-70 rounded-lg z-10">
-                        <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200 text-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                          <p className="text-gray-700 font-medium">Veuillez valider le type de photobooth (Étape 2) avant de continuer</p>
+                      <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-orange-700">
+                              Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir utiliser l'éditeur de canvas.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
                     
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          console.log('🔍 Opening style templates');
-                          setShowStyleTemplates(!showStyleTemplates);
-                        }}
-                        className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                        disabled={!typeValidated}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                        Ajouter des styles depuis un template
-                      </button
-                      >
-                      
-                      <button
-                        onClick={() => setAddingStyle(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                        disabled={!typeValidated}
-                      >
-                        <RiAddLine className="mr-2 h-4 w-4" />
-                        Ajouter style manuellement
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Message de guide pour Etape 3 */}
-                  {!typeValidated && (
-                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm text-orange-700">
-                            Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir ajouter des styles.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Templates section */}
-                  {showStyleTemplates && (
-                    <div className="mb-8 border-b border-gray-200 pb-6">
-                      <StyleTemplates 
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                      <CanvasEditor 
                         projectId={projectId} 
-                        photoboothType={project.photobooth_type}
-                        onStylesAdded={handleStyleTemplatesAdded}
-                        onError={handleStyleTemplatesError}
-                        existingStyles={styles} // Pass the current styles to prevent duplicates
+                        onSave={(layoutData) => {
+                          setCanvasLayout(layoutData);
+                          setSuccess("Layout de canvas enregistré avec succès!");
+                        }}
+                        initialData={canvasLayout}
                       />
                     </div>
-                  )}
-                  
-                  {/* Style form */}
-                  {addingStyle && (
-                    <div className="mb-6 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                      <h4 className="text-md font-medium mb-3">Nouveau style</h4>
-                      <form onSubmit={handleAddStyle} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <label htmlFor="styleName" className="block text-sm font-medium text-gray-700">
-                              Nom du style *
-                            </label>
-                            <input
-                              type="text"
-                              id="styleName"
-                              value={newStyle.name}
-                              onChange={(e) => setNewStyle({...newStyle, name: e.target.value})}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="styleGender" className="block text-sm font-medium text-gray-700">
-                              Catégorie *
-                            </label>
-                            <select
-                              id="styleGender"
-                              value={newStyle.gender}
-                              onChange={(e) => setNewStyle({...newStyle, gender: e.target.value})}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                              required
-                            >
-                              <option value="">Sélectionner...</option>
-                              <option value="m">Homme</option>
-                              <option value="f">Femme</option>
-                              <option value="ag">Ado Garçon</option>
-                              <option value="af">Ado Fille</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label htmlFor="styleKey" className="block text-sm font-medium text-gray-700">
-                              Clé de style (s1, s2, etc.) *
-                            </label>
-                            <input
-                              type="text"
-                              id="styleKey"
-                              value={newStyle.style_key}
-                              onChange={(e) => setNewStyle({...newStyle, style_key: e.target.value})}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="styleVariations" className="block text-sm font-medium text-gray-700">
-                              Nombre de variations
-                            </label>
-                            <input
-                              type="number"
-                              id="styleVariations"
-                              min="1"
-                              max="10"
-                              value={newStyle.variations}
-                              onChange={(e) => setNewStyle({...newStyle, variations: e.target.value})}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="styleDescription" className="block text-sm font-medium text-gray-700">
-                            Description
-                          </label>
-                          <textarea
-                            id="styleDescription"
-                            rows={2}
-                            value={newStyle.description}
-                            onChange={(e) => setNewStyle({...newStyle, description: e.target.value})}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Image de prévisualisation *</label>
-                          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                            <div className="space-y-1 text-center">
-                              {styleImagePreview ? (
-                                <div className="flex flex-col items-center">
-                                  <div className="w-40 h-40 mb-3 relative">
-                                    <Image
-                                      src={styleImagePreview}
-                                      alt="Aperçu"
-                                      fill
-                                      style={{ objectFit: "contain" }}
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setStyleFile(null);
-                                      setStyleImagePreview(null);
-                                    }}
-                                    className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                                  >
-                                    Supprimer
-                                  </button>
-                                </div>
-                              ) : (
-                                <>
-                                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                  <div className="flex text-sm text-gray-600">
-                                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
-                                      <span>Télécharger un fichier</span>
-                                      <input
-                                        type="file"
-                                        className="sr-only"
-                                        accept="image/*"
-                                        onChange={handleStyleImageChange}
-                                      />
-                                    </label>
-                                  </div>
-                                  <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu&apos;à 10MB</p>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-end space-x-3">
-                          <button
-                            type="button"
-                            onClick={() => setAddingStyle(false)}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                          >
-                            Annuler
-                          </button>
-                          <button
-                            type="submit"
-                            className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
-                            disabled={addingStyleLoading}
-                          >
-                            {addingStyleLoading ? 'Ajout en cours...' : 'Ajouter'}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  
-                  {/* Message si aucun style n'est disponible */}
-                  {styles.length === 0 && !showStyleTemplates && !addingStyle && (
-                    <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="mt-4 text-gray-500">
-                        Aucun style n&apos;a été ajouté à ce projet.
-                      </p>
-                      <div className="mt-6 flex justify-center space-x-3">
-                        <button
-                          onClick={() => setShowStyleTemplates(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                          </svg>
-                          Ajouter des styles depuis un template
-                        </button>
-                        
-                        <button
-                          onClick={() => setAddingStyle(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                        >
-                          <RiAddLine className="mr-2 h-4 w-4" />
-                          Ajouter manuellement
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Affichage de la grille des styles existants */}
-                  {styles.length > 0 && (
-                    <div className="mb-8">
-                      {/* Design-oriented multi-column encart with modern styling */}
-                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 shadow-lg border border-indigo-100">
-                        <h4 className="text-lg font-semibold text-indigo-800 mb-6 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
-                          </svg>
-                          Galerie des styles séléctionnés ({styles.length})
-                          {/* Add debug button in development */}
-                        </h4>
-                        
-                        {/* Modern 5-column grid with responsive design */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                          {styles.map((style) => (
-                            <div 
-                              key={style.id} 
-                              className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 border border-gray-200"
-                            >
-                              <div className="aspect-square bg-gray-100 relative overflow-hidden">
-                                {style.preview_image ? (
-                                  <Image
-                                    src={style.preview_image}
-                                    alt={style.name}
-                                    fill
-                                    style={{ objectFit: "cover" }}
-                                    className="transition-transform duration-500 group-hover:scale-110"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                                )}
-                                
-                                {/* Gender badge overlay */}
-                                <div className="absolute top-2 right-2">
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                                    style.gender === 'm' ? 'bg-blue-100 text-blue-800' : 
-                                    style.gender === 'f' ? 'bg-pink-100 text-pink-800' :
-                                    style.gender === 'ag' ? 'bg-green-100 text-green-800' :
-                                    style.gender === 'af' ? 'bg-purple-100 text-purple-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {style.gender === 'm' ? 'Homme' : 
-                                     style.gender === 'f' ? 'Femme' : 
-                                     style.gender === 'ag' ? 'Ado G' : 
-                                     style.gender === 'af' ? 'Ado F' : 'Général'}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="p-3">
-                                <h5 className="font-medium text-gray-900 mb-1 truncate">{style.name}</h5>
-                                <div className="flex items-center text-xs text-gray-500 mb-2">
-                                  <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md">
-                                    {style.style_key}
-                                  </span>
-                                  {style.variations > 1 && (
-                                    <span className="ml-2 bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-md">
-                                      {style.variations} var.
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Tags based on gender - Completely replaced to fix schema error */}
-                                <div className="flex flex-wrap gap-1 mt-2 mb-3">
-                                {style.gender === 'm' && (
-                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                                    homme
-                                  </span>
-                                )}
-                                {style.gender === 'f' && (
-                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                                    femme
-                                  </span>
-                                )}
-                                {style.gender === 'ag' && (
-                                  <>
-                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
-                                      ado
-                                    </span>
-                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
-                                      garçon
-                                    </span>
-                                  </>
-                                )}
-                                {style.gender === 'af' && (
-                                  <>
-                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
-                                      ado
-                                    </span>
-                                    <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                                      fille
-                                    </span>
-                                  </>
-                                )}
-                                {(!style.gender || style.gender === '') && (
-                                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                    général
-                                  </span>
-                                )}
-                              </div>
-                                
-                                <div className="flex space-x-1 mt-2">
-                                  <button
-                                    onClick={() => handleDeleteStyle(style.id)}
-                                    className="w-full inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
-                                    Supprimer
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-6 flex justify-end">
-                    <button
-                      onClick={() => router.push(`/photobooth-ia/admin/projects`)}
-                      className="inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <RiArrowLeftLine className="mr-2 h-4 w-4" />
-                      Retour
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Ajout de l'étape 4: Éditeur de Canvas */}
-                <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                   <div className="flex items-center mb-6">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                      <span className="text-white font-semibold">4</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Editeur de cadres photos</h3>
-                  </div>
-                  {/* Message de guide si le type n'est pas validé */}
-                  {!typeValidated && (
-                    <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <RiAlertLine className="h-5 w-5 text-orange-400" />
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm text-orange-700">
-                            Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir utiliser l'éditeur de canvas.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Canvas Editor Component */}
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <CanvasEditor 
-                      projectId={projectId} 
-                      onSave={(layoutData) => {
-                        setCanvasLayout(layoutData);
-                        setSuccess("Layout de canvas enregistré avec succès!");
-                      }}
-                      initialData={canvasLayout}
-                    />
                   </div>
                 </div>
               </>
@@ -2059,66 +709,25 @@ export default function ProjectDetails({ params }) {
                 </div>
               </form>
             )}
-
-            {/* Remove the Backgrounds Tab from here since we moved it above */}
           </div>
         </div>
       </div>
 
-      {/* Fenêtre modale de confirmation de suppression */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center text-red-600 mb-4">
-              <RiAlertLine className="w-6 h-6 mr-2" />
-              <h3 className="text-lg font-medium">Confirmation de suppression</h3>
-            </div>
-            
-            <p className="mb-4 text-gray-700">
-              Êtes-vous sûr de vouloir supprimer le projet <strong>"{project?.name}"</strong> ?
-              <br /><br />
-              Cette action est irréversible et supprimera également :
-            </p>
-            
-            <ul className="list-disc list-inside mb-4 text-sm text-gray-600">
-              <li>Tous les styles associés ({styles.length})</li>
-              <li>Tous les arrière-plans ({backgrounds.length})</li>
-              <li>Tous les paramètres du projet</li>
-            </ul>
-            
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setDeleteConfirm(false)}
-                disabled={deleteLoading}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleDeleteProject}
-               
-                disabled={deleteLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
-              >
-                {deleteLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Suppression...
-                  </>
-                ) : (
-                  <>
-                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                    Supprimer ce style de la galerie
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete Project Confirmation Modal */}
+      <DeleteConfirmationModal 
+        isOpen={deleteConfirm}
+        title="Confirmation de suppression"
+        message={`Êtes-vous sûr de vouloir supprimer le projet "${project?.name}" ?`}
+        dangerText="Cette action est irréversible et supprimera également tous les styles, arrière-plans et paramètres associés."
+        onCancel={() => setDeleteConfirm(false)}
+        onConfirm={handleDeleteProject}
+        isDeleting={deleteLoading}
+        confirmText="Supprimer définitivement"
+        itemToDelete={{
+          name: project?.name,
+          imageUrl: project?.logo_url
+        }}
+      />
 
       {/* Background templates popup */}
       {showBackgroundTemplates && (
@@ -2128,6 +737,20 @@ export default function ProjectDetails({ params }) {
             onBackgroundsAdded={handleBackgroundTemplatesAdded}
             onError={handleBackgroundTemplatesError}
             onClose={() => setShowBackgroundTemplates(false)}
+          />
+        </div>
+      )}
+
+      {/* Style templates popup */}
+      {showStyleTemplates && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <StyleTemplates 
+            projectId={projectId} 
+            photoboothType={project.photobooth_type}
+            onStylesAdded={handleStyleTemplatesAdded}
+            onError={handleStyleTemplatesError}
+            existingStyles={styles}
+            onClose={() => setShowStyleTemplates(false)}
           />
         </div>
       )}
@@ -2158,90 +781,11 @@ export default function ProjectDetails({ params }) {
           </div>
         </div>
       )}
-
-      {/* Style delete confirmation popup */}
-      {deleteStyleConfirm && styleToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn">
-            <div className="flex items-center text-red-600 mb-4">
-              <RiAlertLine className="w-6 h-6 mr-2" />
-              <h3 className="text-lg font-medium">Confirmer la suppression</h3>
-            </div>
-            
-            <div className="mb-6">
-              <p className="text-gray-700 mb-4">
-                Êtes-vous sûr de vouloir supprimer le style <strong>"{styleToDelete.name}"</strong> de votre galerie?
-              </p>
-              
-              {styleToDelete.preview_image && (
-                <div className="flex justify-center mb-4">
-                  <div className="w-24 h-24 relative border border-gray-200 rounded-md overflow-hidden">
-                    <Image
-                      src={styleToDelete.preview_image}
-                      alt={styleToDelete.name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 text-sm">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-orange-700">
-                      Vous pourrez ajouter ce style depuis les templates 
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setDeleteStyleConfirm(false);
-                  setStyleToDelete(null);
-                }}
-                disabled={deleteStyleLoading}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmDeleteStyle}
-                disabled={deleteStyleLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
-              >
-                {deleteStyleLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Suppression...
-                  </>
-                ) : (
-                  <>
-                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                    Supprimer de la galerie des styles
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
 
-// Add this CSS animation at the top of your file
+// Add this CSS animation for fade in effect
 const globalStyles = `
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
@@ -2254,7 +798,6 @@ const globalStyles = `
 `;
 
 // Add the global styles to the document
-// This should be before the ProjectDetails function
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.innerHTML = globalStyles;
