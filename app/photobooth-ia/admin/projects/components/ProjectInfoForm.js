@@ -124,7 +124,7 @@ const ProjectInfoForm = ({
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
           <span className="text-white font-semibold">1</span>
         </div>
-        <h3 className="text-xl font-semibold text-gray-900">Informations du projet</h3>
+        <h3 className="text-xl font-semibold text-gray-900">Informations du projet et personnamisation du photobooth</h3>
       </div>
       
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -357,7 +357,7 @@ const ProjectInfoForm = ({
             {/* Right column: URL and QR code */}
             <div className="md:col-span-1">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">URL du projet</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">URL du photobooth</h4>
                 
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

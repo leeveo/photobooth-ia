@@ -9,12 +9,13 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import TabComponentWrapper from './TabComponentWrapper';
 
 // Import tab components - handle safely in case they have issues
-let ElementsTab, TextTab, UnsplashTab, LayoutTab;
+let ElementsTab, TextTab, UnsplashTab, LayoutTab, TemplatesTab;
 try {
   ElementsTab = require('./ElementsTab').default;
   TextTab = require('./TextTab').default;
   UnsplashTab = require('./UnsplashTab').default;
   LayoutTab = require('./LayoutTab').default;
+  TemplatesTab = require('./TemplatesTab').default;
 } catch (error) {
   console.error("Error importing tab components:", error);
   // We'll handle the missing components in the TabComponentWrapper
@@ -127,7 +128,45 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
     fontStyle: 'normal'
   });
   
+  // Add templates to the list of states
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesError, setTemplatesError] = useState(null);
+  
   const supabase = createClientComponentClient();
+
+
+  useEffect(() => {
+  const loadTemplates = async () => {
+    setTemplatesLoading(true);
+    setTemplatesError(null);
+    try {
+      const { data, error } = await supabase
+        .from('layout_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des templates :', error);
+      setTemplatesError("Impossible de charger les templates.");
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  if (activeTab === 'templates') {
+    loadTemplates();
+  }
+}, [activeTab, supabase]);
+
+
+
+
   const transformerRef = useRef();
   const stageRef = useRef();
   const containerRef = useRef();
@@ -966,6 +1005,41 @@ const handleTextPropertyChange = useCallback((property, value) => {
   }));
 }, [selectedId]);
 
+// Ajoute cette fonction AVANT le return du composant CanvasEditor
+const handleSelectTemplate = (template) => {
+  try {
+    // Parse elements if they're stored as a string
+    let templateElements = [];
+    if (typeof template.elements === 'string') {
+      templateElements = JSON.parse(template.elements);
+    } else if (Array.isArray(template.elements)) {
+      templateElements = template.elements;
+    }
+
+    // Parse stage size if it's stored as a string
+    let templateStageSize = { width: 970, height: 651, scale: 1 };
+    if (typeof template.stage_size === 'string') {
+      templateStageSize = JSON.parse(template.stage_size);
+    } else if (template.stage_size && typeof template.stage_size === 'object') {
+      templateStageSize = template.stage_size;
+    }
+
+    // Update state with template data
+    setElements(templateElements);
+    setStageSize(prev => ({
+      ...templateStageSize,
+      scale: prev.scale // Keep current scale
+    }));
+    setSelectedId(null);
+
+    // Switch to elements tab after loading template
+    setActiveTab('elements');
+  } catch (error) {
+    console.error('Error loading template:', error);
+    alert('Erreur lors du chargement du template');
+  }
+};
+
   // Attention: ne pas appeler des fonctions qui modifient l'état directement dans le rendu
   // Assurez-vous que toutes les fonctions appelées dans le JSX sont des gestionnaires d'événements
   
@@ -1035,6 +1109,21 @@ const handleTextPropertyChange = useCallback((property, value) => {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Column 1: Vertical tabs */}
         <div className="w-full lg:w-16 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-lg flex lg:flex-col shadow-lg">
+          {/* Onglet Templates en premier */}
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'templates' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('templates')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            <span className="text-xs font-medium">Templates</span>
+          </button>
+          
           <button
             className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
               activeTab === 'elements' 
@@ -1122,6 +1211,14 @@ const handleTextPropertyChange = useCallback((property, value) => {
         {/* Column 2: Tab content */}
         <div className="w-full lg:w-68 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
           <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+            {activeTab === 'templates' && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                Templates
+              </>
+            )}
             {activeTab === 'elements' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1173,6 +1270,85 @@ const handleTextPropertyChange = useCallback((property, value) => {
           </h4>
           
           <div className="flex-grow overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-20rem)]">
+            {/* Add Templates tab content */}
+            {activeTab === 'templates' && (
+              <div className="space-y-4">
+                {templatesLoading && (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                    <span className="ml-2 text-sm text-gray-600">Chargement des templates...</span>
+                  </div>
+                )}
+                
+                {templatesError && (
+                  <div className="p-4 text-sm text-red-700 bg-red-100 rounded-md">
+                    {templatesError}
+                  </div>
+                )}
+                
+                {!templatesLoading && !templatesError && templates.length === 0 && (
+                  <div className="text-center py-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <p className="mt-4 text-gray-500">
+                      Aucun template disponible.
+                    </p>
+                  </div>
+                )}
+                
+                {!templatesLoading && !templatesError && templates.length > 0 && (
+                  <>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Sélectionnez un template pour l'utiliser comme base
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {templates.map(template => (
+                        <div
+                          key={template.id}
+                          onClick={() => handleSelectTemplate(template)}
+                          className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all bg-white"
+                        >
+                          <div className="h-24 bg-gray-50 flex items-center justify-center">
+                            {template.thumbnail_url ? (
+                              <img 
+                                src={template.thumbnail_url} 
+                                alt={template.name}
+                                className="w-full h-full object-cover"
+                                style={{ maxWidth: 120, maxHeight: 96 }}
+                                onError={e => {
+                                  console.warn('[CanvasEditor] Erreur chargement thumbnail_url:', template.thumbnail_url);
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://via.placeholder.com/120x96?text=No+Image';
+                                }}
+                              />
+                            ) : (
+                              <div className="text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2">
+                            <h3 className="text-sm font-medium text-gray-900 truncate">{template.name}</h3>
+                            {template.category && (
+                              <p className="text-xs text-gray-500">{template.category}</p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              {template.created_at ? new Date(template.created_at).toLocaleDateString() : ''}
+                            </p>
+                            {/* Affiche l'URL pour le débogage */}
+                          
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            
             {activeTab === 'elements' && (
               <TabComponentWrapper
                 component={ElementsTab}
