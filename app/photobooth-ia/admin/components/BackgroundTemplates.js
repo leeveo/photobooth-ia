@@ -91,10 +91,9 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
     try {
       setSavingBackground(true);
       
-      let backgroundData = {
-        projectId: projectId,
-        name: selectedTemplate.name,
-      };
+      console.log("Début du processus de remplacement d'arrière-plan");
+      console.log("ID du projet:", projectId);
+      console.log("Template sélectionné:", selectedTemplate);
       
       // If it's an uploaded image, upload it to Supabase first
       if (selectedTemplate.isUploaded && uploadedImage?.file) {
@@ -122,6 +121,8 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
         onBackgroundsAdded && onBackgroundsAdded(data);
       } else {
         // It's a template from the JSON file - use API endpoint
+        console.log('Ajout du template comme nouvel arrière-plan:', selectedTemplate.name);
+        
         const response = await fetch('/api/admin/add-background-from-url', {
           method: 'POST',
           headers: {
@@ -131,19 +132,32 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
             projectId: projectId,
             name: selectedTemplate.name,
             imageUrl: selectedTemplate.url,
+            forceReplace: true, // Always force replace
           }),
         });
         
+        const responseData = await response.json();
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Erreur lors de l'ajout de l'arrière-plan");
+          console.error('API error response:', responseData);
+          throw new Error(responseData.error || "Erreur lors de l'ajout de l'arrière-plan");
         }
         
-        const { data } = await response.json();
-        console.log('Added background via API:', data);
+        console.log('API success response:', responseData);
         
-        // Call the callback with the added background
-        onBackgroundsAdded && onBackgroundsAdded(data);
+        if (responseData.success && responseData.data) {
+          // Call the callback with the added background
+          onBackgroundsAdded && onBackgroundsAdded(responseData.data);
+          
+          // Show success in console
+          console.log('Arrière-plan ajouté avec succès:', 
+            Array.isArray(responseData.data) ? 
+            `${responseData.data.length} arrière-plans` : 
+            '1 arrière-plan');
+        } else {
+          console.warn('Unexpected API response format:', responseData);
+          throw new Error("Format de réponse API inattendu");
+        }
       }
       
       // Close the popup
@@ -391,7 +405,7 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
                 Enregistrement...
               </>
             ) : (
-              'Définir comme arrière-plan'
+              'Remplacer l\'arrière-plan existant'
             )}
           </button>
         </div>

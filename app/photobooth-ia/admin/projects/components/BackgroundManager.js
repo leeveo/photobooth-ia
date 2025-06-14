@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiAddLine } from 'react-icons/ri';
+import BackgroundTemplates from '../../components/BackgroundTemplates';
 
 const BackgroundManager = ({ 
   projectId, 
@@ -21,6 +22,7 @@ const BackgroundManager = ({
   const [backgroundImagePreview, setBackgroundImagePreview] = useState(null);
   const [addingBackgroundLoading, setAddingBackgroundLoading] = useState(false);
   const [showBackgroundTemplates, setShowBackgroundTemplates] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   function handleBackgroundImageChange(e) {
     const file = e.target.files[0];
@@ -110,18 +112,62 @@ const BackgroundManager = ({
 
   // Updated function to handle backgrounds added from templates
   const handleBackgroundTemplatesAdded = (addedBackgrounds) => {
-    console.log(`✅ Background updated successfully`, addedBackgrounds);
+    console.log(`✅ Background templates callback received:`, addedBackgrounds);
     
     // Close the template popup
     setShowBackgroundTemplates(false);
     
-    // Set a success message
-    setSuccess(`Arrière-plan du projet mis à jour avec succès !`);
+    // Indicate we're refreshing
+    setIsRefreshing(true);
     
-    // Replace the backgrounds with only the newly added background
-    setBackgrounds(addedBackgrounds);
+    // Set a success message
+    setSuccess(`Arrière-plan du projet remplacé avec succès !`);
+    
+    // Force a direct UI update first
+    if (Array.isArray(addedBackgrounds)) {
+      setBackgrounds(addedBackgrounds);
+    } else if (addedBackgrounds) {
+      setBackgrounds([addedBackgrounds]);
+    } else {
+      setBackgrounds([]);
+    }
+    
+    // After a delay, refresh from the database to ensure we have the latest data
+    setTimeout(() => {
+      refreshBackgroundsFromDatabase();
+    }, 500);
   };
-  
+
+  // Add this new function to refresh backgrounds directly from the database
+  const refreshBackgroundsFromDatabase = async () => {
+    try {
+      console.log("Refreshing backgrounds from database...");
+      
+      // Get fresh data from the database
+      const { data, error } = await supabase
+        .from('backgrounds')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('is_active', true);
+      
+      if (error) {
+        console.error("Error fetching backgrounds:", error);
+        setError("Failed to refresh backgrounds");
+        return;
+      }
+      
+      console.log("Fresh background data:", data);
+      
+      // Update the state with the fresh data
+      setBackgrounds(data || []);
+      
+    } catch (err) {
+      console.error("Error in refresh:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Function to handle template errors
   const handleBackgroundTemplatesError = (errorMessage) => {
     setError(errorMessage);
@@ -137,11 +183,29 @@ const BackgroundManager = ({
     }
     
     // If it's just a storage path, convert to public URL
-    return supabase
-      .storage
-      .from('backgrounds')
-      .getPublicUrl(url).data.publicUrl;
+    const publicUrlResponse = supabase.storage.from('backgrounds').getPublicUrl(url);
+    
+    // Handle different versions of Supabase client
+    const publicUrl = publicUrlResponse.data?.publicUrl || // newer versions
+                      publicUrlResponse.publicURL || // older versions
+                      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/backgrounds/${url}`;
+    
+    console.log('Original URL:', url);
+    console.log('Public URL:', publicUrl);
+    
+    return publicUrl;
   };
+
+  // Debug backgrounds data
+  useEffect(() => {
+    console.log('Backgrounds data updated:', backgrounds);
+    // Check for duplicate IDs
+    const ids = backgrounds.map(bg => bg.id);
+    const uniqueIds = [...new Set(ids)];
+    if (ids.length !== uniqueIds.length) {
+      console.warn('Duplicate background IDs detected!', ids);
+    }
+  }, [backgrounds]);
 
   return (
     <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
@@ -167,7 +231,17 @@ const BackgroundManager = ({
         </div>
       </div>
       
-      {backgrounds.length === 0 ? (
+      {isRefreshing ? (
+        <div className="text-center py-6 bg-white bg-opacity-50 rounded-lg border border-dashed border-gray-300">
+          <div className="flex justify-center items-center">
+            <svg className="animate-spin h-5 w-5 text-indigo-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-gray-500">Actualisation des arrière-plans...</span>
+          </div>
+        </div>
+      ) : backgrounds.length === 0 ? (
         <div className="text-center py-6 bg-white bg-opacity-50 rounded-lg border border-dashed border-gray-300">
           <p className="text-gray-500">
             Aucun arrière-plan n'a été ajouté à ce projet.
@@ -179,12 +253,23 @@ const BackgroundManager = ({
             <div key={background.id} className="border border-gray-200 rounded-md overflow-hidden bg-white">
               <div className="h-24 bg-gray-100 relative">
                 {background.image_url ? (
-                  <Image
-                    src={getFullImageUrl(background.image_url)}
-                    alt={background.name}
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
+                  <>
+                    <Image
+                      src={getFullImageUrl(background.image_url)}
+                      alt={background.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      unoptimized={true}
+                      onError={(e) => {
+                        console.error('Image failed to load:', background.image_url);
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    {/* Add a small badge to show the URL for debugging */}
+                    <div className="absolute bottom-0 right-0 bg-black bg-opacity-60 text-white text-xs p-1 max-w-full truncate">
+                      ID: {background.id?.substring(0, 4)}...
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="text-gray-400">Aucune image</span>
@@ -295,23 +380,16 @@ const BackgroundManager = ({
           </form>
         </div>
       )}
-
+      
       {/* Background templates popup */}
       {showBackgroundTemplates && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          {/* Here you would import and render the BackgroundTemplates component */}
-          <div className="bg-white p-6 rounded-lg max-w-2xl w-full">
-            <h3 className="text-lg font-medium mb-4">Sélection d'arrière-plan</h3>
-            <p>BackgroundTemplates component would render here</p>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowBackgroundTemplates(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
+          <BackgroundTemplates
+            projectId={projectId}
+            onBackgroundsAdded={handleBackgroundTemplatesAdded}
+            onError={handleBackgroundTemplatesError}
+            onClose={() => setShowBackgroundTemplates(false)}
+          />
         </div>
       )}
     </div>

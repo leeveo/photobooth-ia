@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiAddLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
+import StyleTemplates from '../../components/StyleTemplates';
 
 const StyleManager = ({ 
   projectId, 
@@ -109,7 +110,7 @@ const StyleManager = ({
     }
   }
 
-  // Function to confirm style deletion
+  // Function to confirm style deletion - updated with better styling
   async function confirmDeleteStyle() {
     if (!styleToDelete) return;
     
@@ -243,8 +244,19 @@ const StyleManager = ({
       {/* Templates section */}
       {showStyleTemplates && (
         <div className="mb-8 border-b border-gray-200 pb-6">
-          {/* Here you would import and render the StyleTemplates component */}
-          <p>StyleTemplates Component would render here</p>
+          <StyleTemplates 
+            projectId={projectId}
+            photoboothType={photoboothType}
+            onStylesAdded={handleStyleTemplatesAdded}
+            onStyleDeleted={(deletedStyleId) => {
+              // Remove the deleted style from the local state
+              setStyles(styles.filter(s => s.id !== deletedStyleId));
+              setSuccess(`Style supprimé avec succès`);
+            }}
+            onError={handleStyleTemplatesError}
+            existingStyles={styles}
+            onClose={() => setShowStyleTemplates(false)}
+          />
         </div>
       )}
       
@@ -411,7 +423,7 @@ const StyleManager = ({
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
               Ajouter des styles depuis un template
             </button>
@@ -550,64 +562,80 @@ const StyleManager = ({
         </div>
       )}
 
-      {/* Style delete confirmation popup */}
+      {/* Style delete confirmation popup - updated with matching style to success popup */}
       {deleteStyleConfirm && styleToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn">
-            <div className="flex items-center text-red-600 mb-4">
-              <RiAlertLine className="w-6 h-6 mr-2" />
-              <h3 className="text-lg font-medium">Confirmer la suppression</h3>
-            </div>
-            
-            <div className="mb-6">
-              <p className="text-gray-700 mb-4">
-                Êtes-vous sûr de vouloir supprimer le style <strong>"{styleToDelete.name}"</strong> de votre galerie?
-              </p>
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4 delete-popup-container" 
+          role="dialog" 
+          aria-modal="true">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+               onClick={(e) => e.stopPropagation()}>
+            {/* Header with RED gradient effect */}
+            <div className="h-28 bg-gradient-to-r from-red-500 to-red-700 relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-cover bg-center opacity-20" 
+                   style={{ backgroundImage: `url(${styleToDelete?.preview_image})` }}></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
               
-              {styleToDelete.preview_image && (
-                <div className="flex justify-center mb-4">
-                  <div className="w-24 h-24 relative border border-gray-200 rounded-md overflow-hidden">
-                    <Image
-                      src={styleToDelete.preview_image}
-                      alt={styleToDelete.name}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 text-sm">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-orange-700">
-                      Vous pourrez ajouter ce style depuis les templates 
-                    </p>
-                  </div>
-                </div>
+              {/* Delete icon with animation */}
+              <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </div>
             </div>
             
-            <div className="flex justify-end gap-3">
+            {/* Content */}
+            <div className="p-6 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmer la suppression</h3>
+              <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                Êtes-vous sûr de vouloir supprimer le style <span className="font-semibold text-red-400">{styleToDelete.name}</span> ?
+              </p>
+              
+              {/* Style preview */}
+              <div className="flex justify-center mt-6 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                <div className="w-32 h-32 relative rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+                  {styleToDelete.preview_image ? (
+                    <img 
+                      src={styleToDelete.preview_image} 
+                      alt={styleToDelete.name} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/placeholder-style.png';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">Aucune image</span>
+                    </div>
+                  )}
+                  
+                  {/* Style name */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-1 text-center">
+                    <span className="text-white text-xs truncate block">{styleToDelete.name}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.25s" }}>
+                Cette action ne peut pas être annulée.
+              </div>
+            </div>
+            
+            {/* Footer with buttons */}
+            <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
               <button
-                onClick={() => {
-                  setDeleteStyleConfirm(false);
-                  setStyleToDelete(null);
-                }}
+                type="button"
+                onClick={() => setDeleteStyleConfirm(false)}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
                 disabled={deleteStyleLoading}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Annuler
               </button>
               <button
+                type="button"
                 onClick={confirmDeleteStyle}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
                 disabled={deleteStyleLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
               >
                 {deleteStyleLoading ? (
                   <>
@@ -619,8 +647,10 @@ const StyleManager = ({
                   </>
                 ) : (
                   <>
-                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                    Supprimer de la galerie des styles
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer
                   </>
                 )}
               </button>
@@ -630,6 +660,46 @@ const StyleManager = ({
       )}
     </div>
   );
-};
+}
+
+// Add matching animation styles
+const deletePopupAnimations = `
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes checkmark {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-success-popup {
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-success-icon {
+  animation: checkmark 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.animate-success-text {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+`;
+
+// Inject animation styles into document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = deletePopupAnimations;
+  document.head.appendChild(style);
+}
 
 export default StyleManager;

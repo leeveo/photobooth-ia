@@ -1,10 +1,10 @@
 {
   "templates": [
     {
-      "id": "neymar",
-      "name": "Neymar",
+      "id": "cabane",
+      "name": "Cabane",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/001.png",
-      "category": "Sports"
+      "category": "Nature"
     },
     {
       "id": "blue-gradient",

@@ -300,8 +300,12 @@ export default function ProjectDetails({ params }) {
     // Close the template popup immediately
     setShowStyleTemplates(false);
     
-    // Set a success message
+    // Set a success message for the inline notification
     setSuccess(`${addedStyles.length} styles ont été ajoutés avec succès !`);
+    
+    // Show the success popup with more details
+    setSuccessMessage(`${addedStyles.length} styles ont été ajoutés à votre projet depuis la collection de templates.`);
+    setShowSuccessPopup(true);
     
     // Force refresh the styles data
     const refreshStyles = async () => {
@@ -333,14 +337,41 @@ export default function ProjectDetails({ params }) {
   
   // Updated function to handle backgrounds added from templates
   const handleBackgroundTemplatesAdded = (addedBackgrounds) => {
-    console.log(`✅ Background updated successfully`, addedBackgrounds);
+    console.log(`✅ Received updated backgrounds`, addedBackgrounds);
     
+    // Close template popup
     setShowBackgroundTemplates(false);
-    setSuccess(`Arrière-plan du projet mis à jour avec succès !`);
-    setBackgrounds(addedBackgrounds);
     
+    // Show success message
+    setSuccess(`Arrière-plan du projet remplacé avec succès !`);
+    
+    // Force a complete UI refresh by setting loading state
+    setLoading(true);
+    
+    // Update the backgrounds state with the new data
+    if (Array.isArray(addedBackgrounds)) {
+      console.log(`Setting ${addedBackgrounds.length} backgrounds`);
+      setBackgrounds(addedBackgrounds);
+    } else if (addedBackgrounds) {
+      console.log('Setting single background');
+      setBackgrounds([addedBackgrounds]);
+    } else {
+      console.warn('No background data received');
+      setBackgrounds([]);
+    }
+    
+    // Then do a full refresh after a short delay
     setTimeout(() => {
-      fetchProjectData();
+      fetchProjectData()
+        .then(() => {
+          console.log("Project data refreshed successfully");
+        })
+        .catch(err => {
+          console.error("Error refreshing project data:", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }, 500);
   };
   
@@ -741,24 +772,26 @@ export default function ProjectDetails({ params }) {
         </div>
       )}
 
-      {/* Style templates popup */}
+      {/* Style templates popup with improved structure */}
       {showStyleTemplates && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <StyleTemplates 
-            projectId={projectId} 
-            photoboothType={project.photobooth_type}
-            onStylesAdded={handleStyleTemplatesAdded}
-            onError={handleStyleTemplatesError}
-            existingStyles={styles}
-            onClose={() => setShowStyleTemplates(false)}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl">
+            <StyleTemplates 
+              projectId={projectId} 
+              photoboothType={project.photobooth_type}
+              onStylesAdded={handleStyleTemplatesAdded}
+              onError={handleStyleTemplatesError}
+              existingStyles={styles}
+              onClose={() => setShowStyleTemplates(false)}
+            />
+          </div>
         </div>
       )}
 
-      {/* Success Popup */}
+      {/* Success Popup with higher z-index */}
       {showSuccessPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="animate-fadeIn bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 border-l-4 border-green-500 pointer-events-auto">
+        <div className="fixed inset-0 flex items-center justify-center z-[99999] pointer-events-auto">
+          <div className="animate-fadeIn bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full mx-4 border-l-4 border-green-500">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-green-100 rounded-full p-2">
                 <svg className="h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

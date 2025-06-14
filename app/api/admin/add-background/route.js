@@ -1,90 +1,142 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+// Initialize Supabase admin client to bypass RLS
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
 export async function POST(request) {
   try {
-    // Process the form data
+    // Get form data from the request
     const formData = await request.formData();
-    const file = formData.get('file');
     const projectId = formData.get('projectId');
-    const name = formData.get('name') || 'Arrière-plan';
+    const name = formData.get('name');
+    const file = formData.get('file');
     
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!projectId || !name || !file) {
+      return NextResponse.json({
+        success: false,
+        error: 'Project ID, name and file are required'
+      }, { status: 400 });
     }
     
-    if (!projectId) {
-      return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
+    console.log('Uploading background image for project', projectId);
+    
+    // First delete existing backgrounds for this project
+    try {
+      const { error: deleteError } = await supabaseAdmin
+        .from('backgrounds')
+        .delete()
+        .eq('project_id', projectId)
+        .eq('is_active', true);
+        
+      if (deleteError) {
+        console.error('Error deleting backgrounds:', deleteError);
+        throw new Error(`Error deleting existing backgrounds: ${deleteError.message}`);
+      } else {
+        console.log('Successfully deleted existing backgrounds');
+      }
+    } catch (error) {
+      console.error('Error handling existing backgrounds:', error);
+      return NextResponse.json({
+        success: false,
+        error: error.message || 'Error handling existing backgrounds'
+      }, { status: 500 });
     }
     
-    // Convert file to buffer
-    const fileBuffer = await file.arrayBuffer();
-    const fileBlob = new Blob([fileBuffer]);
+    // Get project slug from projectId
+    const { data: projectData, error: projectError } = await supabaseAdmin
+      .from('projects')
+      .select('slug')
+      .eq('id', projectId)
+      .single();
     
-    // Create filename
+    if (projectError) {
+      console.error('Error fetching project:', projectError);
+      return NextResponse.json({
+        success: false,
+        error: `Error fetching project: ${projectError.message}`
+      }, { status: 500 });
+    }
+    
+    const projectSlug = projectData.slug;
+    
+    // Create file path
+    const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
-    const fileName = `upload_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
-    const filePath = `templates/${fileName}`;
-
-    // Create a Supabase client with the service role key to bypass RLS
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    const filePath = `${projectSlug}/backgrounds/${timestamp}.${fileExt}`;
     
-    // Upload the file to storage
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
+    // Ensure file buffer is valid
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = new Uint8Array(arrayBuffer);
+    
+    // Upload file to storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('backgrounds')
-      .upload(filePath, fileBlob, {
+      .upload(filePath, fileBuffer, { 
+        contentType: file.type,
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       });
     
     if (uploadError) {
-      console.error('Error uploading file:', uploadError);
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      console.error('Upload error:', uploadError);
+      return NextResponse.json({
+        success: false,
+        error: `Upload error: ${uploadError.message}`
+      }, { status: 500 });
     }
     
-    // Get the public URL
-    const { data: publicUrlData } = supabase
-      .storage
+    // Get public URL for the uploaded file
+    const { data: urlData } = supabaseAdmin.storage
       .from('backgrounds')
       .getPublicUrl(filePath);
     
-    // First, deactivate all existing backgrounds for this project
-    const { error: deactivateError } = await supabase
-      .from('backgrounds')
-      .update({ is_active: false })
-      .eq('project_id', projectId);
-    
-    if (deactivateError) {
-      console.error('Error deactivating existing backgrounds:', deactivateError);
-      return NextResponse.json({ error: deactivateError.message }, { status: 500 });
+    if (!urlData || !urlData.publicUrl) {
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to get public URL'
+      }, { status: 500 });
     }
     
-    // Add the new background to the database with the service role to bypass RLS
-    const { data, error } = await supabase
+    // Insert background in database
+    const { data: insertData, error: insertError } = await supabaseAdmin
       .from('backgrounds')
       .insert({
-        project_id: projectId,
         name: name,
-        image_url: filePath,
+        image_url: urlData.publicUrl,
+        storage_path: filePath,
+        project_id: projectId,
         is_active: true
       })
       .select();
     
-    if (error) {
-      console.error('Error inserting background:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      return NextResponse.json({
+        success: false,
+        error: `Database error: ${insertError.message}`
+      }, { status: 500 });
     }
     
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      data: data
+      data: insertData
     });
+    
   } catch (error) {
-    console.error('Error in add-background route:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Server error:', error);
+    return NextResponse.json({
+      success: false,
+      error: `Server error: ${error.message}`
+    }, { status: 500 });
   }
 }
