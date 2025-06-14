@@ -320,7 +320,6 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   };
 
   // Remove these functions - deletion should be handled by the parent component
-  // Fonction pour ouvrir le popup de confirmation de suppression
   /*const openDeleteConfirmPopup = (style) => {
     setStyleToDelete(style);
     setShowDeleteConfirmPopup(true);
@@ -335,6 +334,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
   /*const renderStyleCard = (style, index) => {
     // ...existing code...
   };*/
+
+  // Options de genre disponibles - Simplifier pour n'avoir que l'option Groupe/Neutre
+  const getGenderOptions = () => {
+    return [
+      { value: 'g', label: 'Général (tous)' }
+    ];
+  };
 
   return (
     <div className="mt-6 space-y-6">
