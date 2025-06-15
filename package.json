@@ -22,7 +22,7 @@
     "@fal-ai/serverless-proxy": "^0.7.4",
     "@ffprobe-installer/ffprobe": "^2.1.2",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.49.4",
+    "@supabase/supabase-js": "^2.50.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.2",
     "cookies-next": "^4.1.1",
