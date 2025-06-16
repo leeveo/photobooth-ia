@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { v4 as uuidv4 } from 'uuid';
 
-// Page minimaliste pour la création de projet
 export default function NewProject() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -18,43 +18,41 @@ export default function NewProject() {
   const [error, setError] = useState(null);
   const [session, setSession] = useState(null);
 
-  // Initialiser Supabase uniquement quand le composant est monté
-  const [supabase, setSupabase] = useState(null);
-  
-  useEffect(() => {
-    // Initialiser Supabase seulement côté client
-    if (typeof window !== 'undefined') {
-      setSupabase(createClientComponentClient());
-    }
-  }, []);
+  // Initialize Supabase inside component
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    // Vérifier la session uniquement côté client
-    if (typeof window !== 'undefined') {
-      const checkSession = () => {
-        try {
-          let sessionData = sessionStorage.getItem('admin_session');
-          if (!sessionData) {
-            sessionData = localStorage.getItem('admin_session');
-          }
-          
-          if (sessionData) {
-            const parsedSession = JSON.parse(sessionData);
-            if (parsedSession && parsedSession.logged_in) {
-              setSession(parsedSession);
-              return;
-            }
-          }
-          
-          router.push('/photobooth-ia/admin/login');
-        } catch (err) {
-          console.error("Erreur de session:", err);
-          router.push('/photobooth-ia/admin/login');
+    const checkSession = () => {
+      try {
+        // Check for cookie first
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('admin_session='));
+        
+        // Try sessionStorage first
+        let sessionData = sessionStorage.getItem('admin_session');
+        
+        // If not found, try localStorage
+        if (!sessionData) {
+          sessionData = localStorage.getItem('admin_session');
         }
-      };
-      
-      checkSession();
-    }
+        
+        if (sessionData) {
+          const parsedSession = JSON.parse(sessionData);
+          
+          if (parsedSession && parsedSession.logged_in) {
+            setSession(parsedSession);
+            return;
+          }
+        }
+        
+        // Redirect to login if no session found
+        router.push('/photobooth-ia/admin/login');
+      } catch (err) {
+        console.error("Session check error:", err);
+        router.push('/photobooth-ia/admin/login');
+      }
+    };
+    
+    checkSession();
   }, [router]);
 
   const handleChange = (e) => {
@@ -66,6 +64,7 @@ export default function NewProject() {
   };
 
   const handleSlugChange = (e) => {
+    // Auto-generate slug from name (lower case, replace spaces with dashes)
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -75,8 +74,6 @@ export default function NewProject() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!supabase) return;
-    
     setLoading(true);
     setError(null);
     
@@ -109,17 +106,22 @@ export default function NewProject() {
     }
   };
 
-  if (typeof window === 'undefined') {
-    return null; // Ne rien rendre côté serveur
-  }
-
   return (
     <div className="bg-white shadow-sm rounded-xl p-6">
       <h1 className="text-2xl font-bold mb-6">Nouveau projet</h1>
       
       {error && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <p className="text-sm text-red-700">{error}</p>
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
         </div>
       )}
       
@@ -156,6 +158,7 @@ export default function NewProject() {
               className="flex-1 block w-full border border-gray-300 rounded-none rounded-r-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
+          <p className="mt-1 text-xs text-gray-500">Cet identifiant unique sera utilisé dans l'URL de votre photobooth.</p>
         </div>
         
         <div>

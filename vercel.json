@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
   "routes": [
     {
       "src": "^/_next/static/(.*)",
@@ -25,10 +19,6 @@
     {
       "src": "^/(.*)",
       "dest": "/$1"
-    },
-    {
-      "src": "/photobooth-ia/admin/(.*)",
-      "dest": "/photobooth-ia/admin/$1"
     }
   ],
   "images": {
@@ -46,8 +36,5 @@
       "NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION": "true",
       "NEXT_PUBLIC_DISABLE_STRICT_MODE": "true"
     }
-  },
-  "env": {
-    "NEXT_SKIP_GENERATE_STATIC": "true"
   }
 }

@@ -1,55 +1,33 @@
-const path = require('path');
-
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
-  // Désactiver complètement la génération statique et utiliser uniquement le mode serveur
-  output: 'server',
+  reactStrictMode: true,
   
-  // Désactiver les optimisations qui causent des problèmes
-  swcMinify: true,
-  
-  // Configuration des images 
-  images: {
-    domains: ['localhost', 'storage.googleapis.com', 'lh3.googleusercontent.com', 'pbs.twimg.com'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+  // Disable static optimization for problematic routes
+  experimental: {
+    // Turn off static generation for admin pages
+    workerThreads: false,
+    cpus: 1
   },
   
-  // Ignorer les erreurs de vérification
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Skip ESLint during builds to prevent build failures
   eslint: {
+    // Warning: this disables ESLint checks during build
     ignoreDuringBuilds: true,
   },
   
-  // Paramètres expérimentaux pour résoudre les problèmes de sérialisation
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-    serverActions: {
-      bodySizeLimit: '10mb'
-    }
+  // Disable image optimization warnings temporarily
+  images: {
+    unoptimized: true,
   },
   
-  // Personnalisation de webpack pour gérer canvas
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Alias "canvas" à notre module dummyCanvas.js
-      config.resolve.alias['canvas'] = path.resolve(__dirname, 'canvas-shim.js');
-      // Désactiver la résolution de FS et Path côté client
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        path: false,
-      };
-    }
-    
-    return config;
-  },
-}
+  // Exclude admin pages from static optimization
+  unstable_excludeFiles: [
+    '**/admin/**/*.js',
+    '**/admin/**/*.jsx',
+    '**/admin/**/*.ts',
+    '**/admin/**/*.tsx',
+  ]
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

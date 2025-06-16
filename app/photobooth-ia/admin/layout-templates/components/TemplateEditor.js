@@ -1,8 +1,5 @@
 'use client';
 
-// Add this comment at the top to ensure this is only loaded client-side
-// The rest of the file remains the same
-
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { 
   Stage, Layer, Rect, Image as KonvaImage, Transformer, Text,

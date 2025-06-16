@@ -23,13 +23,24 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
 
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [showDetailsPopup, setShowDetailsPopup] = useState(false);
-  const [templateStyles, setTemplateStyles] = useState([]);
-  const [selectedStyles, setSelectedStyles] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [existingStyleKeys, setExistingStyleKeys] = useState(new Set());
   const [error, setError] = useState(null);
+  const [templateList, setTemplateList] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showCustomSettings, setShowCustomSettings] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [filterTag, setFilterTag] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [formError, setFormError] = useState('');
+  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedStyles, setSelectedStyles] = useState([]);
+  const [existingStyleKeys, setExistingStyleKeys] = useState(new Set());
   // État pour le popup de succès
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successData, setSuccessData] = useState(null);

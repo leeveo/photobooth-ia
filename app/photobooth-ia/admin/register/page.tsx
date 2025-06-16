@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
+import { getSupabaseClient } from '../../../../lib/supabase-client';
 
 export default function AdminRegisterPage() {
   const [email, setEmail] = useState('');
@@ -12,9 +12,6 @@ export default function AdminRegisterPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  
-  // Initialiser Supabase à l'intérieur du composant pour éviter les problèmes de sérialisation
-  const supabase = createClientComponentClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +25,9 @@ export default function AdminRegisterPage() {
     }
 
     try {
+      // Get the Supabase client safely
+      const supabase = getSupabaseClient();
+      
       // MÉTHODE 1: Essayer d'utiliser l'authentification Supabase standard
       try {
         const { data, error } = await supabase.auth.signUp({ 
@@ -51,7 +51,7 @@ export default function AdminRegisterPage() {
         // Si erreur Supabase Auth, ne pas afficher d'erreur tout de suite, essayer l'alternative
         console.log("Méthode 1 (Auth standard) échouée:", error.message);
       } catch (err) {
-        console.log("Erreur avec l'authentification standard:", err);
+        console.log("Erreur avec l'authentification standard:", err instanceof Error ? err.message : String(err));
       }
 
       // MÉTHODE 2: Utiliser la fonction RPC personnalisée
@@ -71,11 +71,11 @@ export default function AdminRegisterPage() {
           }
         );
 
-        console.log("Réponse register_admin:", { adminData, adminError });
-
         if (adminError) {
-          setErrorMessage(`Erreur d'inscription: ${adminError.message}`);
-          console.error("Erreur complète:", adminError);
+          // Avoid serializing the entire error object
+          const errorMsg = typeof adminError.message === 'string' ? adminError.message : 'Erreur inconnue';
+          setErrorMessage(`Erreur d'inscription: ${errorMsg}`);
+          console.error("Erreur:", errorMsg);
           setIsLoading(false);
           return;
         }
@@ -84,7 +84,9 @@ export default function AdminRegisterPage() {
           alert(`Compte administrateur créé avec succès! ID: ${adminData.user_id}`);
           
           // Stocker temporairement l'ID pour faciliter la connexion
-          sessionStorage.setItem('last_registered_email', email);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('last_registered_email', email);
+          }
           
           router.push('/photobooth-ia/admin/login');
           return;
@@ -92,15 +94,17 @@ export default function AdminRegisterPage() {
           setErrorMessage(adminData?.message || "Erreur lors de la création du compte");
         }
       } catch (err) {
-        console.log("Erreur avec la fonction RPC:", err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.log("Erreur avec la fonction RPC:", errorMsg);
         setErrorMessage(
           "Votre Supabase n'est pas correctement configuré. Un administrateur doit exécuter " +
           "le script SQL 'setup_complete.sql' en tant qu'utilisateur postgres."
         );
       }
     } catch (err) {
-      console.error("Erreur générale:", err);
-      setErrorMessage(`Une erreur inattendue s'est produite: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Erreur générale:", errorMsg);
+      setErrorMessage(`Une erreur inattendue s'est produite: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -24,51 +24,66 @@ import {
 import './admin.css';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
+  const [showNav, setShowNav] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [photoboothOpen, setPhotoboothOpen] = useState(true);
-
-  const supabase = createClientComponentClient();
-
-  const publicRoutes = [
-    '/photobooth-ia/admin/login',
-    '/photobooth-ia/admin/register',
-    '/photobooth-ia/admin/logout',
-  ];
-
-  // ✅ Masquer le layout si on est sur une page publique
-  if (publicRoutes.includes(pathname)) {
-    return <>{children}</>;
-  }
-
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  // Initialize effects
+  const effectsInitialized = useRef(false);
+  
+  // Combine the effects so they're not conditional
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setUser(null);
-      } else {
-        setUser(session.user);
+    if (effectsInitialized.current) return;
+    effectsInitialized.current = true;
+    
+    async function checkAuth() {
+      // Don't check auth for login and register pages
+      if (pathname === "/photobooth-ia/admin/login" || pathname === "/photobooth-ia/admin/register") {
+        setIsLoading(false);
+        return;
       }
-      setLoading(false);
-    };
-    checkUser();
-  }, [supabase.auth]);
-
-  useEffect(() => {
-    if (!loading && !user && !publicRoutes.includes(pathname)) {
-      router.push('/photobooth-ia/admin/login');
+      
+      const supabase = createClientComponentClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setIsAuthenticated(true);
+        setUserEmail(session.user.email || '');
+      } else {
+        router.push('/photobooth-ia/admin/login');
+      }
+      
+      setIsLoading(false);
     }
-  }, [loading, user, pathname, router]);
+    
+    checkAuth();
+  }, [pathname, router]);
+
+  // Handle path-dependent UI
+  useEffect(() => {
+    // Always run this effect unconditionally
+    const isLoginPage = pathname === "/photobooth-ia/admin/login";
+    const isRegisterPage = pathname === "/photobooth-ia/admin/register";
+    
+    if (isLoginPage || isRegisterPage) {
+      setShowNav(false);
+    } else {
+      setShowNav(true);
+    }
+  }, [pathname]);
 
   const handleSignOut = async () => {
+    const supabase = createClientComponentClient();
     await supabase.auth.signOut();
     router.push('/photobooth-ia/admin/login');
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Chargement...</div>;
   }
 

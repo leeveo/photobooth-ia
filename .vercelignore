@@ -11,15 +11,3 @@ public/tautaufest/style
 public/haircut/style
 public/pln/style
 public/avatar/base
-
-# Instructions pour Vercel
-
-# Pour Vercel, assurez-vous de configurer votre projet avec les variables d'environnement suivantes:
-
-# 1. Ajoutez `NEXT_SKIP_STATIC_GENERATION` avec la valeur `true`
-# 2. Définissez la commande de build comme `npm run build:vercel`
-
-# Ces modifications devraient résoudre définitivement les problèmes de sérialisation. Si nécessaire, vous pouvez également ajouter un fichier `.vercelignore` pour exclure certains fichiers du déploiement:
-
-build.js
-.babelrc
