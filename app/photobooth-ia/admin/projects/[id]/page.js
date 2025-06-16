@@ -57,18 +57,37 @@ export default function ProjectDetails({ params }) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [canvasLayout, setCanvasLayout] = useState(null);
+  // Ajouter l'état de session utilisateur
+  const [session, setSession] = useState(null);
   
   const fetchProjectData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch project data
+      // Vérifier si l'utilisateur est connecté
+      if (!session || !session.user_id) {
+        console.warn("No valid user session found");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch project data with owner check
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('*')
         .eq('id', projectId)
+        .eq('created_by', session.user_id) // Vérifier que le projet appartient à l'utilisateur
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        if (projectError.code === 'PGRST116') {
+          // Projet non trouvé ou n'appartenant pas à l'utilisateur
+          setError('Vous n\'avez pas accès à ce projet');
+          setLoading(false);
+          return;
+        }
+        throw projectError;
+      }
+      
       setProject(projectData);
 
       // Fetch project settings
@@ -115,7 +134,7 @@ export default function ProjectDetails({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, projectId]);
+  }, [supabase, projectId, session]); // Ajouter session comme dépendance
 
   useEffect(() => {
     // Initialiser window.id si nécessaire (pour éviter l'erreur)
@@ -123,8 +142,10 @@ export default function ProjectDetails({ params }) {
       window.id = projectId || '';
     }
     
-    fetchProjectData();
-  }, [fetchProjectData, projectId]);
+    if (session) {
+      fetchProjectData();
+    }
+  }, [fetchProjectData, projectId, session]);
 
   // Update the typeValidated state based on project data when it loads
   useEffect(() => {
@@ -421,6 +442,42 @@ export default function ProjectDetails({ params }) {
     }
   }
   
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        // Vérifier si le cookie admin_session existe
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('admin_session='));
+        
+        // Essayer de récupérer depuis sessionStorage d'abord
+        let sessionData = sessionStorage.getItem('admin_session');
+        
+        // Si pas trouvé, essayer localStorage
+        if (!sessionData) {
+          sessionData = localStorage.getItem('admin_session');
+        }
+        
+        if (sessionData) {
+          const parsedSession = JSON.parse(sessionData);
+          
+          // Vérifier si la session est valide
+          if (parsedSession && parsedSession.logged_in) {
+            setSession(parsedSession);
+            return;
+          }
+        }
+        
+        // Si aucune session valide trouvée, rediriger vers la page de connexion
+        console.log("Aucune session valide trouvée, redirection vers login");
+        router.push('/photobooth-ia/admin/login');
+      } catch (err) {
+        console.error("Erreur lors de la vérification de session:", err);
+        router.push('/photobooth-ia/admin/login');
+      }
+    };
+    
+    checkSession();
+  }, [router]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">

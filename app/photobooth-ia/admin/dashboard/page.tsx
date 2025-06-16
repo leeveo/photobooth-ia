@@ -82,9 +82,16 @@ export default function Dashboard() {
   const fetchProjects = useCallback(async () => {
     console.log("Dashboard: Fetching projects from Supabase...");
     try {
+      // Vérifier si l'utilisateur est connecté et a un ID
+      if (!session || !session.user_id) {
+        console.warn("No valid user session found, cannot fetch projects");
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('created_by', session.user_id) // Filtrer par l'ID de l'utilisateur connecté
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -92,14 +99,14 @@ export default function Dashboard() {
         throw error;
       }
       
-      console.log("Projects received in dashboard:", data?.length || 0, "projects");
+      console.log("Projects received in dashboard:", data?.length || 0, "projects for user", session.user_id);
       return data || [];
     } catch (error) {
       console.error('Error fetching projects in dashboard:', error);
       setError('Erreur lors du chargement des projets');
       return [];
     }
-  }, [supabase]);
+  }, [supabase, session]);
   
   // Fonction pour récupérer les données du tableau de bord
   const fetchDashboardData = useCallback(async () => {
@@ -179,7 +186,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [supabase, fetchProjects, sessions.length]);
+  }, [supabase, fetchProjects, sessions.length, session]);
   
   useEffect(() => {
     console.log("Dashboard mounted, calling fetchDashboardData");

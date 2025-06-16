@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import { useRouter } from 'next/navigation';
 import { 
   RiFilterLine, 
   RiDownloadLine, 
@@ -15,6 +16,8 @@ import {
 } from 'react-icons/ri';
 
 export default function ProjectGallery() {
+  const router = useRouter();
+  const [session, setSession] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectImages, setProjectImages] = useState([]);
@@ -39,6 +42,49 @@ export default function ProjectGallery() {
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   
   const supabase = createClientComponentClient();
+  
+  // Vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        // Vérifier si le cookie admin_session existe
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('admin_session='));
+        
+        // Essayer de récupérer depuis sessionStorage d'abord
+        let sessionData = sessionStorage.getItem('admin_session');
+        
+        // Si pas trouvé, essayer localStorage
+        if (!sessionData) {
+          sessionData = localStorage.getItem('admin_session');
+        }
+        
+        if (sessionData) {
+          const parsedSession = JSON.parse(sessionData);
+          
+          // Vérifier si la session est valide
+          if (parsedSession && parsedSession.logged_in) {
+            setSession(parsedSession);
+            
+            // Si le cookie n'existe pas, le créer
+            if (!hasCookie) {
+              document.cookie = `admin_session=${parsedSession.user_id}; path=/; max-age=86400;`;
+            }
+            
+            return;
+          }
+        }
+        
+        // Si aucune session valide trouvée, rediriger vers la page de connexion
+        console.log("Aucune session valide trouvée, redirection vers login");
+        router.push('/photobooth-ia/admin/login');
+      } catch (err) {
+        console.error("Erreur lors de la vérification de session:", err);
+        router.push('/photobooth-ia/admin/login');
+      }
+    };
+    
+    checkSession();
+  }, [router]);
   
   // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
@@ -96,14 +142,24 @@ export default function ProjectGallery() {
   useEffect(() => {
     async function loadProjects() {
       try {
-        // Fetch projects
+        // Vérifier si l'utilisateur est connecté
+        if (!session || !session.user_id) {
+          console.warn("No valid user session found, cannot fetch projects");
+          setProjects([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch projects filtered by user ID
         const { data, error } = await supabase
           .from('projects')
           .select('id, name, slug')
+          .eq('created_by', session.user_id)
           .order('name', { ascending: true });
           
         if (error) throw error;
         
+        console.log(`Loaded ${data?.length || 0} projects for user ${session.user_id}`);
         setProjects(data || []);
         
         // Fetch photo counts for each project
@@ -131,8 +187,10 @@ export default function ProjectGallery() {
       }
     }
     
-    loadProjects();
-  }, [supabase]);
+    if (session) {
+      loadProjects();
+    }
+  }, [supabase, session]);
   
   // Charger les images S3 d'un projet sélectionné
   useEffect(() => {
