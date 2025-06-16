@@ -33,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [photoboothOpen, setPhotoboothOpen] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [isPublicRoute, setIsPublicRoute] = useState(false);
   
   const userMenuRef = useRef<HTMLDivElement>(null);
   const supabase = createClientComponentClient();
@@ -43,13 +44,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     '/photobooth-ia/admin/logout',
   ];
 
-  // ✅ Masquer le layout si on est sur une page publique
-  if (publicRoutes.includes(pathname)) {
-    return <>{children}</>;
-  }
+  // Check if current route is public - moved before the early return
+  useEffect(() => {
+    setIsPublicRoute(publicRoutes.includes(pathname));
+  }, [pathname]);
 
   useEffect(() => {
     const checkUser = async () => {
+      // Skip auth check for public routes
+      if (isPublicRoute) {
+        setLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setUser(null);
@@ -76,10 +83,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setLoading(false);
     };
     checkUser();
-  }, [supabase.auth]);
+  }, [supabase.auth, isPublicRoute]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (isPublicRoute) return; // Skip for public routes
+
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
@@ -90,13 +99,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isPublicRoute]);
 
   useEffect(() => {
-    if (!loading && !user && !publicRoutes.includes(pathname)) {
+    if (!loading && !user && !isPublicRoute) {
       router.push('/photobooth-ia/admin/login');
     }
-  }, [loading, user, pathname, router]);
+  }, [loading, user, router, isPublicRoute]);
 
   const handleSignOut = () => {
     // Clear localStorage and sessionStorage
@@ -109,6 +118,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // Redirect to logout page
     router.push('/photobooth-ia/admin/logout');
   };
+
+  // ✅ NOW return for public routes AFTER all hooks are executed
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Chargement...</div>;
