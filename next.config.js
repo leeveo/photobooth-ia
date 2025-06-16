@@ -31,7 +31,22 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb'
     }
-  }
+  },
+  
+  // Personnalisation de webpack pour gérer canvas
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Ne pas résoudre le module 'fs' côté client pour éviter cette erreur
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false,
+        fs: false,
+        path: false,
+      };
+    }
+    
+    return config;
+  },
 }
 
 module.exports = nextConfig

@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RiAddLine, RiDeleteBin6Line, RiEdit2Line, RiArrowLeftLine, RiRefreshLine } from 'react-icons/ri';
-import dynamic from 'next/dynamic';
 import { uploadThumbnail, updateTemplateThumbnail, migrateExistingThumbnails } from '../utils/thumbnailUtils';
 
-// IMPORTANT: Importer TemplateEditor au lieu de CanvasEditor
+// Dynamically import TemplateEditor with SSR disabled
 const TemplateEditor = dynamic(
   () => import('../layout-templates/components/TemplateEditor'),
   { ssr: false }
@@ -16,6 +17,7 @@ const TemplateEditor = dynamic(
 
 export default function LayoutTemplates() {
   const supabase = createClientComponentClient();
+  const router = useRouter();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
