@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Désactiver complètement la génération statique et utiliser uniquement le mode serveur
@@ -36,10 +38,11 @@ const nextConfig = {
   // Personnalisation de webpack pour gérer canvas
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Ne pas résoudre le module 'fs' côté client pour éviter cette erreur
+      // Alias "canvas" à notre module dummyCanvas.js
+      config.resolve.alias['canvas'] = path.resolve(__dirname, 'dummyCanvas.js');
+      // Désactiver la résolution de FS et Path côté client
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        canvas: false,
         fs: false,
         path: false,
       };
