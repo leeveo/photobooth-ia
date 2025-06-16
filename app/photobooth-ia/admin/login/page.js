@@ -59,10 +59,6 @@ export default function ProjectDetails({ params }) {
   const [canvasLayout, setCanvasLayout] = useState(null);
   // Ajouter l'état de session utilisateur
   const [session, setSession] = useState(null);
-  // Ajouter ces états après les autres déclarations d'état
-  const [styleToDelete, setStyleToDelete] = useState(null);
-  const [deleteStyleConfirm, setDeleteStyleConfirm] = useState(false);
-  const [deleteStyleLoading, setDeleteStyleLoading] = useState(false);
   
   const fetchProjectData = useCallback(async () => {
     setLoading(true);
@@ -482,15 +478,6 @@ export default function ProjectDetails({ params }) {
     checkSession();
   }, [router]);
 
-  // Ajouter cette fonction manquante dans le composant ProjectDetails
-  const handleSettingChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setSettings(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -684,7 +671,7 @@ export default function ProjectDetails({ params }) {
                           </div>
                           <div className="ml-3">
                             <p className="text-sm text-orange-700">
-                              Vous devez d&apos;abord valider le type de photobooth à l&apos;étape 2 avant de pouvoir utiliser l&apos;éditeur de canvas.
+                              Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir utiliser l'éditeur de canvas.
                             </p>
                           </div>
                         </div>
@@ -897,7 +884,8 @@ const globalStyles = `
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
-}`;
+}
+`;
 
 // Add the global styles to the document
 if (typeof document !== 'undefined') {

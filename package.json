@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --experimental-https",
-    "build": "next build",
+    "build": "node build.js",
     "start": "next start",
     "preview": "npm run build && next start",
     "check": "tsc --noEmit && eslint .",
     "predeploy": "npm run check && npm run preview",
     "lint": "next lint",
-    "install-sharp": "npm install --platform=win32 --arch=x64 sharp"
+    "install-sharp": "npm install --platform=win32 --arch=x64 sharp",
+    "build:vercel": "NEXT_SKIP_STATIC_GENERATION=true next build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.826.0",

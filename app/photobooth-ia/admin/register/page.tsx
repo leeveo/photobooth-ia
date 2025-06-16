@@ -1,7 +1,8 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSupabaseClient } from '/lib/supabaseClient';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 
 export default function AdminRegisterPage() {
@@ -11,97 +12,100 @@ export default function AdminRegisterPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const supabase = createSupabaseClient();
-
-const handleSignup = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setErrorMessage('');
-  setIsLoading(true);
   
-  if (password.length < 6) {
-    setErrorMessage("Le mot de passe doit contenir au moins 6 caractères");
-    setIsLoading(false);
-    return;
-  }
+  // Initialiser Supabase à l'intérieur du composant pour éviter les problèmes de sérialisation
+  const supabase = createClientComponentClient();
 
-  try {
-    // MÉTHODE 1: Essayer d'utiliser l'authentification Supabase standard
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setIsLoading(true);
+    
+    if (password.length < 6) {
+      setErrorMessage("Le mot de passe doit contenir au moins 6 caractères");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/photobooth-ia/admin/login`,
-          data: {
-            company_name: company || ''
+      // MÉTHODE 1: Essayer d'utiliser l'authentification Supabase standard
+      try {
+        const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/photobooth-ia/admin/login`,
+            data: {
+              company_name: company || ''
+            }
           }
+        });
+
+        if (!error) {
+          // Si pas d'erreur, tout va bien
+          alert('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
+          router.push('/photobooth-ia/admin/login');
+          return;
         }
-      });
-
-      if (!error) {
-        // Si pas d'erreur, tout va bien
-        alert('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
-        router.push('/photobooth-ia/admin/login');
-        return;
+        
+        // Si erreur Supabase Auth, ne pas afficher d'erreur tout de suite, essayer l'alternative
+        console.log("Méthode 1 (Auth standard) échouée:", error.message);
+      } catch (err) {
+        console.log("Erreur avec l'authentification standard:", err);
       }
-      
-      // Si erreur Supabase Auth, ne pas afficher d'erreur tout de suite, essayer l'alternative
-      console.log("Méthode 1 (Auth standard) échouée:", error.message);
-    } catch (err) {
-      console.log("Erreur avec l'authentification standard:", err);
-    }
 
-    // MÉTHODE 2: Utiliser la fonction RPC personnalisée
-    try {
-      console.log("Tentative d'inscription avec:", { 
-        email, 
-        password: password.length + " caractères",
-        company 
-      });
-      
-      const { data: adminData, error: adminError } = await supabase.rpc(
-        'register_admin',
-        { 
-          admin_email: email, 
-          admin_password: password, 
-          admin_company: company || '' 
+      // MÉTHODE 2: Utiliser la fonction RPC personnalisée
+      try {
+        console.log("Tentative d'inscription avec:", { 
+          email, 
+          password: password.length + " caractères",
+          company 
+        });
+        
+        const { data: adminData, error: adminError } = await supabase.rpc(
+          'register_admin',
+          { 
+            admin_email: email, 
+            admin_password: password, 
+            admin_company: company || '' 
+          }
+        );
+
+        console.log("Réponse register_admin:", { adminData, adminError });
+
+        if (adminError) {
+          setErrorMessage(`Erreur d'inscription: ${adminError.message}`);
+          console.error("Erreur complète:", adminError);
+          setIsLoading(false);
+          return;
         }
-      );
 
-      console.log("Réponse register_admin:", { adminData, adminError });
-
-      if (adminError) {
-        setErrorMessage(`Erreur d'inscription: ${adminError.message}`);
-        console.error("Erreur complète:", adminError);
-        setIsLoading(false);
-        return;
-      }
-
-      if (adminData?.success) {
-        alert(`Compte administrateur créé avec succès! ID: ${adminData.user_id}`);
-        
-        // Stocker temporairement l'ID pour faciliter la connexion
-        sessionStorage.setItem('last_registered_email', email);
-        
-        router.push('/photobooth-ia/admin/login');
-        return;
-      } else {
-        setErrorMessage(adminData?.message || "Erreur lors de la création du compte");
+        if (adminData?.success) {
+          alert(`Compte administrateur créé avec succès! ID: ${adminData.user_id}`);
+          
+          // Stocker temporairement l'ID pour faciliter la connexion
+          sessionStorage.setItem('last_registered_email', email);
+          
+          router.push('/photobooth-ia/admin/login');
+          return;
+        } else {
+          setErrorMessage(adminData?.message || "Erreur lors de la création du compte");
+        }
+      } catch (err) {
+        console.log("Erreur avec la fonction RPC:", err);
+        setErrorMessage(
+          "Votre Supabase n'est pas correctement configuré. Un administrateur doit exécuter " +
+          "le script SQL 'setup_complete.sql' en tant qu'utilisateur postgres."
+        );
       }
     } catch (err) {
-      console.log("Erreur avec la fonction RPC:", err);
-      setErrorMessage(
-        "Votre Supabase n'est pas correctement configuré. Un administrateur doit exécuter " +
-        "le script SQL 'setup_complete.sql' en tant qu'utilisateur postgres."
-      );
+      console.error("Erreur générale:", err);
+      setErrorMessage(`Une erreur inattendue s'est produite: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error("Erreur générale:", err);
-    setErrorMessage(`Une erreur inattendue s'est produite: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* LEFT SIDE */}
