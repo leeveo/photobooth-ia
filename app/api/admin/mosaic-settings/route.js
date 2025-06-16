@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
@@ -7,7 +8,7 @@ export async function POST(request) {
     const { projectId, settings } = await request.json();
     
     if (!projectId) {
-      return Response.json({
+      return NextResponse.json({
         success: false,
         error: 'Project ID is required'
       }, { status: 400 });
@@ -57,13 +58,13 @@ export async function POST(request) {
       result = data;
     }
     
-    return Response.json({
+    return NextResponse.json({
       success: true,
       data: result
     });
   } catch (error) {
     console.error('Error saving mosaic settings:', error);
-    return Response.json({
+    return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
@@ -76,7 +77,7 @@ export async function GET(request) {
   const projectId = url.searchParams.get('projectId');
   
   if (!projectId) {
-    return Response.json({
+    return NextResponse.json({
       success: false,
       error: 'Project ID is required'
     }, { status: 400 });
@@ -93,7 +94,7 @@ export async function GET(request) {
       throw error;
     }
     
-    return Response.json({
+    return NextResponse.json({
       success: true,
       data: data || { 
         bg_color: '#000000',
@@ -108,7 +109,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Error fetching mosaic settings:', error);
-    return Response.json({
+    return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
