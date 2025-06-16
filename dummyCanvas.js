@@ -1,2 +1,2 @@
-// This is a dummy module to prevent "canvas" from being loaded on the client.
+// Dummy module for "canvas" to prevent webpack from failing on client-side builds
 module.exports = {};

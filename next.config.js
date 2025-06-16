@@ -6,7 +6,7 @@ const nextConfig = {
   output: 'server',
   
   // Désactiver les optimisations qui causent des problèmes
-  swcMinify: false,
+  swcMinify: true,
   
   // Configuration des images 
   images: {
