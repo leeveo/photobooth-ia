@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+import { useRouter } from 'next/navigation';
 import { 
   RiFilterLine, 
   RiDownloadLine, 
@@ -37,8 +38,53 @@ export default function ProjectGallery() {
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
+  const [session, setSession] = useState(null);
   
+  const router = useRouter();
   const supabase = createClientComponentClient();
+  
+  // Vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        // Vérifier si le cookie admin_session existe
+        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('admin_session='));
+        
+        // Essayer de récupérer depuis sessionStorage d'abord
+        let sessionData = sessionStorage.getItem('admin_session');
+        
+        // Si pas trouvé, essayer localStorage
+        if (!sessionData) {
+          sessionData = localStorage.getItem('admin_session');
+        }
+        
+        if (sessionData) {
+          const parsedSession = JSON.parse(sessionData);
+          
+          // Vérifier si la session est valide
+          if (parsedSession && parsedSession.logged_in) {
+            setSession(parsedSession);
+            
+            // Si le cookie n'existe pas, le créer
+            if (!hasCookie) {
+              document.cookie = `admin_session=${parsedSession.user_id}; path=/; max-age=86400;`;
+            }
+            
+            return;
+          }
+        }
+        
+        // Si aucune session valide trouvée, rediriger vers la page de connexion
+        console.log("Aucune session valide trouvée, redirection vers login");
+        router.push('/photobooth-ia/admin/login');
+      } catch (err) {
+        console.error("Erreur lors de la vérification de session:", err);
+        router.push('/photobooth-ia/admin/login');
+      }
+    };
+    
+    checkSession();
+  }, [router]);
   
   // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
@@ -95,15 +141,24 @@ export default function ProjectGallery() {
   // Charger la liste des projets avec leur nombre de photos
   useEffect(() => {
     async function loadProjects() {
+      if (!session || !session.user_id) {
+        console.warn("No valid session found, cannot fetch user-specific projects");
+        setLoading(false);
+        return;
+      }
+      
       try {
-        // Fetch projects
+        // Fetch only projects owned by the current user
+        console.log(`Filtering projects for user ID: ${session.user_id}`);
         const { data, error } = await supabase
           .from('projects')
           .select('id, name, slug')
+          .eq('created_by', session.user_id)
           .order('name', { ascending: true });
           
         if (error) throw error;
         
+        console.log(`Found ${data?.length || 0} projects for this user`);
         setProjects(data || []);
         
         // Fetch photo counts for each project
@@ -131,8 +186,10 @@ export default function ProjectGallery() {
       }
     }
     
-    loadProjects();
-  }, [supabase]);
+    if (session) {
+      loadProjects();
+    }
+  }, [supabase, session]);
   
   // Charger les images S3 d'un projet sélectionné
   useEffect(() => {
@@ -141,12 +198,21 @@ export default function ProjectGallery() {
       return;
     }
     
+    // Ensure the selected project belongs to the current user
+    if (session && projects.length > 0) {
+      const projectBelongsToUser = projects.some(p => p.id === selectedProject);
+      if (!projectBelongsToUser) {
+        console.warn("Selected project does not belong to current user");
+        setError("Vous n'avez pas accès à ce projet");
+        setProjectImages([]);
+        return;
+      }
+    }
+    
     async function loadS3Images() {
       setLoading(true);
       try {
         console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
-        
-        // Removed schema checks and table creation attempts
         
         // Just call the API to get images
         const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
@@ -175,7 +241,7 @@ export default function ProjectGallery() {
     }
     
     loadS3Images();
-  }, [selectedProject, loadMosaicSettings]);
+  }, [selectedProject, loadMosaicSettings, projects, session]);
   
   // Télécharger une image
   const downloadImage = (url, filename) => {
@@ -389,10 +455,20 @@ export default function ProjectGallery() {
     }
   };
 
+  if (loading && !projects.length) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <LoadingSpinner text="Chargement de vos projets..." size="large" color="indigo" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-        Galerie des Photobooths
+        {session?.company_name 
+          ? `Galerie de ${session.company_name}`
+          : "Votre Galerie de Photos"}
       </h2>
       
       {error && (
@@ -410,7 +486,7 @@ export default function ProjectGallery() {
       <div className="bg-white shadow-sm rounded-xl overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <label htmlFor="projectSelect" className="block text-sm font-medium text-gray-700 mb-2">
-            Sélectionnez un projet
+            Sélectionnez un de vos projets
           </label>
           <div className="flex flex-col sm:flex-row gap-4">
             <select
@@ -420,11 +496,15 @@ export default function ProjectGallery() {
               value={selectedProject || ''}
             >
               <option value="">-- Choisissez un projet --</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.name} ({project.id}) - {projectsWithPhotoCount[project.id] !== undefined ? `${projectsWithPhotoCount[project.id]} photos` : 'chargement...'}
-                </option>
-              ))}
+              {projects.length === 0 ? (
+                <option value="" disabled>Vous n'avez pas de projets</option>
+              ) : (
+                projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name} - {projectsWithPhotoCount[project.id] !== undefined ? `${projectsWithPhotoCount[project.id]} photos` : 'chargement...'}
+                  </option>
+                ))
+              )}
             </select>
             
             <div className="flex flex-col sm:flex-row gap-2">
@@ -469,6 +549,22 @@ export default function ProjectGallery() {
         {loading && selectedProject ? (
           <div className="p-12 flex flex-col items-center justify-center">
             <LoadingSpinner text="Chargement des images en cours" size="medium" color="indigo" />
+          </div>
+        ) : null}
+        
+        {!loading && projects.length === 0 ? (
+          <div className="text-center py-16 px-6">
+            <RiImageLine className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-4 text-lg font-medium text-gray-900">Aucun projet trouvé</p>
+            <p className="mt-2 text-gray-500">Vous n'avez pas encore créé de projets.</p>
+            <div className="mt-6">
+              <Link
+                href="/photobooth-ia/admin/projects/new"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              >
+                Créer un projet
+              </Link>
+            </div>
           </div>
         ) : null}
         

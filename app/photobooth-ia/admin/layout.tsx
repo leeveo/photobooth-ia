@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -19,6 +19,7 @@ import {
   FiHelpCircle,
   FiRotateCcw,
   FiFilm,
+  FiUser,
 } from 'react-icons/fi';
 
 import './admin.css';
@@ -30,7 +31,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [photoboothOpen, setPhotoboothOpen] = useState(true);
-
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const supabase = createClientComponentClient();
 
   const publicRoutes = [
@@ -51,11 +55,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setUser(null);
       } else {
         setUser(session.user);
+        if (session.user?.email) {
+          setUserEmail(session.user.email);
+        }
       }
+      
+      // Check for admin_session in localStorage/sessionStorage
+      const sessionData = sessionStorage.getItem('admin_session') || localStorage.getItem('admin_session');
+      if (sessionData) {
+        try {
+          const parsedSession = JSON.parse(sessionData);
+          if (parsedSession && parsedSession.email) {
+            setUserEmail(parsedSession.email);
+          }
+        } catch (e) {
+          console.error('Error parsing session data:', e);
+        }
+      }
+      
       setLoading(false);
     };
     checkUser();
   }, [supabase.auth]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading && !user && !publicRoutes.includes(pathname)) {
@@ -63,9 +98,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [loading, user, pathname, router]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/photobooth-ia/admin/login');
+  const handleSignOut = () => {
+    // Clear localStorage and sessionStorage
+    localStorage.removeItem('admin_session');
+    sessionStorage.removeItem('admin_session');
+    
+    // Clear cookies
+    document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    
+    // Redirect to logout page
+    router.push('/photobooth-ia/admin/logout');
   };
 
   if (loading) {
@@ -190,15 +232,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm sticky top-0 z-10">
-          <div className="px-6 py-4 flex items-center">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4 lg:hidden" aria-label="Toggle menu">
-              <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h2 className="font-semibold text-xl text-gray-800">
-              {photoboothLinks.find(item => isActive(item.path))?.name || 'Administration'}
-            </h2>
+          <div className="px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4 lg:hidden" aria-label="Toggle menu">
+                <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="font-semibold text-xl text-gray-800">
+                {photoboothLinks.find(item => isActive(item.path))?.name || 'Administration'}
+              </h2>
+            </div>
+            
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+                  <FiUser className="w-4 h-4" />
+                </div>
+                <span className="hidden md:inline-block font-medium">{userEmail ? userEmail.split('@')[0] : 'Utilisateur'}</span>
+                <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+              </button>
+              
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-2 px-4 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-700">Connecté en tant que</p>
+                    <p className="text-sm text-gray-500 truncate">{userEmail || 'Utilisateur'}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <FiLogOut className="mr-2 h-4 w-4" />
+                      Se déconnecter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">

@@ -81,10 +81,18 @@ export default function Dashboard() {
   // Création d'une fonction fetchProjects séparée pour déboguer
   const fetchProjects = useCallback(async () => {
     console.log("Dashboard: Fetching projects from Supabase...");
+    
+    if (!session || !session.user_id) {
+      console.warn("No valid session found, cannot fetch user-specific projects");
+      return [];
+    }
+    
     try {
+      console.log(`Filtering projects for user ID: ${session.user_id}`);
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('created_by', session.user_id)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -92,14 +100,14 @@ export default function Dashboard() {
         throw error;
       }
       
-      console.log("Projects received in dashboard:", data?.length || 0, "projects");
+      console.log("Projects received in dashboard:", data?.length || 0, "projects for this user");
       return data || [];
     } catch (error) {
       console.error('Error fetching projects in dashboard:', error);
       setError('Erreur lors du chargement des projets');
       return [];
     }
-  }, [supabase]);
+  }, [supabase, session]);
   
   // Fonction pour récupérer les données du tableau de bord
   const fetchDashboardData = useCallback(async () => {
@@ -182,13 +190,15 @@ export default function Dashboard() {
   }, [supabase, fetchProjects, sessions.length]);
   
   useEffect(() => {
-    console.log("Dashboard mounted, calling fetchDashboardData");
-    fetchDashboardData();
+    if (session) {
+      console.log("Dashboard mounted with valid session, calling fetchDashboardData");
+      fetchDashboardData();
+    }
     
     // Afficher les informations de connexion Supabase pour le débogage
     console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
     console.log("Supabase Anon Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set");
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, session]);
   
   // Add permission check on component mount
   useEffect(() => {
@@ -280,7 +290,11 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header Stats Card */}
       <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white">
-        <h3 className="text-xl font-medium mb-6">Statistiques Globales</h3>
+        <h3 className="text-xl font-medium mb-6">
+          {session?.company_name 
+            ? `Statistiques pour ${session.company_name}`
+            : "Statistiques Globales"}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Photos */}
           <div className="flex items-center space-x-4">
@@ -325,7 +339,9 @@ export default function Dashboard() {
       {/* Projects List */}
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900">Projets ({projects.length})</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            Vos Projets ({projects.length})
+          </h3>
           <Link 
             href="/photobooth-ia/admin/projects" 
             className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-1"
