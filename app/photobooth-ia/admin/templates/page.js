@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { RiAddLine, RiDeleteBin6Line, RiEdit2Line, RiArrowLeftLine, RiRefreshLine } from 'react-icons/ri';
 import { uploadThumbnail, updateTemplateThumbnail, migrateExistingThumbnails } from '../utils/thumbnailUtils';
 
-// Dynamically import TemplateEditor with SSR disabled
+// Dynamically import TemplateEditor and disable SSR.
 const TemplateEditor = dynamic(
   () => import('../layout-templates/components/TemplateEditor'),
   { ssr: false }

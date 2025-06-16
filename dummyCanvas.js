@@ -1,2 +1,2 @@
-// Dummy module for "canvas" to prevent webpack from failing on client-side builds
+// Dummy module for "canvas" to satisfy react-konva imports on the client side.
 module.exports = {};
