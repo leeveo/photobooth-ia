@@ -39,7 +39,7 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Alias "canvas" à notre module dummyCanvas.js
-      config.resolve.alias['canvas'] = path.resolve(__dirname, 'dummyCanvas.js');
+      config.resolve.alias['canvas'] = path.resolve(__dirname, 'canvas-shim.js');
       // Désactiver la résolution de FS et Path côté client
       config.resolve.fallback = {
         ...config.resolve.fallback,
