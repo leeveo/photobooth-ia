@@ -1,6 +1,7 @@
 // middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { generateSharedToken, setSharedAuthCookie } from './utils/sharedAuth';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -28,6 +29,29 @@ export async function middleware(req: NextRequest) {
 
     if (!customAuthCookie) {
       return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
+    }
+    
+    // Si l'utilisateur est authentifié mais n'a pas de token partagé, en créer un
+    const sharedToken = req.cookies.get('shared_auth_token')?.value;
+    
+    if (customAuthCookie && !sharedToken) {
+      try {
+        // Extraire l'ID utilisateur du cookie admin_session
+        // Note: Ajustez cette partie selon le format de votre cookie
+        const adminSession = JSON.parse(Buffer.from(customAuthCookie, 'base64').toString());
+        const userId = adminSession.userId;
+        
+        if (userId) {
+          // Générer un token partagé
+          const newSharedToken = await generateSharedToken(userId);
+          if (newSharedToken) {
+            // Définir le cookie de token partagé
+            setSharedAuthCookie(res, newSharedToken);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création du token partagé:', error);
+      }
     }
   }
 
