@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -19,6 +19,7 @@ import {
   FiHelpCircle,
   FiRotateCcw,
   FiFilm,
+  FiUser,
 } from 'react-icons/fi';
 
 import './admin.css';
@@ -30,6 +31,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [photoboothOpen, setPhotoboothOpen] = useState(true);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const [adminEmail, setAdminEmail] = useState<string>('');
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [isPublicRoute, setIsPublicRoute] = useState(false);
 
   const supabase = createClientComponentClient();
 
@@ -39,37 +45,89 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     '/photobooth-ia/admin/logout',
   ];
 
-  // ✅ Masquer le layout si on est sur une page publique
-  if (publicRoutes.includes(pathname)) {
-    return <>{children}</>;
-  }
-
+  // Vérifier si c'est une route publique - en utilisant useEffect pour éviter les retours prématurés
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setUser(null);
-      } else {
-        setUser(session.user);
+    setIsPublicRoute(publicRoutes.includes(pathname));
+  }, [pathname]);
+
+  // Récupérer les informations de l'utilisateur connecté
+  useEffect(() => {
+    const loadUserSession = () => {
+      // Ne pas charger la session sur les routes publiques
+      if (isPublicRoute) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
-    checkUser();
-  }, [supabase.auth]);
 
+      try {
+        // Récupérer depuis sessionStorage ou localStorage
+        const sessionStr = sessionStorage.getItem('admin_session') || localStorage.getItem('admin_session');
+        if (sessionStr) {
+          const sessionData = JSON.parse(sessionStr);
+          setUser(sessionData);
+          setAdminEmail(sessionData.email || 'Utilisateur');
+          setShouldRedirect(false);
+        } else {
+          setUser(null);
+          // Au lieu de rediriger immédiatement, utiliser un état pour déclencher la redirection
+          if (!publicRoutes.includes(pathname)) {
+            setShouldRedirect(true);
+          }
+        }
+      } catch (e) {
+        console.error("Erreur lors du chargement de la session admin:", e);
+        setUser(null);
+        // Même chose ici
+        setShouldRedirect(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserSession();
+  }, [pathname, isPublicRoute]);
+
+  // Gérer la redirection séparément
   useEffect(() => {
-    if (!loading && !user && !publicRoutes.includes(pathname)) {
+    if (shouldRedirect && !loading && !isPublicRoute) {
       router.push('/photobooth-ia/admin/login');
     }
-  }, [loading, user, pathname, router]);
+  }, [shouldRedirect, loading, router, isPublicRoute]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  // Fermer le menu utilisateur quand on clique en dehors
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Déconnexion de l'utilisateur
+  const handleLogout = () => {
+    // Supprimer les données de session
+    localStorage.removeItem('admin_session');
+    sessionStorage.removeItem('admin_session');
+    
+    // Supprimer le cookie
+    document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    
+    // Rediriger vers la page de connexion
     router.push('/photobooth-ia/admin/login');
   };
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Chargement...</div>;
+  }
+
+  // Retourner uniquement les enfants pour les routes publiques
+  if (isPublicRoute) {
+    return <>{children}</>;
   }
 
   const isActive = (path: string) => pathname.includes(path);
@@ -190,15 +248,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm sticky top-0 z-10">
-          <div className="px-6 py-4 flex items-center">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4 lg:hidden" aria-label="Toggle menu">
-              <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h2 className="font-semibold text-xl text-gray-800">
-              {photoboothLinks.find(item => isActive(item.path))?.name || 'Administration'}
-            </h2>
+          <div className="px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4 lg:hidden" aria-label="Toggle menu">
+                <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="font-semibold text-xl text-gray-800">
+                {photoboothLinks.find(item => isActive(item.path))?.name || 'Administration'}
+              </h2>
+            </div>
+
+            {/* User Profile Menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 px-4 py-2 rounded-lg text-indigo-700 transition-all duration-200 border border-indigo-100 shadow-sm"
+              >
+                <FiUser className="w-5 h-5" />
+                <span className="font-medium">Mon compte</span>
+                <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 transition-all duration-200 transform origin-top-right">
+                  <div className="p-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-500">Connecté en tant que:</p>
+                    <p className="font-medium text-gray-800 truncate">{adminEmail}</p>
+                  </div>
+                  <div className="p-2">
+                    <button 
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                      <FiLogOut className="w-5 h-5" />
+                      <span>Déconnexion</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">

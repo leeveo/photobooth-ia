@@ -11,6 +11,7 @@ import Loader from '../../../components/ui/Loader';
 export default function ProjectsPage() {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,13 +23,54 @@ export default function ProjectsPage() {
   const [modalLoading, setModalLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
+  // Récupérer l'ID de l'admin connecté
+  useEffect(() => {
+    const getAdminSession = () => {
+      try {
+        // Récupérer la session depuis localStorage ou sessionStorage
+        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+        
+        if (!sessionStr) {
+          console.warn("Aucune session admin trouvée, redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        const sessionData = JSON.parse(sessionStr);
+        
+        if (!sessionData.user_id) {
+          console.warn("Session invalide (aucun user_id), redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        console.log("Session admin trouvée, ID:", sessionData.user_id);
+        setCurrentAdminId(sessionData.user_id);
+        return sessionData.user_id;
+      } catch (err) {
+        console.error("Erreur lors de la récupération de la session admin:", err);
+        router.push('/photobooth-ia/admin/login');
+        return null;
+      }
+    };
+    
+    getAdminSession();
+  }, [router]);
+
   const fetchProjects = useCallback(async () => {
-    console.log("Fetching projects from Supabase...");
+    if (!currentAdminId) {
+      console.warn("Impossible de charger les projets: ID admin non défini");
+      return;
+    }
+    
+    console.log(`Fetching projects from Supabase for admin ID: ${currentAdminId}...`);
     setLoading(true);
     try {
+      // Filtrer les projets par l'ID de l'admin connecté
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('created_by', currentAdminId) // Filtrer par l'admin connecté
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -36,7 +78,7 @@ export default function ProjectsPage() {
         throw error;
       }
       
-      console.log("Projects received:", data?.length || 0, "projects");
+      console.log(`Projects received for admin ${currentAdminId}:`, data?.length || 0, "projects");
       setProjects(data || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -44,14 +86,21 @@ export default function ProjectsPage() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, currentAdminId]);
   
   useEffect(() => {
-    console.log("Projects page mounted, calling fetchProjects");
-    fetchProjects();
-  }, [fetchProjects]);
+    if (currentAdminId) {
+      console.log(`Projects page mounted with admin ID: ${currentAdminId}, calling fetchProjects`);
+      fetchProjects();
+    }
+  }, [fetchProjects, currentAdminId]);
 
   async function handleCreateProject() {
+    if (!currentAdminId) {
+      setError("Vous n'êtes pas connecté. Veuillez vous reconnecter.");
+      return;
+    }
+    
     try {
       setCreatingProject(true);
       const newProject = {
@@ -61,6 +110,7 @@ export default function ProjectsPage() {
         primary_color: '#6366F1',
         secondary_color: '#4F46E5',
         description: 'Description du nouveau projet',
+        created_by: currentAdminId, // Ajouter l'ID de l'admin au projet
       };
       
       const { data, error } = await supabase
@@ -85,6 +135,18 @@ export default function ProjectsPage() {
       setDeleteLoading(true);
       setDeletingProject(true);
       console.log(`Début de la suppression du projet ${projectId} (${projectName})`);
+      
+      // Vérifier que le projet appartient bien à l'admin connecté
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .eq('created_by', currentAdminId)
+        .single();
+        
+      if (projectError || !projectData) {
+        throw new Error("Vous n'êtes pas autorisé à supprimer ce projet");
+      }
       
       // Utiliser l'API pour supprimer le projet
       const response = await fetch('/api/delete-project', {

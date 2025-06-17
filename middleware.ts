@@ -23,13 +23,10 @@ export async function middleware(req: NextRequest) {
     path === '/photobooth-ia/admin/dashboard'; // Ajout du dashboard aux exclusions
 
   if (isAdminRoute && !isExcluded) {
-    // Vérifier la présence d'un token Supabase dans les cookies
-    const accessToken = req.cookies.get('sb-access-token')?.value;
-
-    // Si pas de token Supabase, vérifier si on a un cookie de session personnalisé
+    // Vérifier uniquement la présence du cookie de session personnalisé
     const customAuthCookie = req.cookies.get('admin_session')?.value;
 
-    if (!accessToken && !customAuthCookie) {
+    if (!customAuthCookie) {
       return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
     }
   }

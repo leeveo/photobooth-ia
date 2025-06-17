@@ -41,6 +41,7 @@ export default function ProjectDetails({ params }) {
   const projectId = params.id;
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [project, setProject] = useState(null);
   const [settings, setSettings] = useState(null);
   const [styles, setStyles] = useState([]);
@@ -58,17 +59,67 @@ export default function ProjectDetails({ params }) {
   const [successMessage, setSuccessMessage] = useState('');
   const [canvasLayout, setCanvasLayout] = useState(null);
   
+  // Récupérer l'ID de l'admin connecté
+  useEffect(() => {
+    const getAdminSession = () => {
+      try {
+        // Récupérer la session depuis localStorage ou sessionStorage
+        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+        
+        if (!sessionStr) {
+          console.warn("Aucune session admin trouvée, redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        const sessionData = JSON.parse(sessionStr);
+        
+        if (!sessionData.user_id) {
+          console.warn("Session invalide (aucun user_id), redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        console.log("Session admin trouvée, ID:", sessionData.user_id);
+        setCurrentAdminId(sessionData.user_id);
+        return sessionData.user_id;
+      } catch (err) {
+        console.error("Erreur lors de la récupération de la session admin:", err);
+        router.push('/photobooth-ia/admin/login');
+        return null;
+      }
+    };
+    
+    getAdminSession();
+  }, [router]);
+  
   const fetchProjectData = useCallback(async () => {
+    if (!currentAdminId) {
+      console.warn("Impossible de charger le projet: admin ID non défini");
+      return;
+    }
+    
     setLoading(true);
     try {
-      // Fetch project data
+      // Fetch project data with security check
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('*')
         .eq('id', projectId)
+        .eq('created_by', currentAdminId) // Ajouter la vérification de l'admin propriétaire
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        if (projectError.code === 'PGRST116') {
+          // Le projet n'existe pas ou n'appartient pas à cet admin
+          console.error("Projet non trouvé ou vous n'avez pas les droits d'accès");
+          setError("Ce projet n'existe pas ou vous n'avez pas les droits pour y accéder");
+          setLoading(false);
+          return;
+        }
+        throw projectError;
+      }
+      
       setProject(projectData);
 
       // Fetch project settings
@@ -115,7 +166,7 @@ export default function ProjectDetails({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, projectId]);
+  }, [supabase, projectId, currentAdminId]);
 
   useEffect(() => {
     // Initialiser window.id si nécessaire (pour éviter l'erreur)
@@ -123,8 +174,10 @@ export default function ProjectDetails({ params }) {
       window.id = projectId || '';
     }
     
-    fetchProjectData();
-  }, [fetchProjectData, projectId]);
+    if (currentAdminId) {
+      fetchProjectData();
+    }
+  }, [fetchProjectData, projectId, currentAdminId]);
 
   // Update the typeValidated state based on project data when it loads
   useEffect(() => {

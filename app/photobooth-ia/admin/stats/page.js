@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RiBarChart2Line, RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine } from 'react-icons/ri';
 // Ajout des composants recharts
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export default function StatsPage() {
   const supabase = createClientComponentClient();
+  const router = useRouter();
+  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -21,14 +24,55 @@ export default function StatsPage() {
     photosByMonth: []
   });
 
+  // Récupérer l'ID de l'admin connecté
+  useEffect(() => {
+    const getAdminSession = () => {
+      try {
+        // Récupérer la session depuis localStorage ou sessionStorage
+        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+        
+        if (!sessionStr) {
+          console.warn("Aucune session admin trouvée, redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        const sessionData = JSON.parse(sessionStr);
+        
+        if (!sessionData.user_id) {
+          console.warn("Session invalide (aucun user_id), redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        console.log("Session admin trouvée, ID:", sessionData.user_id);
+        setCurrentAdminId(sessionData.user_id);
+        return sessionData.user_id;
+      } catch (err) {
+        console.error("Erreur lors de la récupération de la session admin:", err);
+        router.push('/photobooth-ia/admin/login');
+        return null;
+      }
+    };
+    
+    getAdminSession();
+  }, [router]);
+
   // Récupérer les projets et compter les photos
   const fetchStats = useCallback(async () => {
+    if (!currentAdminId) {
+      console.warn("Impossible de charger les statistiques: admin ID non défini");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
+      // Récupérer uniquement les projets de l'admin connecté
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
+        .eq('created_by', currentAdminId) // Filtrer par l'ID de l'admin
         .order('created_at', { ascending: false });
 
       if (projectsError) throw projectsError;
@@ -90,11 +134,13 @@ export default function StatsPage() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, currentAdminId]);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    if (currentAdminId) {
+      fetchStats();
+    }
+  }, [fetchStats, currentAdminId]);
 
   // Palette de couleurs pour les graphiques
   const COLORS = ['#6366F1', '#8B5CF6', '#F59E42', '#10B981', '#F43F5E'];

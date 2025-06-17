@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { 
   RiFilterLine, 
@@ -24,6 +25,7 @@ export default function ProjectGallery() {
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
   const [moderationConfirm, setModerationConfirm] = useState(null);
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
+  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -39,8 +41,9 @@ export default function ProjectGallery() {
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   
   const supabase = createClientComponentClient();
+  const router = useRouter();
   
-  // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
+  // Définir loadMosaicSettings AVANT son utilisation dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
@@ -92,14 +95,54 @@ export default function ProjectGallery() {
     }
   }, [supabase]); // Add supabase as dependency
   
+  // Récupérer l'ID de l'admin connecté
+  useEffect(() => {
+    const getAdminSession = () => {
+      try {
+        // Récupérer la session depuis localStorage ou sessionStorage
+        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+        
+        if (!sessionStr) {
+          console.warn("Aucune session admin trouvée, redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        const sessionData = JSON.parse(sessionStr);
+        
+        if (!sessionData.user_id) {
+          console.warn("Session invalide (aucun user_id), redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
+        }
+        
+        console.log("Session admin trouvée, ID:", sessionData.user_id);
+        setCurrentAdminId(sessionData.user_id);
+        return sessionData.user_id;
+      } catch (err) {
+        console.error("Erreur lors de la récupération de la session admin:", err);
+        router.push('/photobooth-ia/admin/login');
+        return null;
+      }
+    };
+    
+    getAdminSession();
+  }, [router]);
+  
   // Charger la liste des projets avec leur nombre de photos
   useEffect(() => {
     async function loadProjects() {
+      if (!currentAdminId) {
+        console.warn("Impossible de charger les projets: admin ID non défini");
+        return;
+      }
+      
       try {
-        // Fetch projects
+        // Fetch projects filtered by admin ID
         const { data, error } = await supabase
           .from('projects')
           .select('id, name, slug')
+          .eq('created_by', currentAdminId)
           .order('name', { ascending: true });
           
         if (error) throw error;
@@ -131,8 +174,10 @@ export default function ProjectGallery() {
       }
     }
     
-    loadProjects();
-  }, [supabase]);
+    if (currentAdminId) {
+      loadProjects();
+    }
+  }, [supabase, currentAdminId]);
   
   // Charger les images S3 d'un projet sélectionné
   useEffect(() => {
@@ -145,8 +190,6 @@ export default function ProjectGallery() {
       setLoading(true);
       try {
         console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
-        
-        // Removed schema checks and table creation attempts
         
         // Just call the API to get images
         const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
@@ -243,31 +286,6 @@ export default function ProjectGallery() {
     };
     reader.readAsDataURL(file);
   };
-
-  // Add this function near your other fetch functions to load mosaic settings
-  async function fetchMosaicSettings(projectId) {
-    if (!projectId) return;
-    
-    try {
-      // Get mosaic settings from the database
-      const { data, error } = await supabase
-        .from('mosaic_settings')
-        .select('*')
-        .eq('project_id', projectId)
-        .maybeSingle();
-    
-      if (error) {
-        console.error('Error fetching mosaic settings:', error);
-        return null;
-      }
-    
-      console.log('Fetched mosaic settings:', data);
-      return data;
-    } catch (err) {
-      console.error('Exception fetching mosaic settings:', err);
-      return null;
-    }
-  }
 
   // Replace the saveMosaicSettings function to use the server-side API for background image upload
   const saveMosaicSettings = async () => {

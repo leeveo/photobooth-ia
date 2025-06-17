@@ -20,7 +20,7 @@ interface SessionData {
 export default function Dashboard() {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const [session, setSession] = useState<SessionData | null>(null);
+  const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
@@ -34,80 +34,84 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState([]);
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
   
-  // Vérifier si l'utilisateur est connecté
+  // Récupérer l'ID de l'admin connecté
   useEffect(() => {
-    const checkSession = () => {
+    const getAdminSession = () => {
       try {
-        // Vérifier si le cookie admin_session existe
-        const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('admin_session='));
+        // Récupérer la session depuis localStorage ou sessionStorage
+        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
         
-        // Essayer de récupérer depuis sessionStorage d'abord
-        let sessionData = sessionStorage.getItem('admin_session');
-        
-        // Si pas trouvé, essayer localStorage
-        if (!sessionData) {
-          sessionData = localStorage.getItem('admin_session');
+        if (!sessionStr) {
+          console.warn("Aucune session admin trouvée, redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
         }
         
-        if (sessionData) {
-          const parsedSession = JSON.parse(sessionData) as SessionData;
-          
-          // Vérifier si la session est valide
-          if (parsedSession && parsedSession.logged_in) {
-            setSession(parsedSession);
-            setLoading(false);
-            
-            // Si le cookie n'existe pas, le créer
-            if (!hasCookie) {
-              document.cookie = `admin_session=${parsedSession.user_id}; path=/; max-age=86400;`;
-            }
-            
-            return;
-          }
+        const sessionData = JSON.parse(sessionStr) as SessionData;
+        
+        if (!sessionData.user_id) {
+          console.warn("Session invalide (aucun user_id), redirection vers login");
+          router.push('/photobooth-ia/admin/login');
+          return null;
         }
         
-        // Si aucune session valide trouvée, rediriger vers la page de connexion
-        console.log("Aucune session valide trouvée, redirection vers login");
-        router.push('/photobooth-ia/admin/login');
+        console.log("Session admin trouvée, ID:", sessionData.user_id);
+        setCurrentAdminId(sessionData.user_id);
+        return sessionData.user_id;
       } catch (err) {
-        console.error("Erreur lors de la vérification de session:", err);
+        console.error("Erreur lors de la récupération de la session admin:", err);
         router.push('/photobooth-ia/admin/login');
+        return null;
       }
     };
     
-    checkSession();
+    getAdminSession();
   }, [router]);
-
-  // Création d'une fonction fetchProjects séparée pour déboguer
-  const fetchProjects = useCallback(async () => {
-    console.log("Dashboard: Fetching projects from Supabase...");
+  
+  // Fonction pour récupérer les projets de l'admin connecté
+  const fetchProjects = useCallback(async (adminId: string) => {
+    if (!adminId) {
+      console.warn("Impossible de charger les projets: ID admin non défini");
+      return [];
+    }
+    
+    console.log(`Chargement des projets pour l'admin ID: ${adminId}`);
+    
     try {
+      // Filtrer les projets par l'ID de l'admin connecté dans le champ created_by
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('created_by', adminId) // Filtre par ID admin
         .order('created_at', { ascending: false });
-        
+      
       if (error) {
-        console.error("Supabase projects error:", error);
+        console.error("Erreur Supabase:", error);
         throw error;
       }
       
-      console.log("Projects received in dashboard:", data?.length || 0, "projects");
+      console.log(`${data?.length || 0} projets trouvés pour l'admin ${adminId}`);
       return data || [];
     } catch (error) {
-      console.error('Error fetching projects in dashboard:', error);
+      console.error('Erreur lors du chargement des projets:', error);
       setError('Erreur lors du chargement des projets');
       return [];
     }
   }, [supabase]);
   
-  // Fonction pour récupérer les données du tableau de bord
+  // Fonction pour charger les données du dashboard une fois l'admin ID récupéré
   const fetchDashboardData = useCallback(async () => {
-    console.log("Fetching dashboard data...");
+    if (!currentAdminId) {
+      console.warn("Impossible de charger les données: admin ID non défini");
+      return;
+    }
+    
     setLoading(true);
+    console.log(`Chargement des données du dashboard pour l'admin ID: ${currentAdminId}`);
+    
     try {
-      // Récupérer les projets
-      const projectsData = await fetchProjects();
+      // Récupérer les projets de l'admin connecté
+      const projectsData = await fetchProjects(currentAdminId);
       setProjects(projectsData);
       
       // Vérifier si la table sessions existe et récupérer les sessions récentes
@@ -172,69 +176,21 @@ export default function Dashboard() {
         totalPhotos,
         recentSessions: sessions || []
       });
-      
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Erreur lors du chargement des données du tableau de bord:', error);
       setError('Erreur lors du chargement des données du tableau de bord');
     } finally {
       setLoading(false);
     }
-  }, [supabase, fetchProjects, sessions.length]);
+  }, [currentAdminId, fetchProjects, sessions.length, supabase]);
   
+  // Appeler fetchDashboardData quand currentAdminId change
   useEffect(() => {
-    console.log("Dashboard mounted, calling fetchDashboardData");
-    fetchDashboardData();
-    
-    // Afficher les informations de connexion Supabase pour le débogage
-    console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log("Supabase Anon Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set");
-  }, [fetchDashboardData]);
-  
-  // Add permission check on component mount
-  useEffect(() => {
-    async function checkPermissions() {
-      try {
-        // First check if the API endpoint exists
-        const response = await fetch('/api/check-permissions', {
-          // Add cache control to prevent caching
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) {
-          // Handle non-200 responses more gracefully
-          if (response.status === 404) {
-            console.warn('Permissions check API not found, continuing without check');
-            return; // Continue without permissions check
-          }
-          throw new Error(`Permissions check failed with status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          console.warn('Permissions check returned failure:', data.error);
-          setError('Vérification des permissions échouée: ' + (data.error || 'unknown error'));
-        } else if (!data.permissions.s3) {
-          console.warn('S3 permissions failed');
-          setError('Problème de permissions AWS S3: vérifiez vos identifiants et votre connexion internet');
-        } else if (!data.permissions.supabase) {
-          console.warn('Supabase permissions failed');
-          setError('Problème de permissions Supabase: vérifiez vos identifiants');
-        } else {
-          console.log('All permissions checks passed:', data.permissions);
-        }
-      } catch (err) {
-        console.error('Permission check error:', err);
-        // Don't block the dashboard from loading with a permissions error
-        console.warn(`Erreur lors de la vérification des permissions: ${err.message}`);
-      }
+    if (currentAdminId) {
+      console.log(`Admin ID récupéré (${currentAdminId}), chargement des données...`);
+      fetchDashboardData();
     }
-    
-    checkPermissions();
-  }, []);
+  }, [currentAdminId, fetchDashboardData]);
   
   // Function to get photobooth type label
   const getPhotoboothTypeLabel = (type) => {

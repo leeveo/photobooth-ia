@@ -25,75 +25,41 @@ const handleSignup = async (e: React.FormEvent) => {
   }
 
   try {
-    // MÉTHODE 1: Essayer d'utiliser l'authentification Supabase standard
-    try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/photobooth-ia/admin/login`,
-          data: {
-            company_name: company || ''
-          }
-        }
-      });
-
-      if (!error) {
-        // Si pas d'erreur, tout va bien
-        alert('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
-        router.push('/photobooth-ia/admin/login');
-        return;
+    console.log("Tentative d'inscription avec:", { 
+      email, 
+      password: password.length + " caractères",
+      company 
+    });
+    
+    // Utiliser uniquement la fonction RPC personnalisée
+    const { data: adminData, error: adminError } = await supabase.rpc(
+      'register_admin',
+      { 
+        admin_email: email, 
+        admin_password: password, 
+        admin_company: company || '' 
       }
-      
-      // Si erreur Supabase Auth, ne pas afficher d'erreur tout de suite, essayer l'alternative
-      console.log("Méthode 1 (Auth standard) échouée:", error.message);
-    } catch (err) {
-      console.log("Erreur avec l'authentification standard:", err);
+    );
+
+    console.log("Réponse register_admin:", { adminData, adminError });
+
+    if (adminError) {
+      setErrorMessage(`Erreur d'inscription: ${adminError.message}`);
+      console.error("Erreur complète:", adminError);
+      setIsLoading(false);
+      return;
     }
 
-    // MÉTHODE 2: Utiliser la fonction RPC personnalisée
-    try {
-      console.log("Tentative d'inscription avec:", { 
-        email, 
-        password: password.length + " caractères",
-        company 
-      });
+    if (adminData?.success) {
+      alert(`Compte administrateur créé avec succès! ID: ${adminData.user_id}`);
       
-      const { data: adminData, error: adminError } = await supabase.rpc(
-        'register_admin',
-        { 
-          admin_email: email, 
-          admin_password: password, 
-          admin_company: company || '' 
-        }
-      );
-
-      console.log("Réponse register_admin:", { adminData, adminError });
-
-      if (adminError) {
-        setErrorMessage(`Erreur d'inscription: ${adminError.message}`);
-        console.error("Erreur complète:", adminError);
-        setIsLoading(false);
-        return;
-      }
-
-      if (adminData?.success) {
-        alert(`Compte administrateur créé avec succès! ID: ${adminData.user_id}`);
-        
-        // Stocker temporairement l'ID pour faciliter la connexion
-        sessionStorage.setItem('last_registered_email', email);
-        
-        router.push('/photobooth-ia/admin/login');
-        return;
-      } else {
-        setErrorMessage(adminData?.message || "Erreur lors de la création du compte");
-      }
-    } catch (err) {
-      console.log("Erreur avec la fonction RPC:", err);
-      setErrorMessage(
-        "Votre Supabase n'est pas correctement configuré. Un administrateur doit exécuter " +
-        "le script SQL 'setup_complete.sql' en tant qu'utilisateur postgres."
-      );
+      // Stocker temporairement l'ID pour faciliter la connexion
+      sessionStorage.setItem('last_registered_email', email);
+      
+      router.push('/photobooth-ia/admin/login');
+      return;
+    } else {
+      setErrorMessage(adminData?.message || "Erreur lors de la création du compte");
     }
   } catch (err) {
     console.error("Erreur générale:", err);
