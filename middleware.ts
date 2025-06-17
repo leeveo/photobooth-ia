@@ -4,6 +4,14 @@ import type { NextRequest } from 'next/server';
 import { generateSharedToken, setSharedAuthCookie } from './utils/sharedAuth';
 
 export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  
+  // Check for exact path '/photobooth-ia/admin' and redirect to root
+  if (path === '/photobooth-ia/admin') {
+    const url = new URL('/', req.url);
+    return NextResponse.redirect(url, 308); // 308 is permanent redirect
+  }
+
   const res = NextResponse.next();
 
   // CORS headers
@@ -11,9 +19,8 @@ export async function middleware(req: NextRequest) {
   res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  const path = req.nextUrl.pathname;
-
-  const isAdminRoute = path.startsWith('/photobooth-ia/admin');
+  // Changed to check for paths with trailing slash to avoid conflict with the redirect
+  const isAdminRoute = path.startsWith('/photobooth-ia/admin/');
 
   // ✅ Exclusions : login, logout, register, et la page du dashboard elle-même
   const isExcluded =
