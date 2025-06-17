@@ -15,14 +15,17 @@ const logWithTimestamp = (message, data) => {
   console.log(`[${timestamp}] ${message}`, data || '');
 };
 
-// S3 client for image uploads
-const s3Client = new S3Client({
-  region: 'eu-west-3',
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-  },
-});
+// S3 client for image uploads - Initialize when needed, not at module level
+// This prevents issues with environment variables not being available during SSR
+const getS3Client = () => {
+  return new S3Client({
+    region: process.env.NEXT_PUBLIC_AWS_REGION || 'eu-west-3',
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
+    },
+  });
+};
 
 export default function Result({ params }) {
   const slug = params.slug;
@@ -169,82 +172,72 @@ export default function Result({ params }) {
   };
   
   const uploadToS3 = async (imageUrl) => {
-  logWithTimestamp('Starting S3 upload for:', imageUrl.substring(0, 100) + '...');
-  
-  try {
-    // Fetch the image
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+    logWithTimestamp('Starting S3 upload for:', imageUrl.substring(0, 100) + '...');
     
-    const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    // Récupérer les données complètes du projet pour garantir l'ID complet
-    let projectName = project?.name || 'unknown-project';
-    let projectOwner = 'unknown-user';
-    let fullProjectId = project.id; // Assurez-vous d'avoir l'ID complet ici
-    
-    // Important: Vérifiez que l'ID du projet est complet
-    console.log('ID du projet utilisé pour S3:', fullProjectId);
-    
-    // Sanitize project name for filename
-    projectName = projectName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-    
-    // Récupérer l'ID de l'utilisateur qui a créé le projet
     try {
-      // ... reste du code inchangé ...
-    } catch (error) {
-      console.error('Error fetching project owner:', error);
-    }
-    
-    // Structure du nom de fichier 
-    const fileName = `photobooth-premium-${fullProjectId}-${projectName}-${projectOwner}-${Date.now()}.jpg`;
-    
-    // S3 upload parameters - Assurez-vous que le même ID complet est utilisé
-    const uploadParams = {
-      Bucket: 'leeveostockage',
-      Key: `projects/${fullProjectId}/${fileName}`, 
-      Body: buffer,
-      ContentType: 'image/jpeg',
-      Metadata: {
-        'project-id': fullProjectId, // ID complet ici aussi
-        'project-name': project.name,
-        'project-slug': slug,
-        'created-by': projectOwner
-      }
-    };
-    
-    // Upload to S3
-    const result = await s3Client.send(new PutObjectCommand(uploadParams));
-    
-    // Generate public URL
-    const s3Url = `https://${uploadParams.Bucket}.s3.eu-west-3.amazonaws.com/${uploadParams.Key}`;
-    
-    // Enregistrer dans project_images avec l'ID complet
-    try {
-      const insertResult = await supabase.from('project_images').insert([{
-        project_id: fullProjectId, // ID complet crucial ici
-        image_url: s3Url,
-        created_at: new Date().toISOString(),
-        metadata: {
-          fileName: fileName,
-          projectName: project.name,
-          projectSlug: slug
-        }
-      }]);
+      // Récupérer les données complètes du projet pour garantir l'ID complet
+      let projectName = project?.name || 'unknown-project';
+      let projectOwner = 'unknown-user';
+      let fullProjectId = project?.id || 'unknown-project-id'; 
       
-      console.log('Résultat insertion project_images:', insertResult);
-    } catch (dbError) {
-      console.error("Error saving image reference to database:", dbError);
+      // Sanitize project name for filename
+      projectName = projectName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+      
+      // Structure du nom de fichier 
+      const fileName = `photobooth-premium-${fullProjectId}-${projectName}-${projectOwner}-${Date.now()}.jpg`;
+      
+      logWithTimestamp('Uploading via server-side API...');
+      setLoadingUpload(true);
+      
+      // Use server-side API route for upload
+      const serverUploadResponse = await fetch('/api/upload-to-s3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          projectId: fullProjectId,
+          fileName,
+          metadata: {
+            projectName: project?.name,
+            projectSlug: params.slug
+          }
+        })
+      });
+      
+      if (!serverUploadResponse.ok) {
+        const errorData = await serverUploadResponse.json();
+        throw new Error(`Server upload failed: ${errorData.error || serverUploadResponse.statusText}`);
+      }
+      
+      const { url } = await serverUploadResponse.json();
+      logWithTimestamp('Upload successful, S3 URL:', url);
+      
+      // Enregistrer dans project_images
+      try {
+        const insertResult = await supabase.from('project_images').insert([{
+          project_id: fullProjectId,
+          image_url: url,
+          created_at: new Date().toISOString(),
+          metadata: {
+            fileName: fileName,
+            projectName: project?.name,
+            projectSlug: params.slug
+          }
+        }]);
+        
+        logWithTimestamp('Résultat insertion project_images:', insertResult);
+      } catch (dbError) {
+        console.error("Error saving image reference to database:", dbError);
+        // Continue even if DB insertion fails, as we still have the S3 URL
+      }
+      
+      return url;
+    } catch (error) {
+      logWithTimestamp('Error uploading to S3:', error);
+      throw error;
     }
-    
-    return s3Url;
-  } catch (error) {
-    logWithTimestamp('Error uploading to S3:', error);
-    throw error;
-  }
-};
+  };
+  
   const handleStartOver = () => {
     // Clear result data
     localStorage.removeItem('faceURLResult');

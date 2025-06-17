@@ -9,6 +9,7 @@ export default function AdminLoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const router = useRouter();
   const supabase = createSupabaseClient();
 
@@ -67,9 +68,14 @@ export default function AdminLoginPage() {
         
         console.log("Session stockée:", sessionData);
         
-        // Redirection vers le tableau de bord
-        alert('Connexion réussie! Redirection vers le tableau de bord...');
-        router.push('/photobooth-ia/admin/dashboard');
+        // Afficher le toast de succès au lieu de l'alerte
+        setShowSuccessToast(true);
+        
+        // Rediriger après un court délai
+        setTimeout(() => {
+          router.push('/photobooth-ia/admin/dashboard');
+        }, 2000);
+        
         return;
       } else {
         // Message d'erreur spécifique retourné par la fonction
@@ -87,7 +93,28 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row relative">
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-down">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-6 w-6" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p className="font-medium">Connexion réussie!</p>
+              <p className="text-sm opacity-90">Redirection vers le tableau de bord...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LEFT SIDE */}
       <div className="w-full md:w-1/3 bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center p-10">
         <div className="max-w-md text-center">

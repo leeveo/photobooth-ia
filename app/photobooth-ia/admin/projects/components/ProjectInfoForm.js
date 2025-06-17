@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiSaveLine } from 'react-icons/ri';
 import { QRCodeSVG } from 'qrcode.react';
@@ -16,6 +16,25 @@ const ProjectInfoForm = ({
 }) => {
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('');
+
+  // Function to get the base URL dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Use window.location in the browser
+      const url = new URL(window.location.href);
+      setBaseUrl(`${url.protocol}//${url.host}`);
+    } else {
+      // Fallback to env variable if not in browser
+      setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+    }
+  }, []);
+
+  // Get the current base URL for the photobooth
+  const getPhotoboothUrl = () => {
+    if (!project?.slug) return '';
+    return `${baseUrl}/photobooth/${project.slug}`;
+  };
 
   // Function to handle project field changes
   const handleProjectChange = (e) => {
@@ -73,7 +92,7 @@ const ProjectInfoForm = ({
 
   // Function to copy URL to clipboard
   const copyProjectUrl = () => {
-    const fullUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`;
+    const fullUrl = getPhotoboothUrl();
     navigator.clipboard.writeText(fullUrl).then(() => {
       setSuccess("URL copiée dans le presse-papiers");
     }).catch((err) => {
@@ -367,7 +386,7 @@ const ProjectInfoForm = ({
                   </div>
                   <input
                     type="text"
-                    value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project?.slug}`}
+                    value={getPhotoboothUrl()}
                     readOnly
                     className="pl-8 block w-full rounded-md border-gray-300 bg-white py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
@@ -387,9 +406,9 @@ const ProjectInfoForm = ({
                   <div className="text-center mb-2">
                     <span className="text-xs font-medium text-gray-500">QR Code</span>
                   </div>
-                  {project && (
+                  {project && baseUrl && (
                     <QRCodeSVG
-                      value={`${process.env.NEXT_PUBLIC_BASE_URL}/photobooth/${project.slug}`}
+                      value={getPhotoboothUrl()}
                       size={140}
                       level="M"
                       bgColor="#FFFFFF"

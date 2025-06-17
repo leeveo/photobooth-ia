@@ -264,11 +264,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="relative" ref={userMenuRef}>
               <button 
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 px-4 py-2 rounded-lg text-indigo-700 transition-all duration-200 border border-indigo-100 shadow-sm"
+                className="flex items-center space-x-2 focus:outline-none"
               >
-                <FiUser className="w-5 h-5" />
-                <span className="font-medium">Mon compte</span>
-                <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md hover:shadow-lg transition-all duration-200 border-2 border-white">
+                  <span className="text-lg font-semibold">{adminEmail.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-sm font-medium text-gray-700">Mon compte</span>
+                  <span className="text-xs text-gray-500 truncate max-w-[120px]">{adminEmail}</span>
+                </div>
+                <FiChevronDown className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : 'rotate-0'}`} />
               </button>
 
               {/* Dropdown Menu */}
