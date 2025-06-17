@@ -4,12 +4,14 @@ import type { NextRequest } from 'next/server';
 import { generateSharedToken, setSharedAuthCookie } from './utils/sharedAuth';
 
 export async function middleware(req: NextRequest) {
+  console.log('Middleware executing for path:', req.nextUrl.pathname);
+  
   const path = req.nextUrl.pathname;
   
-  // Check for root path and redirect to admin
+  // Check for root path with improved detection
   if (path === '/' || path === '') {
-    const url = new URL('/photobooth-ia/admin', req.url);
-    return NextResponse.redirect(url, 308); // 308 is permanent redirect
+    const adminUrl = new URL('/photobooth-ia/admin', req.url);
+    return NextResponse.redirect(adminUrl, 308); // 308 is permanent redirect
   }
 
   const res = NextResponse.next();
@@ -67,7 +69,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',  // Add root path to the matcher
+    '/',  // Root path
     '/api/:path*',
     '/photobooth-ia/admin/:path*',
   ],
