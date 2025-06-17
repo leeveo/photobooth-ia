@@ -6,9 +6,9 @@ import { generateSharedToken, setSharedAuthCookie } from './utils/sharedAuth';
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   
-  // Check for exact path '/photobooth-ia/admin' and redirect to root
-  if (path === '/photobooth-ia/admin') {
-    const url = new URL('/', req.url);
+  // Check for root path and redirect to admin
+  if (path === '/' || path === '') {
+    const url = new URL('/photobooth-ia/admin', req.url);
     return NextResponse.redirect(url, 308); // 308 is permanent redirect
   }
 
@@ -19,8 +19,8 @@ export async function middleware(req: NextRequest) {
   res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Changed to check for paths with trailing slash to avoid conflict with the redirect
-  const isAdminRoute = path.startsWith('/photobooth-ia/admin/');
+  // Revert to the original check since we no longer need to avoid conflict
+  const isAdminRoute = path.startsWith('/photobooth-ia/admin');
 
   // ✅ Exclusions : login, logout, register, et la page du dashboard elle-même
   const isExcluded =
@@ -67,6 +67,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',  // Add root path to the matcher
     '/api/:path*',
     '/photobooth-ia/admin/:path*',
   ],
