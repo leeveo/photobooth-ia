@@ -78,8 +78,8 @@ const handleSignup = async (e: React.FormEvent) => {
             {/* You can replace this with your actual logo */}
             <div className="text-3xl font-bold">PhotoBooth IA</div>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Rejoignez la plateforme !</h1>
-          <p className="text-lg">Créez votre compte administrateur SaaS en quelques secondes.</p>
+          <h1 className="text-4xl font-bold mb-4">Rejoignez la plateforme Evenementielle!</h1>
+          <p className="text-lg">Créez votre compte en quelques secondes et profitez de nombreuses animations pour vos événéments.</p>
         </div>
       </div>
 

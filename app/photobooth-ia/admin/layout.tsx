@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -178,8 +179,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* SIDEBAR */}
       <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out`}>
         <div className="p-6 border-b border-gray-100">
-          <h1 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">PhotoboothIA</h1>
-          <p className="text-sm text-gray-500">Administration</p>
+          <Image 
+            src="/images/logo.png" 
+            alt="WaiBooth.app" 
+            width={180} 
+            height={50} 
+            className="mx-auto"
+          />
+          <p className="text-sm text-purple-600 font-bold italic text-center">"Automatisez la magie.<br/> Laissez Waibooth gérer le show."</p>
         </div>
         <nav className="mt-6 flex flex-col gap-2 text-sm">
           <div className="px-6 py-2 lg:hidden">

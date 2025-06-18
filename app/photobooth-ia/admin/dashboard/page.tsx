@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
-import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine, RiPaletteLine, RiFilter3Line, RiCloseLine, RiInformationLine } from 'react-icons/ri';
 import Loader from '../../../components/ui/Loader';
 import { useRouter } from 'next/navigation';
+// Importer les données de style
+import styleTemplatesData from '../components/styleTemplatesData.json';
 
 interface SessionData {
   user_id: string;
@@ -33,6 +35,13 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
+  
+  // Pour la bibliothèque de styles
+  const [selectedStyleCategory, setSelectedStyleCategory] = useState(null);
+  const [expandedCollections, setExpandedCollections] = useState({});
+  // État pour le modal de détails des styles
+  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -202,6 +211,22 @@ export default function Dashboard() {
       default:
         return 'FaceSwapping';
     }
+  };
+
+  // Fonction pour ouvrir le modal avec la collection sélectionnée
+  const openStyleDetailsModal = (collection) => {
+    setSelectedCollection(collection);
+    setIsModalOpen(true);
+    // Empêcher le défilement de la page derrière le modal
+    document.body.style.overflow = 'hidden';
+  };
+
+  // Fonction pour fermer le modal
+  const closeStyleDetailsModal = () => {
+    setIsModalOpen(false);
+    setSelectedCollection(null);
+    // Réactiver le défilement de la page
+    document.body.style.overflow = 'auto';
   };
 
   if (error) {
@@ -440,6 +465,304 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Style Library Section */}
+      <div className="bg-white shadow-md rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <RiPaletteLine className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-lg font-medium text-gray-900">Bibliothèque de Styles</h3>
+            </div>
+            <div className="flex items-center">
+              <span className="bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {styleTemplatesData.length} collections
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Categories Tabs */}
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <div className="flex whitespace-nowrap px-4 py-2">
+            <button 
+              onClick={() => setSelectedStyleCategory(null)}
+              className={`px-4 py-2 font-medium text-sm rounded-lg mr-2 ${
+                !selectedStyleCategory 
+                  ? 'bg-indigo-600 text-white' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Tous
+            </button>
+            
+            {Array.from(new Set(styleTemplatesData.map(collection => collection.compatibleWith[0]))).map(category => (
+              <button 
+                key={category}
+                onClick={() => setSelectedStyleCategory(category)}
+                className={`px-4 py-2 font-medium text-sm rounded-lg mr-2 ${
+                  selectedStyleCategory === category 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {category === 'premium' ? 'Premium' : 
+                 category === 'standard' ? 'Standard' : 
+                 category === 'photobooth2' ? 'MiniMax' : 
+                 category === 'avatar' ? 'Avatar IA' : category}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Collections Grid */}
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {styleTemplatesData
+            .filter(collection => !selectedStyleCategory || collection.compatibleWith.includes(selectedStyleCategory))
+            .map(collection => (
+              <div 
+                key={collection.id} 
+                className="group border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                <div 
+                  className="relative h-48 w-full overflow-hidden cursor-pointer"
+                  onClick={() => setExpandedCollections(prev => ({
+                    ...prev, 
+                    [collection.id]: !prev[collection.id]
+                  }))}
+                >
+                  {collection.image ? (
+                    <Image
+                      src={collection.image}
+                      alt={collection.name}
+                      fill
+                      priority
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      style={{ objectFit: "cover" }}
+                      className="group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                      <RiPaletteLine className="h-16 w-16 text-indigo-400" />
+                    </div>
+                  )}
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+                    <h4 className="text-white font-medium text-lg">{collection.name}</h4>
+                    <p className="text-white/80 text-sm mt-1 line-clamp-2">{collection.description}</p>
+                  </div>
+                  
+                  <div className="absolute top-2 right-2">
+                    <span className="bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded">
+                      {collection.styles.length} styles
+                    </span>
+                  </div>
+                  
+                  {collection.compatibleWith.map((type, idx) => (
+                    <div key={type} className="absolute top-2 left-2 flex items-center">
+                      <span 
+                        className={`
+                          text-xs font-bold px-2 py-1 rounded
+                          ${type === 'premium' ? 'bg-amber-500 text-white' : 
+                            type === 'standard' ? 'bg-blue-500 text-white' : 
+                            type === 'photobooth2' ? 'bg-green-500 text-white' : 
+                            type === 'avatar' ? 'bg-purple-500 text-white' : 'bg-gray-500 text-white'}
+                        `}
+                      >
+                        {type === 'premium' ? 'Premium' : 
+                         type === 'standard' ? 'Standard' : 
+                         type === 'photobooth2' ? 'MiniMax' : 
+                         type === 'avatar' ? 'Avatar IA' : type}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {expandedCollections[collection.id] && (
+                  <div className="p-4 border-t border-gray-200">
+                    <div className="flex justify-between items-center mb-3">
+                      <h5 className="font-medium">Styles dans cette collection</h5>
+                      <button 
+                        onClick={() => setExpandedCollections(prev => ({...prev, [collection.id]: false}))}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        Fermer
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                      {collection.styles.slice(0, 6).map(style => (
+                        <div 
+                          key={style.style_key} 
+                          className="flex flex-col items-center border border-gray-100 rounded p-2 hover:bg-gray-50"
+                        >
+                          {style.preview_image ? (
+                            <div className="relative h-16 w-full rounded overflow-hidden">
+                              <Image
+                                src={style.preview_image}
+                                alt={style.name}
+                                fill
+                                sizes="100px"
+                                style={{ objectFit: "cover" }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-16 w-full bg-gray-100 rounded flex items-center justify-center">
+                              <RiFilter3Line className="h-8 w-8 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-xs font-medium mt-1 text-center line-clamp-1">{style.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {collection.styles.length > 6 && (
+                      <div className="mt-3 text-center">
+                        <Link
+                          href={`/photobooth-ia/admin/styles?collection=${collection.id}`}
+                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          Voir les {collection.styles.length - 6} autres styles
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="px-4 py-3 bg-gray-50 flex justify-between items-center">
+                 
+                  
+                  <button
+                    onClick={() => openStyleDetailsModal(collection)}
+                    className="text-xs font-medium text-gray-600 hover:text-gray-800 flex items-center"
+                  >
+                    Détails
+                    <RiArrowRightSLine className="ml-1 w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+
+      {/* Modal de détails des styles */}
+      {isModalOpen && selectedCollection && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl animate-fadeIn">
+            {/* En-tête du modal */}
+            <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center space-x-3">
+                <RiPaletteLine className="text-indigo-600 h-6 w-6" />
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">{selectedCollection.name}</h3>
+                  <p className="text-sm text-gray-500">{selectedCollection.description}</p>
+                </div>
+              </div>
+              <button 
+                onClick={closeStyleDetailsModal}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <RiCloseLine className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* Badges de compatibilité */}
+            <div className="px-6 py-3 border-b border-gray-200 flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Compatible avec:</span>
+              {selectedCollection.compatibleWith.map(type => (
+                <span 
+                  key={type}
+                  className={`
+                    text-xs font-bold px-2 py-1 rounded
+                    ${type === 'premium' ? 'bg-amber-500 text-white' : 
+                      type === 'standard' ? 'bg-blue-500 text-white' : 
+                      type === 'photobooth2' ? 'bg-green-500 text-white' : 
+                      type === 'avatar' ? 'bg-purple-500 text-white' : 'bg-gray-500 text-white'}
+                  `}
+                >
+                  {type === 'premium' ? 'Premium' : 
+                   type === 'standard' ? 'Standard' : 
+                   type === 'photobooth2' ? 'MiniMax' : 
+                   type === 'avatar' ? 'Avatar IA' : type}
+                </span>
+              ))}
+              <span className="ml-auto bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {selectedCollection.styles.length} styles
+              </span>
+            </div>
+            
+            {/* Corps du modal avec grille de styles */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {selectedCollection.styles.map(style => (
+                  <div 
+                    key={style.style_key} 
+                    className="flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    {style.preview_image ? (
+                      <div className="relative h-32 w-full">
+                        <Image
+                          src={style.preview_image}
+                          alt={style.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                          style={{ objectFit: "cover" }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-32 w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <RiFilter3Line className="h-10 w-10 text-gray-400" />
+                      </div>
+                    )}
+                    
+                    <div className="p-3">
+                      <h4 className="font-medium text-sm">{style.name}</h4>
+                      {style.description && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{style.description}</p>
+                      )}
+                      
+                      {/* Badges additionnels */}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {style.gender && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            style.gender === 'f' ? 'bg-pink-100 text-pink-800' : 
+                            style.gender === 'm' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {style.gender === 'f' ? 'Féminin' : 
+                             style.gender === 'm' ? 'Masculin' : 
+                             'Universel'}
+                          </span>
+                        )}
+                        
+                        {style.variations && style.variations > 1 && (
+                          <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">
+                            {style.variations} variations
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Pied du modal */}
+            <div className="border-t border-gray-200 px-6 py-4 flex justify-between items-center">
+              <div className="text-sm text-gray-500 flex items-center">
+                <RiInformationLine className="h-4 w-4 mr-1" />
+                Utilisez ces styles dans vos projets
+              </div>
+              <button
+                onClick={closeStyleDetailsModal}
+                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
