@@ -10,7 +10,8 @@ const LayoutTab = ({
   saveLayout,
   elements,
   stageSize,
-  setSavedLayouts
+  setSavedLayouts,
+  activeLayoutId
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -140,6 +141,72 @@ const LayoutTab = ({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-sm font-medium text-gray-700 mb-2">Layouts sauvegardés</h2>
+        
+        {savedLayouts.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-gray-500">Aucun layout sauvegardé pour ce projet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {savedLayouts.map((layout) => {
+              // Vérifier si c'est le layout actif
+              const isActive = layout.id === activeLayoutId;
+              
+              return (
+                <div 
+                  key={layout.id}
+                  onClick={() => loadLayout(layout.id)}
+                  className={`
+                    cursor-pointer border rounded-lg overflow-hidden transition-all
+                    ${isActive 
+                      ? 'border-indigo-500 ring-2 ring-indigo-200' 
+                      : 'border-gray-200 hover:border-indigo-300'}
+                  `}
+                >
+                  <div className="h-24 bg-gray-50 flex items-center justify-center relative">
+                    {layout.thumbnail_url ? (
+                      <img 
+                        src={layout.thumbnail_url} 
+                        alt={layout.name}
+                        className="max-h-full max-w-full object-contain"
+                        onError={(e) => {
+                          e.target.onerror = null; 
+                          e.target.src = 'https://via.placeholder.com/120x80?text=No+Image';
+                        }}
+                      />
+                    ) : (
+                      <div className="text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Indicateur de layout actif */}
+                    {isActive && (
+                      <div className="absolute top-2 right-2 bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-2 bg-white">
+                    <h3 className="text-sm font-medium text-gray-900 truncate">{layout.name}</h3>
+                    <p className="text-xs text-gray-500">
+                      {new Date(layout.updated_at || layout.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
