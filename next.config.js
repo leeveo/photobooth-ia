@@ -89,11 +89,10 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: '/photobooth-ia/admin/dashboard',
+        destination: '/photobooth-ia/admin/',
         permanent: true,
       },
-      // ...autres redirections si besoin...
-    ];
+    ]
   },
 };
 
