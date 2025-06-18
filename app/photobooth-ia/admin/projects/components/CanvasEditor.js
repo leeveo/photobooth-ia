@@ -109,7 +109,9 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('backgrounds');
   const [savedLayouts, setSavedLayouts] = useState([]);
-  const [layoutName, setLayoutName] = useState('');
+  // Supprimer l'état layoutName qui n'est plus nécessaire
+  // const [layoutName, setLayoutName] = useState('');
+  const [projectName, setProjectName] = useState(''); // Ajouter un état pour le nom du projet
   // Nouvelles variables d'état pour les fonctionnalités ajoutées
   const [libraryImages, setLibraryImages] = useState([]);
   const [uploadedImages, setUploadedImages] = useState([]);
@@ -132,6 +134,9 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [templates, setTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [templatesError, setTemplatesError] = useState(null);
+  
+  // Ajouter un état pour stocker l'URL de la miniature
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
   
   const supabase = createClientComponentClient();
 
@@ -775,6 +780,168 @@ const checkBucketExists = useCallback(async (bucketName) => {
     setSelectedId(null);
   };
   
+  // États pour la notification de sauvegarde
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success' // success ou error
+  });
+  
+  // Fonction pour afficher une notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({
+      show: true,
+      message,
+      type
+    });
+    
+    // Masquer la notification après 3 secondes
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
+  // Remplacer la fonction generateTransparentThumbnail par cette version avec fond noir
+  const generateTransparentThumbnail = useCallback(() => {
+    if (!stageRef.current) return null;
+    
+    try {
+      console.log('Génération d\'une miniature PNG avec fond noir...');
+      
+      // Étape 1: Créer un canvas temporaire hors-DOM
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = stageSize.width;
+      tempCanvas.height = stageSize.height;
+      const ctx = tempCanvas.getContext('2d');
+      
+      // Remplir avec un fond noir
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      
+      // Étape 2: Capturer chaque élément sauf le rectangle de fond
+      const layer = stageRef.current.findOne('Layer');
+      const children = layer.children.toArray();
+      
+      console.log(`Traitement de ${children.length} éléments...`);
+      
+      children.forEach((child, index) => {
+        // Ignorer le rectangle de fond et le transformer
+        if (child.attrs.className === 'background-rect' || 
+            child.attrs.name === 'background-rect' || 
+            child.attrs.id === 'background-rect' ||
+            child.getClassName() === 'Transformer') {
+          console.log(`Élément ignoré: ${child.getClassName()} (${child.attrs.id || 'sans id'})`);
+          return;
+        }
+        
+        console.log(`Traitement de l'élément ${index}: ${child.getClassName()} (${child.attrs.id || 'sans id'})`);
+        
+        // Pour chaque élément, créer un canvas temporaire individuel
+        const elemCanvas = document.createElement('canvas');
+        elemCanvas.width = stageSize.width;
+        elemCanvas.height = stageSize.height;
+        
+        // Créer une scène temporaire pour cet élément uniquement
+        const elemStage = new window.Konva.Stage({
+          container: elemCanvas,
+          width: stageSize.width,
+          height: stageSize.height
+        });
+        
+        const elemLayer = new window.Konva.Layer();
+        elemStage.add(elemLayer);
+        
+        // Cloner l'élément et l'ajouter à cette scène
+        const clone = child.clone();
+        elemLayer.add(clone);
+        elemLayer.draw();
+        
+        // Dessiner cet élément sur notre canvas principal
+        ctx.drawImage(elemCanvas, 0, 0);
+      });
+      
+      // Étape 3: Générer une URL de données PNG
+      const dataURL = tempCanvas.toDataURL('image/png');
+      
+      console.log('Miniature PNG avec fond noir générée avec succès.');
+      
+      // Stocker l'URL de la miniature
+      setThumbnailUrl(dataURL);
+      return dataURL;
+    } catch (error) {
+      console.error('Erreur lors de la génération de la miniature:', error);
+      return null;
+    }
+  }, [stageSize]);
+  
+  // Fonction de secours modifiée pour utiliser un fond noir
+  const generateFallbackTransparentThumbnail = useCallback(() => {
+    if (!stageRef.current) return null;
+    
+    try {
+      console.log('Génération de miniature avec fond noir (méthode de secours)...');
+      
+      // Créer un canvas vide de la taille du stage
+      const canvas = document.createElement('canvas');
+      canvas.width = stageSize.width;
+      canvas.height = stageSize.height;
+      const ctx = canvas.getContext('2d');
+      
+      // Remplir avec un fond noir
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Obtenir une image de la scène sans le fond d'origine
+      const stageImg = new Image();
+      
+      // Sauvegarder la référence à la couche et ses enfants
+      const layer = stageRef.current.findOne('Layer');
+      const bgRect = layer.findOne('.background-rect');
+      
+      // Cacher temporairement le rectangle de fond
+      if (bgRect) {
+        bgRect.visible(false);
+        layer.batchDraw();
+      }
+      
+      // Créer une URL de données pour la scène sans fond
+      const stageDataURL = stageRef.current.toDataURL({
+        pixelRatio: 1,
+        mimeType: 'image/png',
+        quality: 1,
+        x: 0,
+        y: 0,
+        width: stageSize.width,
+        height: stageSize.height
+      });
+      
+      // Restaurer la visibilité du fond
+      if (bgRect) {
+        bgRect.visible(true);
+        layer.batchDraw();
+      }
+      
+      // Charger l'image de la scène et la dessiner sur le canvas avec fond noir
+      return new Promise((resolve) => {
+        stageImg.onload = () => {
+          // Le fond noir est déjà en place, dessiner l'image par-dessus
+          ctx.drawImage(stageImg, 0, 0);
+          
+          // Générer l'URL de données PNG finale
+          const dataURL = canvas.toDataURL('image/png');
+          setThumbnailUrl(dataURL);
+          resolve(dataURL);
+        };
+        
+        stageImg.src = stageDataURL;
+      });
+    } catch (error) {
+      console.error('Erreur lors de la génération de la miniature de secours:', error);
+      return null;
+    }
+  }, [stageSize]);
+
+  // Modifiez également la fonction saveLayout pour utiliser generateTransparentThumbnail
   // Fonction pour sauvegarder le layout
   const saveLayout = async () => {
     // En mode template, on ne sauvegarde pas dans la base de données
@@ -785,40 +952,142 @@ const checkBucketExists = useCallback(async (bucketName) => {
           elements,
           stageSize
         });
+        showNotification('Template sauvegardé avec succès');
       }
       return;
     }
     
-    if (!layoutName.trim()) return;
-    
     try {
+      // 1. Générer un nom automatique basé sur le nom du projet
+      const generatedName = `${projectName || 'Layout'}_${new Date().toISOString().slice(0, 10)}`;
+      
+      // 2. Générer la miniature PNG
+      console.log('Génération de la miniature PNG...');
+      let thumbnail = await generateTransparentThumbnail(); // Utiliser la nouvelle fonction améliorée
+      
+      // Si la première méthode échoue, essayer la méthode de secours
+      if (!thumbnail) {
+        console.log('Première méthode échouée, tentative avec la méthode de secours...');
+        thumbnail = await generateFallbackTransparentThumbnail();
+      }
+      
+      let thumbnailPublicUrl = null;
+      
+      // 3. Si la miniature est générée avec succès, l'uploader vers S3
+      if (thumbnail) {
+        try {
+          // Convertir le dataURL en fichier
+          const thumbnailFile = dataURLtoFile(thumbnail, `layout_${Date.now()}.png`);
+          
+          console.log('Envoi de la miniature vers S3 via API...');
+          
+          // Créer un FormData pour l'upload
+          const formData = new FormData();
+          formData.append('file', thumbnailFile);
+          
+          // Appeler l'API d'upload S3
+          const response = await fetch('/api/upload-to-s3', {
+            method: 'POST',
+            body: formData
+          });
+          
+          // Vérifier la réponse
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Erreur API:', errorData);
+            throw new Error(`Erreur d'upload: ${response.status} ${response.statusText}`);
+          }
+          
+          // 4. Récupérer l'URL réelle après upload réussi
+          const data = await response.json();
+          
+          if (data.url) {
+            thumbnailPublicUrl = data.url;
+            console.log('URL S3 réelle obtenue:', thumbnailPublicUrl);
+          } else {
+            throw new Error('Pas d\'URL retournée par l\'API');
+          }
+        } catch (thumbnailError) {
+          console.error('Erreur lors de l\'upload de la miniature:', thumbnailError);
+          // En cas d'erreur, on continue sans URL de miniature
+        }
+      }
+      
+      // 5. Préparer les données du layout
       const layoutData = {
-        project_id: projectId,
-        name: layoutName,
+        name: generatedName,
         elements: JSON.stringify(elements),
         stage_size: JSON.stringify(stageSize),
-        created_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       };
       
-      const { data, error } = await supabase
-        .from('canvas_layouts')
-        .insert(layoutData)
-        .select();
+      // 6. Ajouter l'URL de la miniature seulement si elle a été correctement uploadée
+      if (thumbnailPublicUrl) {
+        layoutData.thumbnail_url = thumbnailPublicUrl;
+        console.log('URL de miniature S3 ajoutée aux données du layout:', thumbnailPublicUrl);
+      }
+      
+      // Vérifier si un layout existe déjà pour ce projet
+      const existingLayout = savedLayouts.length > 0 ? savedLayouts[0] : null;
+      
+      let result;
+      if (existingLayout) {
+        // Mettre à jour le layout existant
+        console.log('Mise à jour du layout existant:', existingLayout.id);
+        const { data, error } = await supabase
+          .from('canvas_layouts')
+          .update(layoutData)
+          .eq('id', existingLayout.id)
+          .eq('project_id', projectId)
+          .select();
+          
+        if (error) {
+          console.error('Erreur lors de la mise à jour du layout:', error);
+          throw error;
+        }
         
-      if (error) throw error;
+        result = data[0];
+        console.log('Layout mis à jour avec succès:', result);
+        
+        // Mettre à jour la liste des layouts sauvegardés
+        setSavedLayouts([result]);
+        showNotification('Layout mis à jour avec succès');
+      } else {
+        // Créer un nouveau layout
+        console.log('Création d\'un nouveau layout pour le projet:', projectId);
+        layoutData.project_id = projectId;
+        layoutData.created_at = new Date().toISOString();
+        
+        const { data, error } = await supabase
+          .from('canvas_layouts')
+          .insert(layoutData)
+          .select();
+          
+        if (error) {
+          console.error('Erreur lors de la création du layout:', error);
+          throw error;
+        }
+        
+        result = data[0];
+        console.log('Nouveau layout créé avec succès avec l\'URL S3:', result);
+        
+        // Mettre à jour la liste des layouts sauvegardés
+        setSavedLayouts([result]);
+        showNotification('Nouveau layout créé avec succès');
+      }
       
-      setSavedLayouts([...savedLayouts, data[0]]);
-      setLayoutName('');
-      
+      // Appeler la fonction onSave si elle existe
       if (onSave) {
         onSave({
           elements,
-          stageSize
+          stageSize,
+          thumbnailUrl: thumbnailPublicUrl
         });
       }
       
     } catch (error) {
       console.error('Error saving layout:', error);
+      showNotification('Erreur lors de la sauvegarde du layout: ' + error.message, 'error');
     }
   };
   
@@ -1046,6 +1315,42 @@ const handleSelectTemplate = (template) => {
   // Modifier le bouton de test URL directe pour utiliser la fonction définie
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+      {/* Notification popup */}
+      {notification.show && (
+        <div 
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 transition-all duration-300 ease-out transform ${
+            notification.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}
+        >
+          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+            notification.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+          }`}>
+            {notification.type === 'success' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            )}
+          </div>
+          <div>
+            <p className={`text-sm font-medium ${notification.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+              {notification.message}
+            </p>
+          </div>
+          <button 
+            onClick={() => setNotification(prev => ({ ...prev, show: false }))}
+            className="ml-auto text-gray-400 hover:text-gray-500"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+          </button>
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
         <h3 className="text-lg font-medium text-gray-900">Éditeur de Canvas</h3>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
@@ -1069,6 +1374,45 @@ const handleSelectTemplate = (template) => {
           </div>
           
           <div className="flex space-x-2 w-full sm:w-auto">
+            {thumbnailUrl && (
+              <div className="hidden md:block">
+                <img 
+                  src={thumbnailUrl} 
+                  alt="Aperçu" 
+                  className="h-8 w-12 object-cover border border-gray-200 rounded"
+                  style={{ background: 'repeating-centric-circles pink yellow 5px' }} // Ajouter un fond de motif pour mieux voir la transparence
+                />
+                <button 
+      onClick={() => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          
+          // Vérifier les données alpha
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let hasTransparentPixels = false;
+          
+          for (let i = 3; i < imgData.data.length; i += 4) {
+            if (imgData.data[i] < 255) {
+              hasTransparentPixels = true;
+              break;
+            }
+          }
+          
+          alert(`Format: ${img.width}x${img.height}\nPNG transparent: ${hasTransparentPixels ? 'Oui' : 'Non'}`);
+        };
+        img.src = thumbnailUrl;
+      }}
+      className="text-xs text-indigo-600 hover:underline mt-1"
+    >
+      Vérifier
+    </button>
+              </div>
+            )}
             <button
               onClick={removeSelected}
               disabled={!selectedId}
@@ -1081,26 +1425,12 @@ const handleSelectTemplate = (template) => {
               Supprimer la sélection
             </button>
             
-            <div className="flex items-center border border-gray-300 rounded-md flex-1 sm:flex-none">
-              <input
-                type="text"
-                value={layoutName}
-                onChange={(e) => setLayoutName(e.target.value)}
-                placeholder="Nom du layout"
-                className="px-3 py-1.5 text-sm border-none focus:ring-0 w-full"
-              />
-              <button
-                onClick={saveLayout}
-                disabled={!layoutName.trim()}
-                className={`px-3 py-1.5 text-sm rounded-r-md whitespace-nowrap ${
-                  layoutName.trim() 
-                    ? 'bg-green-600 text-white hover:bg-green-700' 
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Enregistrer
-              </button>
-            </div>
+            <button
+              onClick={saveLayout}
+              className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 flex-1 sm:flex-none"
+            >
+              Sauvegarder Le Layout
+            </button>
           </div>
         </div>
       </div>
@@ -1239,7 +1569,7 @@ const handleSelectTemplate = (template) => {
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
+            </svg>
                 Uploads
               </>
             )}
@@ -1317,6 +1647,7 @@ const handleSelectTemplate = (template) => {
                                 className="w-full h-full object-cover"
                                 style={{ maxWidth: 120, maxHeight: 96 }}
                                 onError={e => {
+
                                   console.warn('[CanvasEditor] Erreur chargement thumbnail_url:', template.thumbnail_url);
                                   e.target.onerror = null;
                                   e.target.src = 'https://via.placeholder.com/120x96?text=No+Image';
@@ -1338,8 +1669,6 @@ const handleSelectTemplate = (template) => {
                             <p className="text-xs text-gray-400">
                               {template.created_at ? new Date(template.created_at).toLocaleDateString() : ''}
                             </p>
-                            {/* Affiche l'URL pour le débogage */}
-                          
                           </div>
                         </div>
                       ))}
@@ -1395,16 +1724,69 @@ const handleSelectTemplate = (template) => {
                     Télécharger des fichiers
                   </label>
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    {/* ...existing uploads content... */}
-                    <div>Uploads content</div>
+                    <div className="space-y-1 text-center">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <div className="flex text-sm text-gray-600">
+                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                          <span>Télécharger un fichier</span>
+                          <input 
+                            id="file-upload" 
+                            name="file-upload" 
+                            type="file" 
+                            className="sr-only"
+                            onChange={handleFileUpload}
+                            ref={fileInputRef}
+                            accept="image/*"
+                            multiple
+                          />
+                        </label>
+                        <p className="pl-1">ou glisser-déposer</p>
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG jusqu'à 10MB</p>
+                      {uploading && (
+                        <div className="w-full mt-2">
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-indigo-600"
+                              style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">{uploadProgress}% téléchargé</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Images téléchargées</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    {/* ...existing uploaded images grid... */}
-                    <div>Uploaded images grid</div>
+                    {uploadedImages.map(image => (
+                      <div
+                        key={image.id}
+                        className="border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition-all"
+                        onClick={() => addElement('image', image.src, image.name)}
+                      >
+                        <div className="h-20 bg-gray-100 flex items-center justify-center">
+                          <img
+                            src={image.src}
+                            alt={image.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs text-gray-700 truncate">{image.name}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {uploadedImages.length === 0 && (
+                      <div className="col-span-2 text-center py-4 text-sm text-gray-500">
+                        Aucune image téléchargée
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1416,8 +1798,36 @@ const handleSelectTemplate = (template) => {
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Bibliothèque d'images</h4>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  {/* ...existing library images grid... */}
-                  <div>Library images grid</div>
+                  {libraryImages.map(image => (
+                    <div
+                      key={image.id}
+                      className="border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition-all"
+                      onClick={() => addElement('image', image.src, image.name)}
+                    >
+                      <div className="h-20 bg-gray-100 flex items-center justify-center">
+                        <img
+                          src={image.src}
+                          alt={image.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs text-gray-700 truncate">{image.name}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {libraryImages.length === 0 && (
+                    <div className="col-span-2 text-center py-4 text-sm text-gray-500">
+                      <p>Aucune image dans la bibliothèque</p>
+                      <button
+                        onClick={testDirectUrl}
+                        className="mt-2 text-indigo-600 hover:text-indigo-800 text-xs"
+                      >
+                        Tester URL directe
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1429,23 +1839,8 @@ const handleSelectTemplate = (template) => {
                 componentName="LayoutTab"
                 projectId={projectId}
                 savedLayouts={savedLayouts}
-                loadLayout={(layoutId, customElements, customStageSize) => {
-                  console.log('Loading layout from LayoutTab:', layoutId, customElements);
-                  if (layoutId) {
-                    // Call the function with just the ID
-                    loadLayout(layoutId);
-                  } else if (customElements) {
-                    // Handle direct elements application
-                    setElements(customElements);
-                    if (customStageSize) {
-                      setStageSize(customStageSize);
-                    }
-                    setSelectedId(null);
-                  }
-                }}
+                loadLayout={loadLayout}
                 saveLayout={saveLayout}
-                setLayoutName={setLayoutName}
-                layoutName={layoutName}
                 elements={elements}
                 stageSize={stageSize}
                 setSavedLayouts={setSavedLayouts}
@@ -1484,6 +1879,7 @@ const handleSelectTemplate = (template) => {
               aspectRatio: formats.find(f => f.id === selectedFormat)?.ratio || 1.5
             }}
           >
+           
             {/* Conteneur pour le stage avec mise à l'échelle */}
             <div style={{ 
               transform: `scale(${stageSize.scale})`, 
@@ -1502,10 +1898,24 @@ const handleSelectTemplate = (template) => {
                     setSelectedId(null);
                   }
                 }}
-                className="bg-white"
+                className="bg-transparent"
                 style={{ boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
+                backgroundColor="transparent" // Ajouter cette propriété
               >
                 <Layer>
+                  {/* Rectangle d'arrière-plan avec id explicite pour le cibler plus facilement */}
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={stageSize.width}
+                    height={stageSize.height}
+                    fill="#000000" // Changé de #FFFFFF à #000000
+                    name="background-rect"
+                    id="background-rect"
+                    className="background-rect"
+                    listening={false}
+                  />
+                  
                   {/* Cadre de délimitation du format d'impression */}
                   <Rect
                     x={0}
@@ -1789,3 +2199,16 @@ const handleSelectTemplate = (template) => {
 };
 
 export default CanvasEditor;
+
+// Add the missing dataURLtoFile function definition if you're using it in this file
+const dataURLtoFile = (dataurl, filename) => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};

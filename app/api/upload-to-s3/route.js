@@ -1,81 +1,68 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-// Initialize S3 client with server-side environment variables
+// Configuration du client S3
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: 'eu-west-3', // Région Paris
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
 });
+
+// Nom du bucket S3
+const bucketName = 'leeveostockage';
 
 export async function POST(request) {
   try {
-    // Parse the request body
-    const { imageUrl, projectId, fileName, metadata } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get('file');
     
-    // Log but don't expose sensitive info
-    console.log(`Processing upload for project: ${projectId}, file: ${fileName}`);
-    
-    if (!imageUrl) {
-      return NextResponse.json(
-        { error: 'No image URL provided' }, 
-        { status: 400 }
-      );
+    if (!file) {
+      return NextResponse.json({ error: 'Aucun fichier fourni' }, { status: 400 });
     }
+
+    // Générer un nom de fichier unique
+    const timestamp = Date.now();
+    const fileName = `layout_${timestamp}.png`;
+    const s3Key = `templates/${fileName}`;
     
-    // Fetch the image data
-    let imageResponse;
-    try {
-      imageResponse = await fetch(imageUrl);
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
-      }
-    } catch (fetchError) {
-      console.error('Error fetching image:', fetchError);
-      return NextResponse.json(
-        { error: 'Failed to fetch image from provided URL' }, 
-        { status: 400 }
-      );
-    }
+    // Obtenir les données binaires du fichier
+    const fileBuffer = await file.arrayBuffer();
     
-    // Convert to buffer
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    console.log(`Tentative d'upload vers S3: ${bucketName}/${s3Key}`);
     
-    // Generate a key for S3
-    const key = `projects/${projectId}/${fileName}`;
-    
-    // Upload to S3
+    // Configurer les paramètres d'upload
     const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: 'image/jpeg',
-      ACL: 'public-read', // Make the object publicly accessible
+      Bucket: bucketName,
+      Key: s3Key,
+      Body: Buffer.from(fileBuffer),
+      ContentType: file.type || 'image/png', // Conserve le type PNG
+      ACL: 'public-read' // Rendre le fichier accessible publiquement
     };
     
-    try {
-      await s3Client.send(new PutObjectCommand(uploadParams));
-      console.log('S3 upload successful for:', key);
-    } catch (s3Error) {
-      console.error('S3 upload error:', s3Error);
-      return NextResponse.json(
-        { error: `S3 upload failed: ${s3Error.message}` }, 
-        { status: 500 }
-      );
-    }
+    // Ajoutez des logs pour déboguer
+    console.log(`Uploading file with type: ${file.type}`);
     
-    // Return the S3 URL
-    const s3Url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    // Exécuter la commande d'upload
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
     
-    return NextResponse.json({ url: s3Url });
+    // Générer l'URL publique
+    const publicUrl = `https://${bucketName}.s3.eu-west-3.amazonaws.com/${s3Key}`;
+    
+    console.log(`Upload réussi: ${publicUrl}`);
+    
+    return NextResponse.json({ 
+      success: true, 
+      url: publicUrl
+    });
+    
   } catch (error) {
-    console.error('Server error during upload:', error);
-    return NextResponse.json(
-      { error: `Server error: ${error.message}` }, 
-      { status: 500 }
-    );
+    console.error('Erreur lors du téléchargement vers S3:', error);
+    return NextResponse.json({ 
+      error: error.message, 
+      details: error.stack 
+    }, { status: 500 });
   }
 }

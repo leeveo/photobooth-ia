@@ -892,11 +892,10 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     }
   }, [stageSize]);
   
-  // Effect to generate thumbnail when elements change
+  // Effect pour générer automatiquement la miniature quand les éléments changent
   useEffect(() => {
-    // Only generate thumbnail if we have elements
     if (elements.length > 0) {
-      // Use a small delay to ensure all elements are properly rendered
+      // Délai pour s'assurer que tous les éléments sont correctement rendus
       const timer = setTimeout(() => {
         generateThumbnail();
       }, 300);
@@ -905,30 +904,66 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     }
   }, [elements, generateThumbnail]);
   
-  // Fonction modifiée pour sauvegarder avec miniature
-  const saveTemplate = () => {
+  // Ajouter cette fonction dataURLtoFile qui était manquante
+  const dataURLtoFile = (dataurl, filename) => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    
+    return new File([u8arr], filename, { type: mime });
+  };
+  
+  // Fonction pour sauvegarder le template avec sa miniature
+  const saveTemplate = async () => {
     if (onSave) {
       console.log('Sauvegarde du template avec miniature PNG...');
       
       try {
         // Générer une nouvelle miniature avant sauvegarde
         const thumbnail = generateThumbnail();
+        let thumbnailPublicUrl = null;
         
-        if (!thumbnail) {
-          console.error('Échec de la génération de la miniature PNG');
-          // Continuer sans miniature
-          onSave({
-            elements,
-            stageSize
-          });
-          return;
+        if (thumbnail) {
+          try {
+            // Convertir le dataURL en fichier
+            const thumbnailFile = dataURLtoFile(thumbnail, `template_thumbnail_${Date.now()}.png`);
+            
+            // Upload via le bucket uploads de Supabase
+            const filePath = `public/${Date.now()}.png`;
+            
+            const { data: uploadData, error: uploadError } = await supabase
+              .storage
+              .from('uploads')
+              .upload(filePath, thumbnailFile);
+              
+            if (uploadError) {
+              console.error('Erreur lors du téléchargement de la miniature:', uploadError);
+            } else {
+              // Obtenir l'URL publique de la miniature
+              const { data: { publicUrl } } = supabase
+                .storage
+                .from('uploads')
+                .getPublicUrl(filePath);
+                
+              thumbnailPublicUrl = publicUrl;
+              console.log('URL de la miniature:', thumbnailPublicUrl);
+            }
+          } catch (thumbnailError) {
+            console.error('Erreur lors du traitement de la miniature:', thumbnailError);
+          }
         }
         
         // Inclure la miniature dans les données de retour
         onSave({
           elements,
           stageSize,
-          thumbnailUrl: thumbnail
+          thumbnailUrl: thumbnailPublicUrl || thumbnail // Utiliser l'URL publique si disponible
         });
         
         console.log('Template et miniature PNG sauvegardés avec succès');
