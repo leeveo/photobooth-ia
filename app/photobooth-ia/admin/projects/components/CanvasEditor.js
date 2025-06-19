@@ -801,7 +801,7 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }, 3000);
   };
   
-  // Remplacer la fonction generateTransparentThumbnail par cette version avec fond noir
+  // Remplacer la fonction generateTransparentThumbnail par cette version plus robuste
   const generateTransparentThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
     
@@ -818,63 +818,41 @@ const checkBucketExists = useCallback(async (bucketName) => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
       
-      // Étape 2: Capturer chaque élément sauf le rectangle de fond
-      const layer = stageRef.current.findOne('Layer');
-      const children = layer.children.toArray();
-      
-      console.log(`Traitement de ${children.length} éléments...`);
-      
-      children.forEach((child, index) => {
-        // Ignorer le rectangle de fond et le transformer
-        if (child.attrs.className === 'background-rect' || 
-            child.attrs.name === 'background-rect' || 
-            child.attrs.id === 'background-rect' ||
-            child.getClassName() === 'Transformer') {
-          console.log(`Élément ignoré: ${child.getClassName()} (${child.attrs.id || 'sans id'})`);
-          return;
-        }
-        
-        console.log(`Traitement de l'élément ${index}: ${child.getClassName()} (${child.attrs.id || 'sans id'})`);
-        
-        // Pour chaque élément, créer un canvas temporaire individuel
-        const elemCanvas = document.createElement('canvas');
-        elemCanvas.width = stageSize.width;
-        elemCanvas.height = stageSize.height;
-        
-        // Créer une scène temporaire pour cet élément uniquement
-        const elemStage = new window.Konva.Stage({
-          container: elemCanvas,
-          width: stageSize.width,
-          height: stageSize.height
+      // Étape 2: Capturer la scène complète
+      // Utiliser toDataURL directement au lieu d'essayer d'accéder aux enfants
+      try {
+        const dataURL = stageRef.current.toDataURL({
+          pixelRatio: 1,
+          mimeType: 'image/png',
+          quality: 1
         });
         
-        const elemLayer = new window.Konva.Layer();
-        elemStage.add(elemLayer);
-        
-        // Cloner l'élément et l'ajouter à cette scène
-        const clone = child.clone();
-        elemLayer.add(clone);
-        elemLayer.draw();
-        
-        // Dessiner cet élément sur notre canvas principal
-        ctx.drawImage(elemCanvas, 0, 0);
-      });
-      
-      // Étape 3: Générer une URL de données PNG
-      const dataURL = tempCanvas.toDataURL('image/png');
-      
-      console.log('Miniature PNG avec fond noir générée avec succès.');
-      
-      // Stocker l'URL de la miniature
-      setThumbnailUrl(dataURL);
-      return dataURL;
+        // Étape 3: Charger l'image dans le canvas avec le fond noir
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            // Dessiner l'image sur notre canvas avec fond noir
+            ctx.drawImage(img, 0, 0);
+            
+            // Générer l'URL finale
+            const finalDataURL = tempCanvas.toDataURL('image/png');
+            setThumbnailUrl(finalDataURL);
+            resolve(finalDataURL);
+          };
+          img.src = dataURL;
+        });
+      } catch (innerError) {
+        console.error('Erreur lors de la capture de scène:', innerError);
+        // Continuer avec la méthode de secours
+        return null;
+      }
     } catch (error) {
       console.error('Erreur lors de la génération de la miniature:', error);
       return null;
     }
   }, [stageSize]);
   
-  // Fonction de secours modifiée pour utiliser un fond noir
+  // Fonction de secours modifiée pour être plus robuste
   const generateFallbackTransparentThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
     
@@ -891,58 +869,51 @@ const checkBucketExists = useCallback(async (bucketName) => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Obtenir une image de la scène sans le fond d'origine
-      const stageImg = new Image();
-      
-      // Sauvegarder la référence à la couche et ses enfants
-      const layer = stageRef.current.findOne('Layer');
-      const bgRect = layer.findOne('.background-rect');
-      
-      // Cacher temporairement le rectangle de fond
-      if (bgRect) {
-        bgRect.visible(false);
-        layer.batchDraw();
-      }
-      
-      // Créer une URL de données pour la scène sans fond
-      const stageDataURL = stageRef.current.toDataURL({
+      // Capture directe sans manipuler les éléments internes
+      const dataURL = stageRef.current.toDataURL({
         pixelRatio: 1,
         mimeType: 'image/png',
-        quality: 1,
-        x: 0,
-        y: 0,
-        width: stageSize.width,
-        height: stageSize.height
+        quality: 1
       });
       
-      // Restaurer la visibilité du fond
-      if (bgRect) {
-        bgRect.visible(true);
-        layer.batchDraw();
-      }
-      
-      // Charger l'image de la scène et la dessiner sur le canvas avec fond noir
       return new Promise((resolve) => {
-        stageImg.onload = () => {
-          // Le fond noir est déjà en place, dessiner l'image par-dessus
-          ctx.drawImage(stageImg, 0, 0);
-          
-          // Générer l'URL de données PNG finale
-          const dataURL = canvas.toDataURL('image/png');
-          setThumbnailUrl(dataURL);
-          resolve(dataURL);
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0);
+          const finalDataURL = canvas.toDataURL('image/png');
+          setThumbnailUrl(finalDataURL);
+          resolve(finalDataURL);
         };
-        
-        stageImg.src = stageDataURL;
+        img.onerror = () => {
+          // En cas d'erreur, générer au moins une vignette noire
+          const blackThumbnail = canvas.toDataURL('image/png');
+          setThumbnailUrl(blackThumbnail);
+          resolve(blackThumbnail);
+        };
+        img.src = dataURL;
       });
     } catch (error) {
       console.error('Erreur lors de la génération de la miniature de secours:', error);
-      return null;
+      
+      // Dernier recours: retourner juste un canvas noir
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = stageSize.width;
+        canvas.height = stageSize.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const blackThumbnail = canvas.toDataURL('image/png');
+        setThumbnailUrl(blackThumbnail);
+        return blackThumbnail;
+      } catch (finalError) {
+        console.error('Échec complet de la génération de miniature:', finalError);
+        return null;
+      }
     }
   }, [stageSize]);
 
-  // Modifiez également la fonction saveLayout pour utiliser generateTransparentThumbnail
-  // Fonction pour sauvegarder le layout
+  // Modifiez également la fonction saveLayout pour améliorer la gestion des erreurs
   const saveLayout = async () => {
     // En mode template, on ne sauvegarde pas dans la base de données
     // mais on appelle directement la fonction onSave
@@ -961,14 +932,24 @@ const checkBucketExists = useCallback(async (bucketName) => {
       // 1. Générer un nom automatique basé sur le nom du projet
       const generatedName = `${projectName || 'Layout'}_${new Date().toISOString().slice(0, 10)}`;
       
-      // 2. Générer la miniature PNG
+      // 2. Générer la miniature PNG avec gestion améliorée des erreurs
       console.log('Génération de la miniature PNG...');
-      let thumbnail = await generateTransparentThumbnail(); // Utiliser la nouvelle fonction améliorée
+      let thumbnail = null;
+      
+      try {
+        thumbnail = await generateTransparentThumbnail();
+      } catch (thumbnailError) {
+        console.error('Erreur lors de la première méthode de génération:', thumbnailError);
+      }
       
       // Si la première méthode échoue, essayer la méthode de secours
       if (!thumbnail) {
         console.log('Première méthode échouée, tentative avec la méthode de secours...');
-        thumbnail = await generateFallbackTransparentThumbnail();
+        try {
+          thumbnail = await generateFallbackTransparentThumbnail();
+        } catch (fallbackError) {
+          console.error('Erreur avec la méthode de secours:', fallbackError);
+        }
       }
       
       let thumbnailPublicUrl = null;
@@ -985,7 +966,7 @@ const checkBucketExists = useCallback(async (bucketName) => {
           const formData = new FormData();
           formData.append('file', thumbnailFile);
           
-          // Appeler l'API d'upload S3
+          // Appeler l'API d'upload S3 avec gestion améliorée des erreurs
           const response = await fetch('/api/upload-to-s3', {
             method: 'POST',
             body: formData
@@ -993,7 +974,14 @@ const checkBucketExists = useCallback(async (bucketName) => {
           
           // Vérifier la réponse
           if (!response.ok) {
-            const errorData = await response.json();
+            let errorData = {};
+            
+            try {
+              errorData = await response.json();
+            } catch (parseError) {
+              errorData = { message: 'Impossible de parser la réponse d\'erreur' };
+            }
+            
             console.error('Erreur API:', errorData);
             throw new Error(`Erreur d'upload: ${response.status} ${response.statusText}`);
           }
@@ -1005,12 +993,15 @@ const checkBucketExists = useCallback(async (bucketName) => {
             thumbnailPublicUrl = data.url;
             console.log('URL S3 réelle obtenue:', thumbnailPublicUrl);
           } else {
-            throw new Error('Pas d\'URL retournée par l\'API');
+            console.warn('Pas d\'URL retournée par l\'API');
+            // Continuer sans l'URL de la miniature
           }
         } catch (thumbnailError) {
           console.error('Erreur lors de l\'upload de la miniature:', thumbnailError);
           // En cas d'erreur, on continue sans URL de miniature
         }
+      } else {
+        console.warn('Aucune miniature n\'a pu être générée, continuant sans');
       }
       
       // 5. Préparer les données du layout
@@ -1027,53 +1018,89 @@ const checkBucketExists = useCallback(async (bucketName) => {
         console.log('URL de miniature S3 ajoutée aux données du layout:', thumbnailPublicUrl);
       }
       
+      // Vérifier la connexion Supabase avant de continuer
+      try {
+        const { error: testError } = await supabase.from('projects').select('count').limit(1);
+        if (testError) {
+          console.error('Erreur de connexion Supabase:', testError);
+          throw new Error('Problème de connexion à la base de données');
+        }
+      } catch (connError) {
+        console.error('Erreur lors du test de connexion:', connError);
+        showNotification('Problème de connexion à la base de données', 'error');
+        // Appeler onSave sans sauvegarder dans la BD
+        if (onSave) {
+          onSave({
+            elements,
+            stageSize,
+            thumbnailUrl: thumbnailPublicUrl
+          });
+        }
+        return;
+      }
+      
       // Vérifier si un layout existe déjà pour ce projet
       const existingLayout = savedLayouts.length > 0 ? savedLayouts[0] : null;
       
       let result;
-      if (existingLayout) {
-        // Mettre à jour le layout existant
-        console.log('Mise à jour du layout existant:', existingLayout.id);
-        const { data, error } = await supabase
-          .from('canvas_layouts')
-          .update(layoutData)
-          .eq('id', existingLayout.id)
-          .eq('project_id', projectId)
-          .select();
+      try {
+        if (existingLayout) {
+          // Mettre à jour le layout existant
+          console.log('Mise à jour du layout existant:', existingLayout.id);
+          const { data, error } = await supabase
+            .from('canvas_layouts')
+            .update(layoutData)
+            .eq('id', existingLayout.id)
+            .eq('project_id', projectId)
+            .select();
+            
+          if (error) {
+            console.error('Erreur lors de la mise à jour du layout:', error);
+            throw error;
+          }
           
-        if (error) {
-          console.error('Erreur lors de la mise à jour du layout:', error);
-          throw error;
-        }
-        
-        result = data[0];
-        console.log('Layout mis à jour avec succès:', result);
-        
-        // Mettre à jour la liste des layouts sauvegardés
-        setSavedLayouts([result]);
-        showNotification('Layout mis à jour avec succès');
-      } else {
-        // Créer un nouveau layout
-        console.log('Création d\'un nouveau layout pour le projet:', projectId);
-        layoutData.project_id = projectId;
-        layoutData.created_at = new Date().toISOString();
-        
-        const { data, error } = await supabase
-          .from('canvas_layouts')
-          .insert(layoutData)
-          .select();
+          result = data[0];
+          console.log('Layout mis à jour avec succès:', result);
           
-        if (error) {
-          console.error('Erreur lors de la création du layout:', error);
-          throw error;
+          // Mettre à jour la liste des layouts sauvegardés
+          setSavedLayouts([result]);
+          showNotification('Layout mis à jour avec succès');
+        } else {
+          // Créer un nouveau layout
+          console.log('Création d\'un nouveau layout pour le projet:', projectId);
+          layoutData.project_id = projectId;
+          layoutData.created_at = new Date().toISOString();
+          
+          const { data, error } = await supabase
+            .from('canvas_layouts')
+            .insert(layoutData)
+            .select();
+            
+          if (error) {
+            console.error('Erreur lors de la création du layout:', error);
+            throw error;
+          }
+          
+          result = data[0];
+          console.log('Nouveau layout créé avec succès avec l\'URL S3:', result);
+          
+          // Mettre à jour la liste des layouts sauvegardés
+          setSavedLayouts([result]);
+          showNotification('Nouveau layout créé avec succès');
         }
+      } catch (dbError) {
+        console.error('Erreur lors de l\'opération sur la base de données:', dbError);
+        showNotification('Erreur lors de la sauvegarde dans la base de données', 'error');
         
-        result = data[0];
-        console.log('Nouveau layout créé avec succès avec l\'URL S3:', result);
-        
-        // Mettre à jour la liste des layouts sauvegardés
-        setSavedLayouts([result]);
-        showNotification('Nouveau layout créé avec succès');
+        // Même en cas d'erreur DB, appeler onSave pour sauvegarder côté client
+        if (onSave) {
+          onSave({
+            elements,
+            stageSize,
+            thumbnailUrl: thumbnailPublicUrl
+          });
+        }
+        return;
       }
       
       // Appeler la fonction onSave si elle existe
@@ -1088,6 +1115,14 @@ const checkBucketExists = useCallback(async (bucketName) => {
     } catch (error) {
       console.error('Error saving layout:', error);
       showNotification('Erreur lors de la sauvegarde du layout: ' + error.message, 'error');
+      
+      // Appeler onSave malgré l'erreur pour sauvegarder côté client
+      if (onSave) {
+        onSave({
+          elements,
+          stageSize
+        });
+      }
     }
   };
   
