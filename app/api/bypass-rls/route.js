@@ -3,6 +3,23 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// Fonction helper pour décoder les tokens Base64
+const decodeBase64Json = (base64String) => {
+  try {
+    // Vérifier si c'est du Base64 (commence typiquement par "eyJ")
+    if (base64String && base64String.startsWith('eyJ')) {
+      // Décoder le Base64 en chaîne
+      const decodedString = Buffer.from(base64String, 'base64').toString();
+      return JSON.parse(decodedString);
+    }
+    // Sinon essayer de parser directement
+    return JSON.parse(base64String);
+  } catch (error) {
+    console.error('Erreur de décodage:', error);
+    return null;
+  }
+};
+
 // Créer un client Supabase avec la clé de service qui ignore les RLS
 const createAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -38,7 +55,18 @@ export async function POST(request) {
     }
     
     // Log de l'en-tête d'autorisation (pour debug)
-    console.log('En-tête d\'autorisation reçu:', authHeader.substring(0, 20) + '...');
+    const tokenPart = authHeader.split(' ')[1] || authHeader;
+    console.log('En-tête d\'autorisation reçu (tronqué):', tokenPart.substring(0, 20) + '...');
+    
+    // Essayer de décoder le token si c'est du Base64
+    try {
+      const decodedToken = decodeBase64Json(tokenPart);
+      if (decodedToken) {
+        console.log('Token décodé avec succès, userID:', decodedToken.userId);
+      }
+    } catch (decodeError) {
+      console.log('Impossible de décoder le token, utilisation tel quel');
+    }
     
     // Obtenir les données du body
     const requestData = await request.json();

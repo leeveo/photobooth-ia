@@ -55,8 +55,20 @@ export default function Dashboard() {
           router.push('/photobooth-ia/admin/login');
           return null;
         }
+
+        // Correction : décoder base64 avant JSON.parse
+        let decodedSession = sessionStr;
+        try {
+          decodedSession = atob(sessionStr);
+        } catch (e) {
+          // Si déjà décodé, ignorer
+        }
+        const sessionData = JSON.parse(decodedSession) as SessionData;
         
-        const sessionData = JSON.parse(sessionStr) as SessionData;
+        if (!sessionData.user_id && sessionData.userId) {
+          // Support legacy: si userId existe, le mapper
+          sessionData.user_id = sessionData.userId;
+        }
         
         if (!sessionData.user_id) {
           console.warn("Session invalide (aucun user_id), redirection vers login");

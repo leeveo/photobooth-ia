@@ -107,15 +107,27 @@ export default function ProjectGallery() {
           router.push('/photobooth-ia/admin/login');
           return null;
         }
-        
-        const sessionData = JSON.parse(sessionStr);
-        
+
+        // Correction : décoder base64 avant JSON.parse
+        let decodedSession = sessionStr;
+        try {
+          decodedSession = atob(sessionStr);
+        } catch (e) {
+          // Si déjà décodé, ignorer
+        }
+        const sessionData = JSON.parse(decodedSession);
+
+        if (!sessionData.user_id && sessionData.userId) {
+          // Support legacy: si userId existe, le mapper
+          sessionData.user_id = sessionData.userId;
+        }
+
         if (!sessionData.user_id) {
           console.warn("Session invalide (aucun user_id), redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
-        
+
         console.log("Session admin trouvée, ID:", sessionData.user_id);
         setCurrentAdminId(sessionData.user_id);
         return sessionData.user_id;

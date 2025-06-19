@@ -968,34 +968,40 @@ const checkBucketExists = useCallback(async (bucketName) => {
           if (adminToken) {
             console.log('Tentative de sauvegarde avec authentification admin...');
             
-            // Utiliser le service pour contourner les restrictions RLS
-            const response = await fetch('/api/bypass-rls', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${adminToken}`
-              },
-              body: JSON.stringify({
-                projectId,
-                elements,
-                stageSize
-              })
-            });
-            
-            if (response.ok) {
-              const result = await response.json();
-              console.log('Sauvegarde réussie via contournement RLS:', result);
-              showNotification('Layout sauvegardé avec succès via service admin');
-              
-              // Appeler onSave pour synchroniser l'interface
-              if (onSave) {
-                onSave({
+            try {
+              // Utiliser le service pour contourner les restrictions RLS
+              const response = await fetch('/api/bypass-rls', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${adminToken}`
+                },
+                body: JSON.stringify({
+                  projectId,
                   elements,
                   stageSize
-                });
-              }
+                })
+              });
               
-              return;
+              if (response.ok) {
+                const result = await response.json();
+                console.log('Sauvegarde réussie via contournement RLS:', result);
+                showNotification('Layout sauvegardé avec succès via service admin');
+                
+                // Appeler onSave pour synchroniser l'interface
+                if (onSave) {
+                  onSave({
+                    elements,
+                    stageSize
+                  });
+                }
+                
+                // Ne pas utiliser return ici car nous sommes dans un bloc try
+                // L'instruction continue naturellement
+              }
+            } catch (responseError) {
+              console.error('Erreur lors de la requête bypass-rls:', responseError);
+              // Continuer avec la méthode standard en cas d'erreur
             }
           } else {
             console.warn('Aucun token admin trouvé, utilisation de la méthode standard');
@@ -2323,4 +2329,21 @@ const dataURLtoFile = (dataurl, filename) => {
     u8arr[n] = bstr.charCodeAt(n);
   }
   return new File([u8arr], filename, { type: mime });
+};
+
+// Fonction pour décoder un token base64 JSON
+const decodeBase64Session = (encodedToken) => {
+  try {
+    // Vérifier si c'est du Base64 (commence typiquement par "eyJ")
+    if (encodedToken && encodedToken.startsWith('eyJ')) {
+      // Décoder le Base64 en chaîne
+      const decodedString = atob(encodedToken);
+      return JSON.parse(decodedString);
+    }
+    // Sinon essayer de parser directement
+    return JSON.parse(encodedToken);
+  } catch (error) {
+    console.error('Erreur de décodage token:', error);
+    return encodedToken; // retourner tel quel en cas d'erreur
+  }
 };

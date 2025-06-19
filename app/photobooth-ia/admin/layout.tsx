@@ -61,13 +61,58 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
 
       try {
-        // Récupérer depuis sessionStorage ou localStorage
-        const sessionStr = sessionStorage.getItem('admin_session') || localStorage.getItem('admin_session');
-        if (sessionStr) {
-          const sessionData = JSON.parse(sessionStr);
-          setUser(sessionData);
-          setAdminEmail(sessionData.email || 'Utilisateur');
-          setShouldRedirect(false);
+        let adminSession = null;
+        
+        // Récupérer la session depuis localStorage
+        const sessionData = localStorage.getItem('admin_session');
+        
+        if (sessionData) {
+          try {
+            // Vérifier si c'est du Base64 (commence typiquement par "eyJ")
+            if (sessionData.startsWith('eyJ')) {
+              // Décoder le Base64 en chaîne
+              const decodedSession = atob(sessionData);
+              // Puis parser le JSON
+              adminSession = JSON.parse(decodedSession);
+            } else {
+              // Tenter de parser directement si ce n'est pas du Base64
+              adminSession = JSON.parse(sessionData);
+            }
+            
+            console.log('Session admin chargée avec succès');
+            setUser(adminSession);
+            setAdminEmail(adminSession.email || 'Utilisateur');
+            setShouldRedirect(false);
+          } catch (parseError) {
+            console.error('Erreur lors du parsing de la session:', parseError);
+            
+            // En cas d'erreur, tenter de lire le cookie directement
+            const cookies = document.cookie.split(';')
+              .map(cookie => cookie.trim())
+              .find(cookie => cookie.startsWith('admin_session='));
+              
+            if (cookies) {
+              const cookieValue = cookies.split('=')[1];
+              try {
+                // Même logique pour le cookie
+                if (cookieValue.startsWith('eyJ')) {
+                  const decodedCookie = atob(cookieValue);
+                  adminSession = JSON.parse(decodedCookie);
+                  console.log('Session admin chargée depuis cookie');
+                  setUser(adminSession);
+                  setAdminEmail(adminSession.email || 'Utilisateur');
+                  setShouldRedirect(false);
+                } else {
+                  adminSession = JSON.parse(cookieValue);
+                  setUser(adminSession);
+                  setAdminEmail(adminSession.email || 'Utilisateur');
+                  setShouldRedirect(false);
+                }
+              } catch (cookieError) {
+                console.error('Erreur lors du parsing du cookie:', cookieError);
+              }
+            }
+          }
         } else {
           setUser(null);
           // Au lieu de rediriger immédiatement, utiliser un état pour déclencher la redirection
