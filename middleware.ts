@@ -14,12 +14,22 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(adminUrl, 308); // 308 is permanent redirect
   }
 
+  // Gérer les requêtes OPTIONS pour le CORS (pre-flight)
+  if (req.method === 'OPTIONS') {
+    const response = new NextResponse(null, { status: 204 });
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Info, apikey');
+    response.headers.set('Access-Control-Max-Age', '86400'); // 24 heures
+    return response;
+  }
+
   const res = NextResponse.next();
 
-  // CORS headers
+  // CORS headers - Amélioré pour inclure les en-têtes Supabase
   res.headers.set('Access-Control-Allow-Origin', '*');
   res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Info, apikey');
 
   // Revert to the original check since we no longer need to avoid conflict
   const isAdminRoute = path.startsWith('/photobooth-ia/admin');

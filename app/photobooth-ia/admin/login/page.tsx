@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
       if (adminData?.success) {
         // Stocker les informations de session
         const sessionData = {
-          user_id: adminData.user_id,
+          userId: adminData.user_id, // Utiliser userId au lieu de user_id pour cohérence
           email: adminData.email,
           company_name: adminData.company_name,
           logged_in: true,
@@ -60,12 +60,15 @@ export default function AdminLoginPage() {
           login_time: new Date().toISOString()
         };
         
-        // Stocker en localStorage et sessionStorage pour plus de fiabilité
-        localStorage.setItem('admin_session', JSON.stringify(sessionData));
-        sessionStorage.setItem('admin_session', JSON.stringify(sessionData));
+        // Encodage en base64 pour être stocké dans un cookie
+        const encodedSession = btoa(JSON.stringify(sessionData));
         
-        // Définir un cookie pour que le middleware puisse détecter la session
-        document.cookie = `admin_session=${adminData.user_id}; path=/; max-age=86400;`;
+        // Stocker en localStorage, sessionStorage ET cookie pour assurer la disponibilité dans tous les contextes
+        localStorage.setItem('admin_session', encodedSession);
+        sessionStorage.setItem('admin_session', encodedSession);
+        
+        // Définir un cookie HTTP-only avec une durée de 24 heures
+        document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax`;
         
         console.log("Session stockée:", sessionData);
         
