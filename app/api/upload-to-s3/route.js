@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
+// IMPORTANT: Mise à jour du format de configuration
+// Supprimez cette ancienne configuration:
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
+
+// Et utilisez à la place:
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   console.log('API S3: Début de la requête upload');
   
@@ -93,9 +104,3 @@ export async function POST(request) {
     }, { status: 500 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
