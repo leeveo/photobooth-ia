@@ -35,10 +35,14 @@ function isAuthenticated(req: NextRequest): boolean {
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const hostname = req.nextUrl.hostname;
   const res = NextResponse.next();
 
-  // Redirection racine
-  if (path === '/' || path === '') {
+  // Redirection racine UNIQUEMENT sur photobooth.waibooth.app
+  if (
+    (path === '/' || path === '') &&
+    (hostname === 'photobooth.waibooth.app' || hostname.startsWith('localhost'))
+  ) {
     const adminUrl = new URL('/photobooth-ia/admin', req.url);
     return NextResponse.redirect(adminUrl, 308);
   }
@@ -75,16 +79,6 @@ export async function middleware(req: NextRequest) {
         const newSharedToken = await generateSharedToken(userId);
         if (newSharedToken) {
           setSharedAuthCookie(res, newSharedToken);
-          
-          // Set admin_session cookie across all waibooth.app domains
-          res.cookies.set('admin_session', customAuthCookie, {
-            path: '/',
-            httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24, // 1 jour
-            domain: '.waibooth.app'
-          });
         }
       }
     } catch (error) {
