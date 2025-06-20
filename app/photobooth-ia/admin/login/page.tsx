@@ -68,8 +68,7 @@ export default function AdminLoginPage() {
         sessionStorage.setItem('admin_session', encodedSession);
         
         // Définir un cookie HTTP-only avec une durée de 24 heures
-        document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax`;
-        
+    document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax; domain=.waibooth.app`;
         console.log("Session stockée:", sessionData);
         
         // Afficher le toast de succès au lieu de l'alerte

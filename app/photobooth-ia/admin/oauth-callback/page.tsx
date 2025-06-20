@@ -38,10 +38,10 @@ export default function OAuthCallbackPage() {
           // Assurer la synchronisation entre les différents stockages
           if (localStorageSession) {
             sessionStorage.setItem('admin_session', localStorageSession);
-            document.cookie = `admin_session=${localStorageSession}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax; domain=.waibooth.app`;
           } else if (sessionStorageSession) {
             localStorage.setItem('admin_session', sessionStorageSession);
-            document.cookie = `admin_session=${sessionStorageSession}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `admin_session=${sessionStorageSession}; path=/; max-age=86400; SameSite=Lax; domain=.waibooth.app`;
           } else if (cookieSession) {
             const sessionValue = cookieSession.split('=')[1];
             localStorage.setItem('admin_session', sessionValue);

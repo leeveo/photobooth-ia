@@ -75,8 +75,7 @@ export const setAdminSession = (sessionData) => {
     // Stocker dans localStorage, sessionStorage et cookie
     localStorage.setItem('admin_session', encodedSession);
     sessionStorage.setItem('admin_session', encodedSession);
-    document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax`;
-    
+   document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; SameSite=Lax; domain=.waibooth.app`;
     return true;
   } catch (error) {
     console.error('Erreur lors du stockage de la session admin:', error);
