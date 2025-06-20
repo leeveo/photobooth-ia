@@ -49,7 +49,15 @@ export default function OAuthCallbackPage() {
           }
           
           setStatusMessage('Session trouvée! Redirection...');
-          router.push('/photobooth-ia/admin/dashboard');
+          
+          // Check if there's a returnUrl parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnUrl = urlParams.get('returnUrl');
+          if (returnUrl) {
+            window.location.href = returnUrl;
+          } else {
+            window.location.href = '/photobooth-ia/admin/dashboard';
+          }
           return true;
         }
         
@@ -64,7 +72,16 @@ export default function OAuthCallbackPage() {
     if (!checkSession()) {
       // Si pas de session, rediriger vers login après 2 secondes
       setStatusMessage('Aucune session trouvée, redirection vers la page de connexion...');
-      setTimeout(() => router.push('/photobooth-ia/admin/login'), 2000);
+      setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('returnUrl');
+        // Redirect to login page with returnUrl if it exists
+        if (returnUrl) {
+          window.location.href = `/photobooth-ia/admin/login?returnUrl=${encodeURIComponent(returnUrl)}`;
+        } else {
+          window.location.href = '/photobooth-ia/admin/login';
+        }
+      }, 2000);
     }
   }, [router]);
 
