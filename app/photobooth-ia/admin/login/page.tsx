@@ -80,9 +80,9 @@ export default function AdminLoginPage() {
           const urlParams = new URLSearchParams(window.location.search);
           const returnUrl = urlParams.get('returnUrl');
           if (returnUrl) {
-            router.push(returnUrl);
+            window.location.href = returnUrl;
           } else {
-            router.push('/photobooth-ia/admin/dashboard');
+            window.location.href = '/photobooth-ia/admin/dashboard';
           }
         }, 2000);
         
