@@ -31,13 +31,15 @@ export const generateSharedToken = async (userId: string): Promise<string | null
 // Définir le cookie d'authentification partagée
 export const setSharedAuthCookie = (res: NextResponse, token: string) => {
   // Définir le cookie accessible par les deux applications
-  res.cookies.set('shared_auth_token', token, {
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7 // 1 semaine
-  });
+// ...dans setSharedAuthCookie
+res.cookies.set('shared_auth_token', token, {
+  path: '/',
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 60 * 60 * 24 * 7,
+  domain: process.env.NODE_ENV === 'production' ? '.waibooth.app' : undefined
+});
 };
 
 // Vérifier le token partagé

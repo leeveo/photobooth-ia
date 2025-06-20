@@ -62,52 +62,77 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       try {
         let adminSession = null;
-        
+
         // Récupérer la session depuis localStorage
         const sessionData = localStorage.getItem('admin_session');
-        
+        console.log('Admin layout - Token present:', !!sessionData);
+
         if (sessionData) {
+          // Log format check
+          const tokenFormat = {
+            length: sessionData.length,
+            start: sessionData.slice(0, 10),
+            containsDots: sessionData.includes('.'),
+            parts: sessionData.split('.').length
+          };
+          console.log('Token format check:', tokenFormat);
+
           try {
             // Vérifier si c'est du Base64 (commence typiquement par "eyJ")
             if (sessionData.startsWith('eyJ')) {
-              // Décoder le Base64 en chaîne
+              console.log('Attempting to decode as base64 string');
               const decodedSession = atob(sessionData);
-              // Puis parser le JSON
               adminSession = JSON.parse(decodedSession);
+              console.log('Successfully parsed decoded token as JSON');
             } else {
-              // Tenter de parser directement si ce n'est pas du Base64
               adminSession = JSON.parse(sessionData);
+              console.log('Parsed session as plain JSON');
             }
-            
-            console.log('Session admin chargée avec succès');
+
+            console.log('Valid user found in token:', {
+              userId: adminSession.userId || adminSession.user_id,
+              hasEmail: !!adminSession.email
+            });
             setUser(adminSession);
             setAdminEmail(adminSession.email || 'Utilisateur');
             setShouldRedirect(false);
+            console.log('Admin layout - User verified:', true);
           } catch (parseError) {
             console.error('Erreur lors du parsing de la session:', parseError);
-            
+
             // En cas d'erreur, tenter de lire le cookie directement
             const cookies = document.cookie.split(';')
               .map(cookie => cookie.trim())
               .find(cookie => cookie.startsWith('admin_session='));
-              
+
             if (cookies) {
               const cookieValue = cookies.split('=')[1];
+              const tokenFormat = {
+                length: cookieValue.length,
+                start: cookieValue.slice(0, 10),
+                containsDots: cookieValue.includes('.'),
+                parts: cookieValue.split('.').length
+              };
+              console.log('Token format check (cookie):', tokenFormat);
+
               try {
-                // Même logique pour le cookie
                 if (cookieValue.startsWith('eyJ')) {
+                  console.log('Attempting to decode as base64 string (cookie)');
                   const decodedCookie = atob(cookieValue);
                   adminSession = JSON.parse(decodedCookie);
-                  console.log('Session admin chargée depuis cookie');
-                  setUser(adminSession);
-                  setAdminEmail(adminSession.email || 'Utilisateur');
-                  setShouldRedirect(false);
+                  console.log('Successfully parsed decoded token as JSON (cookie)');
                 } else {
                   adminSession = JSON.parse(cookieValue);
-                  setUser(adminSession);
-                  setAdminEmail(adminSession.email || 'Utilisateur');
-                  setShouldRedirect(false);
+                  console.log('Parsed session as plain JSON (cookie)');
                 }
+                console.log('Valid user found in token (cookie):', {
+                  userId: adminSession.userId || adminSession.user_id,
+                  hasEmail: !!adminSession.email
+                });
+                setUser(adminSession);
+                setAdminEmail(adminSession.email || 'Utilisateur');
+                setShouldRedirect(false);
+                console.log('Admin layout - User verified (cookie):', true);
               } catch (cookieError) {
                 console.error('Erreur lors du parsing du cookie:', cookieError);
               }
@@ -115,7 +140,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         } else {
           setUser(null);
-          // Au lieu de rediriger immédiatement, utiliser un état pour déclencher la redirection
           if (!publicRoutes.includes(pathname)) {
             setShouldRedirect(true);
           }
@@ -123,7 +147,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       } catch (e) {
         console.error("Erreur lors du chargement de la session admin:", e);
         setUser(null);
-        // Même chose ici
         setShouldRedirect(true);
       } finally {
         setLoading(false);
