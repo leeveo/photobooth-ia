@@ -404,6 +404,541 @@
       }
     ]
   },
+ {
+  "id": "hairstyles",
+  "name": "Collection Coupes de Cheveux",
+  "description": "20 styles capillaires combinant coupe et couleur",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/hairstyle_collection.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Cheveux longs lisses honey blonde",
+      "gender": "g",
+      "style_key": "long_straight_honey_blonde",
+      "description": "Cheveux longs lisses, couleur honey blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_straight_honey_blonde.jpg",
+      "prompt": "Make the hair long, straight, and honey blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Carré court chestnut brown",
+      "gender": "g",
+      "style_key": "short_bob_chestnut_brown",
+      "description": "Carré court, couleur chestnut brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_bob_chestnut_brown.jpg",
+      "prompt": "Make the hair short bob cut, and chestnut brown.",
+      "variations": 1
+    },
+    {
+      "name": "Boucles naturelles dark auburn",
+      "gender": "g",
+      "style_key": "natural_curls_dark_auburn",
+      "description": "Boucles naturelles, couleur dark auburn",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/natural_curls_dark_auburn.jpg",
+      "prompt": "Make the hair medium-length with natural curls, and dark auburn.",
+      "variations": 1
+    },
+    {
+      "name": "Coupe pixie platinum blonde",
+      "gender": "g",
+      "style_key": "pixie_cut_platinum_blonde",
+      "description": "Coupe pixie, couleur platinum blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixie_cut_platinum_blonde.jpg",
+      "prompt": "Make the hair pixie cut, and platinum blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux ondulés caramel brown",
+      "gender": "g",
+      "style_key": "wavy_hair_caramel_brown",
+      "description": "Cheveux ondulés, couleur caramel brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_caramel_brown.jpg",
+      "prompt": "Make the hair wavy and shoulder-length, and caramel brown.",
+      "variations": 1
+    },
+    {
+      "name": "Afro volumineux jet black",
+      "gender": "g",
+      "style_key": "afro_hair_jet_black",
+      "description": "Afro volumineux, couleur jet black",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/afro_hair_jet_black.jpg",
+      "prompt": "Make the hair voluminous afro, and jet black.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux lisses avec frange ash blonde",
+      "gender": "g",
+      "style_key": "straight_with_bangs_ash_blonde",
+      "description": "Cheveux lisses avec frange, couleur ash blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_with_bangs_ash_blonde.jpg",
+      "prompt": "Make the hair straight with blunt bangs, and ash blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Chignon haut dark brown",
+      "gender": "g",
+      "style_key": "high_bun_dark_brown",
+      "description": "Chignon haut, couleur dark brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_bun_dark_brown.jpg",
+      "prompt": "Make the hair sleek high bun, and dark brown.",
+      "variations": 1
+    },
+    {
+      "name": "Dreadlocks longues copper red",
+      "gender": "g",
+      "style_key": "long_dreadlocks_copper_red",
+      "description": "Dreadlocks longues, couleur copper red",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_dreadlocks_copper_red.jpg",
+      "prompt": "Make the hair long thick dreadlocks, and copper red.",
+      "variations": 1
+    },
+    {
+      "name": "Coupe courte homme silver grey",
+      "gender": "g",
+      "style_key": "short_mens_cut_silver_grey",
+      "description": "Coupe courte homme, couleur silver grey",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_mens_cut_silver_grey.jpg",
+      "prompt": "Make the hair short classic men's cut, and silver grey.",
+      "variations": 1
+    },
+    {
+      "name": "Mohawk stylé neon blue",
+      "gender": "g",
+      "style_key": "mohawk_style_neon_blue",
+      "description": "Mohawk stylé, couleur neon blue",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mohawk_style_neon_blue.jpg",
+      "prompt": "Make the hair sharp mohawk with shaved sides, and neon blue.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux mi-longs en dégradé sandy blonde",
+      "gender": "g",
+      "style_key": "layered_medium_sandy_blonde",
+      "description": "Cheveux mi-longs en dégradé, couleur sandy blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_medium_sandy_blonde.jpg",
+      "prompt": "Make the hair medium-length with soft layers, and sandy blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Tresses africaines dark burgundy",
+      "gender": "g",
+      "style_key": "box_braids_dark_burgundy",
+      "description": "Tresses africaines, couleur dark burgundy",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/box_braids_dark_burgundy.jpg",
+      "prompt": "Make the hair long box braids, and dark burgundy.",
+      "variations": 1
+    },
+    {
+      "name": "Queue de cheval haute strawberry blonde",
+      "gender": "g",
+      "style_key": "high_ponytail_strawberry_blonde",
+      "description": "Queue de cheval haute, couleur strawberry blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_ponytail_strawberry_blonde.jpg",
+      "prompt": "Make the hair sleek high ponytail, and strawberry blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux crêpés reddish brown",
+      "gender": "g",
+      "style_key": "frizzy_hair_reddish_brown",
+      "description": "Cheveux crêpés, couleur reddish brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_reddish_brown.jpg",
+      "prompt": "Make the hair frizzy and voluminous, and reddish brown.",
+      "variations": 1
+    },
+    {
+      "name": "Coupe mulet golden copper",
+      "gender": "g",
+      "style_key": "mullet_cut_golden_copper",
+      "description": "Coupe mulet, couleur golden copper",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_cut_golden_copper.jpg",
+      "prompt": "Make the hair retro mullet cut, and golden copper.",
+      "variations": 1
+    },
+    {
+      "name": "Dégradé homme light brown",
+      "gender": "g",
+      "style_key": "fade_cut_light_brown",
+      "description": "Dégradé homme, couleur light brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fade_cut_light_brown.jpg",
+      "prompt": "Make the hair clean fade cut, and light brown.",
+      "variations": 1
+    },
+    {
+      "name": "Chignon flou bas light ash blonde",
+      "gender": "g",
+      "style_key": "messy_low_bun_light_ash_blonde",
+      "description": "Chignon flou bas, couleur light ash blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/messy_low_bun_light_ash_blonde.jpg",
+      "prompt": "Make the hair messy low bun, and light ash blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Coiffure rétro années 60 champagne blonde",
+      "gender": "g",
+      "style_key": "retro_60s_champagne_blonde",
+      "description": "Coiffure rétro années 60, couleur champagne blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/retro_60s_champagne_blonde.jpg",
+      "prompt": "Make the hair voluminous 60s retro updo, and champagne blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Buzz cut light grey",
+      "gender": "g",
+      "style_key": "buzz_cut_light_grey",
+      "description": "Buzz cut, couleur light grey",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_light_grey.jpg",
+      "prompt": "Make the hair very short buzz cut, and light grey.",
+      "variations": 1
+    },
+    {
+      "name": "Shag effilé copper blonde",
+      "gender": "g",
+      "style_key": "shag_cut_copper_blonde",
+      "description": "Shag effilé, couleur copper blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/shag_cut_copper_blonde.jpg",
+      "prompt": "Make the hair messy shag cut with layers and texture, and copper blonde.",
+      "variations": 1
+    },
+    {
+      "name": "French twist glossy brunette",
+      "gender": "g",
+      "style_key": "french_twist_glossy_brunette",
+      "description": "French twist, couleur glossy brunette",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/french_twist_glossy_brunette.jpg",
+      "prompt": "Make the hair classic French twist, and glossy brunette.",
+      "variations": 1
+    },
+    {
+      "name": "Coupe loup icy lavender",
+      "gender": "g",
+      "style_key": "wolf_cut_icy_lavender",
+      "description": "Coupe loup, couleur icy lavender",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wolf_cut_icy_lavender.jpg",
+      "prompt": "Make the hair modern wolf cut with layered volume, and icy lavender.",
+      "variations": 1
+    },
+    {
+      "name": "Tresses collées dark chocolate brown",
+      "gender": "g",
+      "style_key": "cornrows_dark_chocolate_brown",
+      "description": "Tresses collées, couleur dark chocolate brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cornrows_dark_chocolate_brown.jpg",
+      "prompt": "Make the hair neat cornrows, and dark chocolate brown.",
+      "variations": 1
+    },
+    {
+      "name": "Coupe émo black with purple highlights",
+      "gender": "g",
+      "style_key": "emo_cut_black_with_purple_highlights",
+      "description": "Coupe émo, couleur black with purple highlights",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/emo_cut_black_with_purple_highlights.jpg",
+      "prompt": "Make the hair emo cut with long side bangs, and black with purple highlights.",
+      "variations": 1
+    },
+    {
+      "name": "Coiffure victorienne light chestnut",
+      "gender": "g",
+      "style_key": "victorian_updo_light_chestnut",
+      "description": "Coiffure victorienne, couleur light chestnut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/victorian_updo_light_chestnut.jpg",
+      "prompt": "Make the hair elegant Victorian updo with curls, and light chestnut.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux gaufrés pearl blonde",
+      "gender": "g",
+      "style_key": "crimped_hair_pearl_blonde",
+      "description": "Cheveux gaufrés, couleur pearl blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/crimped_hair_pearl_blonde.jpg",
+      "prompt": "Make the hair long and crimped, and pearl blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Undercut stylisé silver blue",
+      "gender": "g",
+      "style_key": "stylized_undercut_silver_blue",
+      "description": "Undercut stylisé, couleur silver blue",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/stylized_undercut_silver_blue.jpg",
+      "prompt": "Make the hair stylized undercut with volume on top, and silver blue.",
+      "variations": 1
+    },
+    {
+      "name": "Double chignons pastel pink",
+      "gender": "g",
+      "style_key": "space_buns_pastel_pink",
+      "description": "Double chignons, couleur pastel pink",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/space_buns_pastel_pink.jpg",
+      "prompt": "Make the hair double space buns, and pastel pink.",
+      "variations": 1
+    },
+    {
+      "name": "Tresse en épi sun-kissed blonde",
+      "gender": "g",
+      "style_key": "fishtail_braid_sun-kissed_blonde",
+      "description": "Tresse en épi, couleur sun-kissed blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fishtail_braid_sun-kissed_blonde.jpg",
+      "prompt": "Make the hair long fishtail braid, and sun-kissed blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Bob plongeant warm mahogany",
+      "gender": "g",
+      "style_key": "angled_bob_warm_mahogany",
+      "description": "Bob plongeant, couleur warm mahogany",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/angled_bob_warm_mahogany.jpg",
+      "prompt": "Make the hair angled bob cut, and warm mahogany.",
+      "variations": 1
+    },
+    {
+      "name": "Coiffure slick back dark espresso",
+      "gender": "g",
+      "style_key": "slick_back_dark_espresso",
+      "description": "Coiffure slick back, couleur dark espresso",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/slick_back_dark_espresso.jpg",
+      "prompt": "Make the hair slicked back neatly, and dark espresso.",
+      "variations": 1
+    },
+    {
+      "name": "Wet look sand blonde",
+      "gender": "g",
+      "style_key": "wet_look_sand_blonde",
+      "description": "Wet look, couleur sand blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wet_look_sand_blonde.jpg",
+      "prompt": "Make the hair styled in a wet look, and sand blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Tonsure moderne dark ash",
+      "gender": "g",
+      "style_key": "modern_shave_dark_ash",
+      "description": "Tonsure moderne, couleur dark ash",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/modern_shave_dark_ash.jpg",
+      "prompt": "Make the hair shaved with geometric patterns, and dark ash.",
+      "variations": 1
+    },
+    {
+      "name": "Chignon tressé cinnamon brown",
+      "gender": "g",
+      "style_key": "braided_bun_cinnamon_brown",
+      "description": "Chignon tressé, couleur cinnamon brown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/braided_bun_cinnamon_brown.jpg",
+      "prompt": "Make the hair braided bun, and cinnamon brown.",
+      "variations": 1
+    },
+    {
+      "name": "Pompadour féminin auburn red",
+      "gender": "g",
+      "style_key": "female_pompadour_auburn_red",
+      "description": "Pompadour féminin, couleur auburn red",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/female_pompadour_auburn_red.jpg",
+      "prompt": "Make the hair voluminous pompadour, and auburn red.",
+      "variations": 1
+    },
+    {
+      "name": "Cheveux mi-attachés light golden blonde",
+      "gender": "g",
+      "style_key": "half_up_light_golden_blonde",
+      "description": "Cheveux mi-attachés, couleur light golden blonde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/half_up_light_golden_blonde.jpg",
+      "prompt": "Make the hair styled half-up with loose strands, and light golden blonde.",
+      "variations": 1
+    },
+    {
+      "name": "Queue basse graphite black",
+      "gender": "g",
+      "style_key": "low_ponytail_graphite_black",
+      "description": "Queue basse, couleur graphite black",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/low_ponytail_graphite_black.jpg",
+      "prompt": "Make the hair low ponytail with middle part, and graphite black.",
+      "variations": 1
+    },
+    {
+      "name": "Tresses bohèmes warm honey",
+      "gender": "g",
+      "style_key": "boho_braids_warm_honey",
+      "description": "Tresses bohèmes, couleur warm honey",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boho_braids_warm_honey.jpg",
+      "prompt": "Make the hair boho braids with natural accessories, and warm honey.",
+      "variations": 1
+    },
+    {
+      "name": "Volume années 80 fiery red",
+      "gender": "g",
+      "style_key": "retro_80s_fiery_red",
+      "description": "Volume années 80, couleur fiery red",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/retro_80s_fiery_red.jpg",
+      "prompt": "Make the hair styled with 80s volume, and fiery red.",
+      "variations": 1
+    }
+
+  ]
+}
+,
+
+
+
+{
+  "id": "zombie_faces",
+  "name": "Collection Visages Zombies",
+  "description": "20 variations de visages zombies effrayants",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/zombie_faces.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Zombie Effrayant 1",
+      "gender": "g",
+      "style_key": "creepy_zombie_1",
+      "description": "Visage zombie effrayant et horrifique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_1.jpg",
+      "prompt": "Make each face a decayed zombie with hollow eyes and peeling skin.",
+      "variations": 1
+    },
+    {
+      "name": "Zombie Effrayant 2",
+      "gender": "g",
+      "style_key": "creepy_zombie_2",
+      "description": "Visage zombie effrayant et horrifique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_2.jpg",
+      "prompt": "Make each face a creepy undead creature with rotting flesh.",
+      "variations": 1
+    },
+    {
+      "name": "Zombie Effrayant 3",
+      "gender": "g",
+      "style_key": "creepy_zombie_3",
+      "description": "Visage zombie effrayant et horrifique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_3.jpg",
+      "prompt": "Make each face a grotesque zombie with exposed bone and torn flesh.",
+      "variations": 1
+    },
+    {
+      "name": "Zombie Effrayant 4",
+      "gender": "g",
+      "style_key": "creepy_zombie_4",
+      "description": "Visage zombie effrayant et horrifique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_4.jpg",
+      "prompt": "Make each face a terrifying infected zombie with bloodied teeth.",
+      "variations": 1
+    },
+    {
+      "name": "Zombie Effrayant 5",
+      "gender": "g",
+      "style_key": "creepy_zombie_5",
+      "description": "Visage zombie effrayant et horrifique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_5.jpg",
+      "prompt": "Make each face a nightmarish zombie with sunken eyes and greenish skin.",
+      "variations": 1
+       }
+
+  ]
+}
+,
+{
+  "id": "background_environments",
+  "name": "Collection Arrière-plans",
+  "description": "10 environnements variés pour les arrière-plans",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/backgrounds.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Fond : Montagnes enneigées",
+      "gender": "g",
+      "style_key": "background_snowy_mountains",
+      "description": "Fond avec a snowy mountain landscape",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_snowy_mountains.jpg",
+      "prompt": "Make the background a snowy mountain landscape.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Forêt luxuriante",
+      "gender": "g",
+      "style_key": "background_green_forest",
+      "description": "Fond avec a lush green forest",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_green_forest.jpg",
+      "prompt": "Make the background a lush green forest.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Ville futuriste de nuit",
+      "gender": "g",
+      "style_key": "background_futuristic_city_night",
+      "description": "Fond avec a futuristic city at night",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_futuristic_city_night.jpg",
+      "prompt": "Make the background a futuristic city at night.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Château de conte de fées",
+      "gender": "g",
+      "style_key": "background_fairy_tale_castle",
+      "description": "Fond avec a magical fairy tale castle",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_fairy_tale_castle.jpg",
+      "prompt": "Make the background a magical fairy tale castle.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Plage tropicale",
+      "gender": "g",
+      "style_key": "background_tropical_beach",
+      "description": "Fond avec a tropical beach with palm trees",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_tropical_beach.jpg",
+      "prompt": "Make the background a tropical beach with palm trees.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Terre post-apocalyptique",
+      "gender": "g",
+      "style_key": "background_post_apocalyptic",
+      "description": "Fond avec a post-apocalyptic wasteland",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_post_apocalyptic.jpg",
+      "prompt": "Make the background a post-apocalyptic wasteland.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Scène sous-marine",
+      "gender": "g",
+      "style_key": "background_underwater_scene",
+      "description": "Fond avec an underwater ocean scene",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_underwater_scene.jpg",
+      "prompt": "Make the background an underwater ocean scene.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Galaxie colorée",
+      "gender": "g",
+      "style_key": "background_colorful_galaxy",
+      "description": "Fond avec a colorful galaxy with stars",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_colorful_galaxy.jpg",
+      "prompt": "Make the background a colorful galaxy with stars.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Village médiéval",
+      "gender": "g",
+      "style_key": "background_medieval_village",
+      "description": "Fond avec a medieval village",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_medieval_village.jpg",
+      "prompt": "Make the background a medieval village.",
+      "variations": 1
+    },
+    {
+      "name": "Fond : Jardin zen japonais",
+      "gender": "g",
+      "style_key": "background_zen_garden",
+      "description": "Fond avec a Japanese zen garden",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/background_zen_garden.jpg",
+      "prompt": "Make the background a Japanese zen garden.",
+      "variations": 1
+    }
+  ]
+},
   {
     "id": "cartoon",
     "name": "Collection Cartoon",
