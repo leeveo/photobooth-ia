@@ -77,7 +77,13 @@ export default function AdminLoginPage() {
         
         // Rediriger après un court délai
         setTimeout(() => {
-          router.push('/photobooth-ia/admin/dashboard');
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnUrl = urlParams.get('returnUrl');
+          if (returnUrl) {
+            router.push(returnUrl);
+          } else {
+            router.push('/photobooth-ia/admin/dashboard');
+          }
         }, 2000);
         
         return;
