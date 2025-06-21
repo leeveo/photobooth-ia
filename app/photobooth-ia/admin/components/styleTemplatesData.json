@@ -404,6 +404,949 @@
       }
     ]
   },
+  {
+  "id": "womens_hairstyles",
+  "name": "Coupes de Cheveux Féminines",
+  "description": "20 coupes de cheveux tendance pour femmes",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_hairstyles.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Long straight",
+      "gender": "g",
+      "style_key": "womens_long_straight",
+      "description": "Long and straight hair",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_long_straight.jpg",
+      "prompt": "Make the hair in a long and straight hair style.",
+      "variations": 1
+    },
+    {
+      "name": "Short bob",
+      "gender": "g",
+      "style_key": "womens_short_bob",
+      "description": "Chin-length bob cut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_short_bob.jpg",
+      "prompt": "Make the hair in a chin-length bob cut style.",
+      "variations": 1
+    },
+    {
+      "name": "Wavy layers",
+      "gender": "g",
+      "style_key": "womens_wavy_layers",
+      "description": "Layered wavy hair",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_wavy_layers.jpg",
+      "prompt": "Make the hair in a layered wavy hair style.",
+      "variations": 1
+    },
+    {
+      "name": "Curly hair",
+      "gender": "g",
+      "style_key": "womens_curly_hair",
+      "description": "Defined natural curls",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_curly_hair.jpg",
+      "prompt": "Make the hair in a defined natural curls style.",
+      "variations": 1
+    },
+    {
+      "name": "Pixie cut",
+      "gender": "g",
+      "style_key": "womens_pixie_cut",
+      "description": "Short pixie haircut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_pixie_cut.jpg",
+      "prompt": "Make the hair in a short pixie haircut style.",
+      "variations": 1
+    },
+
+    {
+      "name": "Side shave",
+      "gender": "g",
+      "style_key": "womens_side_shave",
+      "description": "Long hair with one side shaved",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_side_shave.jpg",
+      "prompt": "Make the hair in a long hair with one side shaved style.",
+      "variations": 1
+    },
+    {
+      "name": "French braid",
+      "gender": "g",
+      "style_key": "womens_french_braid",
+      "description": "Single French braid",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_french_braid.jpg",
+      "prompt": "Make the hair in a single french braid style.",
+      "variations": 1
+    },
+    {
+      "name": "Double buns",
+      "gender": "g",
+      "style_key": "womens_double_buns",
+      "description": "Hair in two symmetrical buns",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_double_buns.jpg",
+      "prompt": "Make the hair in a hair in two symmetrical buns style.",
+      "variations": 1
+    },
+    {
+      "name": "Messy bun",
+      "gender": "g",
+      "style_key": "womens_messy_bun",
+      "description": "Casual messy bun",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_messy_bun.jpg",
+      "prompt": "Make the hair in a casual messy bun style.",
+      "variations": 1
+    },
+    {
+      "name": "Sleek ponytail",
+      "gender": "g",
+      "style_key": "womens_sleek_ponytail",
+      "description": "Tight high ponytail",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_sleek_ponytail.jpg",
+      "prompt": "Make the hair in a tight high ponytail style.",
+      "variations": 1
+    },
+    {
+      "name": "Low bun",
+      "gender": "g",
+      "style_key": "womens_low_bun",
+      "description": "Elegant low bun",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_low_bun.jpg",
+      "prompt": "Make the hair in a elegant low bun style.",
+      "variations": 1
+    },
+    {
+      "name": "Half-up style",
+      "gender": "g",
+      "style_key": "womens_half_up",
+      "description": "Half-up, half-down style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_half_up.jpg",
+      "prompt": "Make the hair in a half-up, half-down style style.",
+      "variations": 1
+    },
+    {
+      "name": "Braided crown",
+      "gender": "g",
+      "style_key": "womens_braided_crown",
+      "description": "Braided crown around the head",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_braided_crown.jpg",
+      "prompt": "Make the hair in a braided crown around the head style.",
+      "variations": 1
+    },
+    {
+      "name": "Vintage waves",
+      "gender": "g",
+      "style_key": "womens_vintage_waves",
+      "description": "Retro Hollywood waves",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_vintage_waves.jpg",
+      "prompt": "Make the hair in a retro hollywood waves style.",
+      "variations": 1
+    },
+    {
+      "name": "Top knot",
+      "gender": "g",
+      "style_key": "womens_top_knot",
+      "description": "High top knot bun",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_top_knot.jpg",
+      "prompt": "Make the hair in a high top knot bun style.",
+      "variations": 1
+    },
+    {
+      "name": "Shag cut",
+      "gender": "g",
+      "style_key": "womens_shag_cut",
+      "description": "Textured shag haircut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_shag_cut.jpg",
+      "prompt": "Make the hair in a textured shag haircut style.",
+      "variations": 1
+    },
+    {
+      "name": "Straight with bangs",
+      "gender": "g",
+      "style_key": "womens_straight_bangs",
+      "description": "Straight hair with full bangs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_straight_bangs.jpg",
+      "prompt": "Make the hair in a straight hair with full bangs style.",
+      "variations": 1
+    },
+    {
+      "name": "High pigtails",
+      "gender": "g",
+      "style_key": "womens_high_pigtails",
+      "description": "Playful high pigtails",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_high_pigtails.jpg",
+      "prompt": "Make the hair in a playful high pigtails style.",
+      "variations": 1
+    },
+    {
+      "name": "Layered lob",
+      "gender": "g",
+      "style_key": "womens_layered_lob",
+      "description": "Long bob with layers",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_layered_lob.jpg",
+      "prompt": "Make the hair in a long bob with layers style.",
+      "variations": 1
+    }
+  ]
+},
+  {
+  "id": "mens_hairstyles",
+  "name": "Coupes de Cheveux Masculines",
+  "description": "20 coupes de cheveux tendance pour hommes",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_hairstyles.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Buzz cut",
+      "gender": "g",
+      "style_key": "mens_buzz_cut",
+      "description": "Ultra short buzz cut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_buzz_cut.jpg",
+      "prompt": "Make the hair in a ultra short buzz cut style.",
+      "variations": 1
+    },
+    {
+      "name": "Crew cut",
+      "gender": "g",
+      "style_key": "mens_crew_cut",
+      "description": "Classic crew cut with short sides",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_crew_cut.jpg",
+      "prompt": "Make the hair in a classic crew cut with short sides style.",
+      "variations": 1
+    },
+    {
+      "name": "Fade cut",
+      "gender": "g",
+      "style_key": "mens_fade_cut",
+      "description": "Modern fade with sharp edges",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_fade_cut.jpg",
+      "prompt": "Make the hair in a modern fade with sharp edges style.",
+      "variations": 1
+    },
+    {
+      "name": "Pompadour",
+      "gender": "g",
+      "style_key": "mens_pompadour",
+      "description": "Voluminous pompadour style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_pompadour.jpg",
+      "prompt": "Make the hair in a voluminous pompadour style style.",
+      "variations": 1
+    },
+    {
+      "name": "Undercut",
+      "gender": "g",
+      "style_key": "mens_undercut",
+      "description": "Undercut with long top and shaved sides",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_undercut.jpg",
+      "prompt": "Make the hair in a undercut with long top and shaved sides style.",
+      "variations": 1
+    },
+    {
+      "name": "Quiff",
+      "gender": "g",
+      "style_key": "mens_quiff",
+      "description": "Styled quiff with volume",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_quiff.jpg",
+      "prompt": "Make the hair in a styled quiff with volume style.",
+      "variations": 1
+    },
+    {
+      "name": "Slick back",
+      "gender": "g",
+      "style_key": "mens_slick_back",
+      "description": "Hair slicked back with gel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_slick_back.jpg",
+      "prompt": "Make the hair in a hair slicked back with gel style.",
+      "variations": 1
+    },
+    {
+      "name": "Side part",
+      "gender": "g",
+      "style_key": "mens_side_part",
+      "description": "Side-parted classic style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_side_part.jpg",
+      "prompt": "Make the hair in a side-parted classic style style.",
+      "variations": 1
+    },
+    {
+      "name": "Curly top",
+      "gender": "g",
+      "style_key": "mens_curly_top",
+      "description": "Short sides with natural curls on top",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_curly_top.jpg",
+      "prompt": "Make the hair in a short sides with natural curls on top style.",
+      "variations": 1
+    },
+    {
+      "name": "Messy textured",
+      "gender": "g",
+      "style_key": "mens_messy_textured",
+      "description": "Textured messy look",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_messy_textured.jpg",
+      "prompt": "Make the hair in a textured messy look style.",
+      "variations": 1
+    },
+    {
+      "name": "Mullet",
+      "gender": "g",
+      "style_key": "mens_mullet",
+      "description": "Retro mullet with short front, long back",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
+      "prompt": "Make the hair in a retro mullet with short front, long back style.",
+      "variations": 1
+    },
+    {
+      "name": "Man bun",
+      "gender": "g",
+      "style_key": "mens_man_bun",
+      "description": "Tied back man bun style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_man_bun.jpg",
+      "prompt": "Make the hair in a tied back man bun style style.",
+      "variations": 1
+    },
+    {
+      "name": "Top knot",
+      "gender": "g",
+      "style_key": "mens_top_knot",
+      "description": "Top knot with undercut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
+      "prompt": "Make the hair in a top knot with undercut style.",
+      "variations": 1
+    },
+    {
+      "name": "French crop",
+      "gender": "g",
+      "style_key": "mens_french_crop",
+      "description": "Short fringe crop style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_french_crop.jpg",
+      "prompt": "Make the hair in a short fringe crop style style.",
+      "variations": 1
+    },
+    {
+      "name": "Long layered",
+      "gender": "g",
+      "style_key": "mens_long_layered",
+      "description": "Shoulder-length layered hair",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_long_layered.jpg",
+      "prompt": "Make the hair in a shoulder-length layered hair style.",
+      "variations": 1
+    },
+    {
+      "name": "Afro",
+      "gender": "g",
+      "style_key": "mens_afro",
+      "description": "Full rounded afro style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_afro.jpg",
+      "prompt": "Make the hair in a full rounded afro style style.",
+      "variations": 1
+    },
+    {
+      "name": "Cornrows",
+      "gender": "g",
+      "style_key": "mens_cornrows",
+      "description": "Braided cornrows close to scalp",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_cornrows.jpg",
+      "prompt": "Make the hair in a braided cornrows close to scalp style.",
+      "variations": 1
+    },
+    {
+      "name": "Dreadlocks",
+      "gender": "g",
+      "style_key": "mens_dreadlocks",
+      "description": "Thick long dreadlocks",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_dreadlocks.jpg",
+      "prompt": "Make the hair in a thick long dreadlocks style.",
+      "variations": 1
+    },
+    {
+      "name": "Spiky hair",
+      "gender": "g",
+      "style_key": "mens_spiky",
+      "description": "Short and spiked with gel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_spiky.jpg",
+      "prompt": "Make the hair in a short and spiked with gel style.",
+      "variations": 1
+    },
+    {
+      "name": "Ivy League",
+      "gender": "g",
+      "style_key": "mens_ivy_league",
+      "description": "Preppy Ivy League hairstyle",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ivy_league.jpg",
+      "prompt": "Make the hair in a preppy ivy league hairstyle style.",
+      "variations": 1
+    }
+  ]
+}
+,
+{
+  "id": "ancient_civilizations",
+  "name": "Civilisations Historiques",
+  "description": "20 tenues inspirées des grandes civilisations du monde",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilizations_collection.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Egyptian Style",
+      "gender": "g",
+      "style_key": "civilization_egyptian",
+      "description": "Style inspiré de la civilisation Egyptian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_egyptian.jpg",
+      "prompt": "Make with an ancient Egyptian outfit with gold jewelry and eyeliner.",
+      "variations": 1
+    },
+    {
+      "name": "Roman Style",
+      "gender": "g",
+      "style_key": "civilization_roman",
+      "description": "Style inspiré de la civilisation Roman",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_roman.jpg",
+      "prompt": "Make with a Roman tunic with a laurel crown .",
+      "variations": 1
+    },
+    {
+      "name": "Greek Style",
+      "gender": "g",
+      "style_key": "civilization_greek",
+      "description": "Style inspiré de la civilisation Greek",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_greek.jpg",
+      "prompt": "Make with a classical Greek robe with braided hair and golden accessories.",
+      "variations": 1
+    },
+    {
+      "name": "Persian Style",
+      "gender": "g",
+      "style_key": "civilization_persian",
+      "description": "Style inspiré de la civilisation Persian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_persian.jpg",
+      "prompt": "Make with a Persian royal outfit with embroidered patterns and turban.",
+      "variations": 1
+    },
+    {
+      "name": "Viking Style",
+      "gender": "g",
+      "style_key": "civilization_viking",
+      "description": "Style inspiré de la civilisation Viking",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_viking.jpg",
+      "prompt": "Make with a Viking warrior outfit with fur cloak and braided beard.",
+      "variations": 1
+    },
+    {
+      "name": "Aztec Style",
+      "gender": "g",
+      "style_key": "civilization_aztec",
+      "description": "Style inspiré de la civilisation Aztec",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_aztec.jpg",
+      "prompt": "Make with an Aztec outfit with feathers.",
+      "variations": 1
+    },
+    {
+      "name": "Mayan Style",
+      "gender": "g",
+      "style_key": "civilization_mayan",
+      "description": "Style inspiré de la civilisation Mayan",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_mayan.jpg",
+      "prompt": "Make this with a Mayan ceremonial outfit .",
+      "variations": 1
+    },
+    {
+      "name": "Chinese Imperial Style",
+      "gender": "g",
+      "style_key": "civilization_chinese",
+      "description": "Style inspiré de la civilisation Chinese Imperial",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_chinese.jpg",
+      "prompt": "Make with a Chinese imperial robe with dragon motifs and crown.",
+      "variations": 1
+    },
+    {
+      "name": "Japanese Samurai Style",
+      "gender": "g",
+      "style_key": "civilization_samurai",
+      "description": "Style inspiré de la civilisation Japanese Samurai",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_samurai.jpg",
+      "prompt": "Make with a samurai armor with helmet and katana.",
+      "variations": 1
+    },
+    {
+      "name": "Zulu Style",
+      "gender": "g",
+      "style_key": "civilization_zulu",
+      "description": "Style inspiré de la civilisation Zulu",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_zulu.jpg",
+      "prompt": "Make with a traditional Zulu outfit with shield and body paint.",
+      "variations": 1
+    },
+    {
+      "name": "Inca Style",
+      "gender": "g",
+      "style_key": "civilization_inca",
+      "description": "Style inspiré de la civilisation Inca",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_inca.jpg",
+      "prompt": "Make with an Inca royal outfit with colorful textiles and sun crown.",
+      "variations": 1
+    },
+    {
+      "name": "Mesopotamian Style",
+      "gender": "g",
+      "style_key": "civilization_mesopotamian",
+      "description": "Style inspiré de la civilisation Mesopotamian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_mesopotamian.jpg",
+      "prompt": "Make with a Mesopotamian robe with cuneiform patterns.",
+      "variations": 1
+    },
+    {
+      "name": "Byzantine Style",
+      "gender": "g",
+      "style_key": "civilization_byzantine",
+      "description": "Style inspiré de la civilisation Byzantine",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_byzantine.jpg",
+      "prompt": "Make with a Byzantine imperial robe with jeweled accents.",
+      "variations": 1
+    },
+    {
+      "name": "Mongol Style",
+      "gender": "g",
+      "style_key": "civilization_mongol",
+      "description": "Style inspiré de la civilisation Mongol",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_mongol.jpg",
+      "prompt": "Make with a Mongol warrior outfit with fur and bow.",
+      "variations": 1
+    },
+    {
+      "name": "Indian Maharaja Style",
+      "gender": "g",
+      "style_key": "civilization_maharaja",
+      "description": "Style inspiré de la civilisation Indian Maharaja",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_maharaja.jpg",
+      "prompt": "Make with an Indian maharaja outfit with turban and jewels.",
+      "variations": 1
+    },
+    {
+      "name": "Celtic Style",
+      "gender": "g",
+      "style_key": "civilization_celtic",
+      "description": "Style inspiré de la civilisation Celtic",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_celtic.jpg",
+      "prompt": "Make with a Celtic druid outfit with runes and staff.",
+      "variations": 1
+    },
+    {
+      "name": "Native American Style",
+      "gender": "g",
+      "style_key": "civilization_native_american",
+      "description": "Style inspiré de la civilisation Native American",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_native_american.jpg",
+      "prompt": "Make with a Native American outfit with feathers and beadwork.",
+      "variations": 1
+    },
+    {
+      "name": "Ottoman Style",
+      "gender": "g",
+      "style_key": "civilization_ottoman",
+      "description": "Style inspiré de la civilisation Ottoman",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_ottoman.jpg",
+      "prompt": "Make with an Ottoman sultan outfit with ornate fabric and turban.",
+      "variations": 1
+    },
+    {
+      "name": "Tibetan Style",
+      "gender": "g",
+      "style_key": "civilization_tibetan",
+      "description": "Style inspiré de la civilisation Tibetan",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_tibetan.jpg",
+      "prompt": "Make with a Tibetan monk robe with prayer beads.",
+      "variations": 1
+    },
+    {
+      "name": "Phoenician Style",
+      "gender": "g",
+      "style_key": "civilization_phoenician",
+      "description": "Style inspiré de la civilisation Phoenician",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_phoenician.jpg",
+      "prompt": "Make with a Phoenician trader outfit with purple dye and cloak.",
+      "variations": 1
+    }
+  ]
+}
+,
+
+{
+  "id": "music_styles_detailed",
+  "name": "Styles Musicaux Détailés",
+  "description": "20 styles vestimentaires inspirés de genres musicaux avec accessoires",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_styles_detailed.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Style Jazz",
+      "gender": "g",
+      "style_key": "music_jazz",
+      "description": "Style Jazz avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_jazz.jpg",
+      "prompt": "Make with jazz outfit clothes and hat.",
+      "variations": 1
+    },
+    {
+      "name": "Style Rock",
+      "gender": "g",
+      "style_key": "music_rock",
+      "description": "Style Rock avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_rock.jpg",
+      "prompt": "Make with rock outfit clothes and leather jacket.",
+      "variations": 1
+    },
+    {
+      "name": "Style Hip-hop",
+      "gender": "g",
+      "style_key": "music_hiphop",
+      "description": "Style Hip-hop avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_hiphop.jpg",
+      "prompt": "Make with hip-hop outfit clothes and gold chain.",
+      "variations": 1
+    },
+    {
+      "name": "Style Classical",
+      "gender": "g",
+      "style_key": "music_classical",
+      "description": "Style Classical avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_classical.jpg",
+      "prompt": "Make with classical outfit clothes and violin.",
+      "variations": 1
+    },
+    {
+      "name": "Style Pop",
+      "gender": "g",
+      "style_key": "music_pop",
+      "description": "Style Pop avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_pop.jpg",
+      "prompt": "Make with pop outfit clothes and microphone.",
+      "variations": 1
+    },
+
+    {
+      "name": "Style Punk",
+      "gender": "g",
+      "style_key": "music_punk",
+      "description": "Style Punk avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_punk.jpg",
+      "prompt": "Make with punk outfit clothes and spiked hair.",
+      "variations": 1
+    },
+    {
+      "name": "Style Metal",
+      "gender": "g",
+      "style_key": "music_metal",
+      "description": "Style Metal avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_metal.jpg",
+      "prompt": "Make with metal outfit clothes and skull rings.",
+      "variations": 1
+    },
+    {
+      "name": "Style Country",
+      "gender": "g",
+      "style_key": "music_country",
+      "description": "Style Country avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_country.jpg",
+      "prompt": "Make with country outfit clothes and cowboy hat.",
+      "variations": 1
+    },
+    {
+      "name": "Style Techno",
+      "gender": "g",
+      "style_key": "music_techno",
+      "description": "Style Techno avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_techno.jpg",
+      "prompt": "Make with techno outfit clothes and neon glasses.",
+      "variations": 1
+    },
+    {
+      "name": "Style Blues",
+      "gender": "g",
+      "style_key": "music_blues",
+      "description": "Style Blues avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_blues.jpg",
+      "prompt": "Make with blues outfit clothes and harmonica.",
+      "variations": 1
+    },
+    {
+      "name": "Style Disco",
+      "gender": "g",
+      "style_key": "music_disco",
+      "description": "Style Disco avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_disco.jpg",
+      "prompt": "Make with disco outfit clothes and shiny jacket.",
+      "variations": 1
+    },
+    {
+      "name": "Style Funk",
+      "gender": "g",
+      "style_key": "music_funk",
+      "description": "Style Funk avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_funk.jpg",
+      "prompt": "Make with funk outfit clothes and hairstyle.",
+      "variations": 1
+    },
+    {
+      "name": "Style EDM",
+      "gender": "g",
+      "style_key": "music_edm",
+      "description": "Style EDM avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_edm.jpg",
+      "prompt": "Make with EDM outfit clothes and LED accessories.",
+      "variations": 1
+    },
+    {
+      "name": "Style R&B",
+      "gender": "g",
+      "style_key": "music_rnb",
+      "description": "Style R&B avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_rnb.jpg",
+      "prompt": "Make with R&B outfit clothes and sunglasses.",
+      "variations": 1
+    },
+    {
+      "name": "Style K-pop",
+      "gender": "g",
+      "style_key": "music_kpop",
+      "description": "Style K-pop avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_kpop.jpg",
+      "prompt": "Make with K-pop outfit clothes and stylish earrings.",
+      "variations": 1
+    },
+    {
+      "name": "Style Goth",
+      "gender": "g",
+      "style_key": "music_goth",
+      "description": "Style Goth avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_goth.jpg",
+      "prompt": "Make with goth outfit clothes and dark makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Style Latin",
+      "gender": "g",
+      "style_key": "music_latin",
+      "description": "Style Latin avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_latin.jpg",
+      "prompt": "Make with latin outfit clothes .",
+      "variations": 1
+    },
+    {
+      "name": "Style Folk",
+      "gender": "g",
+      "style_key": "music_folk",
+      "description": "Style Folk avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_folk.jpg",
+      "prompt": "Make with folk outfit clothes and acoustic guitar.",
+      "variations": 1
+    },
+    {
+      "name": "Style Grunge",
+      "gender": "g",
+      "style_key": "music_grunge",
+      "description": "Style Grunge avec tenue et accessoires typiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_grunge.jpg",
+      "prompt": "Make with grunge outfit clothes and flannel shirt.",
+      "variations": 1
+    }
+  ]
+},
+
+{
+  "id": "artistic_makeup",
+  "name": "Maquillage Artistique et Effets de Peau",
+  "description": "20 maquillages créatifs, fantasy et spéciaux",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_collection.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Green skin with tribal gold paint",
+      "gender": "g",
+      "style_key": "makeup_green_tribal",
+      "description": "Makeup style featuring green skin and golden tribal face paint",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_green_tribal.jpg",
+      "prompt": "Make with green skin and golden tribal face paint.",
+      "variations": 1
+    },
+    {
+      "name": "Silver metallic skin with glowing eyes",
+      "gender": "g",
+      "style_key": "makeup_silver_glow",
+      "description": "Makeup style featuring metallic silver skin and glowing eyes",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_silver_glow.jpg",
+      "prompt": "Make with metallic silver skin and glowing eyes.",
+      "variations": 1
+    },
+    {
+      "name": "Blue galaxy skin with stars",
+      "gender": "g",
+      "style_key": "makeup_blue_galaxy",
+      "description": "Makeup style featuring blue skin and galaxy makeup with stars",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_blue_galaxy.jpg",
+      "prompt": "Make with blue skin and galaxy makeup with stars.",
+      "variations": 1
+    },
+    {
+      "name": "Black eyeliner and red teardrops",
+      "gender": "g",
+      "style_key": "makeup_red_teardrops",
+      "description": "Makeup style featuring artistic black eyeliner and red teardrops",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_teardrops.jpg",
+      "prompt": "Make with artistic black eyeliner and red teardrops.",
+      "variations": 1
+    },
+    {
+      "name": "Cracked porcelain effect",
+      "gender": "g",
+      "style_key": "makeup_cracked_porcelain",
+      "description": "Makeup style featuring cracked porcelain skin effect",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_cracked_porcelain.jpg",
+      "prompt": "Make with cracked porcelain skin effect.",
+      "variations": 1
+    },
+    {
+      "name": "Neon UV face paint",
+      "gender": "g",
+      "style_key": "makeup_neon_uv",
+      "description": "Makeup style featuring neon makeup and UV face paint",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_neon_uv.jpg",
+      "prompt": "Make with neon makeup and UV face paint.",
+      "variations": 1
+    },
+    {
+      "name": "Glitter cheeks and rainbow eyebrows",
+      "gender": "g",
+      "style_key": "makeup_glitter_rainbow",
+      "description": "Makeup style featuring glitter cheeks and rainbow eyebrows",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_glitter_rainbow.jpg",
+      "prompt": "Make with glitter cheeks and rainbow eyebrows.",
+      "variations": 1
+    },
+    {
+      "name": "Half skull painted face",
+      "gender": "g",
+      "style_key": "makeup_half_skull",
+      "description": "Makeup style featuring half face painted as a skull",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_half_skull.jpg",
+      "prompt": "Make with half face painted as a skull.",
+      "variations": 1
+    },
+    {
+      "name": "Purple skin with jewels",
+      "gender": "g",
+      "style_key": "makeup_purple_jewels",
+      "description": "Makeup style featuring purple skin and jewel accents",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_purple_jewels.jpg",
+      "prompt": "Make with purple skin and jewel accents.",
+      "variations": 1
+    },
+    {
+      "name": "Star freckles and sparkles",
+      "gender": "g",
+      "style_key": "makeup_star_freckles",
+      "description": "Makeup style featuring freckles made of stars and sparkles",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_star_freckles.jpg",
+      "prompt": "Make with freckles made of stars and sparkles.",
+      "variations": 1
+    },
+    {
+      "name": "Scarred and stitched skin",
+      "gender": "g",
+      "style_key": "makeup_scarred_stitches",
+      "description": "Makeup style featuring scarred skin and stitched effects",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_scarred_stitches.jpg",
+      "prompt": "Make with scarred skin and stitched effects.",
+      "variations": 1
+    },
+    {
+      "name": "Cybernetic glowing tattoos",
+      "gender": "g",
+      "style_key": "makeup_cyber_tattoos",
+      "description": "Makeup style featuring glowing cybernetic tattoos on face",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_cyber_tattoos.jpg",
+      "prompt": "Make with glowing cybernetic tattoos on face.",
+      "variations": 1
+    },
+    {
+      "name": "Cracked lava skin with glowing lines",
+      "gender": "g",
+      "style_key": "makeup_lava_cracks",
+      "description": "Makeup style featuring cracked lava texture and glowing lines",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_lava_cracks.jpg",
+      "prompt": "Make with cracked lava texture and glowing lines.",
+      "variations": 1
+    },
+    {
+      "name": "Frostbite and icy eyebrows",
+      "gender": "g",
+      "style_key": "makeup_frostbite_ice",
+      "description": "Makeup style featuring frostbite makeup and icy eyebrows",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_frostbite_ice.jpg",
+      "prompt": "Make with frostbite makeup and icy eyebrows.",
+      "variations": 1
+    },
+    {
+      "name": "Pastel clown makeup with hearts",
+      "gender": "g",
+      "style_key": "makeup_pastel_clown",
+      "description": "Makeup style featuring pastel clown makeup and heart-shaped blush",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_clown.jpg",
+      "prompt": "Make with pastel clown makeup and heart-shaped blush.",
+      "variations": 1
+    },
+    {
+      "name": "Vampire pale skin and gothic makeup",
+      "gender": "g",
+      "style_key": "makeup_vampire_goth",
+      "description": "Makeup style featuring vampire-inspired makeup and pale cold skin",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_vampire_goth.jpg",
+      "prompt": "Make with vampire-inspired makeup and pale cold skin.",
+      "variations": 1
+    },
+    {
+      "name": "Tribal red markings",
+      "gender": "g",
+      "style_key": "makeup_tribal_red",
+      "description": "Makeup style featuring tribal red markings and white face paint",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_tribal_red.jpg",
+      "prompt": "Make with tribal red markings and white face paint.",
+      "variations": 1
+    },
+    {
+      "name": "Underwater makeup with pearls",
+      "gender": "g",
+      "style_key": "makeup_underwater_pearls",
+      "description": "Makeup style featuring underwater makeup and pearl accents",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_underwater_pearls.jpg",
+      "prompt": "Make with underwater makeup and pearl accents.",
+      "variations": 1
+    },
+    {
+      "name": "Half-robot face",
+      "gender": "g",
+      "style_key": "makeup_half_robot",
+      "description": "Makeup style featuring half-robot face and chrome effects",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_half_robot.jpg",
+      "prompt": "Make with half-robot face and chrome effects.",
+      "variations": 1
+    },
+    {
+      "name": "Shadow makeup with moon symbol",
+      "gender": "g",
+      "style_key": "makeup_shadow_moon",
+      "description": "Makeup style featuring shadow makeup and crescent moon on forehead",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_shadow_moon.jpg",
+      "prompt": "Make with shadow makeup and crescent moon on forehead.",
+      "variations": 1
+    }
+  ]
+},
  {
   "id": "hairstyles",
   "name": "Collection Coupes de Cheveux",
@@ -939,6 +1882,198 @@
     }
   ]
 },
+{
+  "id": "clothing_styles",
+  "name": "Collection Styles Vestimentaires",
+  "description": "20 styles de vêtements à appliquer sur les portraits",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_styles.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Tenue Victorian",
+      "gender": "g",
+      "style_key": "clothing_victorian",
+      "description": "Style vestimentaire victorian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_victorian.jpg",
+      "prompt": "Make with victorian clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Cyberpunk",
+      "gender": "g",
+      "style_key": "clothing_cyberpunk",
+      "description": "Style vestimentaire cyberpunk",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_cyberpunk.jpg",
+      "prompt": "Make with cyberpunk clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Medieval",
+      "gender": "g",
+      "style_key": "clothing_medieval",
+      "description": "Style vestimentaire medieval",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_medieval.jpg",
+      "prompt": "Make with medieval clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Futuristic armor",
+      "gender": "g",
+      "style_key": "clothing_futuristic_armor",
+      "description": "Style vestimentaire futuristic armor",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_futuristic_armor.jpg",
+      "prompt": "Make with futuristic armor clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Steampunk",
+      "gender": "g",
+      "style_key": "clothing_steampunk",
+      "description": "Style vestimentaire steampunk",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_steampunk.jpg",
+      "prompt": "Make with steampunk clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Samurai",
+      "gender": "g",
+      "style_key": "clothing_samurai",
+      "description": "Style vestimentaire samurai",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_samurai.jpg",
+      "prompt": "Make with samurai clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Ancient Egyptian",
+      "gender": "g",
+      "style_key": "clothing_ancient_egyptian",
+      "description": "Style vestimentaire ancient egyptian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_ancient_egyptian.jpg",
+      "prompt": "Make with ancient egyptian clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Gothic",
+      "gender": "g",
+      "style_key": "clothing_gothic",
+      "description": "Style vestimentaire gothic",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_gothic.jpg",
+      "prompt": "Make with gothic clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Modern business",
+      "gender": "g",
+      "style_key": "clothing_modern_business",
+      "description": "Style vestimentaire modern business",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_modern_business.jpg",
+      "prompt": "Make with modern business clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Renaissance",
+      "gender": "g",
+      "style_key": "clothing_renaissance",
+      "description": "Style vestimentaire renaissance",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_renaissance.jpg",
+      "prompt": "Make with renaissance clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Casual streetwear",
+      "gender": "g",
+      "style_key": "clothing_streetwear",
+      "description": "Style vestimentaire casual streetwear",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_streetwear.jpg",
+      "prompt": "Make with casual streetwear clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue 80s retro",
+      "gender": "g",
+      "style_key": "clothing_retro_80s",
+      "description": "Style vestimentaire 80s retro",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_retro_80s.jpg",
+      "prompt": "Make with 80s retro clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Pirate",
+      "gender": "g",
+      "style_key": "clothing_pirate",
+      "description": "Style vestimentaire pirate",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_pirate.jpg",
+      "prompt": "Make with pirate clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Military uniform",
+      "gender": "g",
+      "style_key": "clothing_military_uniform",
+      "description": "Style vestimentaire military uniform",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_military_uniform.jpg",
+      "prompt": "Make with military uniform clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Traditional Indian",
+      "gender": "g",
+      "style_key": "clothing_traditional_indian",
+      "description": "Style vestimentaire traditional indian",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_traditional_indian.jpg",
+      "prompt": "Make with traditional indian clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Cowboy",
+      "gender": "g",
+      "style_key": "clothing_cowboy",
+      "description": "Style vestimentaire cowboy",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_cowboy.jpg",
+      "prompt": "Make with cowboy clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Korean hanbok",
+      "gender": "g",
+      "style_key": "clothing_hanbok",
+      "description": "Style vestimentaire korean hanbok",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_hanbok.jpg",
+      "prompt": "Make with korean hanbok clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Traditional Chinese",
+      "gender": "g",
+      "style_key": "clothing_chinese_traditional",
+      "description": "Style vestimentaire traditional chinese",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_chinese_traditional.jpg",
+      "prompt": "Make with traditional chinese clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue High fashion runway",
+      "gender": "g",
+      "style_key": "clothing_high_fashion",
+      "description": "Style vestimentaire high fashion runway",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_high_fashion.jpg",
+      "prompt": "Make with high fashion runway clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Tenue Fantasy mage robe",
+      "gender": "g",
+      "style_key": "clothing_fantasy_mage",
+      "description": "Style vestimentaire fantasy mage robe",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_fantasy_mage.jpg",
+      "prompt": "Make with fantasy mage robe clothes.",
+      "variations": 1
+    }
+  ]
+},
+
   {
     "id": "cartoon",
     "name": "Collection Cartoon",

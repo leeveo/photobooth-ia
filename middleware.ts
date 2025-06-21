@@ -78,8 +78,18 @@ export async function middleware(req: NextRequest) {
       if (userId) {
         const newSharedToken = await generateSharedToken(userId);
         if (newSharedToken) {
+          // Pose le cookie shared_auth_token sur .waibooth.app même en dev
+          res.cookies.set('shared_auth_token', newSharedToken, {
+            path: '/',
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7,
+            domain: '.waibooth.app'
+          });
+          console.log('Cookie shared_auth_token posé sur .waibooth.app');
+
           setSharedAuthCookie(res, newSharedToken);
-          
           // Partager explicitement le cookie admin_session avec tous les sous-domaines
           res.cookies.set('admin_session', customAuthCookie, {
             path: '/',
@@ -89,7 +99,6 @@ export async function middleware(req: NextRequest) {
             maxAge: 60 * 60 * 24, // 1 jour
             domain: '.waibooth.app' // Le point au début est crucial pour partager entre sous-domaines
           });
-          
           // Ajouter un log pour vérifier
           console.log('Cookie admin_session partagé avec tous les sous-domaines de .waibooth.app');
         }
