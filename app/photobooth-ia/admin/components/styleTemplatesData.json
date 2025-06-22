@@ -971,6 +971,390 @@
   ]
 }
 ,
+{
+  "id": "womens_makeup_pack",
+  "name": "Pack Maquillage Femme",
+  "description": "20 styles de maquillage pour le visage féminin",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_makeup_pack.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Red lips and smoky eyes",
+      "gender": "g",
+      "style_key": "makeup_red_smoky",
+      "description": "Makeup look featuring red lips and smoky eye makeup",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_smoky.jpg",
+      "prompt": "Make with red lips and smoky eye makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Nude lips with bronze glow",
+      "gender": "g",
+      "style_key": "makeup_nude_bronze",
+      "description": "Makeup look featuring nude lips and bronzed cheeks",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_nude_bronze.jpg",
+      "prompt": "Make with nude lips and bronzed cheeks.",
+      "variations": 1
+    },
+    {
+      "name": "Pink lips with rosy blush",
+      "gender": "g",
+      "style_key": "makeup_pink_rosy",
+      "description": "Makeup look featuring pink lips, rosy blush and subtle eyeliner",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pink_rosy.jpg",
+      "prompt": "Make with pink lips, rosy blush and subtle eyeliner.",
+      "variations": 1
+    },
+    {
+      "name": "Glossy lips and gold shimmer eyes",
+      "gender": "g",
+      "style_key": "makeup_glossy_gold",
+      "description": "Makeup look featuring glossy lips and golden eyeshadow",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_glossy_gold.jpg",
+      "prompt": "Make with glossy lips and golden eyeshadow.",
+      "variations": 1
+    },
+    {
+      "name": "Matte brown lips and neutral tones",
+      "gender": "g",
+      "style_key": "makeup_matte_neutral",
+      "description": "Makeup look featuring matte brown lips and neutral eye makeup",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_matte_neutral.jpg",
+      "prompt": "Make with matte brown lips and neutral eye makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Plum lips with silver eyeshadow",
+      "gender": "g",
+      "style_key": "makeup_plum_silver",
+      "description": "Makeup look featuring plum lips and shimmering silver eyeshadow",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_plum_silver.jpg",
+      "prompt": "Make with plum lips and shimmering silver eyeshadow.",
+      "variations": 1
+    },
+    {
+      "name": "Peach lips and coral cheeks",
+      "gender": "g",
+      "style_key": "makeup_peach_coral",
+      "description": "Makeup look featuring peach lips and coral blush with light eye makeup",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_peach_coral.jpg",
+      "prompt": "Make with peach lips and coral blush with light eye makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Dark red lips and cat eyeliner",
+      "gender": "g",
+      "style_key": "makeup_dark_cat",
+      "description": "Makeup look featuring dark red lips and sharp cat eye liner",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_dark_cat.jpg",
+      "prompt": "Make with dark red lips and sharp cat eye liner.",
+      "variations": 1
+    },
+    {
+      "name": "Orange lips with sunset tones",
+      "gender": "g",
+      "style_key": "makeup_orange_sunset",
+      "description": "Makeup look featuring orange lips and sunset-inspired eye makeup",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_orange_sunset.jpg",
+      "prompt": "Make with orange lips and sunset-inspired eye makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Glossy pink lips with glitter eyes",
+      "gender": "g",
+      "style_key": "makeup_pink_glitter",
+      "description": "Makeup look featuring glossy pink lips and glittery eyeshadow",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pink_glitter.jpg",
+      "prompt": "Make with glossy pink lips and glittery eyeshadow.",
+      "variations": 1
+    },
+    {
+      "name": "Vampy lips and deep contour",
+      "gender": "g",
+      "style_key": "makeup_vampy_contour",
+      "description": "Makeup look featuring dark vampy lips and contoured cheekbones",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_vampy_contour.jpg",
+      "prompt": "Make with dark vampy lips and contoured cheekbones.",
+      "variations": 1
+    },
+    {
+      "name": "Metallic lips and holographic eyes",
+      "gender": "g",
+      "style_key": "makeup_metallic_holo",
+      "description": "Makeup look featuring metallic lips and holographic eye shadow",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_metallic_holo.jpg",
+      "prompt": "Make with metallic lips and holographic eye shadow.",
+      "variations": 1
+    },
+    {
+      "name": "Pastel makeup with soft pink tones",
+      "gender": "g",
+      "style_key": "makeup_pastel_soft",
+      "description": "Makeup look featuring pastel eye makeup and soft pink lips",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_soft.jpg",
+      "prompt": "Make with pastel eye makeup and soft pink lips.",
+      "variations": 1
+    },
+    {
+      "name": "Berry lips and mauve tones",
+      "gender": "g",
+      "style_key": "makeup_berry_mauve",
+      "description": "Makeup look featuring berry lips and mauve blush with matching eyeshadow",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_berry_mauve.jpg",
+      "prompt": "Make with berry lips and mauve blush with matching eyeshadow.",
+      "variations": 1
+    },
+    {
+      "name": "Red gloss and winged eyeliner",
+      "gender": "g",
+      "style_key": "makeup_red_winged",
+      "description": "Makeup look featuring red glossy lips and dramatic winged eyeliner",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_winged.jpg",
+      "prompt": "Make with red glossy lips and dramatic winged eyeliner.",
+      "variations": 1
+    },
+    {
+      "name": "Fuchsia lips and bold lashes",
+      "gender": "g",
+      "style_key": "makeup_fuchsia_lashes",
+      "description": "Makeup look featuring fuchsia lips and voluminous eyelashes",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_fuchsia_lashes.jpg",
+      "prompt": "Make with fuchsia lips and voluminous eyelashes.",
+      "variations": 1
+    },
+    {
+      "name": "Natural tones with freckles",
+      "gender": "g",
+      "style_key": "makeup_natural_freckles",
+      "description": "Makeup look featuring natural makeup with nude lips and freckles",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_natural_freckles.jpg",
+      "prompt": "Make with natural makeup with nude lips .",
+      "variations": 1
+    },
+    {
+      "name": "Silver eyeliner and icy pink lips",
+      "gender": "g",
+      "style_key": "makeup_silver_icy",
+      "description": "Makeup look featuring silver eyeliner and icy pink lips",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_silver_icy.jpg",
+      "prompt": "Make with silver eyeliner and icy pink lips.",
+      "variations": 1
+    },
+    {
+      "name": "Copper shimmer and nude lips",
+      "gender": "g",
+      "style_key": "makeup_copper_nude",
+      "description": "Makeup look featuring copper eyeshadow and nude matte lips",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_copper_nude.jpg",
+      "prompt": "Make with copper eyeshadow and nude matte lips.",
+      "variations": 1
+    },
+    {
+      "name": "Golden glow with highlight",
+      "gender": "g",
+      "style_key": "makeup_golden_highlight",
+      "description": "Makeup look featuring golden cheeks, highlighted skin and soft lips",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_golden_highlight.jpg",
+      "prompt": "Make with golden cheeks, highlighted skin and soft lips.",
+      "variations": 1
+    }
+  ]
+}
+,
+{
+  "id": "carnival_costumes",
+  "name": "Costumes de Carnaval & Mascarade",
+  "description": "20 styles de masques et tenues inspirés des bals masqués et carnavals",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_costumes.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Venetian Mask",
+      "gender": "g",
+      "style_key": "carnival_venetian_mask",
+      "description": "Carnival costume: Venetian Mask",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_venetian_mask.jpg",
+      "prompt": "Make with an ornate Venetian mask with gold details and feathers, clothes.",
+      "variations": 1
+    },
+    {
+      "name": "Feathered Masquerade",
+      "gender": "g",
+      "style_key": "carnival_feathered",
+      "description": "Carnival costume: Feathered Masquerade",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_feathered.jpg",
+      "prompt": "Make with a feathered masquerade costume with sparkling eyeshadow, carnaval clothes, venise background.",
+      "variations": 1
+    },
+    {
+      "name": "Glitter Carnival",
+      "gender": "g",
+      "style_key": "carnival_glitter_carnival",
+      "description": "Carnival costume: Glitter Carnival",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_glitter_carnival.jpg",
+      "prompt": "Make with a carnival outfit with shimmering glitter makeup and sequins.",
+      "variations": 1
+    },
+    {
+      "name": "Mysterious Cloak",
+      "gender": "g",
+      "style_key": "carnival_mysterious_cloak",
+      "description": "Carnival costume: Mysterious Cloak",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_mysterious_cloak.jpg",
+      "prompt": "Make with a black masquerade cloak with silver embroidery and dark mask.",
+      "variations": 1
+    },
+    {
+      "name": "Jester Costume",
+      "gender": "g",
+      "style_key": "carnival_jester",
+      "description": "Carnival costume: Jester Costume",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_jester.jpg",
+      "prompt": "Make with a colorful jester costume with bells and checkered mask.",
+      "variations": 1
+    },
+    {
+      "name": "Queen of Carnival",
+      "gender": "g",
+      "style_key": "carnival_queen_carnival",
+      "description": "Carnival costume: Queen of Carnival",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_queen_carnival.jpg",
+      "prompt": "Make with a regal carnival dress with a crystal mask and elegant fan.",
+      "variations": 1
+    },
+    {
+      "name": "Harlequin Style",
+      "gender": "g",
+      "style_key": "carnival_harlequin",
+      "description": "Carnival costume: Harlequin Style",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_harlequin.jpg",
+      "prompt": "Make with a harlequin-patterned mask with bold geometric makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Fantasy Peacock",
+      "gender": "g",
+      "style_key": "carnival_peacock",
+      "description": "Carnival costume: Fantasy Peacock",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_peacock.jpg",
+      "prompt": "Make with a peacock-inspired costume with blue and green feathers.",
+      "variations": 1
+    },
+    {
+      "name": "Mystic Fire Mask",
+      "gender": "g",
+      "style_key": "carnival_fire_mask",
+      "description": "Carnival costume: Mystic Fire Mask",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_fire_mask.jpg",
+      "prompt": "Make with a fiery red and orange mask with flame-shaped patterns.",
+      "variations": 1
+    },
+    {
+      "name": "Icy Masquerade",
+      "gender": "g",
+      "style_key": "carnival_ice_mask",
+      "description": "Carnival costume: Icy Masquerade",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_ice_mask.jpg",
+      "prompt": "Make with an icy silver-blue costume with snowflake mask.",
+      "variations": 1
+    },
+    {
+      "name": "Moonlight Masquerade",
+      "gender": "g",
+      "style_key": "carnival_moonlight",
+      "description": "Carnival costume: Moonlight Masquerade",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_moonlight.jpg",
+      "prompt": "Make with a moon-themed mask with silver tones and soft glow.",
+      "variations": 1
+    },
+    {
+      "name": "Golden Angel",
+      "gender": "g",
+      "style_key": "carnival_golden_angel",
+      "description": "Carnival costume: Golden Angel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_golden_angel.jpg",
+      "prompt": "Make with a white and gold costume with radiant mask and halo-like accessories.",
+      "variations": 1
+    },
+    {
+      "name": "Dark Phantom",
+      "gender": "g",
+      "style_key": "carnival_dark_phantom",
+      "description": "Carnival costume: Dark Phantom",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_dark_phantom.jpg",
+      "prompt": "Make with a dark phantom mask keeping skin with half-face coverage and red velvet cloak.",
+      "variations": 1
+    },
+    {
+      "name": "Rose Masque",
+      "gender": "g",
+      "style_key": "carnival_rose_masque",
+      "description": "Carnival costume: Rose Masque",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_rose_masque.jpg",
+      "prompt": "Make with a floral mask with red roses and elegant lace.",
+      "variations": 1
+    },
+    {
+      "name": "Butterfly Veil",
+      "gender": "g",
+      "style_key": "carnival_butterfly_veil",
+      "description": "Carnival costume: Butterfly Veil",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_butterfly_veil.jpg",
+      "prompt": "Make with a butterfly-shaped mask with colorful wings and sparkling gems.",
+      "variations": 1
+    },
+    {
+      "name": "Masquerade Pirate",
+      "gender": "g",
+      "style_key": "carnival_pirate_mask",
+      "description": "Carnival costume: Masquerade Pirate",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_pirate_mask.jpg",
+      "prompt": "Make with a pirate-themed costume with feathered hat and leather mask.",
+      "variations": 1
+    },
+    {
+      "name": "Crystal Shards",
+      "gender": "g",
+      "style_key": "carnival_crystal_shards",
+      "description": "Carnival costume: Crystal Shards",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_crystal_shards.jpg",
+      "prompt": "Make with a mask with translucent crystal pieces and metallic accents.",
+      "variations": 1
+    },
+    {
+      "name": "Sun God",
+      "gender": "g",
+      "style_key": "carnival_sun_god",
+      "description": "Carnival costume: Sun God",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_sun_god.jpg",
+      "prompt": "Make with a bright golden mask with radiant sun rays and warm tones.",
+      "variations": 1
+    },
+    {
+      "name": "Forest Spirit",
+      "gender": "g",
+      "style_key": "carnival_forest_spirit",
+      "description": "Carnival costume: Forest Spirit",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_forest_spirit.jpg",
+      "prompt": "Make with a woodland-inspired mask with leaves, bark textures and green makeup.",
+      "variations": 1
+    },
+    {
+      "name": "Elegant Lace",
+      "gender": "g",
+      "style_key": "carnival_elegant_lace",
+      "description": "Carnival costume: Elegant Lace",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_elegant_lace.jpg",
+      "prompt": "Make with a delicate lace masquerade mask with pearls and soft blush.",
+      "variations": 1
+    }
+  ]
+}
+,
 
 {
   "id": "music_styles_detailed",
@@ -2099,33 +2483,8 @@
         "prompt": "Transform this portrait into a Japanese anime character with large expressive eyes and stylized features",
         "variations": 1
       },
-      {
-        "name": "Pixar",
-        "gender": "g",
-        "style_key": "pixar",
-        "description": "Style 3D à la Pixar",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixar.jpg",
-        "prompt": "Transform this portrait into a 3D Pixar-style character with expressive features and polished render",
-        "variations": 1
-      },
-      {
-        "name": "Pixar 3D",
-        "gender": "g",
-        "style_key": "pixar_3d",
-        "description": "Style Pixar avec textures lisses",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixar_3d.jpg",
-        "prompt": "Transform this portrait into a Pixar-style 3D character with expressive eyes, smooth textures, and soft lighting.",
-        "variations": 1
-      },
-      {
-        "name": "Disney Classique",
-        "gender": "g",
-        "style_key": "disney_classic",
-        "description": "Style Disney animé classique",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/disney_classic.jpg",
-        "prompt": "Transform this portrait into a classic Disney animated character, with large eyes, clean lines, and a friendly smile.",
-        "variations": 1
-      },
+   
+     
       {
         "name": "DreamWorks",
         "gender": "g",

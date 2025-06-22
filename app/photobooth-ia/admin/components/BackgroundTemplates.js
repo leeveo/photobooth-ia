@@ -140,6 +140,40 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
         
         if (!response.ok) {
           console.error('API error response:', responseData);
+          
+          // Si l'erreur concerne l'API key, essayer une approche alternative
+          if (responseData.error && responseData.error.includes('Invalid API key')) {
+            console.log('Tentative de récupération après erreur d\'API key...');
+            
+            // Utiliser une API endpoint de secours qui n'utilise pas directement l'API Supabase
+            const fallbackResponse = await fetch('/api/admin/add-background-fallback', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                projectId: projectId,
+                name: selectedTemplate.name,
+                imageUrl: selectedTemplate.url,
+              }),
+            });
+            
+            const fallbackData = await fallbackResponse.json();
+            
+            if (!fallbackResponse.ok) {
+              throw new Error(fallbackData.error || "Erreur lors de l'ajout de l'arrière-plan (méthode alternative)");
+            }
+            
+            console.log('Méthode alternative réussie:', fallbackData);
+            
+            // Utiliser les données de la méthode alternative
+            if (fallbackData.success && fallbackData.data) {
+              onBackgroundsAdded && onBackgroundsAdded(fallbackData.data);
+              return; // Sortir de la fonction après succès
+            }
+          }
+          
+          // Si la méthode alternative a échoué ou si ce n'était pas une erreur d'API key
           throw new Error(responseData.error || "Erreur lors de l'ajout de l'arrière-plan");
         }
         
