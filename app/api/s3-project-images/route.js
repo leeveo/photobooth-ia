@@ -2,36 +2,43 @@ import { NextResponse } from 'next/server';
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
 
-// Configure S3 client
+// Configure S3 client with proper error handling for environment variables
 const s3Client = new S3Client({
-  region: 'eu-west-3',
+  region: process.env.AWS_REGION || 'eu-west-3',
   credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
   },
 });
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Initialize Supabase client with fallback for environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase credentials are missing. Please check environment variables.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request) {
-  const searchParams = new URL(request.url).searchParams;
-  const projectId = searchParams.get('projectId');
-  const userId = searchParams.get('userId'); // Get the logged-in user ID
-  const countOnly = searchParams.get('countOnly') === 'true';
-  const includeModerated = searchParams.get('includeModerated') !== 'false'; // Default to true
-  
-  if (!projectId) {
-    return Response.json({
-      success: false, 
-      error: 'Project ID is required'
-    }, { status: 400 });
-  }
-  
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get('projectId');
+    const userId = searchParams.get('userId'); // Get the logged-in user ID
+    const countOnly = searchParams.get('countOnly') === 'true';
+    const includeModerated = searchParams.get('includeModerated') !== 'false'; // Default to true
+    
+    if (!projectId) {
+      return NextResponse.json({
+        success: false, 
+        error: 'Project ID is required'
+      }, { status: 400 });
+    }
+
+    // S3 bucket name with fallback
+    const bucketName = process.env.AWS_S3_BUCKET || 'leeveostockage';
+    
     // Step 1: Check if the project belongs to the user or is public
     if (userId) {
       const { data: projectData, error: projectError } = await supabase
@@ -117,7 +124,7 @@ export async function GET(request) {
     const s3Prefix = 'layouts/';
     
     const command = new ListObjectsV2Command({
-      Bucket: 'leeveostockage',
+      Bucket: bucketName,
       Prefix: s3Prefix,
       // Increase MaxKeys to fetch more objects
       MaxKeys: countOnly ? 1000 : 100,
@@ -146,7 +153,7 @@ export async function GET(request) {
       while (nextToken && attempts < maxAttempts) {
         attempts++;
         const nextCommand = new ListObjectsV2Command({
-          Bucket: 'leeveostockage',
+          Bucket: bucketName,
           Prefix: s3Prefix,
           MaxKeys: 1000,
           ContinuationToken: nextToken
@@ -180,6 +187,9 @@ export async function GET(request) {
         source: 's3'
       });
     }
+    
+    // When constructing URLs, use the environment variable for region and bucket
+    const s3Region = process.env.AWS_REGION || 'eu-west-3';
     
     // Process the objects into the format expected by the UI
     const images = allProjectObjects.map(item => {
@@ -217,7 +227,7 @@ export async function GET(request) {
       
       return {
         id: `s3_${key.replace(/[\/\.]/g, '_')}`, // Create a unique ID for S3
-        image_url: `https://leeveostockage.s3.eu-west-3.amazonaws.com/${key}`,
+        image_url: `https://${bucketName}.s3.${s3Region}.amazonaws.com/${key}`,
         project_id: projectId,
         isModerated: false, // Default S3 images to non-moderated
         created_at: created.toISOString(),
@@ -233,7 +243,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Error in S3 project images API:', error);
-    return Response.json({
+    return NextResponse.json({
       success: false,
       error: error.message,
       images: []

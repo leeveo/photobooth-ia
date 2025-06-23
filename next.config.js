@@ -94,6 +94,11 @@ const nextConfig = {
       },
     ]
   },
+  // Adjust environment variables for Vercel
+  env: {
+    AWS_REGION: process.env.AWS_REGION || 'eu-west-3',
+    AWS_S3_BUCKET: process.env.AWS_S3_BUCKET || 'leeveostockage',
+  }
 };
 
 module.exports = nextConfig;
