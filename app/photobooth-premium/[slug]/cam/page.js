@@ -711,19 +711,6 @@ export default function CameraCapture({ params }) {
       
       // Nouvelle partie: Enregistrer l'image dans la table photos
       try {
-<<<<<<< Updated upstream
-          await supabase.from('sessions').insert({
-            user_email: null, // Anonymous user
-            style_id: localStorage.getItem('selectedStyleId'),
-            gender: styleGender,
-            result_image_url: resultImageUrl,
-            processing_time_ms: Date.now() - start,
-            is_success: true,
-            project_id: project?.id
-          });
-      } catch (logError) {
-          console.error("Error logging session:", logError);
-=======
         setLogs(prevLogs => [...prevLogs, "Enregistrement de l'image dans la base de données..."]);
         
         // Récupérer la session en cours si elle existe
@@ -739,11 +726,10 @@ export default function CameraCapture({ params }) {
               user_email: localStorage.getItem('userEmail') || null,
               style_id: localStorage.getItem('selectedStyleId'),
               gender: styleGender,
-              result_image_url: finalImageUrl,
+              result_image_url: resultImageUrl,
               processing_time_ms: Date.now() - start,
               is_success: true,
-              project_id: project?.id,
-              has_watermark: hasWatermark
+              project_id: project?.id
             })
             .select('id')
             .single();
@@ -763,7 +749,7 @@ export default function CameraCapture({ params }) {
             project_id: project?.id,
             session_id: sessionId,
             user_email: localStorage.getItem('userEmail') || null,
-            image_url: finalImageUrl,
+            image_url: resultImageUrl,
             style_id: localStorage.getItem('selectedStyleId'),
             is_paid: false, // Par défaut, l'image n'est pas payée
             metadata: {
@@ -789,7 +775,6 @@ export default function CameraCapture({ params }) {
       } catch (dbError) {
         console.error("Exception lors de l'enregistrement en base de données:", dbError);
         setLogs(prevLogs => [...prevLogs, "Erreur lors de l'enregistrement dans la base de données"]);
->>>>>>> Stashed changes
       }
       
       // Rediriger vers la page de résultat
