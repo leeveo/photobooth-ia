@@ -2131,7 +2131,7 @@
       "style_key": "creepy_zombie_2",
       "description": "Visage zombie effrayant et horrifique",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_2.jpg",
-      "prompt": "Make each face a creepy undead creature with rotting flesh.",
+      "prompt": "Make each face a creepy undead creature .",
       "variations": 1
     },
     {
@@ -2140,7 +2140,7 @@
       "style_key": "creepy_zombie_3",
       "description": "Visage zombie effrayant et horrifique",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_3.jpg",
-      "prompt": "Make each face a grotesque zombie with exposed bone and torn flesh.",
+      "prompt": "Make each face a grotesque zombie with exposed bone .",
       "variations": 1
     },
     {
@@ -2149,7 +2149,7 @@
       "style_key": "creepy_zombie_4",
       "description": "Visage zombie effrayant et horrifique",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creepy_zombie_4.jpg",
-      "prompt": "Make each face a terrifying infected zombie with bloodied teeth.",
+      "prompt": "Make each face a terrifying infected zombie with yellow and creepy teeth.",
       "variations": 1
     },
     {
@@ -3383,7 +3383,7 @@
         "style_key": "vampire_noble",
         "description": "Style noble vampire d'un royaume gothique",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/vampire_noble.jpg",
-        "prompt": "Transform this portrait into a vampire noble from a gothic fantasy realm, with pale skin, red eyes, and a blood-red cloak.",
+        "prompt": "Transform this portrait into a vampire noble from a gothic fantasy realm, with pale skin, red eyes.",
         "variations": 1
       },
       {
@@ -3607,7 +3607,7 @@
         "style_key": "battle_scarred_veteran",
         "description": "Style vétéran avec membres cybernétiques",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/battle_scarred_veteran.jpg",
-        "prompt": "Transform this portrait into a battle-scarred veteran with cybernetic limbs, bloodstained gear, and haunted eyes.",
+        "prompt": "Transform this portrait into a battle-scarred veteran with cybernetic limbs, and haunted eyes.",
         "variations": 1
       },
       {

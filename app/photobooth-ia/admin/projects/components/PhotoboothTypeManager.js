@@ -22,7 +22,7 @@ const PhotoboothTypeManager = ({
       case 'standard':
         return 'FaceSwapping';
       default:
-        return 'FaceSwapping';
+        return 'Premium'; // Changed default to Premium
     }
   };
 
@@ -69,6 +69,11 @@ const PhotoboothTypeManager = ({
     }
   };
 
+  // Set default type to premium if not already set
+  if (!project.photobooth_type) {
+    updatePhotoboothType('premium');
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center mb-6">
@@ -92,7 +97,8 @@ const PhotoboothTypeManager = ({
         </div>
 
         <div className="mt-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
+            {/* Standard type button is commented out
             <button
               onClick={() => updatePhotoboothType('standard')}
               disabled={typeValidated && project.photobooth_type !== 'standard'}
@@ -109,12 +115,13 @@ const PhotoboothTypeManager = ({
               </svg>
               <span className="text-sm font-medium">FaceSwapping</span>
             </button>
+            */}
             
             <button
               onClick={() => updatePhotoboothType('premium')}
               disabled={typeValidated && project.photobooth_type !== 'premium'}
               className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                project.photobooth_type === 'premium' 
+                project.photobooth_type === 'premium' || !project.photobooth_type
                   ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
                   : typeValidated 
                     ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
@@ -127,6 +134,7 @@ const PhotoboothTypeManager = ({
               <span className="text-sm font-medium">Premium</span>
             </button>
             
+            {/* MiniMax type button is commented out
             <button
               onClick={() => updatePhotoboothType('photobooth2')}
               disabled={typeValidated && project.photobooth_type !== 'photobooth2'}
@@ -143,6 +151,7 @@ const PhotoboothTypeManager = ({
               </svg>
               <span className="text-sm font-medium">MiniMax</span>
             </button>
+            */}
           </div>
           
           {/* Add the validation button here, after the grid and centered */}
@@ -158,7 +167,7 @@ const PhotoboothTypeManager = ({
           )}
           
           <p className="mt-2 text-xs text-gray-500">
-            Sélectionnez le type d'expérience pour ce photobooth. Type actuel: {getPhotoboothTypeLabel(project.photobooth_type || 'standard')}
+            Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
             {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
           </p>
         </div>

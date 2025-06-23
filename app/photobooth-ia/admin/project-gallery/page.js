@@ -203,7 +203,36 @@ export default function ProjectGallery() {
       try {
         console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
         
-        // Just call the API to get images
+        // Try direct database query first
+        try {
+          console.log('Tentative de récupération des images depuis la table photos...');
+          const { data: photosData, error: photosError } = await supabase
+            .from('photos')
+            .select('*')
+            .eq('project_id', selectedProject)
+            .order('created_at', { ascending: false });
+          
+          if (photosError) {
+            console.error('Erreur lors de la récupération depuis la table photos:', photosError);
+            // Fall back to API if database query fails
+            console.log('Erreur détaillée:', JSON.stringify(photosError));
+          } else if (photosData && photosData.length > 0) {
+            console.log('Images récupérées depuis la table photos:', photosData.length);
+            setProjectImages(photosData);
+            // Successfully loaded from database, no need to call API
+            setLoading(false);
+            // Also load mosaic settings for this project
+            loadMosaicSettings(selectedProject);
+            return;
+          } else {
+            console.log('Aucune image trouvée dans la table photos, essai avec l\'API S3');
+          }
+        } catch (dbError) {
+          console.error('Exception lors de la récupération depuis la table photos:', dbError);
+        }
+        
+        // Fallback to API if database query fails or returns no results
+        console.log('Tentative de récupération via l\'API S3...');
         const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
         
         if (!response.ok) {
@@ -222,15 +251,15 @@ export default function ProjectGallery() {
         // Also load mosaic settings for this project
         loadMosaicSettings(selectedProject);
       } catch (err) {
-        console.error('Erreur lors du chargement des images S3:', err);
-        setError('Impossible de charger les images du projet depuis S3');
+        console.error('Erreur lors du chargement des images:', err);
+        setError('Impossible de charger les images du projet');
       } finally {
         setLoading(false);
       }
     }
     
     loadS3Images();
-  }, [selectedProject, loadMosaicSettings]);
+  }, [selectedProject, loadMosaicSettings, supabase]);
   
   // Télécharger une image
   const downloadImage = (url, filename) => {
@@ -260,16 +289,26 @@ export default function ProjectGallery() {
     
     const { id, url } = moderationConfirm;
     
-    // For now, just update the UI without database changes
     try {
-      // Update UI immediately
+      // First update the database
+      const { data, error } = await supabase
+        .from('photos')
+        .update({ is_moderated: true })
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Erreur lors de la mise à jour dans la base de données:', error);
+        throw error;
+      }
+      
+      // Then update UI
       setProjectImages(projectImages.map(img => 
         img.id === id 
-          ? {...img, isModerated: true} 
+          ? {...img, is_moderated: true} 
           : img
       ));
       
-      setSuccess("Image modérée visuellement avec succès");
+      setSuccess("Image modérée avec succès");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Erreur lors de la modération:', err);
@@ -827,17 +866,25 @@ export default function ProjectGallery() {
                   onClick={saveMosaicSettings}
                   disabled={savingMosaicSettings}
                   className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-medium text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {savingMosaicSettings ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMosaicSettings(false)}
-                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  Annuler
-                </button>
-              </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}  );    </div>      )}        </div>          </div>            </div>              </div>                </button>                  Annuler                >                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"                  onClick={() => setShowMosaicSettings(false)}                  type="button"                <button                </button>                  {savingMosaicSettings ? 'Enregistrement...' : 'Enregistrer'}                >              </div>
             </div>
           </div>
         </div>

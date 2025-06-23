@@ -8,79 +8,67 @@ const UnsplashTab = ({ addElement }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Dummy data for demonstration (since actual Unsplash API requires a key)
-  const dummyUnsplashImages = [
-    {
-      id: 'unsplash-1',
-      description: 'Nature landscape',
-      urls: {
-        small: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bmF0dXJlfGVufDB8fDB8fHww',
-        regular: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bmF0dXJlfGVufDB8fDB8fHww',
-      },
-      user: { name: 'John Doe' }
-    },
-    {
-      id: 'unsplash-2',
-      description: 'Mountain view',
-      urls: {
-        small: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bmF0dXJlfGVufDB8fDB8fHww',
-        regular: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bmF0dXJlfGVufDB8fDB8fHww',
-      },
-      user: { name: 'Jane Smith' }
-    },
-    {
-      id: 'unsplash-3',
-      description: 'Ocean sunset',
-      urls: {
-        small: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D',
-        regular: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D',
-      },
-      user: { name: 'Alex Brown' }
-    },
-    {
-      id: 'unsplash-4',
-      description: 'Forest path',
-      urls: {
-        small: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D',
-        regular: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D',
-      },
-      user: { name: 'Sarah Williams' }
-    }
-  ];
+  const accessKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || 'kklxbwGuaJiY_TCiq6-dkoyYfgrrnVl3aTbSyK0rbYk';
 
-  // Simulate search functionality with dummy data
-  const searchImages = () => {
+  // Function to fetch images from Unsplash
+  const fetchImages = async (query = '', pageNum = 1) => {
     setLoading(true);
     setError(null);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      try {
-        // Filter dummy images based on search query (case insensitive)
-        const filteredImages = searchQuery
-          ? dummyUnsplashImages.filter(img => 
-              img.description.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : dummyUnsplashImages;
-        
-        setImages(filteredImages);
-        setLoading(false);
-      } catch (err) {
-        setError('Une erreur est survenue lors de la recherche d\'images.');
-        setLoading(false);
+    try {
+      const endpoint = query 
+        ? `https://api.unsplash.com/search/photos?query=${query}&page=${pageNum}&per_page=12` 
+        : `https://api.unsplash.com/photos?page=${pageNum}&per_page=12`;
+      
+      const response = await fetch(endpoint, {
+        headers: {
+          'Authorization': `Client-ID ${accessKey}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
       }
-    }, 800);
+      
+      const data = await response.json();
+      
+      // Format data based on whether it's a search or just photos
+      const fetchedImages = query ? data.results : data;
+      
+      if (pageNum === 1) {
+        setImages(fetchedImages);
+      } else {
+        setImages(prevImages => [...prevImages, ...fetchedImages]);
+      }
+      
+      // Check if there are more images to load
+      setHasMore(fetchedImages.length === 12);
+      
+    } catch (err) {
+      console.error('Error fetching images:', err);
+      setError('Une erreur est survenue lors de la récupération des images.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Load initial images
+  // Load initial images on component mount
   useEffect(() => {
-    setImages(dummyUnsplashImages);
+    fetchImages('', 1);
   }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    searchImages();
+    setPage(1); // Reset to page 1 for new searches
+    fetchImages(searchQuery, 1);
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchImages(searchQuery, nextPage);
   };
 
   const handleAddImage = (image) => {
@@ -114,7 +102,7 @@ const UnsplashTab = ({ addElement }) => {
       </div>
 
       <div className="space-y-3">
-        {loading ? (
+        {loading && page === 1 ? (
           <div className="p-3 border border-gray-300 rounded-md bg-white text-center">
             <p className="text-gray-500">Chargement...</p>
           </div>
@@ -149,6 +137,18 @@ const UnsplashTab = ({ addElement }) => {
             ) : (
               <div className="p-3 border border-gray-300 rounded-md bg-white text-center">
                 <p className="text-gray-500">Aucune image trouvée</p>
+              </div>
+            )}
+            
+            {images.length > 0 && hasMore && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm hover:bg-gray-300 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Chargement...' : 'Charger plus'}
+                </button>
               </div>
             )}
           </>
