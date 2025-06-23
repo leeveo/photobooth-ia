@@ -866,25 +866,17 @@ export default function ProjectGallery() {
                   onClick={saveMosaicSettings}
                   disabled={savingMosaicSettings}
                   className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-medium text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}  );    </div>      )}        </div>          </div>            </div>              </div>                </button>                  Annuler                >                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"                  onClick={() => setShowMosaicSettings(false)}                  type="button"                <button                </button>                  {savingMosaicSettings ? 'Enregistrement...' : 'Enregistrer'}                >              </div>
+                >
+                  {savingMosaicSettings ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMosaicSettings(false)}
+                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
         </div>
