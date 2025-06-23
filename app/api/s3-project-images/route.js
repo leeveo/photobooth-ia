@@ -32,67 +32,74 @@ export async function GET(request) {
   }
 
   try {
-    // Déterminer si on doit utiliser S3 ou Supabase
-    // Essayons d'abord avec Supabase car c'est plus rapide pour les requêtes structurées
-    let images = [];
-    let count = 0;
-
+    // Essayons d'abord avec la table 'photos' de Supabase
     try {
-      // Vérifier dans la table project_images
+      console.log(`Tentative de récupération depuis la table photos pour le projet ${projectId}`);
+      
+      // Requête à la table photos au lieu de project_images
       const { data, error, count: totalCount } = await supabase
-        .from('project_images')
+        .from('photos')
         .select('*', { count: countOnly ? 'exact' : null })
         .eq('project_id', projectId)
         .order('created_at', { ascending: false })
         .range(countOnly ? 0 : (page - 1) * limit, countOnly ? 0 : page * limit - 1);
 
-      if (error) throw error;
+      console.log(`Résultat requête photos:`, error ? 'Erreur' : `${data?.length || 0} résultats`);
+      
+      if (error) {
+        console.error('Erreur Supabase lors de la requête photos:', error);
+        throw error;
+      }
 
       if (countOnly) {
-        return NextResponse.json({ count: totalCount || 0 });
+        return NextResponse.json({ count: totalCount || 0, source: 'supabase' });
       }
 
       if (data?.length > 0) {
-        images = data.map(item => ({
-          url: item.image_url,
+        const images = data.map(item => ({
+          id: item.id,
+          image_url: item.image_url,
           created_at: item.created_at,
-          metadata: item.metadata
+          metadata: item.metadata,
+          is_moderated: item.is_moderated || false
         }));
         
         return NextResponse.json({ 
+          success: true,
           images,
           page,
           limit,
-          total: totalCount
+          total: totalCount,
+          source: 'supabase'
         });
       }
     } catch (supabaseError) {
-      console.error('Erreur Supabase:', supabaseError);
-      // Si Supabase échoue, on continue avec S3
+      console.error('Erreur lors de la requête Supabase:', supabaseError);
+      // Continuer avec S3 si la requête Supabase échoue
     }
 
-    // Si on n'a pas trouvé d'images dans Supabase ou s'il y a eu une erreur,
-    // cherchons dans S3
+    // Recherche dans S3 - maintenant avec le bon préfixe
+    console.log('Recherche dans S3 avec le dossier layouts');
     
-    // Configuration pour S3
-    const s3Prefix = `projects/${projectId}/`;
+    // Modification ici : utilisation du dossier layouts
+    const s3Prefix = 'layouts/';
+    
     const command = new ListObjectsV2Command({
       Bucket: process.env.AWS_S3_BUCKET,
       Prefix: s3Prefix,
-      MaxKeys: countOnly ? 1000 : limit, // Si on compte seulement, on récupère plus d'objets
+      MaxKeys: countOnly ? 1000 : limit,
       ContinuationToken: countOnly ? undefined : (page > 1 ? searchParams.get('token') : undefined)
     });
 
+    console.log(`Envoi requête S3 avec préfixe: ${s3Prefix}`);
     const response = await s3Client.send(command);
     
     if (countOnly) {
-      // S3 ne permet pas de compter facilement, alors nous devons récupérer tous les objets
-      // et les compter côté serveur
+      // Pour le comptage, on filtre manuellement les images contenant l'ID du projet
       let allObjects = response.Contents || [];
       let nextToken = response.NextContinuationToken;
       
-      // Continuer à récupérer tous les objets s'il y en a plus
-      while (nextToken && allObjects.length < 5000) { // Limite arbitraire pour éviter les boucles infinies
+      while (nextToken && allObjects.length < 5000) {
         const nextCommand = new ListObjectsV2Command({
           Bucket: process.env.AWS_S3_BUCKET,
           Prefix: s3Prefix,
@@ -105,28 +112,100 @@ export async function GET(request) {
         nextToken = nextResponse.NextContinuationToken;
       }
       
-      return NextResponse.json({ count: allObjects.length });
+      // Filtrer les objets qui contiennent l'ID du projet
+      const projectObjects = allObjects.filter(obj => 
+        obj.Key.includes(`-${projectId}-`) || // Format potentiel incluant le projectId
+        obj.Key.includes(`_project-${projectId}_`) // Autre format possible
+      );
+      
+      console.log(`S3: ${allObjects.length} objets totaux, ${projectObjects.length} objets pour le projet ${projectId}`);
+      
+      return NextResponse.json({ 
+        count: projectObjects.length,
+        source: 's3'
+      });
     }
     
+    // Pour les images, filtrer et transformer les objets S3
+    let filteredContents = (response.Contents || []).filter(obj => 
+      obj.Key.includes(`-${projectId}-`) || // Format potentiel incluant le projectId
+      obj.Key.includes(`_project-${projectId}_`) // Autre format possible
+    );
+    
+    // Si on a un nombre limité d'images, on peut charger plus d'objets pour atteindre la limite
+    if (filteredContents.length < limit && response.NextContinuationToken) {
+      let nextToken = response.NextContinuationToken;
+      let attempts = 0; // Limiter le nombre de tentatives
+      
+      while (nextToken && filteredContents.length < limit && attempts < 5) {
+        attempts++;
+        const nextCommand = new ListObjectsV2Command({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Prefix: s3Prefix,
+          MaxKeys: 1000,
+          ContinuationToken: nextToken
+        });
+        
+        const nextResponse = await s3Client.send(nextCommand);
+        const additionalFiltered = (nextResponse.Contents || []).filter(obj => 
+          obj.Key.includes(`-${projectId}-`) ||
+          obj.Key.includes(`_project-${projectId}_`
+        ));
+        
+        filteredContents = [...filteredContents, ...additionalFiltered];
+        nextToken = nextResponse.NextContinuationToken;
+      }
+    }
+    
+    // Limiter au nombre demandé
+    filteredContents = filteredContents.slice(0, limit);
+    
     // Transformer les objets S3 en liste d'images
-    images = (response.Contents || []).map(item => ({
-      url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${item.Key}`,
-      last_modified: item.LastModified,
-      size: item.Size,
-      key: item.Key
-    }));
+    const images = filteredContents.map(item => {
+      // Extraire les informations à partir du nom de fichier
+      const fileName = item.Key.split('/').pop();
+      const parts = fileName.split('_');
+      const timestamp = parts[0];
+      
+      // Essayer d'extraire des métadonnées du nom de fichier
+      let metadata = {};
+      try {
+        // Format hypothétique: timestamp_photobooth-premium-userId-projectName-username-timestamp.jpg
+        const filenameParts = fileName.split('-');
+        metadata = {
+          fileName,
+          timestamp,
+          size: item.Size,
+          // Autres métadonnées extraites du nom de fichier si disponible
+        };
+      } catch (e) {
+        metadata = { fileName, timestamp, size: item.Size };
+      }
+      
+      return {
+        id: `s3_${item.Key.replace(/[\/\.]/g, '_')}`, // ID unique pour l'image
+        image_url: `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${item.Key}`,
+        created_at: item.LastModified || new Date(parseInt(timestamp) || Date.now()).toISOString(),
+        metadata,
+        key: item.Key
+      };
+    });
 
+    console.log(`S3: Retour de ${images.length} images pour le projet ${projectId}`);
+    
     return NextResponse.json({
+      success: true,
       images,
       page,
       limit,
-      nextToken: response.NextContinuationToken
+      nextToken: response.NextContinuationToken,
+      source: 's3'
     });
 
   } catch (error) {
     console.error('Error fetching project images:', error);
     return NextResponse.json(
-      { error: 'Failed to retrieve project images' },
+      { error: 'Failed to retrieve project images', details: error.message },
       { status: 500 }
     );
   }
