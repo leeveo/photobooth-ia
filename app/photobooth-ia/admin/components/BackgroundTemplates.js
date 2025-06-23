@@ -123,79 +123,52 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
         // It's a template from the JSON file - use API endpoint
         console.log('Ajout du template comme nouvel arrière-plan:', selectedTemplate.name);
         
-        const response = await fetch('/api/admin/add-background-from-url', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            projectId: projectId,
-            name: selectedTemplate.name,
-            imageUrl: selectedTemplate.url,
-            forceReplace: true, // Always force replace
-          }),
-        });
-        
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-          console.error('API error response:', responseData);
+        try {
+          // Supprimer d'abord l'arrière-plan existant
+          const deleteResponse = await fetch('/api/admin/backgrounds', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: projectId })
+          });
           
-          // Si l'erreur concerne l'API key, essayer une approche alternative
-          if (responseData.error && responseData.error.includes('Invalid API key')) {
-            console.log('Tentative de récupération après erreur d\'API key...');
-            
-            // Utiliser une API endpoint de secours qui n'utilise pas directement l'API Supabase
-            const fallbackResponse = await fetch('/api/admin/add-background-fallback', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                projectId: projectId,
-                name: selectedTemplate.name,
-                imageUrl: selectedTemplate.url,
-              }),
-            });
-            
-            const fallbackData = await fallbackResponse.json();
-            
-            if (!fallbackResponse.ok) {
-              throw new Error(fallbackData.error || "Erreur lors de l'ajout de l'arrière-plan (méthode alternative)");
-            }
-            
-            console.log('Méthode alternative réussie:', fallbackData);
-            
-            // Utiliser les données de la méthode alternative
-            if (fallbackData.success && fallbackData.data) {
-              onBackgroundsAdded && onBackgroundsAdded(fallbackData.data);
-              return; // Sortir de la fonction après succès
-            }
+          if (!deleteResponse.ok) {
+            const errorData = await deleteResponse.json();
+            throw new Error(errorData.error || "Erreur lors de la suppression de l'arrière-plan existant");
           }
           
-          // Si la méthode alternative a échoué ou si ce n'était pas une erreur d'API key
-          throw new Error(responseData.error || "Erreur lors de l'ajout de l'arrière-plan");
-        }
-        
-        console.log('API success response:', responseData);
-        
-        if (responseData.success && responseData.data) {
-          // Call the callback with the added background
-          onBackgroundsAdded && onBackgroundsAdded(responseData.data);
+          // Puis ajouter le nouvel arrière-plan
+          const response = await fetch('/api/admin/backgrounds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId: projectId,
+              name: selectedTemplate.name,
+              imageUrl: selectedTemplate.url
+            })
+          });
           
-          // Show success in console
-          console.log('Arrière-plan ajouté avec succès:', 
-            Array.isArray(responseData.data) ? 
-            `${responseData.data.length} arrière-plans` : 
-            '1 arrière-plan');
-        } else {
-          console.warn('Unexpected API response format:', responseData);
-          throw new Error("Format de réponse API inattendu");
+          const responseData = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(responseData.error || "Erreur lors de l'ajout de l'arrière-plan");
+          }
+          
+          console.log('API success response:', responseData);
+          
+          if (responseData.success && responseData.data) {
+            onBackgroundsAdded && onBackgroundsAdded(responseData.data);
+          } else {
+            console.warn('Unexpected API response format:', responseData);
+            throw new Error("Format de réponse API inattendu");
+          }
+        } catch (error) {
+          console.error('Error saving background:', error);
+          onError && onError('Erreur: ' + error.message);
         }
+        
+        // Close the popup
+        onClose && onClose();
       }
-      
-      // Close the popup
-      onClose && onClose();
     } catch (error) {
       console.error('Error saving background:', error);
       onError && onError('Erreur lors de l\'enregistrement de l\'arrière-plan: ' + error.message);
