@@ -302,9 +302,9 @@ export default function CameraCapture({ params }) {
       const videoWidth = video.videoWidth || 1280;
       const videoHeight = video.videoHeight || 720;
       
-      // Set canvas dimensions
-      canvas.width = 1280;
-      canvas.height = 720;
+      // Set canvas dimensions to EXACTLY match the required thumbnail dimensions
+      canvas.width = 970;
+      canvas.height = 651;
       
       const context = canvas.getContext('2d');
       if (!context) {
@@ -319,16 +319,39 @@ export default function CameraCapture({ params }) {
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
       
-      // Draw video to canvas
-      context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+      // Calculate scaling to maintain aspect ratio while filling the canvas
+      const videoAspect = videoWidth / videoHeight;
+      const canvasAspect = canvas.width / canvas.height;
+      
+      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+      
+      if (videoAspect > canvasAspect) {
+        // Video is wider than canvas (relative to height)
+        drawHeight = canvas.height;
+        drawWidth = drawHeight * videoAspect;
+        offsetX = (canvas.width - drawWidth) / 2;
+      } else {
+        // Video is taller than canvas (relative to width)
+        drawWidth = canvas.width;
+        drawHeight = drawWidth / videoAspect;
+        offsetY = (canvas.height - drawHeight) / 2;
+      }
+      
+      // Draw video to canvas with proper aspect ratio and centering
+      context.drawImage(
+        video, 
+        0, 0, videoWidth, videoHeight, 
+        offsetX, offsetY, drawWidth, drawHeight
+      );
       
       // Reset transform
       context.setTransform(1, 0, 0, 1, 0, 0);
       
       // Get the data URL
-      const imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+      const imageDataURL = canvas.toDataURL('image/jpeg', 0.95);
       
       console.log("Image captured successfully, setting state");
+      console.log(`Captured image dimensions: ${canvas.width}x${canvas.height}`);
       
       // Set state with the captured image
       setImageFile(imageDataURL);
@@ -560,6 +583,177 @@ export default function CameraCapture({ params }) {
       reader.readAsDataURL(blob)
     }));
   
+  // Add these utility functions for image processing
+  
+  // Function to fetch thumbnail from canvas_layouts
+  const fetchProjectThumbnail = async (projectId) => {
+    try {
+      console.log('Fetching thumbnail for project:', projectId);
+      
+      // First check if there are any canvas_layouts for this project
+      const { data: layoutsData, error: layoutsError } = await supabase
+        .from('canvas_layouts')
+        .select('id')
+        .eq('project_id', projectId);
+        
+      if (layoutsError) {
+        console.error('Error checking for layouts:', layoutsError);
+        return null;
+      }
+      
+      if (!layoutsData || layoutsData.length === 0) {
+        console.log('No layouts found for this project');
+        return null;
+      }
+      
+      console.log(`Found ${layoutsData.length} layouts, fetching thumbnail...`);
+      
+      // Now get the thumbnail URL from the first layout
+      const { data, error } = await supabase
+        .from('canvas_layouts')
+        .select('thumbnail_url')
+        .eq('project_id', projectId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching thumbnail:', error);
+        return null;
+      }
+      
+      console.log('Thumbnail URL found:', data?.thumbnail_url || 'null');
+      return data?.thumbnail_url || null;
+    } catch (error) {
+      console.error('Exception in fetchProjectThumbnail:', error);
+      return null;
+    }
+  };
+  
+  // Function to make black background transparent and combine images
+  const combineImagesWithTransparentOverlay = async (baseImageUrl, overlayImageUrl) => {
+    if (!baseImageUrl || !overlayImageUrl) {
+      console.error('Missing image URLs for combination');
+      return baseImageUrl; // Return original if we can't combine
+    }
+    
+    try {
+      // Load both images
+      const loadImage = (url) => {
+        return new Promise((resolve, reject) => {
+          // Use window.Image to explicitly use the browser's Image constructor, not Next.js Image
+          const img = new window.Image();
+          img.crossOrigin = 'Anonymous'; // Handle CORS
+          img.onload = () => resolve(img);
+          img.onerror = (e) => {
+            console.error(`Failed to load image: ${url}`, e);
+            reject(e);
+          };
+          img.src = url;
+        });
+      };
+      
+      console.log('Loading base image:', baseImageUrl.substring(0, 50) + '...');
+      console.log('Loading overlay image:', overlayImageUrl);
+      
+      // Load images with proper error handling
+      let baseImage, overlayImage;
+      try {
+        [baseImage, overlayImage] = await Promise.all([
+          loadImage(baseImageUrl),
+          loadImage(overlayImageUrl)
+        ]);
+        console.log('Both images loaded successfully');
+        console.log('Base image dimensions:', baseImage.width, 'x', baseImage.height);
+        console.log('Overlay image dimensions:', overlayImage.width, 'x', overlayImage.height);
+      } catch (imgError) {
+        console.error('Failed to load one or both images:', imgError);
+        return baseImageUrl;
+      }
+      
+      // Create canvas for the combined image - ensure it's exactly 970x651
+      const canvas = document.createElement('canvas');
+      canvas.width = 970;
+      canvas.height = 651;
+      const ctx = canvas.getContext('2d');
+      
+      // If base image doesn't match our target dimensions, resize it properly
+      if (baseImage.width !== 970 || baseImage.height !== 651) {
+        console.log('Resizing base image to match required dimensions (970x651)');
+        const baseAspect = baseImage.width / baseImage.height;
+        const targetAspect = 970 / 651;
+        
+        let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+        
+        if (baseAspect > targetAspect) {
+          // Base image is wider than target
+          drawHeight = 651;
+          drawWidth = drawHeight * baseAspect;
+          offsetX = (970 - drawWidth) / 2;
+        } else {
+          // Base image is taller than target
+          drawWidth = 970;
+          drawHeight = drawWidth / baseAspect;
+          offsetY = (651 - drawHeight) / 2;
+        }
+        
+        // Draw resized image centered on canvas
+        ctx.drawImage(baseImage, offsetX, offsetY, drawWidth, drawHeight);
+      } else {
+        // Draw the base image directly if dimensions already match
+        ctx.drawImage(baseImage, 0, 0, 970, 651);
+      }
+      
+      console.log('Base image drawn to canvas');
+      
+      // Create a temporary canvas for the overlay to process transparency
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = overlayImage.width;
+      tempCanvas.height = overlayImage.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // Draw the overlay to the temp canvas
+      tempCtx.drawImage(overlayImage, 0, 0);
+      console.log('Overlay drawn to temp canvas');
+      
+      // Process the overlay to make black pixels transparent
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+      
+      let transparentPixelCount = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        // Check if pixel is black or nearly black (allowing for some compression artifacts)
+        if (data[i] < 10 && data[i + 1] < 10 && data[i + 2] < 10) {
+          // Make it transparent
+          data[i + 3] = 0;
+          transparentPixelCount++;
+        }
+      }
+      console.log(`Made ${transparentPixelCount} black pixels transparent`);
+      
+      // Put the processed image data back
+      tempCtx.putImageData(imageData, 0, 0);
+      
+      // Scale overlay to match canvas dimensions if needed
+      // Assume the overlay should be sized to match the canvas exactly
+      ctx.drawImage(tempCanvas, 0, 0, overlayImage.width, overlayImage.height, 
+                  0, 0, 970, 651);
+      
+      console.log('Overlay drawn at full canvas size (970x651)');
+      
+      // Convert the final canvas to a data URL
+      const finalImageUrl = canvas.toDataURL('image/jpeg', 0.95);
+      console.log('Successfully generated combined image with dimensions 970x651!');
+      return finalImageUrl;
+    } catch (error) {
+      console.error('Error combining images:', error);
+      return baseImageUrl; // Return original if combination fails
+    }
+  };
+  
+  // Initialize state for image processing
+  const [imageProcessing, setImageProcessing] = useState(false);
+  
   const generateImageSwap = async () => {
     setNumProses(2);
     reset2();
@@ -630,11 +824,15 @@ export default function CameraCapture({ params }) {
         input: {
           prompt: stylePrompt,
           input_image: imageFile,
-          output_format: "jpg"
+          output_format: "jpg",
+          // Add width and height parameters to ensure the generated image has the correct dimensions
+          width: 970,
+          height: 651
         }
       };
       
       console.log('Sending request to Replicate with model:', requestBody.model);
+      console.log('Requesting specific output dimensions: 970x651');
       
       const response = await fetch('/api/replicate', {
         method: 'POST',
@@ -666,13 +864,12 @@ export default function CameraCapture({ params }) {
       console.log('Replicate result:', result);
       setResultFaceSwap(result);
       setLogs(prevLogs => [...prevLogs, "Génération terminée avec succès!"]);
-      setLoadingProgress(100);
+      setLoadingProgress(80); // Set to 80% before starting thumbnail processing
       
       // Mettre à jour l'étape de traitement
       setProcessingStep(2);
       
       // Le résultat du modèle est directement l'URL de l'image ou les données binaires de l'image
-      // Nous devons l'adapter selon la réponse exacte du modèle
       const resultImageUrl = typeof result === 'string' ? result : 
                             Array.isArray(result) ? result[0] : 
                             result.url || result.image || result;
@@ -682,7 +879,43 @@ export default function CameraCapture({ params }) {
           throw new Error("URL d'image non trouvée dans la réponse");
       }
       
-      // Stocker les métadonnées de génération pour débogage
+      // NEW CODE: Fetch thumbnail and combine images
+      setLogs(prevLogs => [...prevLogs, "Récupération du watermark du projet..."]);
+      const thumbnailUrl = await fetchProjectThumbnail(project?.id);
+      
+      let finalImageUrl = resultImageUrl;
+      let hasWatermark = false;
+      
+      if (thumbnailUrl) {
+        setLogs(prevLogs => [...prevLogs, "Application du watermark sur l'image..."]);
+        setLoadingProgress(90);
+        
+        try {
+          // Combine the generated image with the thumbnail overlay
+          console.log('Attempting to combine images with thumbnail overlay');
+          const combinedImageDataUrl = await combineImagesWithTransparentOverlay(resultImageUrl, thumbnailUrl);
+          
+          if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
+            console.log('Successfully created combined image with watermark');
+            finalImageUrl = combinedImageDataUrl;
+            hasWatermark = true;
+            setLogs(prevLogs => [...prevLogs, "Watermark appliqué avec succès!"]);
+          } else {
+            console.log('Failed to apply watermark, using original image');
+            setLogs(prevLogs => [...prevLogs, "Impossible d'appliquer le watermark, utilisation de l'image originale."]);
+          }
+        } catch (watermarkError) {
+          console.error('Error applying watermark:', watermarkError);
+          setLogs(prevLogs => [...prevLogs, "Erreur lors de l'application du watermark. Utilisation de l'image originale."]);
+        }
+      } else {
+        console.log('No thumbnail/watermark found for this project');
+        setLogs(prevLogs => [...prevLogs, "Aucun watermark trouvé pour ce projet."]);
+      }
+      
+      setLoadingProgress(100);
+      
+      // Store generation metadata with watermark status
       const generationMetadata = {
           requestTime: new Date().toISOString(),
           processingTime: Date.now() - start,
@@ -693,88 +926,68 @@ export default function CameraCapture({ params }) {
               output_format: 'jpg'
           },
           projectId: project?.id,
-          styleId: localStorage.getItem('selectedStyleId')
+          styleId: localStorage.getItem('selectedStyleId'),
+          hasWatermark: hasWatermark
       };
       
-      // Stocker l'URL et les métadonnées
-      localStorage.setItem("faceURLResult", resultImageUrl);
+      // Store the URL and metadata
+      localStorage.setItem("faceURLResult", finalImageUrl);
       localStorage.setItem("falGenerationMetadata", JSON.stringify(generationMetadata));
       
       try {
-          // Convertir l'image en base64 pour un stockage local
-          const dataUrl = await toDataURL(resultImageUrl);
-          localStorage.setItem("resulAIBase64", dataUrl);
+          // For S3 upload, we need to convert to a file if it's a data URL
+          if (finalImageUrl.startsWith('data:')) {
+            const uploadFile = dataURLtoFile(finalImageUrl, `result_${Date.now()}.jpg`);
+            
+            // Create FormData for S3 upload
+            const formData = new FormData();
+            formData.append('file', uploadFile);
+            formData.append('projectId', project?.id || 'unknown');
+            
+            // Upload to S3 via your API endpoint
+            const uploadResponse = await fetch('/api/upload-to-s3', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!uploadResponse.ok) {
+              throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+            }
+            
+            const uploadData = await uploadResponse.json();
+            if (uploadData.url) {
+              // Update the final URL to the S3 version
+              finalImageUrl = uploadData.url;
+              localStorage.setItem("faceURLResult", finalImageUrl);
+            }
+          }
+          
+          // Convert the image to base64 for local storage if it's not already
+          if (!finalImageUrl.startsWith('data:')) {
+            const dataUrl = await toDataURL(finalImageUrl);
+            localStorage.setItem("resulAIBase64", dataUrl);
+          } else {
+            localStorage.setItem("resulAIBase64", finalImageUrl);
+          }
       } catch (conversionError) {
-          console.warn("Impossible de convertir l'image en base64:", conversionError);
-          // Continue anyway with the direct URL
+          console.warn("Issue with image conversion or upload:", conversionError);
+          // Continue with the direct URL or data URL we already have
       }
       
-      // Nouvelle partie: Enregistrer l'image dans la table photos
+      // Enregistrer la session dans Supabase
       try {
-        setLogs(prevLogs => [...prevLogs, "Enregistrement de l'image dans la base de données..."]);
-        
-        // Récupérer la session en cours si elle existe
-        let sessionId = null;
-        const currentSession = localStorage.getItem('currentSessionId');
-        if (currentSession) {
-          sessionId = currentSession;
-        } else {
-          // Créer une nouvelle session si nécessaire
-          const { data: sessionData, error: sessionError } = await supabase
-            .from('sessions')
-            .insert({
-              user_email: localStorage.getItem('userEmail') || null,
-              style_id: localStorage.getItem('selectedStyleId'),
-              gender: styleGender,
-              result_image_url: resultImageUrl,
-              processing_time_ms: Date.now() - start,
-              is_success: true,
-              project_id: project?.id
-            })
-            .select('id')
-            .single();
-            
-          if (sessionError) {
-            console.error("Erreur lors de la création de la session:", sessionError);
-          } else if (sessionData) {
-            sessionId = sessionData.id;
-            localStorage.setItem('currentSessionId', sessionId);
-          }
-        }
-        
-        // Enregistrer l'image dans la table photos
-        const { data: photoData, error: photoError } = await supabase
-          .from('photos')
-          .insert({
-            project_id: project?.id,
-            session_id: sessionId,
-            user_email: localStorage.getItem('userEmail') || null,
-            image_url: resultImageUrl,
+          await supabase.from('sessions').insert({
+            user_email: null, // Anonymous user
             style_id: localStorage.getItem('selectedStyleId'),
-            is_paid: false, // Par défaut, l'image n'est pas payée
-            metadata: {
-              ...generationMetadata,
-              originalCapture: imageFile ? true : false,
-              browser: navigator.userAgent,
-              screenSize: `${window.innerWidth}x${window.innerHeight}`,
-              timestamp: new Date().toISOString()
-            },
-            is_moderated: false // Par défaut, l'image n'est pas modérée
-          })
-          .select('id')
-          .single();
-          
-        if (photoError) {
-          console.error("Erreur lors de l'enregistrement de la photo:", photoError);
-          setLogs(prevLogs => [...prevLogs, "Attention: Erreur lors de l'enregistrement de la photo dans la base de données"]);
-        } else {
-          setLogs(prevLogs => [...prevLogs, "Photo enregistrée avec succès dans la base de données"]);
-          // Stocker l'ID de la photo pour référence future
-          localStorage.setItem('lastPhotoId', photoData.id);
-        }
-      } catch (dbError) {
-        console.error("Exception lors de l'enregistrement en base de données:", dbError);
-        setLogs(prevLogs => [...prevLogs, "Erreur lors de l'enregistrement dans la base de données"]);
+            gender: styleGender,
+            result_image_url: finalImageUrl,
+            processing_time_ms: Date.now() - start,
+            is_success: true,
+            project_id: project?.id,
+            has_watermark: !!thumbnailUrl
+          });
+      } catch (logError) {
+          console.error("Error logging session:", logError);
       }
       
       // Rediriger vers la page de résultat
