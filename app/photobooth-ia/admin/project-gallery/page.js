@@ -482,19 +482,51 @@ export default function ProjectGallery() {
             Sélectionnez un projet
           </label>
           <div className="flex flex-col sm:flex-row gap-4">
-            <select
-              id="projectSelect"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
-              onChange={(e) => setSelectedProject(e.target.value)}
-              value={selectedProject || ''}
-            >
-              <option value="">-- Choisissez un projet --</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.name} ({project.id}) - {projectsWithPhotoCount[project.id] !== undefined ? `${projectsWithPhotoCount[project.id]} photos` : 'chargement...'}
-                </option>
-              ))}
-            </select>
+            <div className="w-full">
+              <select
+                id="projectSelect"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
+                onChange={(e) => setSelectedProject(e.target.value)}
+                value={selectedProject || ''}
+              >
+                <option value="">-- Choisissez un projet --</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name} ({project.id})
+                  </option>
+                ))}
+              </select>
+              
+              {/* Indicateur de nombre de photos par projet */}
+              {selectedProject && (
+                <div className="mt-2 text-sm text-indigo-600 flex items-center">
+                  <RiFilterLine className="mr-1 h-4 w-4 text-indigo-400" />
+                  <span className="font-semibold">{projectsWithPhotoCount[selectedProject] || 0}</span> 
+                  <span className="ml-1">photos trouvées pour ce projet</span>
+                </div>
+              )}
+              
+              {/* Affichage du nombre de photos pour tous les projets */}
+              {!selectedProject && projects.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs font-medium text-gray-500">Nombre de photos par projet:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {projects.map(project => (
+                      <div 
+                        key={`count-${project.id}`} 
+                        className="bg-gray-50 px-3 py-1.5 rounded-md text-xs flex justify-between items-center hover:bg-indigo-50 cursor-pointer"
+                        onClick={() => setSelectedProject(project.id)}
+                      >
+                        <span className="truncate" title={project.name}>{project.name}</span>
+                        <span className="ml-2 font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                          {projectsWithPhotoCount[project.id] !== undefined ? projectsWithPhotoCount[project.id] : '...'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-2">
               <Link
