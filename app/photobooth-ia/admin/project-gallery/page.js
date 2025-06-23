@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { 
   RiFilterLine, 
@@ -25,7 +24,6 @@ export default function ProjectGallery() {
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
   const [moderationConfirm, setModerationConfirm] = useState(null);
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
-  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -41,9 +39,8 @@ export default function ProjectGallery() {
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   
   const supabase = createClientComponentClient();
-  const router = useRouter();
   
-  // Définir loadMosaicSettings AVANT son utilisation dans useEffect
+  // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
@@ -95,66 +92,14 @@ export default function ProjectGallery() {
     }
   }, [supabase]); // Add supabase as dependency
   
-  // Récupérer l'ID de l'admin connecté
-  useEffect(() => {
-    const getAdminSession = () => {
-      try {
-        // Récupérer la session depuis localStorage ou sessionStorage
-        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
-        
-        if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
-          router.push('/photobooth-ia/admin/login');
-          return null;
-        }
-
-        // Correction : décoder base64 avant JSON.parse
-        let decodedSession = sessionStr;
-        try {
-          decodedSession = atob(sessionStr);
-        } catch (e) {
-          // Si déjà décodé, ignorer
-        }
-        const sessionData = JSON.parse(decodedSession);
-
-        if (!sessionData.user_id && sessionData.userId) {
-          // Support legacy: si userId existe, le mapper
-          sessionData.user_id = sessionData.userId;
-        }
-
-        if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
-          router.push('/photobooth-ia/admin/login');
-          return null;
-        }
-
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
-        setCurrentAdminId(sessionData.user_id);
-        return sessionData.user_id;
-      } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
-        router.push('/photobooth-ia/admin/login');
-        return null;
-      }
-    };
-    
-    getAdminSession();
-  }, [router]);
-  
   // Charger la liste des projets avec leur nombre de photos
   useEffect(() => {
     async function loadProjects() {
-      if (!currentAdminId) {
-        console.warn("Impossible de charger les projets: admin ID non défini");
-        return;
-      }
-      
       try {
-        // Fetch projects filtered by admin ID
+        // Fetch projects
         const { data, error } = await supabase
           .from('projects')
           .select('id, name, slug')
-          .eq('created_by', currentAdminId)
           .order('name', { ascending: true });
           
         if (error) throw error;
@@ -186,10 +131,8 @@ export default function ProjectGallery() {
       }
     }
     
-    if (currentAdminId) {
-      loadProjects();
-    }
-  }, [supabase, currentAdminId]);
+    loadProjects();
+  }, [supabase]);
   
   // Charger les images S3 d'un projet sélectionné
   useEffect(() => {
@@ -203,36 +146,9 @@ export default function ProjectGallery() {
       try {
         console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
         
-        // Try direct database query first
-        try {
-          console.log('Tentative de récupération des images depuis la table photos...');
-          const { data: photosData, error: photosError } = await supabase
-            .from('photos')
-            .select('*')
-            .eq('project_id', selectedProject)
-            .order('created_at', { ascending: false });
-          
-          if (photosError) {
-            console.error('Erreur lors de la récupération depuis la table photos:', photosError);
-            // Fall back to API if database query fails
-            console.log('Erreur détaillée:', JSON.stringify(photosError));
-          } else if (photosData && photosData.length > 0) {
-            console.log('Images récupérées depuis la table photos:', photosData.length);
-            setProjectImages(photosData);
-            // Successfully loaded from database, no need to call API
-            setLoading(false);
-            // Also load mosaic settings for this project
-            loadMosaicSettings(selectedProject);
-            return;
-          } else {
-            console.log('Aucune image trouvée dans la table photos, essai avec l\'API S3');
-          }
-        } catch (dbError) {
-          console.error('Exception lors de la récupération depuis la table photos:', dbError);
-        }
+        // Removed schema checks and table creation attempts
         
-        // Fallback to API if database query fails or returns no results
-        console.log('Tentative de récupération via l\'API S3...');
+        // Just call the API to get images
         const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
         
         if (!response.ok) {
@@ -251,15 +167,15 @@ export default function ProjectGallery() {
         // Also load mosaic settings for this project
         loadMosaicSettings(selectedProject);
       } catch (err) {
-        console.error('Erreur lors du chargement des images:', err);
-        setError('Impossible de charger les images du projet');
+        console.error('Erreur lors du chargement des images S3:', err);
+        setError('Impossible de charger les images du projet depuis S3');
       } finally {
         setLoading(false);
       }
     }
     
     loadS3Images();
-  }, [selectedProject, loadMosaicSettings, supabase]);
+  }, [selectedProject, loadMosaicSettings]);
   
   // Télécharger une image
   const downloadImage = (url, filename) => {
@@ -289,26 +205,16 @@ export default function ProjectGallery() {
     
     const { id, url } = moderationConfirm;
     
+    // For now, just update the UI without database changes
     try {
-      // First update the database
-      const { data, error } = await supabase
-        .from('photos')
-        .update({ is_moderated: true })
-        .eq('id', id);
-        
-      if (error) {
-        console.error('Erreur lors de la mise à jour dans la base de données:', error);
-        throw error;
-      }
-      
-      // Then update UI
+      // Update UI immediately
       setProjectImages(projectImages.map(img => 
         img.id === id 
-          ? {...img, is_moderated: true} 
+          ? {...img, isModerated: true} 
           : img
       ));
       
-      setSuccess("Image modérée avec succès");
+      setSuccess("Image modérée visuellement avec succès");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Erreur lors de la modération:', err);
@@ -337,6 +243,31 @@ export default function ProjectGallery() {
     };
     reader.readAsDataURL(file);
   };
+
+  // Add this function near your other fetch functions to load mosaic settings
+  async function fetchMosaicSettings(projectId) {
+    if (!projectId) return;
+    
+    try {
+      // Get mosaic settings from the database
+      const { data, error } = await supabase
+        .from('mosaic_settings')
+        .select('*')
+        .eq('project_id', projectId)
+        .maybeSingle();
+    
+      if (error) {
+        console.error('Error fetching mosaic settings:', error);
+        return null;
+      }
+    
+      console.log('Fetched mosaic settings:', data);
+      return data;
+    } catch (err) {
+      console.error('Exception fetching mosaic settings:', err);
+      return null;
+    }
+  }
 
   // Replace the saveMosaicSettings function to use the server-side API for background image upload
   const saveMosaicSettings = async () => {
