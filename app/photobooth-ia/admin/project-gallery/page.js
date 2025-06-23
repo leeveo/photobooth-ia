@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { 
   RiFilterLine, 
@@ -25,7 +24,6 @@ export default function ProjectGallery() {
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
   const [moderationConfirm, setModerationConfirm] = useState(null);
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
-  const [currentAdminId, setCurrentAdminId] = useState(null);
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -41,9 +39,8 @@ export default function ProjectGallery() {
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   
   const supabase = createClientComponentClient();
-  const router = useRouter();
   
-  // Définir loadMosaicSettings AVANT son utilisation dans useEffect
+  // Définir loadMosaicSettings AVANT de l'utiliser dans useEffect
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
@@ -95,66 +92,14 @@ export default function ProjectGallery() {
     }
   }, [supabase]); // Add supabase as dependency
   
-  // Récupérer l'ID de l'admin connecté
-  useEffect(() => {
-    const getAdminSession = () => {
-      try {
-        // Récupérer la session depuis localStorage ou sessionStorage
-        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
-        
-        if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
-          router.push('/photobooth-ia/admin/login');
-          return null;
-        }
-
-        // Correction : décoder base64 avant JSON.parse
-        let decodedSession = sessionStr;
-        try {
-          decodedSession = atob(sessionStr);
-        } catch (e) {
-          // Si déjà décodé, ignorer
-        }
-        const sessionData = JSON.parse(decodedSession);
-
-        if (!sessionData.user_id && sessionData.userId) {
-          // Support legacy: si userId existe, le mapper
-          sessionData.user_id = sessionData.userId;
-        }
-
-        if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
-          router.push('/photobooth-ia/admin/login');
-          return null;
-        }
-
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
-        setCurrentAdminId(sessionData.user_id);
-        return sessionData.user_id;
-      } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
-        router.push('/photobooth-ia/admin/login');
-        return null;
-      }
-    };
-    
-    getAdminSession();
-  }, [router]);
-  
   // Charger la liste des projets avec leur nombre de photos
   useEffect(() => {
     async function loadProjects() {
-      if (!currentAdminId) {
-        console.warn("Impossible de charger les projets: admin ID non défini");
-        return;
-      }
-      
       try {
-        // Fetch projects filtered by admin ID
+        // Fetch projects
         const { data, error } = await supabase
           .from('projects')
           .select('id, name, slug')
-          .eq('created_by', currentAdminId)
           .order('name', { ascending: true });
           
         if (error) throw error;
@@ -186,10 +131,8 @@ export default function ProjectGallery() {
       }
     }
     
-    if (currentAdminId) {
-      loadProjects();
-    }
-  }, [supabase, currentAdminId]);
+    loadProjects();
+  }, [supabase]);
   
   // Charger les images S3 d'un projet sélectionné
   useEffect(() => {
@@ -203,36 +146,9 @@ export default function ProjectGallery() {
       try {
         console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
         
-        // Try direct database query first
-        try {
-          console.log('Tentative de récupération des images depuis la table photos...');
-          const { data: photosData, error: photosError } = await supabase
-            .from('photos')
-            .select('*')
-            .eq('project_id', selectedProject)
-            .order('created_at', { ascending: false });
-          
-          if (photosError) {
-            console.error('Erreur lors de la récupération depuis la table photos:', photosError);
-            // Fall back to API if database query fails
-            console.log('Erreur détaillée:', JSON.stringify(photosError));
-          } else if (photosData && photosData.length > 0) {
-            console.log('Images récupérées depuis la table photos:', photosData.length);
-            setProjectImages(photosData);
-            // Successfully loaded from database, no need to call API
-            setLoading(false);
-            // Also load mosaic settings for this project
-            loadMosaicSettings(selectedProject);
-            return;
-          } else {
-            console.log('Aucune image trouvée dans la table photos, essai avec l\'API S3');
-          }
-        } catch (dbError) {
-          console.error('Exception lors de la récupération depuis la table photos:', dbError);
-        }
+        // Removed schema checks and table creation attempts
         
-        // Fallback to API if database query fails or returns no results
-        console.log('Tentative de récupération via l\'API S3...');
+        // Just call the API to get images
         const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
         
         if (!response.ok) {
@@ -251,15 +167,15 @@ export default function ProjectGallery() {
         // Also load mosaic settings for this project
         loadMosaicSettings(selectedProject);
       } catch (err) {
-        console.error('Erreur lors du chargement des images:', err);
-        setError('Impossible de charger les images du projet');
+        console.error('Erreur lors du chargement des images S3:', err);
+        setError('Impossible de charger les images du projet depuis S3');
       } finally {
         setLoading(false);
       }
     }
     
     loadS3Images();
-  }, [selectedProject, loadMosaicSettings, supabase]);
+  }, [selectedProject, loadMosaicSettings]);
   
   // Télécharger une image
   const downloadImage = (url, filename) => {
@@ -289,26 +205,16 @@ export default function ProjectGallery() {
     
     const { id, url } = moderationConfirm;
     
+    // For now, just update the UI without database changes
     try {
-      // First update the database
-      const { data, error } = await supabase
-        .from('photos')
-        .update({ is_moderated: true })
-        .eq('id', id);
-        
-      if (error) {
-        console.error('Erreur lors de la mise à jour dans la base de données:', error);
-        throw error;
-      }
-      
-      // Then update UI
+      // Update UI immediately
       setProjectImages(projectImages.map(img => 
         img.id === id 
-          ? {...img, is_moderated: true} 
+          ? {...img, isModerated: true} 
           : img
       ));
       
-      setSuccess("Image modérée avec succès");
+      setSuccess("Image modérée visuellement avec succès");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Erreur lors de la modération:', err);
@@ -337,6 +243,31 @@ export default function ProjectGallery() {
     };
     reader.readAsDataURL(file);
   };
+
+  // Add this function near your other fetch functions to load mosaic settings
+  async function fetchMosaicSettings(projectId) {
+    if (!projectId) return;
+    
+    try {
+      // Get mosaic settings from the database
+      const { data, error } = await supabase
+        .from('mosaic_settings')
+        .select('*')
+        .eq('project_id', projectId)
+        .maybeSingle();
+    
+      if (error) {
+        console.error('Error fetching mosaic settings:', error);
+        return null;
+      }
+    
+      console.log('Fetched mosaic settings:', data);
+      return data;
+    } catch (err) {
+      console.error('Exception fetching mosaic settings:', err);
+      return null;
+    }
+  }
 
   // Replace the saveMosaicSettings function to use the server-side API for background image upload
   const saveMosaicSettings = async () => {
@@ -482,19 +413,51 @@ export default function ProjectGallery() {
             Sélectionnez un projet
           </label>
           <div className="flex flex-col sm:flex-row gap-4">
-            <select
-              id="projectSelect"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
-              onChange={(e) => setSelectedProject(e.target.value)}
-              value={selectedProject || ''}
-            >
-              <option value="">-- Choisissez un projet --</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.name} ({project.id}) - {projectsWithPhotoCount[project.id] !== undefined ? `${projectsWithPhotoCount[project.id]} photos` : 'chargement...'}
-                </option>
-              ))}
-            </select>
+            <div className="w-full">
+              <select
+                id="projectSelect"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
+                onChange={(e) => setSelectedProject(e.target.value)}
+                value={selectedProject || ''}
+              >
+                <option value="">-- Choisissez un projet --</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name} ({project.id})
+                  </option>
+                ))}
+              </select>
+              
+              {/* Indicateur de nombre de photos par projet */}
+              {selectedProject && (
+                <div className="mt-2 text-sm text-indigo-600 flex items-center">
+                  <RiFilterLine className="mr-1 h-4 w-4 text-indigo-400" />
+                  <span className="font-semibold">{projectsWithPhotoCount[selectedProject] || 0}</span> 
+                  <span className="ml-1">photos trouvées pour ce projet</span>
+                </div>
+              )}
+              
+              {/* Affichage du nombre de photos pour tous les projets */}
+              {!selectedProject && projects.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs font-medium text-gray-500">Nombre de photos par projet:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {projects.map(project => (
+                      <div 
+                        key={`count-${project.id}`} 
+                        className="bg-gray-50 px-3 py-1.5 rounded-md text-xs flex justify-between items-center hover:bg-indigo-50 cursor-pointer"
+                        onClick={() => setSelectedProject(project.id)}
+                      >
+                        <span className="truncate" title={project.name}>{project.name}</span>
+                        <span className="ml-2 font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                          {projectsWithPhotoCount[project.id] !== undefined ? projectsWithPhotoCount[project.id] : '...'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-2">
               <Link
