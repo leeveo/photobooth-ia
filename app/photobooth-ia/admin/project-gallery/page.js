@@ -159,20 +159,26 @@ export default function ProjectGallery() {
           return;
         }
         console.log("Projets récupérés:", projectsData);
+
+        // Affiche les project_id récupérés
+        const projectIds = (projectsData || []).map(p => p.id);
+        console.log("IDs des projets récupérés:", projectIds);
+
         setProjects(projectsData || []);
 
-        // 2. Pour chaque projet, compter les images dans sessions
+        // 2. Pour chaque projet, compter les images dans sessions (sans filtre is_success)
         const photoCounts = {};
         for (const project of projectsData || []) {
-          const { count, error: countError } = await supabase
+          const { data: sessionRows, count, error: countError } = await supabase
             .from('sessions')
-            .select('id', { count: 'exact', head: true })
+            .select('id, project_id, result_s3_url, result_image_url', { count: 'exact', head: false })
             .eq('project_id', project.id);
 
           if (countError) {
             console.error(`Erreur lors du comptage pour le projet ${project.id}:`, countError);
           }
-          photoCounts[project.id] = countError ? 0 : count;
+          console.log(`Sessions pour projet ${project.id}:`, sessionRows);
+          photoCounts[project.id] = countError ? 0 : (count || 0);
         }
         setProjectsWithPhotoCount(photoCounts);
         console.log("Comptes d'images par projet:", photoCounts);
@@ -201,7 +207,7 @@ export default function ProjectGallery() {
         console.log("Chargement des images pour le projet:", selectedProject);
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('sessions')
-          .select('id, result_s3_url, result_image_url, created_at')
+          .select('id, project_id, result_s3_url, result_image_url, created_at')
           .eq('project_id', selectedProject)
           .order('created_at', { ascending: false });
 
@@ -209,7 +215,7 @@ export default function ProjectGallery() {
           console.error("Erreur récupération images sessions:", sessionsError);
           setProjectImages([]);
         } else {
-          console.log("Images sessions récupérées:", sessionsData);
+          console.log("Images sessions récupérées pour project_id", selectedProject, ":", sessionsData);
           const images = (sessionsData || []).map(session => ({
             id: session.id,
             image_url: session.result_s3_url || session.result_image_url,
