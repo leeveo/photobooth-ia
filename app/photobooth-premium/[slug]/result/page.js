@@ -53,7 +53,6 @@ export default function Result({ params }) {
   const [linkQR, setLinkQR] = useState(null);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   
   const fetchProjectData = useCallback(async () => {
     try {
@@ -154,7 +153,6 @@ export default function Result({ params }) {
     
     setLoadingUpload(true);
     setError(null);
-    setSuccess(null);
     
     try {
       // Upload to S3
@@ -172,7 +170,6 @@ export default function Result({ params }) {
         
         setLinkQR(s3Url);
         setGenerateQR(true);
-        setSuccess("Image prête à être partagée !");
       } else {
         throw new Error("Échec de l'upload de l'image");
       }
@@ -366,11 +363,7 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {success && (
-          <div className="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded-lg">
-            {success}
-          </div>
-        )}
+        {/* Removing the success message display */}
         
         {/* Result Image Display - Full Size Container */}
         {imageResultAI ? (

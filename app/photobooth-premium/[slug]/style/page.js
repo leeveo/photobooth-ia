@@ -25,14 +25,20 @@ export default function PhotoboothStyles({ params }) {
   
   // Simplified state for infinite scroll
   const [visibleCount, setVisibleCount] = useState(50);
+  const [isScrollEnd, setIsScrollEnd] = useState(false);
   
-  // Effect for infinite scroll
+  // Effect for infinite scroll - Updated to track scroll position
   useEffect(() => {
     const handleScroll = () => {
       if (scrollRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        
+        // Check if near bottom for infinite scroll
         if (scrollTop + clientHeight >= scrollHeight - 100) {
           setVisibleCount(prev => Math.min(prev + 10, styles.length));
+          setIsScrollEnd(true);
+        } else {
+          setIsScrollEnd(false);
         }
       }
     };
@@ -198,14 +204,14 @@ export default function PhotoboothStyles({ params }) {
   }, [slug, supabase, fetchStyles]); // Include fetchStyles dependency now that it's defined first
   
   useEffect(() => {
-    // Try to load from localStorage first for faster rendering
+    // Essaie d'abord de charger depuis localStorage pour un rendu plus rapide
     const cachedProject = localStorage.getItem('projectData');
     if (cachedProject) {
       try {
         const parsedProject = JSON.parse(cachedProject);
         setProject(parsedProject);
         
-        // If we have a cached project ID, try to load styles immediately
+        // Si nous avons un ID de projet en cache, essayons de charger les styles immédiatement
         if (parsedProject.id) {
           fetchStyles(parsedProject.id);
         }
@@ -216,7 +222,7 @@ export default function PhotoboothStyles({ params }) {
       }
     }
     
-    // Always fetch fresh data
+    // Toujours récupérer les données fraîches
     fetchProjectData();
   }, [fetchProjectData, fetchStyles]);
 
@@ -278,7 +284,6 @@ export default function PhotoboothStyles({ params }) {
   return (
     <main 
       className="min-h-screen flex flex-col"
-      ref={scrollRef}
     >
       <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 lg:py-12 flex flex-col flex-grow">
         {/* Logo and welcome message */}
@@ -324,13 +329,13 @@ export default function PhotoboothStyles({ params }) {
         
         {/* Styles selection - with masonry layout */}
         <motion.div 
-          className="mb-16 flex-grow flex flex-col items-center justify-center"
+          className="mb-8 flex-grow flex flex-col items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.7 }}
         >
           <motion.h3 
-            className="text-2xl font-semibold text-center mb-8" 
+            className="text-xl font-semibold text-center mb-6" 
             style={{ color: secondaryColor }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -350,78 +355,103 @@ export default function PhotoboothStyles({ params }) {
           ) : styles.length === 0 ? (
             <p className="text-center text-white text-xl">Aucun style disponible pour ce projet</p>
           ) : (
-            <div className="w-full max-w-[1800px] mx-auto">
-              {/* Masonry layout using CSS columns */}
-              <div className="masonry-grid">
-                {styles.slice(0, visibleCount).map((style, index) => (
-                  <motion.div 
-                    key={style.id}
-                    className="masonry-item mb-4 inline-block w-full"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
+            <div className="w-full mx-auto">
+              {/* Conteneur avec scroll et classe conditionnelle pour le bas de page */}
+              <div className={`styles-scrollable-container ${isScrollEnd ? 'scroll-end' : ''}`} ref={scrollRef}>
+                {/* Indicateur de défilement */}
+                <div className="scroll-indicator">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                
+                {/* Conteneur pour centrage horizontal */}
+                <div className="masonry-grid-container">
+                  {/* Masonry grid avec classes conditionnelles */}
+                  <div 
+                    className={`masonry-grid ${
+                      // Appliquer la classe few-items pour un meilleur centrage avec un petit nombre d'éléments
+                      styles.length <= 10 ? 'few-items' : ''
+                    } ${
+                      // Forcer un nombre spécifique de colonnes selon le nombre d'éléments
+                      styles.length <= 3 ? 'force-2-cols' : 
+                      styles.length <= 6 ? 'force-3-cols' : 
+                      styles.length <= 12 ? 'force-4-cols' : 
+                      styles.length <= 20 ? 'force-5-cols' : ''
+                    }`}
                   >
-                    <div 
-                      className={`cursor-pointer overflow-hidden rounded-2xl backdrop-blur-sm bg-white/10 shadow-lg hover:shadow-xl transition-all transform duration-300 border-2 ${
-                        selectedStyle?.id === style.id 
-                          ? 'border-white scale-105 shadow-xl' 
-                          : 'border-transparent hover:scale-[1.03]'
-                      }`}
-                      onClick={() => handleStyleSelect(style)}
-                    >
-                      {/* Image with random heights for masonry effect */}
-                      <div 
-                        className="relative overflow-hidden"
-                        style={{ 
-                          height: `${Math.floor(Math.random() * 100) + 250}px` 
-                        }}
+                    {styles.slice(0, visibleCount).map((style, index) => (
+                      <motion.div 
+                        key={style.id}
+                        className="masonry-item"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.05 }}
                       >
-                        {style.preview_image ? (
-                          <>
-                            <img 
-                              src={style.preview_image}
-                              alt={style.name}
-                              className="object-cover w-full h-full transition-transform duration-700 hover:scale-110"
-                              onError={(e) => {
-                                console.error(`Failed to load image for style ${style.name}`);
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-70 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                              <button className="px-8 py-3 bg-white rounded-full text-purple-900 font-bold shadow-lg transform hover:scale-105 transition-transform text-lg">
-                                Choisissez ce style
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-                            <span className="text-gray-500 text-lg">Aucune image</span>
+                        <div 
+                          className={`cursor-pointer overflow-hidden rounded-2xl backdrop-blur-sm bg-white/10 shadow-lg hover:shadow-xl transition-all transform duration-300 border-2 style-card ${
+                            selectedStyle?.id === style.id 
+                              ? 'border-white scale-105 shadow-xl' 
+                              : 'border-transparent hover:scale-[1.03]'
+                          }`}
+                          onClick={() => handleStyleSelect(style)}
+                        >
+                          {/* Image avec hauteur réduite pour éviter le débordement */}
+                          <div 
+                            className="relative overflow-hidden"
+                            style={{ 
+                              // Hauteur réduite et plus uniforme pour améliorer l'apparence
+                              height: `${Math.floor(Math.random() * 50) + 180}px` 
+                            }}
+                          >
+                            {style.preview_image ? (
+                              <>
+                                <img 
+                                  src={style.preview_image}
+                                  alt={style.name}
+                                  className="object-cover w-full h-full transition-transform duration-700 hover:scale-110"
+                                  onError={(e) => {
+                                    console.error(`Failed to load image for style ${style.name}`);
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-70 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                  <button className="px-8 py-3 bg-white rounded-full text-purple-900 font-bold shadow-lg transform hover:scale-105 transition-transform text-lg">
+                                    Choisissez ce style
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                                <span className="text-gray-500 text-lg">Aucune image</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Style information */}
-                      <div className="p-5">
-                        <h4 className="font-bold text-white text-xl tracking-tight">
-                          {style.name}
-                        </h4>
-                        {style.description && (
-                          <p className="mt-2 text-white/80 text-base line-clamp-2">
-                            {style.description}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Selection badge */}
-                      {selectedStyle?.id === style.id && (
-                        <div className="absolute top-4 right-4 bg-white/90 text-purple-900 text-sm font-bold px-3 py-1.5 rounded-full">
-                          Sélectionné
+                          
+                          {/* Style information */}
+                          <div className="p-5">
+                            <h4 className="font-bold text-white text-xl tracking-tight">
+                              {style.name}
+                            </h4>
+                            {style.description && (
+                              <p className="mt-2 text-white/80 text-base line-clamp-2">
+                                {style.description}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {/* Selection badge */}
+                          {selectedStyle?.id === style.id && (
+                            <div className="absolute top-4 right-4 bg-white/90 text-purple-900 text-sm font-bold px-3 py-1.5 rounded-full">
+                              Sélectionné
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}

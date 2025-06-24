@@ -115,87 +115,93 @@ export default function HowToUse({ params }) {
         )}
       </motion.div>
 
-      <div className="relative w-full mt-[20vh]">
-        <motion.div 
-          className="text-center mb-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          <h2 
-            className="text-2xl font-bold mb-4"
-            style={{ color: secondaryColor }}
+      <div className="relative w-full flex justify-center items-center mt-8 md:mt-[12vh] lg:mt-[10vh]">
+        <div className="w-full max-w-5xl px-4 md:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 md:mb-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Comment ça marche ?
-          </h2>
-        </motion.div>
+            <h2 
+              className="text-4xl md:text-6xl font-bold mb-4"
+              style={{ color: secondaryColor }}
+            >
+              Comment ça marche ?
+            </h2>
+          </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mx-auto">
             <motion.div 
-              className="rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: secondaryColor }}
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="text-center bg-black bg-opacity-20 rounded-xl p-5 backdrop-blur-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
             >
-              <span className="text-3xl" style={{ color: primaryColor }}>1</span>
+              <motion.div 
+                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
+                style={{ backgroundColor: secondaryColor }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
+                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>1</span>
+              </motion.div>
+              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Choisissez votre style</h3>
+              <p className="text-white text-sm md:text-base">Sélectionnez un style de vêtements qui vous plaît</p>
             </motion.div>
-            <h3 className="font-bold mb-2" style={{ color: secondaryColor }}>Choisissez votre style</h3>
-            <p className="text-white">Sélectionnez un style de vêtements qui vous plaît</p>
-          </motion.div>
-          
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.7 }}
-          >
+            
             <motion.div 
-              className="rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: secondaryColor }}
-              whileHover={{ scale: 1.1, rotate: -5 }}
+              className="text-center bg-black bg-opacity-20 rounded-xl p-5 backdrop-blur-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.7 }}
             >
-              <span className="text-3xl" style={{ color: primaryColor }}>2</span>
+              <motion.div 
+                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
+                style={{ backgroundColor: secondaryColor }}
+                whileHover={{ scale: 1.1, rotate: -5 }}
+              >
+                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>2</span>
+              </motion.div>
+              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Prenez une photo</h3>
+              <p className="text-white text-sm md:text-base">Positionnez-vous et prenez une photo avec la caméra</p>
             </motion.div>
-            <h3 className="font-bold mb-2" style={{ color: secondaryColor }}>Prenez une photo</h3>
-            <p className="text-white">Positionnez-vous et prenez une photo avec la caméra</p>
-          </motion.div>
-          
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.9 }}
-          >
+            
             <motion.div 
-              className="rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: secondaryColor }}
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="text-center bg-black bg-opacity-20 rounded-xl p-5 backdrop-blur-sm sm:col-span-2 md:col-span-1 sm:max-w-xs sm:mx-auto md:mx-0 md:max-w-none"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.9 }}
             >
-              <span className="text-3xl" style={{ color: primaryColor }}>3</span>
+              <motion.div 
+                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
+                style={{ backgroundColor: secondaryColor }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
+                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>3</span>
+              </motion.div>
+              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Récupérez votre création</h3>
+              <p className="text-white text-sm md:text-base">Admirez votre photo générée par l&apos;IA et partagez-la</p>
             </motion.div>
-            <h3 className="font-bold mb-2" style={{ color: secondaryColor }}>Récupérez votre création</h3>
-            <p className="text-white">Admirez votre photo générée par l&apos;IA et partagez-la</p>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       <motion.div 
-        className="fixed bottom-10 w-full"
+        className="fixed bottom-8 sm:bottom-12 md:bottom-20 w-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1.2 }}
       >
-        <div className="w-[70%] max-w-md mx-auto">
+        <div className="w-[75%] sm:w-[80%] max-w-lg mx-auto">
           <motion.button 
             onClick={goToStyles} 
-            className="w-full py-4 font-bold text-xl rounded-lg"
-            style={{ backgroundColor: secondaryColor, color: primaryColor }}
-            whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}
+            className="w-full py-3 sm:py-4 md:py-6 font-bold text-lg sm:text-xl md:text-3xl rounded-lg shadow-xl border-2"
+            style={{ 
+              backgroundColor: secondaryColor, 
+              color: primaryColor,
+              borderColor: primaryColor 
+            }}
+            whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}
             whileTap={{ scale: 0.95 }}
           >
             CONTINUER

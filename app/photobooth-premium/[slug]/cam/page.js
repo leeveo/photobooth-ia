@@ -8,6 +8,49 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
+const dataURLtoFile = (dataurl, filename) => {
+  if (!dataurl) {
+    console.error("dataURLtoFile: dataurl is null or undefined");
+    return null;
+  }
+  
+  // S'assurer que c'est bien une data URL (commence par "data:")
+  if (!dataurl.startsWith('data:')) {
+    console.error("dataURLtoFile: Not a data URL", dataurl.substring(0, 20) + "...");
+    return null;
+  }
+  
+  try {
+    const arr = dataurl.split(',');
+    if (arr.length < 2) {
+      console.error("dataURLtoFile: Invalid dataURL format - missing comma");
+      return null;
+    }
+    
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch || !mimeMatch[1]) {
+      console.error("dataURLtoFile: Could not extract MIME type");
+      return null;
+    }
+    
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    
+    console.log(`Successfully created File object for ${filename} with MIME ${mime}`);
+    return new File([u8arr], filename, { type: mime });
+  } catch (error) {
+    console.error("Error in dataURLtoFile:", error);
+    return null;
+  }
+};
+
 // Hook webcam with improved error handling and retries
 let streamCam = null;
 const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
@@ -302,7 +345,8 @@ export default function CameraCapture({ params }) {
       const videoWidth = video.videoWidth || 1280;
       const videoHeight = video.videoHeight || 720;
       
-      // Set canvas dimensions to EXACTLY match the required thumbnail dimensions
+      // Set canvas dimensions to match the expected output dimensions (970x651)
+      // These dimensions should match those used in the result page
       canvas.width = 970;
       canvas.height = 651;
       
@@ -935,59 +979,151 @@ export default function CameraCapture({ params }) {
       localStorage.setItem("falGenerationMetadata", JSON.stringify(generationMetadata));
       
       try {
-          // For S3 upload, we need to convert to a file if it's a data URL
-          if (finalImageUrl.startsWith('data:')) {
-            const uploadFile = dataURLtoFile(finalImageUrl, `result_${Date.now()}.jpg`);
+        // Avant de tenter un upload S3, d'abord convertir l'URL replicate en base64 si nécessaire
+        let uploadableImage = finalImageUrl;
+        
+        // Si l'image n'est pas déjà en format base64, la télécharger et convertir
+        if (finalImageUrl.startsWith('http')) {
+          try {
+            console.log("Converting HTTP URL to base64 for S3 upload:", finalImageUrl.substring(0, 50) + '...');
+            setLogs(prevLogs => [...prevLogs, "Préparation de l'image pour stockage cloud..."]);
             
-            // Create FormData for S3 upload
-            const formData = new FormData();
-            formData.append('file', uploadFile);
-            formData.append('projectId', project?.id || 'unknown');
-            
-            // Upload to S3 via your API endpoint
-            const uploadResponse = await fetch('/api/upload-to-s3', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (!uploadResponse.ok) {
-              throw new Error(`S3 upload failed: ${uploadResponse.status}`);
-            }
-            
-            const uploadData = await uploadResponse.json();
-            if (uploadData.url) {
-              // Update the final URL to the S3 version
-              finalImageUrl = uploadData.url;
-              localStorage.setItem("faceURLResult", finalImageUrl);
-            }
+            uploadableImage = await toDataURL(finalImageUrl);
+            console.log("Successfully converted HTTP URL to base64");
+          } catch (convError) {
+            console.error("Failed to convert HTTP URL to base64:", convError);
+            setLogs(prevLogs => [...prevLogs, "Erreur lors de la préparation pour le stockage cloud."]);
+            // Continuer avec l'URL d'origine, l'API gérera l'erreur
+          }
+        }
+        
+        // Maintenant tenter l'upload S3 avec l'image convertie ou d'origine
+        if (uploadableImage && uploadableImage.startsWith('data:')) {
+          const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
+          console.log("Creating file for S3 upload:", uniqueFilename);
+          
+          const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
+          
+          if (!uploadFile) {
+            console.error("Failed to create file from data URL");
+            throw new Error("Échec de la préparation du fichier pour l'upload");
           }
           
-          // Convert the image to base64 for local storage if it's not already
-          if (!finalImageUrl.startsWith('data:')) {
+          // Créer FormData pour l'upload S3
+          const formData = new FormData();
+          formData.append('file', uploadFile);
+          formData.append('projectId', project?.id || 'unknown');
+          
+          console.log("Starting S3 upload for:", uploadableImage.substring(0, 50) + '...');
+          setLogs(prevLogs => [...prevLogs, "Téléchargement de l'image vers le stockage cloud..."]);
+          
+          // Upload to S3
+          const uploadResponse = await fetch('/api/upload-to-s3', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            console.error("S3 upload failed:", uploadResponse.status, errorText);
+            throw new Error(`Échec de l'upload: ${uploadResponse.status}`);
+          }
+          
+          const uploadData = await uploadResponse.json();
+          console.log("S3 upload response:", uploadData);
+          
+          if (uploadData && uploadData.url) {
+            // Succès! On a l'URL S3
+            console.log("✅ S3 upload successful:", uploadData.url);
+            setLogs(prevLogs => [...prevLogs, "Image stockée avec succès dans le cloud!"]);
+            
+            // Mettre à jour les URLs avec la nouvelle version
+            const s3Url = uploadData.url;
+            
+            // Stocker l'URL S3 pour référence
+            localStorage.setItem("faceURLResultS3", s3Url);
+            
+            // Enregistrer la session avec l'URL S3
+            try {
+              // Pour la session, on peut quand même garder l'URL S3
+              await supabase.from('sessions').insert({
+                user_email: null,
+                style_id: localStorage.getItem('selectedStyleId'),
+                style_key: localStorage.getItem('selectedStyleKey') || null,
+                gender: styleGender,
+                result_image_url: finalImageUrl, // URL originale pour compatibilité
+                result_s3_url: s3Url, // URL S3 explicite
+                processing_time_ms: Date.now() - start,
+                is_success: true,
+                project_id: project?.id,
+                has_watermark: hasWatermark
+              });
+              
+              console.log("Session recorded with S3 URL");
+            } catch (sessionError) {
+              console.error("Error recording session:", sessionError);
+            }
+          } else {
+            throw new Error("Réponse S3 invalide - URL manquante");
+          }
+        } else {
+          // Si on n'a pas pu convertir en base64, on utilise l'URL directe
+          console.log("Using direct URL for session:", finalImageUrl.substring(0, 50) + '...');
+          
+          // Enregistrer la session avec l'URL directe
+          try {
+            await supabase.from('sessions').insert({
+              user_email: null,
+              style_id: localStorage.getItem('selectedStyleId'),
+              style_key: localStorage.getItem('selectedStyleKey') || null,
+              gender: styleGender,
+              result_image_url: finalImageUrl,
+              result_s3_url: finalImageUrl.startsWith('http') ? finalImageUrl : null,
+              processing_time_ms: Date.now() - start,
+              is_success: true,
+              project_id: project?.id,
+              has_watermark: hasWatermark
+            });
+            
+            console.log("Session recorded with direct URL");
+          } catch (sessionError) {
+            console.error("Error recording session:", sessionError);
+          }
+        }
+        
+        // Toujours stocker en base64 pour l'affichage local
+        if (!finalImageUrl.startsWith('data:')) {
+          try {
             const dataUrl = await toDataURL(finalImageUrl);
             localStorage.setItem("resulAIBase64", dataUrl);
-          } else {
-            localStorage.setItem("resulAIBase64", finalImageUrl);
+          } catch (convError) {
+            console.warn("Could not convert to base64 for local storage:", convError);
           }
-      } catch (conversionError) {
-          console.warn("Issue with image conversion or upload:", conversionError);
-          // Continue with the direct URL or data URL we already have
-      }
-      
-      // Enregistrer la session dans Supabase
-      try {
+        } else {
+          localStorage.setItem("resulAIBase64", finalImageUrl);
+        }
+      } catch (uploadError) {
+        console.error("Error during S3 upload process:", uploadError);
+        setLogs(prevLogs => [...prevLogs, `Erreur lors du stockage: ${uploadError.message}`]);
+        
+        // Fallback: enregistrer la session avec l'URL directe
+        try {
           await supabase.from('sessions').insert({
-            user_email: null, // Anonymous user
+            user_email: null,
             style_id: localStorage.getItem('selectedStyleId'),
+            style_key: localStorage.getItem('selectedStyleKey') || null,
             gender: styleGender,
             result_image_url: finalImageUrl,
+            result_s3_url: finalImageUrl.startsWith('http') ? finalImageUrl : null,
             processing_time_ms: Date.now() - start,
             is_success: true,
             project_id: project?.id,
-            has_watermark: !!thumbnailUrl
+            has_watermark: hasWatermark,
+            error_message: uploadError.message
           });
-      } catch (logError) {
-          console.error("Error logging session:", logError);
+        } catch (fallbackError) {
+          console.error("Complete failure to record session:", fallbackError);
+        }
       }
       
       // Rediriger vers la page de résultat
@@ -1000,14 +1136,19 @@ export default function CameraCapture({ params }) {
       
       // Enregistrer l'échec dans Supabase
       try {
+          // Récupérer l'ID de l'utilisateur admin si disponible
+          const adminUserId = localStorage.getItem('adminUserId') || null;
+          
           await supabase.from('sessions').insert({
             user_email: null,
             style_id: localStorage.getItem('selectedStyleId'),
+            style_key: localStorage.getItem('selectedStyleKey') || null,
             gender: styleGender,
             processing_time_ms: Date.now() - start,
             is_success: false,
             error_message: error.message,
-            project_id: project?.id
+            project_id: project?.id,
+            created_by: adminUserId
           });
       } catch (logError) {
           console.error("Error logging failed session:", logError);
@@ -1183,15 +1324,15 @@ export default function CameraCapture({ params }) {
           <button id="retryCamera" onClick={retryCamera}>Retry Camera</button>
         </div>
         
-        {/* Camera viewfinder with improved visibility */}
+        {/* Camera viewfinder with dimensions matching result page - simple approach to ensure camera is visible */}
         <motion.div 
-          className="relative mx-auto overflow-hidden rounded-lg shadow-xl bg-black"
+          className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
           style={{ 
-            width: '100%', 
-            maxWidth: '640px',
-            aspectRatio: '16/9',
-            minHeight: '360px',
-            border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none'
+            width: '100%',
+            maxWidth: '1200px',
+            aspectRatio: '970/651', // Exact aspect ratio to match final output
+            border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
+            backgroundColor: 'black'
           }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -1275,21 +1416,18 @@ export default function CameraCapture({ params }) {
             )}
           </AnimatePresence>
 
-          {/* Video element with IMPROVED styling for visibility */}
+          {/* Video element - simplified to ensure it's displayed properly */}
           <video 
             ref={videoRef} 
-            className="absolute inset-0 w-full h-full object-cover"
+            className="w-full h-full object-cover"
             style={{ 
               transform: 'scaleX(-1)', // Mirror effect for selfie mode
               display: enabled ? 'none' : 'block', // Only hide when showing captured image
-              opacity: 1,
-              zIndex: 10 // Ensure it's above any other elements
+              maxHeight: '75vh'
             }} 
             playsInline
             autoPlay
             muted
-            width={640}
-            height={360}
             onLoadedMetadata={() => {
               console.log("Video metadata loaded:", {
                 videoWidth: videoRef.current?.videoWidth,
@@ -1306,8 +1444,12 @@ export default function CameraCapture({ params }) {
           {/* Canvas element */}
           <canvas 
             ref={previewRef} 
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ display: enabled ? 'block' : 'none' }}
+            className="w-full h-full"
+            style={{ 
+              display: enabled ? 'block' : 'none',
+              maxHeight: '75vh', 
+              objectFit: 'contain'
+            }}
           />
           
           {/* Viewfinder overlay - only show when camera is working */}
