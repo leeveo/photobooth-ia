@@ -141,33 +141,16 @@ export default function ProjectGallery() {
     getAdminSession();
   }, [router]);
   
-  // Charger la liste des projets ayant au moins une session (pour debug)
+  // Charger la liste des projets créés par l'admin connecté
   useEffect(() => {
     async function loadProjects() {
       setLoading(true);
       try {
-        // Récupérer tous les project_id distincts de la table sessions
-        const { data: sessionProjects, error: sessionProjectsError } = await supabase
-          .from('sessions')
-          .select('project_id')
-          .not('project_id', 'is', null);
-
-        if (sessionProjectsError) {
-          console.error("Erreur récupération des project_id de sessions:", sessionProjectsError);
-          setError('Erreur récupération des projets');
-          setLoading(false);
-          return;
-        }
-
-        // Extraire les project_id uniques
-        const uniqueProjectIds = [...new Set(sessionProjects.map(s => s.project_id))];
-        console.log("Project IDs trouvés dans sessions:", uniqueProjectIds);
-
-        // Récupérer les infos des projets correspondants
+        // 1. Récupérer les projets créés par l'admin connecté
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
           .select('id, name, slug')
-          .in('id', uniqueProjectIds);
+          .eq('created_by', currentAdminId);
 
         if (projectsError) {
           console.error("Erreur récupération projets:", projectsError);
@@ -178,7 +161,7 @@ export default function ProjectGallery() {
         console.log("Projets récupérés:", projectsData);
         setProjects(projectsData || []);
 
-        // Pour chaque projet, compter les images dans sessions
+        // 2. Pour chaque projet, compter les images dans sessions
         const photoCounts = {};
         for (const project of projectsData || []) {
           const { count, error: countError } = await supabase
@@ -189,7 +172,6 @@ export default function ProjectGallery() {
           if (countError) {
             console.error(`Erreur lors du comptage pour le projet ${project.id}:`, countError);
           }
-          console.log(`Projet ${project.id} (${project.name}) : ${count} images`);
           photoCounts[project.id] = countError ? 0 : count;
         }
         setProjectsWithPhotoCount(photoCounts);
@@ -202,8 +184,8 @@ export default function ProjectGallery() {
       }
     }
 
-    loadProjects();
-  }, [supabase]);
+    if (currentAdminId) loadProjects();
+  }, [supabase, currentAdminId]);
   
   // Charger les images du projet sélectionné depuis sessions
   useEffect(() => {
