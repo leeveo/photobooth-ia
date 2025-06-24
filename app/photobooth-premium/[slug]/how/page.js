@@ -146,7 +146,7 @@ export default function HowToUse({ params }) {
                 <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>1</span>
               </motion.div>
               <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Choisissez votre style</h3>
-              <p className="text-white text-sm md:text-base">Sélectionnez un style de vêtements qui vous plaît</p>
+              
             </motion.div>
             
             <motion.div 
@@ -163,7 +163,7 @@ export default function HowToUse({ params }) {
                 <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>2</span>
               </motion.div>
               <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Prenez une photo</h3>
-              <p className="text-white text-sm md:text-base">Positionnez-vous et prenez une photo avec la caméra</p>
+             
             </motion.div>
             
             <motion.div 
@@ -180,7 +180,7 @@ export default function HowToUse({ params }) {
                 <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>3</span>
               </motion.div>
               <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Récupérez votre création</h3>
-              <p className="text-white text-sm md:text-base">Admirez votre photo générée par l&apos;IA et partagez-la</p>
+              
             </motion.div>
           </div>
         </div>

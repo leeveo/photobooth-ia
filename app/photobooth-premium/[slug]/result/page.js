@@ -380,12 +380,26 @@ export default function Result({ params }) {
                 setError("Impossible de charger l'image");
               }}
               style={{
-                maxHeight: '75vh', // Increased to take up more vertical space
+                maxHeight: '75vh',
                 maxWidth: '100%',
                 objectFit: 'contain',
-                display: 'block' // Ensures no extra space around the image
+                display: 'block'
               }}
             />
+            {/* Bouton de téléchargement visible uniquement sur mobile */}
+            {linkQR && (
+              <a
+                href={linkQR}
+                download
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold shadow-lg text-base flex items-center gap-2 md:hidden"
+                style={{ maxWidth: '90vw' }}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Télécharger ma photo
+              </a>
+            )}
           </div>
         ) : (
           <div className="p-8 bg-white bg-opacity-10 rounded-lg text-white text-center">

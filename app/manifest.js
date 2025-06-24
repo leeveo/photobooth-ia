@@ -1,9 +1,9 @@
 export default function manifest() {
     return {
-      name: 'AI PHOTOBOOTH',
-      short_name: 'AI PHOTOBOOTH',
-      description: 'AI PHOTOBOOTH',
-      start_url: '/zymuno',
+      name: 'WAIBOOTH',
+      short_name: 'WAIBOOTH',
+      description: 'WAIBOOTH',
+      start_url: 'https://waibooth.app',
       display: 'standalone',
       background_color: '#fff',
       theme_color: '#fff',
