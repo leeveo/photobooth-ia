@@ -141,14 +141,14 @@ export default function ProjectGallery() {
     getAdminSession();
   }, [router]);
   
-  // Charger la liste des projets avec leur nombre de photos
+  // Charger la liste des projets avec leur nombre de photos (sessions)
   useEffect(() => {
     async function loadProjects() {
       if (!currentAdminId) {
         console.warn("Impossible de charger les projets: admin ID non défini");
         return;
       }
-      
+
       try {
         // Fetch projects filtered by admin ID
         const { data, error } = await supabase
@@ -156,27 +156,35 @@ export default function ProjectGallery() {
           .select('id, name, slug')
           .eq('created_by', currentAdminId)
           .order('name', { ascending: true });
-          
+
         if (error) throw error;
-        
+
         setProjects(data || []);
-        
-        // Fetch photo counts for each project
+
+        // Fetch photo counts for each project via sessions
         const photoCounts = {};
         for (const project of data || []) {
           try {
-            // Call API to count S3 images
-            const response = await fetch(`/api/s3-project-images?projectId=${project.id}&countOnly=true`);
-            if (response.ok) {
-              const countData = await response.json();
-              photoCounts[project.id] = countData.count || 0;
+            // Compter les sessions réussies avec image pour ce projet
+            const { count, error: countError } = await supabase
+              .from('sessions')
+              .select('id', { count: 'exact', head: true })
+              .eq('project_id', project.id)
+              .eq('is_success', true)
+              .not('result_s3_url', 'is', null);
+
+            if (countError) {
+              console.error(`Erreur lors du comptage pour le projet ${project.id}:`, countError);
+              photoCounts[project.id] = '?';
+            } else {
+              photoCounts[project.id] = count || 0;
             }
           } catch (countError) {
             console.error(`Error fetching counts for project ${project.id}:`, countError);
             photoCounts[project.id] = '?';
           }
         }
-        
+
         setProjectsWithPhotoCount(photoCounts);
       } catch (err) {
         console.error('Erreur lors du chargement des projets:', err);
@@ -185,80 +193,63 @@ export default function ProjectGallery() {
         setLoading(false);
       }
     }
-    
+
     if (currentAdminId) {
       loadProjects();
     }
   }, [supabase, currentAdminId]);
   
-  // Charger les images S3 d'un projet sélectionné
+  // Charger les images (sessions) d'un projet sélectionné
   useEffect(() => {
     if (!selectedProject) {
       setProjectImages([]);
       return;
     }
-    
-    async function loadS3Images() {
+
+    async function loadSessionImages() {
       setLoading(true);
       try {
-        console.log(`Chargement des images S3 pour le projet: ${selectedProject}`);
-        
-        // Try direct database query first
-        try {
-          console.log('Tentative de récupération des images depuis la table photos...');
-          const { data: photosData, error: photosError } = await supabase
-            .from('photos')
-            .select('*')
-            .eq('project_id', selectedProject)
-            .order('created_at', { ascending: false });
-          
-          if (photosError) {
-            console.error('Erreur lors de la récupération depuis la table photos:', photosError);
-            // Fall back to API if database query fails
-            console.log('Erreur détaillée:', JSON.stringify(photosError));
-          } else if (photosData && photosData.length > 0) {
-            console.log('Images récupérées depuis la table photos:', photosData.length);
-            setProjectImages(photosData);
-            // Successfully loaded from database, no need to call API
-            setLoading(false);
-            // Also load mosaic settings for this project
-            loadMosaicSettings(selectedProject);
-            return;
-          } else {
-            console.log('Aucune image trouvée dans la table photos, essai avec l\'API S3');
-          }
-        } catch (dbError) {
-          console.error('Exception lors de la récupération depuis la table photos:', dbError);
-        }
-        
-        // Fallback to API if database query fails or returns no results
-        console.log('Tentative de récupération via l\'API S3...');
-        const response = await fetch(`/api/s3-project-images?projectId=${selectedProject}`);
-        
-        if (!response.ok) {
-          throw new Error(`Erreur API: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Résultat API S3:', data);
-        
-        if (data.success && data.images) {
-          setProjectImages(data.images);
+        // Charger les sessions réussies avec image pour ce projet
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('project_id', selectedProject)
+          .eq('is_success', true)
+          .not('result_s3_url', 'is', null)
+          .order('created_at', { ascending: false });
+
+        if (sessionsError) {
+          console.error('Erreur lors de la récupération des images sessions:', sessionsError);
+          setProjectImages([]);
+        } else if (sessionsData && sessionsData.length > 0) {
+          // Adapter le format pour l'affichage (compatibilité avec l'ancien code)
+          const images = sessionsData.map(session => ({
+            id: session.id,
+            image_url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at,
+            // Ajout d'un champ metadata factice pour compatibilité UI
+            metadata: {
+              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+              size: null // Optionnel, si vous avez la taille
+            },
+            isModerated: false // Pas de modération dans sessions
+          }));
+          setProjectImages(images);
         } else {
           setProjectImages([]);
         }
 
-        // Also load mosaic settings for this project
+        // Charger les paramètres de mosaïque
         loadMosaicSettings(selectedProject);
       } catch (err) {
-        console.error('Erreur lors du chargement des images:', err);
+        console.error('Erreur lors du chargement des images sessions:', err);
         setError('Impossible de charger les images du projet');
       } finally {
         setLoading(false);
       }
     }
-    
-    loadS3Images();
+
+    loadSessionImages();
   }, [selectedProject, loadMosaicSettings, supabase]);
   
   // Télécharger une image
