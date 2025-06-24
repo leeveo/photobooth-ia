@@ -144,62 +144,43 @@ export default function ProjectGallery() {
   // Charger la liste des projets avec leur nombre de photos (sessions)
   useEffect(() => {
     async function loadProjects() {
-      if (!currentAdminId) {
-        console.warn("Impossible de charger les projets: admin ID non défini");
-        return;
-      }
+      if (!currentAdminId) return;
 
       try {
-        // Fetch projects filtered by admin ID
-        const { data, error } = await supabase
+        // Récupérer les projets
+        const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
           .select('id, name, slug')
           .eq('created_by', currentAdminId)
           .order('name', { ascending: true });
 
-        if (error) throw error;
+        if (projectsError) throw projectsError;
+        setProjects(projectsData || []);
 
-        setProjects(data || []);
-
-        // Fetch photo counts for each project via sessions
+        // Pour chaque projet, compter les images dans sessions
         const photoCounts = {};
-        for (const project of data || []) {
-          try {
-            // Compter les sessions réussies avec image pour ce projet
-            const { count, error: countError } = await supabase
-              .from('sessions')
-              .select('id', { count: 'exact', head: true })
-              .eq('project_id', project.id)
-              .eq('is_success', true)
-              .not('result_s3_url', 'is', null);
+        for (const project of projectsData || []) {
+          const { count, error: countError } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', project.id)
+            .eq('is_success', true)
+            .not('result_s3_url', 'is', null);
 
-            if (countError) {
-              console.error(`Erreur lors du comptage pour le projet ${project.id}:`, countError);
-              photoCounts[project.id] = '?';
-            } else {
-              photoCounts[project.id] = count || 0;
-            }
-          } catch (countError) {
-            console.error(`Error fetching counts for project ${project.id}:`, countError);
-            photoCounts[project.id] = '?';
-          }
+          photoCounts[project.id] = countError ? 0 : count;
         }
-
         setProjectsWithPhotoCount(photoCounts);
       } catch (err) {
-        console.error('Erreur lors du chargement des projets:', err);
         setError('Impossible de charger les projets');
       } finally {
         setLoading(false);
       }
     }
 
-    if (currentAdminId) {
-      loadProjects();
-    }
+    if (currentAdminId) loadProjects();
   }, [supabase, currentAdminId]);
   
-  // Charger les images (sessions) d'un projet sélectionné
+  // Charger les images du projet sélectionné depuis sessions
   useEffect(() => {
     if (!selectedProject) {
       setProjectImages([]);
@@ -209,40 +190,32 @@ export default function ProjectGallery() {
     async function loadSessionImages() {
       setLoading(true);
       try {
-        // Charger les sessions réussies avec image pour ce projet
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('sessions')
-          .select('*')
+          .select('id, result_s3_url, result_image_url, created_at')
           .eq('project_id', selectedProject)
           .eq('is_success', true)
           .not('result_s3_url', 'is', null)
           .order('created_at', { ascending: false });
 
         if (sessionsError) {
-          console.error('Erreur lors de la récupération des images sessions:', sessionsError);
           setProjectImages([]);
-        } else if (sessionsData && sessionsData.length > 0) {
-          // Adapter le format pour l'affichage (compatibilité avec l'ancien code)
-          const images = sessionsData.map(session => ({
+        } else {
+          // Adapter pour affichage
+          const images = (sessionsData || []).map(session => ({
             id: session.id,
             image_url: session.result_s3_url || session.result_image_url,
             created_at: session.created_at,
-            // Ajout d'un champ metadata factice pour compatibilité UI
             metadata: {
               fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-              size: null // Optionnel, si vous avez la taille
+              size: null
             },
-            isModerated: false // Pas de modération dans sessions
+            isModerated: false
           }));
           setProjectImages(images);
-        } else {
-          setProjectImages([]);
         }
-
-        // Charger les paramètres de mosaïque
         loadMosaicSettings(selectedProject);
       } catch (err) {
-        console.error('Erreur lors du chargement des images sessions:', err);
         setError('Impossible de charger les images du projet');
       } finally {
         setLoading(false);
