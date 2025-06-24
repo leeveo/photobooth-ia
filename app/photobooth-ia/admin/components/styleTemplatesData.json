@@ -2946,304 +2946,7 @@
       }
     ]
   },
-  {
-    "id": "minimax-ghibli",
-    "name": "Collection Portraits MiniMax",
-    "description": "Prompts optimisés pour l'IA MiniMax",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-ghibli.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Ghibli",
-        "gender": "g",
-        "style_key": "Ghibli",
-        "description": "Style portrait studio Ghibli",
-        "prompt": "add a Studio Ghibli-style illustration — soft watercolor palette, delicate linework, cozy atmosphere, and fantasy elements like floating lights or magical plants."
-      }
-    ]
-  },
-  {
-    "id": "minimax-pixar",
-    "name": "Collection PIxar MiniMax",
-    "description": "Personnages fantastiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-pixar.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "pixar",
-        "gender": "g",
-        "style_key": "cartoon",
-        "description": "style 3d cartoon ",
-        "prompt": "add a 3D Pixar-style cartoon clean lines, soft lighting, expressive features, and a polished render that feels cinematic."
-      }
-    ]
-  },
-  {
-    "id": "minimax-manga",
-    "name": "Collection Manga",
-    "description": "Portraits de Manga via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-manga.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "manga",
-        "gender": "g",
-        "style_key": "manga",
-        "description": "Style japonais Manga",
-        "prompt": "Stylize this image like an anime still bold linework, cel shading, speed lines in the background, and optional Japanese text or subtitle at the bottom"
-      }
-    ]
-  },
-  {
-    "id": "minimax-empire",
-    "name": "Collection Empire",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-empire.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style Empire",
-        "gender": "g",
-        "style_key": "empire",
-        "description": "Style empire",
-        "prompt": "add Style by Style-Empire, (symmetry:1.1) (portrait of floral:1.05) pink and gold and opal color scheme, bold intricate filegrid facepaint, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by greg rutkowski and alphonse mucha, 8k"
-      }
-    ]
-  },
-  {
-    "id": "minimax-plastic",
-    "name": "Collection plastique",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-plastic.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style plastic",
-        "gender": "g",
-        "style_key": "plastique",
-        "description": "Style plastique",
-        "prompt": "cinematic film still wide shot, far full frame , Portrait Photographshifty crimson red skinned  muscular tiefling rogue with slick, coal-black hair and youthful, face with curled horns , center frame, standing proud with a big claymore sword in her hands , Hasselblad, looking at the camera, in a dark foreboding mossy fangorn forest , 4k, 8k, highly detailed, cinematic, 8k, magic lighting high detail, highly detailed, hyper realistic, intricate, intricate sharp details, 35mm photograph, film, bokeh, sunset, golden hour . shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy"
-      }
-    ]
-  },
-  {
-    "id": "minimax-caricature",
-    "name": "Collection caricature",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-caricature.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style caricature",
-        "gender": "g",
-        "style_key": "caricature",
-        "description": "Style caricature",
-        "prompt": "cinematic film still A powerful and imposing orc chieftain stands at the forefront of a dense, mystical forest, exuding an aura of strength and wisdom. The orc skin is a vibrant shade of green, with pronounced muscular features that reflect his warrior nature. He wears intricate armor adorned with sharp spikes and glowing green gemstones, signifying his status and power. Draped over his shoulders is a fur-lined cloak that blends seamlessly with the forest surroundings. In his hand, he holds a staff topped with a glowing, green crystal, which emits a soft, eerie light. The staff is intricately carved with ancient symbols, adding to its mystical appearance. Behind him, a group of armored warriors, dressed in earth-toned robes and metal armor, stand ready, showing loyalty and readiness for battle. The forest is bathed in a soft, greenish light filtering through the dense canopy, with tall trees enveloping the scene, creating an atmosphere of mystery and ancient power . shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy"
-      }
-    ]
-  },
-  {
-    "id": "minimax-impressionniste",
-    "name": "Collection impressionniste",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-impressionnniste.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style impressionniste",
-        "gender": "g",
-        "style_key": "impressionniste",
-        "description": "Style impressionniste",
-        "prompt": "Impressionist painting Impressionist painting Claude Monet painting Antibes sea view with tree. . Loose brushwork, vibrant color, light and shadow play, captures feeling over form . Loose brushwork, vibrant color, light and shadow play, captures feeling over form,8k, ultra realist"
-      }
-    ]
-  },
-  {
-    "id": "minimax-painting",
-    "name": "Collection painting",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-painting.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style painting",
-        "gender": "g",
-        "style_key": "painting",
-        "description": "Style painting",
-        "prompt": "Impressionist painting Picasso painting . . Loose brushwork, vibrant color, light and shadow play, captures feeling over form, 8k, ultra realist photography"
-      }
-    ]
-  },
-  {
-    "id": "minimax-clay",
-    "name": "Collection clay",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-clay.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style clay",
-        "gender": "g",
-        "style_key": "clay",
-        "description": "Style clay",
-        "prompt": "clay style,  8k, ultra realist photography"
-      }
-    ]
-  },
-  {
-    "id": "minimax-milo",
-    "name": "Collection milo",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-milo.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style milo",
-        "gender": "g",
-        "style_key": "milo",
-        "description": "Style milo",
-        "prompt": "Group people in a bar outdoor ,with smartphone in own hands,clear night ,hot weather,by Milo Manara side angle, medium shot, upper body, long shot technique , artstation, 8k, ultra realistic"
-      }
-    ]
-  },
-  {
-    "id": "minimax-drawing",
-    "name": "Collection drawing",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-drawing.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style drawing",
-        "gender": "g",
-        "style_key": "drawing",
-        "description": "Style drawing",
-        "prompt": "The Simpsons style, it is important that people have yellow skin , big head, artstation, 8k, ultra realistic , Simpsons Style"
-      }
-    ]
-  },
-  {
-    "id": "minimax-kitchen",
-    "name": "Collection kitchen",
-    "description": "Styles artistiques via prompts",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-kitchen.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Style kitchen",
-        "gender": "g",
-        "style_key": "kitchen",
-        "description": "Style kitchen",
-        "prompt": "add Style-Kitchen, japanese restaurant, sushi, onigiri, digital painting, concept art, smooth, ((sharp focus)), rule of thirds, ntricate details, wide shot,  cooking, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by greg rutkowski and alphonse mucha, 8k"
-      }
-    ]
-  },
-  {
-    "id": "minimax-psycho",
-    "name": "Collection Groupes psycho",
-    "description": "Styles pour des photos de groupe",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/minimax-psycho.jpeg",
-    "compatibleWith": ["photobooth2"],
-    "styles": [
-      {
-        "name": "Groupe Famille",
-        "gender": "g",
-        "style_key": "family",
-        "description": "Portrait de famille",
-        "prompt": "[style-Psycho::30] award winning photo of a cat in a wet city street, dark, menacing, grim, neon lamps, moon, night"
-      }
-    ]
-  },
-  {
-    "id": "avatar-fashion",
-    "name": "Collection Avatar Fashion",
-    "description": "Styles fashion pour avatar IA",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/avatar-fashion.jpg",
-    "compatibleWith": ["avatar"],
-    "styles": [
-      {
-        "name": "Met Gala",
-        "gender": "g",
-        "style_key": "metgala",
-        "description": "Style élégant de tapis rouge",
-        "prompt": "at the Met Gala, dressed in very fancy outfits, captured in a full body shot"
-      },
-      {
-        "name": "Business",
-        "gender": "g",
-        "style_key": "business",
-        "description": "Style professionnel",
-        "prompt": "professional business attire, in an office setting, full body shot"
-      },
-      {
-        "name": "Casual",
-        "gender": "g",
-        "style_key": "casual",
-        "description": "Style décontracté",
-        "prompt": "casual streetwear outfit, urban environment, full body shot"
-      }
-    ]
-  },
-  {
-    "id": "avatar-fantasy",
-    "name": "Collection Avatar Fantasy",
-    "description": "Avatars de fantaisie",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/avatar-fantasy.jpg",
-    "compatibleWith": ["avatar"],
-    "styles": [
-      {
-        "name": "Médiéval",
-        "gender": "g",
-        "style_key": "medieval",
-        "description": "Style médiéval fantasy",
-        "prompt": "as a medieval knight in shining armor, fantasy setting, full body shot"
-      },
-      {
-        "name": "Super Hero",
-        "gender": "g",
-        "style_key": "superhero",
-        "description": "Style super héros",
-        "prompt": "as a superhero with a cape, action pose, city background, full body shot"
-      },
-      {
-        "name": "Space",
-        "gender": "g",
-        "style_key": "space",
-        "description": "Style spatial futuriste",
-        "prompt": "as an astronaut in a futuristic space suit, on mars, full body shot"
-      }
-    ]
-  },
-  {
-    "id": "avatar-professional",
-    "name": "Collection Avatar Pro",
-    "description": "Avatars professionnels",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/avatar-professional.jpg",
-    "compatibleWith": ["avatar"],
-    "styles": [
-      {
-        "name": "LinkedIn",
-        "gender": "g",
-        "style_key": "linkedin",
-        "description": "Portrait professionnel style LinkedIn",
-        "prompt": "professional headshot for LinkedIn, neutral background, shoulders up"
-      },
-      {
-        "name": "CEO",
-        "gender": "g",
-        "style_key": "ceo",
-        "description": "Style executive",
-        "prompt": "as a CEO in a corner office, wearing a suit, professional setting, upper body shot"
-      },
-      {
-        "name": "Creative",
-        "gender": "g",
-        "style_key": "creative",
-        "description": "Style créatif pour portfolio",
-        "prompt": "creative professional in a design studio, artistic environment, half body shot"
-      }
-    ]
-  },
+ 
   {
     "id": "medieval",
     "name": "Collection Médiévale Fantastique",
@@ -4474,6 +4177,205 @@
       }
     ]
   },
+  
+  {
+  "id": "photo_render_effects",
+  "name": "Photographic Effects & Renders",
+  "description": "Collection of prompts that modify the visual and photographic style of an image",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/photographic_effects.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Polaroid Snapshot",
+      "gender": "g",
+      "style_key": "effect_polaroid",
+      "description": "Add a vintage Polaroid frame with retro color tones",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_polaroid.jpg",
+      "prompt": "Render this image as a vintage Polaroid photo. Add a white Polaroid-style border, slightly faded retro colors, soft grain, and natural lens blur. Make the lighting look like daylight film exposure with slight warm tones."
+    },
+    {
+      "name": "Studio Lighting",
+      "gender": "g",
+      "style_key": "effect_studio_lighting",
+      "description": "Apply dramatic studio lighting with shadows and reflectors",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_studio_lighting.jpg",
+      "prompt": "Apply professional studio lighting with controlled highlights and deep soft shadows. Use a key light from the left and a reflector on the right for soft contrast. Background should be smooth black or grey. Hyper-realistic finish."
+    },
+    {
+      "name": "Cinematic Lighting",
+      "gender": "g",
+      "style_key": "effect_cinematic",
+      "description": "Add cinematic mood with warm tones and dramatic contrast",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_cinematic.jpg",
+      "prompt": "Transform the image with cinematic lighting and mood. Add soft film grain, warm color grading (orange-teal), and dramatic shadows. Simulate depth using shallow focus and a subtle vignette."
+    },
+    {
+      "name": "Lens: Fisheye Distortion",
+      "gender": "g",
+      "style_key": "effect_fisheye",
+      "description": "Distort image with fisheye lens curvature",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_fisheye.jpg",
+      "prompt": "Render the image as seen through a fisheye lens. Apply wide-angle distortion, with strong curvature and center focus exaggeration. Create immersive, dynamic framing with visible edge warp."
+    },
+
+    {
+      "name": "Backlit Glow Effect",
+      "gender": "g",
+      "style_key": "effect_backlit",
+      "description": "Add soft glowing light from behind the subject",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_backlit.jpg",
+      "prompt": "Apply a glowing backlight effect. Light source is behind the subject, creating rim light and soft atmospheric glow. Slight haze or lens flare included for dreamy silhouette style."
+    },
+    {
+      "name": "Overexposed Vintage Flash",
+      "gender": "g",
+      "style_key": "effect_overexposed_flash",
+      "description": "Overexposed flash look with retro colors",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_overexposed_flash.jpg",
+      "prompt": "Add a strong frontal flash with slight overexposure. Flatten shadows and give a raw snapshot aesthetic. Slight motion blur or grain optional. Retro tones and unfiltered vibe."
+    },
+    {
+      "name": "Bokeh Light Overlay",
+      "gender": "g",
+      "style_key": "effect_bokeh_overlay",
+      "description": "Overlay colorful bokeh lights in foreground and background",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_bokeh_overlay.jpg",
+      "prompt": "Overlay circular bokeh lights in foreground and background. Use soft pinks, blues, and gold tones. Maintain image focus on subject. Create romantic or dreamy atmosphere."
+    },
+
+{
+      "name": "Analog Film Look (35mm)",
+      "gender": "g",
+      "style_key": "effect_film_35mm",
+      "description": "Apply classic 35mm film grain and vintage tones",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_film_35mm.jpg",
+      "prompt": "Transform the image to look like it was shot on Kodak Portra 400 35mm film. Add soft grain, pastel tones, mild contrast, and organic imperfections like light leaks or lens flare."
+    },
+    {
+      "name": "Infrared Vision",
+      "gender": "g",
+      "style_key": "effect_infrared",
+      "description": "Simulate infrared photography with surreal colors",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_infrared.jpg",
+      "prompt": "Render this image as if captured with an infrared camera. Vegetation should appear pink or white, sky deep black or turquoise. Create surreal, dreamlike contrast using inverted heat mapping."
+    },
+    {
+      "name": "Holographic Glow Overlay",
+      "gender": "g",
+      "style_key": "effect_holographic",
+      "description": "Add futuristic holographic textures and glows",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_holographic.jpg",
+      "prompt": "Overlay holographic textures and glowing color shifts across the image. Use iridescent tones—purple, cyan, and silver—with shimmer effects and light diffraction. Futuristic feel, semi-transparent overlays."
+    },
+    {
+      "name": "Golden Hour Lighting",
+      "gender": "g",
+      "style_key": "effect_golden_hour",
+      "description": "Simulate soft golden hour sunlight and warm haze",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_golden_hour.jpg",
+      "prompt": "Apply golden hour lighting with soft sun flare, warm golden tones, and long soft shadows. Highlight edges of the subject with glowing ambient backlight and orange-pink color grading."
+    },
+    {
+      "name": "Tilt-Shift Miniature Effect",
+      "gender": "g",
+      "style_key": "effect_tilt_shift",
+      "description": "Add tilt-shift blur to simulate miniature look",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_tilt_shift.jpg",
+      "prompt": "Apply a tilt-shift effect to make the scene appear miniature. Add shallow band of focus across center, with extreme blur above and below. Slight color saturation boost enhances toy-like appearance."
+    },
+    {
+      "name": "Light Rays Through Window",
+      "gender": "g",
+      "style_key": "effect_light_rays",
+      "description": "Add soft volumetric light rays through a window",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_light_rays.jpg",
+      "prompt": "Add soft, atmospheric light rays streaming through a window, dust particles suspended in air. Simulate natural ambient lighting with subtle shadows and gentle diffusion. Create a warm, poetic ambiance."
+    },
+    {
+      "name": "Soft Dream Glow",
+      "gender": "g",
+      "style_key": "effect_dream_glow",
+      "description": "Add glowing soft blur and pastel glow tones",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_dream_glow.jpg",
+      "prompt": "Render this image with a dreamy soft-focus glow. Add pastel pink and blue tones, low contrast, and blooming highlights. Apply a subtle glow to edges and soft vignette for an ethereal mood."
+    },
+    {
+      "name": "Moody Black & White Grain",
+      "gender": "g",
+      "style_key": "effect_moody_bw",
+      "description": "Convert to high-contrast black & white with grain",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_moody_bw.jpg",
+      "prompt": "Convert the image to high-contrast black and white. Add visible grain texture, strong shadows, and deep blacks. Emphasize emotion through harsh lighting and sharp textures, like classic photojournalism."
+    },
+
+    {
+      "name": "Neon Glow & Cyberpunk",
+      "gender": "g",
+      "style_key": "effect_neon_cyberpunk",
+      "description": "Apply neon lighting and futuristic cyberpunk colors",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_neon_cyberpunk.jpg",
+      "prompt": "Add intense neon lighting and a cyberpunk aesthetic. Use vibrant purple, blue, and magenta tones. Glow effects, reflections, and city light ambiance. Make it feel like a futuristic sci-fi scene at night."
+    },
+    {
+      "name": "Double Exposure Portrait",
+      "gender": "g",
+      "style_key": "effect_double_exposure",
+      "description": "Blend a portrait with natural or urban elements",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_double_exposure.jpg",
+      "prompt": "Create a double exposure effect. Blend the subject's face or silhouette with forest landscapes, city skylines, or clouds. Keep the portrait crisp with semi-transparent overlaid imagery."
+    },
+    {
+      "name": "Projector Light Mapping",
+      "gender": "g",
+      "style_key": "effect_projected_patterns",
+      "description": "Project geometric or artistic patterns onto the subject",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_projected_patterns.jpg",
+      "prompt": "Simulate light projections of patterns onto the face or background. Use grids, text, stripes, or floral textures. The light should wrap around the contours for dramatic effect."
+    },
+    {
+      "name": "Vintage 90s Camcorder Look",
+      "gender": "g",
+      "style_key": "effect_camcorder_90s",
+      "description": "Add VHS-style blur, timestamp, and analog artifacts",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_camcorder_90s.jpg",
+      "prompt": "Render the image as if recorded with a 1990s VHS camcorder. Add timestamp in the corner, slight interlacing, grain, chromatic aberration, and a slight blue-magenta shift. Low contrast and analog blur."
+    },
+    {
+      "name": "Old Newspaper Halftone Print",
+      "gender": "g",
+      "style_key": "effect_halftone_print",
+      "description": "Convert image to black and white halftone print texture",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_halftone_print.jpg",
+      "prompt": "Convert the image to an old halftone print like a newspaper. Black and white only. Dot-based texture, high contrast edges, slight paper grain, with minor ink misalignment artifacts."
+    },
+    {
+      "name": "Thermal Vision",
+      "gender": "g",
+      "style_key": "effect_thermal_vision",
+      "description": "Simulate a heat-detecting thermal camera view",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_thermal_vision.jpg",
+      "prompt": "Render the image as seen through a thermal camera. Use false color scale: blue for cold areas, red and yellow for hot spots. Apply visual noise and low detail, simulating night vision."
+    },
+    {
+      "name": "Oil Painting Texture",
+      "gender": "g",
+      "style_key": "effect_oil_painting",
+      "description": "Transform image with oil paint strokes and canvas texture",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_oil_painting.jpg",
+      "prompt": "Transform the image into an oil painting. Use visible brush strokes, thick textures, and canvas surface grain. Colors should blend like traditional oils, with soft edges and impasto highlights."
+    },
+    {
+      "name": "Editorial Cutout Collage",
+      "gender": "g",
+      "style_key": "effect_collage_cutout",
+      "description": "Apply modern cutout collage style with paper layers",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/effect_collage_cutout.jpg",
+      "prompt": "Create a cutout collage style using paper textures, torn edges, layered shapes, and bold magazine-style compositions. Add shadows between layers to emphasize the 3D effect."
+    }
+
+  ]
+}
+,
   {
     "id": "grandpeintre",
     "name": "Collection Grands Peintres",
