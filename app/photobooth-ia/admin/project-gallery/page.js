@@ -204,18 +204,27 @@ export default function ProjectGallery() {
     async function loadSessionImages() {
       setLoading(true);
       try {
-        console.log("Chargement des images pour le projet:", selectedProject);
+        // DEBUG : Affiche toutes les sessions pour voir ce qu'il y a en base
+        const { data: allSessions, error: allSessionsError } = await supabase
+          .from('sessions')
+          .select('*');
+        console.log("Toutes les sessions en base:", allSessions);
+
+        // DEBUG : Affiche la valeur et le type de selectedProject
+        console.log("selectedProject value:", selectedProject, "type:", typeof selectedProject);
+
+        // DEBUG : Affiche toutes les sessions pour ce project_id (en forçant le string et trim)
+        const projectIdToQuery = String(selectedProject).trim();
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('sessions')
-          .select('id, project_id, result_s3_url, result_image_url, created_at')
-          .eq('project_id', selectedProject)
-          .order('created_at', { ascending: false });
+          .select('*')
+          .eq('project_id', projectIdToQuery);
 
         if (sessionsError) {
           console.error("Erreur récupération images sessions:", sessionsError);
           setProjectImages([]);
         } else {
-          console.log("Images sessions récupérées pour project_id", selectedProject, ":", sessionsData);
+          console.log("Sessions récupérées pour project_id", projectIdToQuery, ":", sessionsData);
           const images = (sessionsData || []).map(session => ({
             id: session.id,
             image_url: session.result_s3_url || session.result_image_url,
