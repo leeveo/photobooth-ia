@@ -91,23 +91,28 @@ export default function StatsPage() {
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
-        .eq('created_by', currentAdminId) // Filtrer par l'ID de l'admin
+        .eq('created_by', currentAdminId)
         .order('created_at', { ascending: false });
 
       if (projectsError) throw projectsError;
       setProjects(projectsData || []);
 
-      // Compter les photos pour chaque projet
+      // Compter les photos pour chaque projet depuis la table sessions
       let totalPhotos = 0;
       const photoCounts = {};
       for (const project of projectsData || []) {
         try {
-          const response = await fetch(`/api/s3-project-images?projectId=${project.id}&countOnly=true`);
-          if (!response.ok) throw new Error('API error');
-          const countData = await response.json();
-          const count = countData.count || 0;
-          photoCounts[project.id] = count;
-          totalPhotos += count;
+          const { count, error: countError } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', project.id);
+
+          if (countError) {
+            photoCounts[project.id] = 0;
+            continue;
+          }
+          photoCounts[project.id] = count || 0;
+          totalPhotos += count || 0;
         } catch {
           photoCounts[project.id] = 0;
         }
