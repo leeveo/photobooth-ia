@@ -150,7 +150,7 @@ export default function ProjectGallery() {
         const { data: sessionProjects, error: sessionProjectsError } = await supabase
           .from('sessions')
           .select('project_id')
-          .neq('project_id', null);
+          .not('project_id', 'is', null);
 
         if (sessionProjectsError) {
           console.error("Erreur récupération des project_id de sessions:", sessionProjectsError);
