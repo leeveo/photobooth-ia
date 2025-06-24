@@ -159,37 +159,37 @@ export default function Dashboard() {
       // Calculer les statistiques
       const activeProjects = projectsData ? projectsData.filter(p => p.is_active).length : 0;
       
-      // Récupérer le nombre de photos pour chaque projet
+      // Récupérer le nombre de photos pour chaque projet depuis la table sessions
       let totalPhotos = 0;
       const photoCounts = {};
-      
+
       console.log("Fetching photo counts for", projectsData.length, "projects");
-      
+
       for (const project of projectsData || []) {
         try {
-          // Appeler l'API pour compter les images S3
-          console.log(`Fetching photo count for project ${project.id}: ${project.name}`);
-          const response = await fetch(`/api/s3-project-images?projectId=${project.id}&countOnly=true`);
-          
-          if (!response.ok) {
-            console.warn(`Failed to fetch counts for project ${project.id}:`, response.statusText);
+          // Compter les sessions pour ce projet (une session = une photo)
+          const { count, error: countError } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', project.id);
+
+          if (countError) {
+            console.warn(`Failed to fetch counts for project ${project.id}:`, countError);
             photoCounts[project.id] = 0;
             continue;
           }
-          
-          const countData = await response.json();
-          const count = countData.count || 0;
+
+          photoCounts[project.id] = count || 0;
+          totalPhotos += count || 0;
           console.log(`Project ${project.id} has ${count} photos`);
-          photoCounts[project.id] = count;
-          totalPhotos += count;
         } catch (countError) {
           console.error(`Error fetching counts for project ${project.id}:`, countError);
           photoCounts[project.id] = 0;
         }
       }
-      
+
       setProjectsWithPhotoCount(photoCounts);
-      
+
       setStats({
         totalProjects: projectsData.length,
         activeProjects,
