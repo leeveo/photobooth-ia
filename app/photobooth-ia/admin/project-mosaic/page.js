@@ -103,39 +103,48 @@ export default function ProjectMosaic() {
     loadProjectData();
   }, [projectId, supabase]);
   
-  // Charger les images S3 du projet
+  // Charger les images du projet depuis la table sessions
   useEffect(() => {
     if (!projectId) return;
-    
-    async function loadS3Images() {
+
+    async function loadSessionImages() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/s3-project-images?projectId=${projectId}`);
-        
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.images) {
-          setProjectImages(data.images);
-        } else {
+        // Récupérer toutes les sessions pour ce projet (une session = une image)
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false });
+
+        if (sessionsError) {
+          console.error('Erreur lors du chargement des images sessions:', sessionsError);
           setProjectImages([]);
+        } else {
+          // On prend result_s3_url en priorité, sinon result_image_url
+          const images = (sessionsData || []).map(session => ({
+            id: session.id,
+            image_url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at,
+            metadata: {
+              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+              size: null
+            }
+          })).filter(img => img.image_url); // Ne garder que les images existantes
+          setProjectImages(images);
         }
       } catch (err) {
-        console.error('Error loading S3 images:', err);
         setError('Failed to load project images');
+        setProjectImages([]);
       } finally {
         setLoading(false);
       }
     }
-    
-    loadS3Images();
-    
-    // Corriger la fonction de nettoyage pour éviter le double return
+
+    loadSessionImages();
+
+    // Nettoyage du canal realtime si besoin
     return () => {
-      // Vérifier si un canal existe avant de tenter de le supprimer
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current);
         realtimeChannel.current = null;

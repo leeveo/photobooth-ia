@@ -4177,7 +4177,108 @@
       }
     ]
   },
-  
+  {
+  "id": "montages-creatifs",
+  "name": "Collection Montages Créatifs",
+  "description": "Styles artistiques combinant plusieurs versions de la même image dans une mise en page graphique",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/montages_creatifs.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Triptyque Artistique",
+      "gender": "g",
+      "style_key": "collage_triptych",
+      "description": "Trois versions visuelles du sujet côte à côte : réaliste, abstrait, noir et blanc",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_triptych.jpg",
+      "prompt": "Make this as a triptych featuring the same person in three vertical panels. Each panel shows a different artistic style: one realistic, one abstract with bold colors, and one in black & white grain. Keep lighting consistent across all versions.",
+      "variations": 1
+    },
+    {
+      "name": "Modern vs Classique",
+      "gender": "g",
+      "style_key": "collage_split_modern_classic",
+      "description": "Portrait divisé en deux : moitié réaliste moderne, moitié peinture classique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_split.jpg",
+      "prompt": "Split the image vertically: the left half is modern and photorealistic, while the right half appears hand-painted like a Renaissance portrait. Ensure seamless blending at the center, with different color tones and textures for contrast.",
+      "variations": 1
+    },
+    {
+      "name": "Pop Art Quad",
+      "gender": "g",
+      "style_key": "collage_pop_art_repeat",
+      "description": "Quatre versions du portrait en style pop art à la Warhol",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_pop_art.jpg",
+      "prompt": "make this Creating a 2x2 grid inspired by Andy Warhol. Repeat in four squares, each one recolored with high-contrast pop art palettes: pink/yellow, blue/orange, green/red, black/white. Use flat, bold tones and minimal shading.",
+      "variations": 1
+    },
+    {
+      "name": "Style Miroir Inversé",
+      "gender": "g",
+      "style_key": "collage_mirror_effect",
+      "description": "Reflet inversé avec version alternative (grunge, bruitée, colorée)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_mirror.jpg",
+      "prompt": "Create a mirrored version , where the reflection shows a different version. Top: clean studio photo. Bottom (inverted): grungy distressed style with noise, scratches, and altered colors. Create a visual contrast between clean and chaos.",
+      "variations": 1
+    },
+ {
+      "name": "Visage en Puzzle",
+      "gender": "g",
+      "style_key": "collage_puzzle_face",
+      "description": "Visage reconstitué avec pièces de puzzle manquantes ou stylisées",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_puzzle.jpg",
+      "prompt": "make this as if made of puzzle pieces. Some areas show clean realistic portrait, others missing or replaced with abstract textures like clouds, circuit boards, or floral patterns. Add subtle shadows between pieces.",
+      "variations": 1
+    },
+    {
+      "name": "Style Graffiti & Pochoir",
+      "gender": "g",
+      "style_key": "collage_stencil_graffiti",
+      "description": "Superposition de tags, peintures pochoir et visuel urbain brut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_graffiti.jpg",
+      "prompt": "Overlay the image with graffiti textures, stencil-style portraits, and sprayed paint effects. Use high-contrast black and white with splashes of color. Add rough brick or concrete background with street art layering.",
+      "variations": 1
+    },
+    {
+      "name": "Démultiplication Dynamique",
+      "gender": "g",
+      "style_key": "collage_motion_repeat",
+      "description": "Sujet répété en plusieurs poses avec effet de mouvement stylisé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_motion.jpg",
+      "prompt": "make this multiple silhouettes of the same subject in dynamic motion. Apply different visual effects on each ghosted duplicate: blur, glitch, colored shadow, freeze-frame style. Arrange them in an arc or spread across the background.",
+      "variations": 1
+    },
+    {
+      "name": "Cadres Découpés Superposés",
+      "gender": "g",
+      "style_key": "collage_cutout_layered",
+      "description": "Découpe de papier en couches avec effet de profondeur artistique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_cutout.jpg",
+      "prompt": "Design a multi-layer cutout collage with different paper textures. Show depth using shadows between cutout shapes. Each layer reveals a version of the portrait: one clean, one painted, one textured.",
+      "variations": 1
+    },
+
+    {
+      "name": "Pop Collage Magazine",
+      "gender": "g",
+      "style_key": "collage_magazine_mix",
+      "description": "Découpage style magazine avec typographies, stickers, collages",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_mag_cut.jpg",
+      "prompt": "make this as a pop magazine collage using torn paper, printed headlines, doodles, and cutout shapes. Layer elements from fashion, music, emojis, and stickers. Play with bright color palettes and asymmetrical layout.",
+      "variations": 1
+    },
+ 
+    {
+      "name": "Double Interprétation",
+      "gender": "g",
+      "style_key": "collage_dual_style",
+      "description": "Deux rendus côte à côte : style cyberpunk VS naturel doré",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/collage_dual.jpg",
+      "prompt": "make this Duplicating the same image side by side. Left side is rendered in cyberpunk neon style, with glowing accents and dark shadows. Right side is warm golden-hour photography, soft and natural. Keep pose identical, background adjusted for harmony.",
+      "variations": 1
+    }
+  ]
+}
+,
   {
   "id": "photo_render_effects",
   "name": "Photographic Effects & Renders",
