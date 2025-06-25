@@ -54,8 +54,8 @@ export default function ProjectMosaic() {
   // Charger les détails du projet et les paramètres de mosaïque
   useEffect(() => {
     if (!projectId) return;
-    
-    async function loadProjectData() {
+
+    async function loadProjectDataAndSettings() {
       try {
         // Fetch project details
         const { data: projectData, error: projectError } = await supabase
@@ -63,20 +63,22 @@ export default function ProjectMosaic() {
           .select('id, name, slug, description')
           .eq('id', projectId)
           .single();
-          
+
         if (projectError) throw projectError;
-        
         setProjectDetails(projectData);
-        
-        // Fetch mosaic settings
+
+        // Fetch mosaic settings à chaque affichage (toujours frais)
         const { data: settingsData, error: settingsError } = await supabase
           .from('mosaic_settings')
           .select('*')
           .eq('project_id', projectId)
-          .single();
-          
-        if (!settingsError && settingsData) {
-          console.log("Loaded mosaic settings:", settingsData);
+          .maybeSingle();
+
+        if (settingsError) {
+          console.error('Erreur lors du chargement des paramètres de mosaïque:', settingsError);
+        }
+
+        if (settingsData) {
           setMosaicSettings({
             bg_color: settingsData.bg_color || '#000000',
             bg_image_url: settingsData.bg_image_url || '',
@@ -88,19 +90,19 @@ export default function ProjectMosaic() {
             qr_position: settingsData.qr_position || 'center'
           });
         } else {
-          // Use project name as default title if no settings found
+          // Si aucun paramètre, fallback sur le nom du projet
           setMosaicSettings(prev => ({
             ...prev,
             title: projectData.name || ''
           }));
         }
       } catch (err) {
-        console.error('Erreur lors du chargement du projet:', err);
+        console.error('Erreur lors du chargement du projet ou des paramètres:', err);
         setError('Impossible de charger les détails du projet');
       }
     }
-    
-    loadProjectData();
+
+    loadProjectDataAndSettings();
   }, [projectId, supabase]);
   
   // Charger les images du projet depuis la table sessions
