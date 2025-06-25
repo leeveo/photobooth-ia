@@ -38,14 +38,14 @@ export default function ProjectMosaic() {
   const mosaicUrl = typeof window !== 'undefined' ? 
     `${window.location.origin}/photobooth-ia/admin/project-mosaic?projectId=${projectId}` : '';
   
-  // Background style based on settings
+  // Background style based on settings (utilise bg_image_url ou bg_color de mosaic_settings)
   const getBackgroundStyle = () => {
     if (mosaicSettings.bg_image_url) {
       return {
         backgroundImage: `url(${mosaicSettings.bg_image_url})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundColor: mosaicSettings.bg_color // Fallback color
+        backgroundColor: mosaicSettings.bg_color // fallback si image non chargée
       };
     }
     return { backgroundColor: mosaicSettings.bg_color };
@@ -279,6 +279,39 @@ export default function ProjectMosaic() {
 
   return (
     <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      {/* Affichage des informations de la mosaïque */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="bg-white/80 rounded-lg shadow p-4 mb-4 flex flex-col gap-2 text-gray-900">
+          <div>
+            <span className="font-semibold">Titre :</span> {mosaicSettings.title || <span className="italic text-gray-400">Non défini</span>}
+          </div>
+          <div>
+            <span className="font-semibold">Description :</span> {mosaicSettings.description || <span className="italic text-gray-400">Non définie</span>}
+          </div>
+          <div>
+            <span className="font-semibold">Couleur de fond :</span>
+            <span className="inline-block w-6 h-6 rounded-full align-middle ml-2 border" style={{ backgroundColor: mosaicSettings.bg_color }} title={mosaicSettings.bg_color}></span>
+            <span className="ml-2 text-xs">{mosaicSettings.bg_color}</span>
+          </div>
+          {mosaicSettings.bg_image_url && (
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Image de fond :</span>
+              <Image src={mosaicSettings.bg_image_url} alt="Background" width={60} height={40} className="rounded shadow border" />
+              <a href={mosaicSettings.bg_image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">Voir</a>
+            </div>
+          )}
+          <div>
+            <span className="font-semibold">QR Code affiché :</span> {mosaicSettings.show_qr_code ? 'Oui' : 'Non'}
+            {mosaicSettings.show_qr_code && (
+              <div className="mt-2 flex flex-col gap-1">
+                <span className="font-semibold">Titre QR :</span> {mosaicSettings.qr_title}
+                <span className="font-semibold">Description QR :</span> {mosaicSettings.qr_description}
+                <span className="font-semibold">Position QR :</span> {mosaicSettings.qr_position}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       {/* Fullscreen Button - Always visible when supported */}
       {showFullscreenButton && (
         <motion.button
@@ -328,17 +361,49 @@ export default function ProjectMosaic() {
         </motion.div>
       )}
 
+      {/* Affichage du QR code de la mosaïque si activé dans mosaic_settings */}
+      {mosaicSettings.show_qr_code && (
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/90 rounded-lg shadow p-4 flex flex-col items-center max-w-xs w-full">
+            <h3 className="text-lg font-bold text-gray-900 mb-2 text-center">
+              {mosaicSettings.qr_title}
+            </h3>
+            <div className="mb-2">
+              <Canvas
+                text={mosaicUrl}
+                options={{
+                  level: 'M',
+                  margin: 3,
+                  scale: 4,
+                  width: 180,
+                  color: {
+                    dark: '#000000',
+                    light: '#ffffff',
+                  },
+                }}
+              />
+            </div>
+            <div className="text-xs text-gray-500 mb-1 text-center truncate w-full px-2">
+              {mosaicUrl.split('//')[1]?.substring(0, 40)}...
+            </div>
+            <div className="text-sm text-gray-700 text-center px-2">
+              {mosaicSettings.qr_description}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Title and description */}
       {(mosaicSettings.title || mosaicSettings.description) && (
         <div className="max-w-4xl mx-auto mb-8 text-center">
           {mosaicSettings.title && (
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow">
               {mosaicSettings.title}
             </h1>
           )}
           
           {mosaicSettings.description && (
-            <p className="text-base sm:text-lg text-white/90">
+            <p className="text-base sm:text-lg text-white/90 drop-shadow">
               {mosaicSettings.description}
             </p>
           )}
