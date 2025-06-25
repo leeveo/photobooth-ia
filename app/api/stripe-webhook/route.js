@@ -31,7 +31,8 @@ export async function POST(request) {
   // Gérer l'événement d'abonnement créé ou payé
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const email = session.customer_email;
+    // Correction ici : récupère l'email depuis customer_details si besoin
+    const email = session.customer_email || (session.customer_details && session.customer_details.email);
     const subscriptionId = session.subscription;
     console.log('[WEBHOOK] checkout.session.completed for email:', email, 'subscription:', subscriptionId);
 
