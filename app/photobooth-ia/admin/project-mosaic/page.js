@@ -104,14 +104,51 @@ export default function ProjectMosaic() {
     loadProjectDataAndSettings();
   }, [projectId, supabase, /* Ajoute un trigger sur reload si besoin */]);
   
-  // Charger les images du projet depuis la table sessions
+  // Charger les paramètres de mosaïque à chaque changement de projectId
+  useEffect(() => {
+    if (!projectId) return;
+
+    async function loadMosaicSettingsAndProject() {
+      try {
+        // Charger les paramètres de mosaïque
+        const { data: settingsData } = await supabase
+          .from('mosaic_settings')
+          .select('*')
+          .eq('project_id', projectId)
+          .maybeSingle();
+
+        // Charger les infos projet (pour fallback du titre)
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('id, name, slug, description')
+          .eq('id', projectId)
+          .single();
+
+        setMosaicSettings({
+          bg_color: settingsData?.bg_color || '#000000',
+          bg_image_url: settingsData?.bg_image_url || '',
+          title: settingsData?.title || projectData?.name || '',
+          description: settingsData?.description || '',
+          show_qr_code: settingsData?.show_qr_code || false,
+          qr_title: settingsData?.qr_title || 'Scannez-moi',
+          qr_description: settingsData?.qr_description || 'Retrouvez toutes les photos ici',
+          qr_position: settingsData?.qr_position || 'center'
+        });
+      } catch (err) {
+        setError('Impossible de charger les paramètres de la mosaïque');
+      }
+    }
+
+    loadMosaicSettingsAndProject();
+  }, [projectId, supabase]);
+  
+  // Charger les images du projet depuis la table sessions à chaque changement de projectId
   useEffect(() => {
     if (!projectId) return;
 
     async function loadSessionImages() {
       setLoading(true);
       try {
-        // Récupérer toutes les sessions pour ce projet (une session = une image)
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('sessions')
           .select('id, result_s3_url, result_image_url, created_at')
@@ -119,10 +156,8 @@ export default function ProjectMosaic() {
           .order('created_at', { ascending: false });
 
         if (sessionsError) {
-          console.error('Erreur lors du chargement des images sessions:', sessionsError);
           setProjectImages([]);
         } else {
-          // On prend result_s3_url en priorité, sinon result_image_url
           const images = (sessionsData || []).map(session => ({
             id: session.id,
             image_url: session.result_s3_url || session.result_image_url,
@@ -131,11 +166,10 @@ export default function ProjectMosaic() {
               fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
               size: null
             }
-          })).filter(img => img.image_url); // Ne garder que les images existantes
+          })).filter(img => img.image_url);
           setProjectImages(images);
         }
       } catch (err) {
-        setError('Failed to load project images');
         setProjectImages([]);
       } finally {
         setLoading(false);
@@ -143,14 +177,6 @@ export default function ProjectMosaic() {
     }
 
     loadSessionImages();
-
-    // Nettoyage du canal realtime si besoin
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current);
-        realtimeChannel.current = null;
-      }
-    };
   }, [projectId, supabase]);
   
   // Animation variants
