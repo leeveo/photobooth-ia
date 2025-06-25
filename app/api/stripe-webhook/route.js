@@ -1,32 +1,29 @@
-import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+
+// Nouvelle convention Next.js app router
+export const dynamic = "force-dynamic";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-export const config = { api: { bodyParser: false } };
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
-  const sig = req.headers['stripe-signature'];
-  const buf = await buffer(req);
+export async function POST(request) {
+  const sig = request.headers.get('stripe-signature');
+  const buf = Buffer.from(await request.arrayBuffer());
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
   // Gérer l'événement d'abonnement créé ou payé
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    // Récupérer l'email ou metadata pour retrouver l'utilisateur
     const email = session.customer_email;
     const subscriptionId = session.subscription;
 
-    // Trouver l'utilisateur dans Supabase et mettre à jour son abonnement
     const { data: user } = await supabase
       .from('admin_users')
       .select('id')
@@ -45,5 +42,5 @@ export default async function handler(req, res) {
     }
   }
 
-  res.json({ received: true });
+  return new Response(JSON.stringify({ received: true }), { status: 200 });
 }
