@@ -401,12 +401,9 @@ export default function ProjectGallery() {
       setSuccess('Paramètres de mosaïque enregistrés avec succès');
       setShowMosaicSettings(false);
       
-      // Refresh the mosaic settings - now this function exists
-      const updatedSettings = await fetchMosaicSettings(selectedProject);
-      if (updatedSettings) {
-        setMosaicSettings(updatedSettings);
-      }
-      
+      // Refresh the mosaic settings - remplacer fetchMosaicSettings par loadMosaicSettings
+      await loadMosaicSettings(selectedProject);
+
     } catch (err) {
       console.error('Error saving mosaic settings:', err);
       setError(`Erreur lors de l'enregistrement des paramètres de mosaïque: ${err.message}`);

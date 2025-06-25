@@ -4477,6 +4477,251 @@
   ]
 }
 ,
+{
+  "id": "montages-simples",
+  "name": "Montages Simples & Épurés",
+  "description": "Dispositions graphiques simples avec plusieurs images encadrées, chacune filtrée par une couleur dominante ou un style minimaliste.",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/montage_simple.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Trilogie Horizontale",
+      "gender": "g",
+      "style_key": "simple_horizontal_triptych",
+      "description": "3 portraits côte à côte, chacun avec un filtre de couleur différent",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_triptych.jpg",
+      "prompt": "make this as a horizontal  . Each version uses a different monochrome filter: red, green, and blue. Keep lighting soft and minimalist."
+    },
+    {
+      "name": "Carré à 4 Couleurs",
+      "gender": "g",
+      "style_key": "simple_color_quadrant",
+      "description": "Grille 2x2 avec 4 images dans des teintes pastel variées",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_quadrant.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant is lightly color-tinted: soft pink, mint green, sky blue, and beige. Keep clean white borders and soft contrast."
+    },
+    {
+      "name": "Bande Verticale Minimaliste",
+      "gender": "g",
+      "style_key": "simple_vertical_strip",
+      "description": "Trois images en bande verticale avec un effet film doux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_vertical_strip.jpg",
+      "prompt": "Display a vertical strip of three portraits. Use the same image with subtle filters: one warm tone, one cool tone, one in grayscale. Add thin white gaps between panels for a clean layout."
+    },
+    {
+      "name": "Polaroids Croisés",
+      "gender": "g",
+      "style_key": "simple_polaroid_stack",
+      "description": "4 petites images en style polaroid empilées en décalé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_polaroid.jpg",
+      "prompt": "Create four small square versions in polaroid frames, slightly rotated and overlapping. Each one has a vintage film filter: faded red, yellow hue, grainy black and white, and teal shift."
+    },
+
+    {
+      "name": "Color Fade Panel",
+      "gender": "g",
+      "style_key": "simple_gradient_sequence",
+      "description": "Transition visuelle sur 4 images d’un filtre chaud vers un filtre froid",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_fade.jpg",
+      "prompt": "Display a sequence of four images from left to right. Each uses a progressive color filter: warm orange, pink, purple, then cool blue. Keep the same pose throughout for visual consistency."
+    },
+    {
+      "name": "Bandes Décalées",
+      "gender": "g",
+      "style_key": "simple_shifted_panels",
+      "description": "Trois encarts légèrement décalés, comme des diapositives en mouvement",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/simple_shifted.jpg",
+      "prompt": "Show three versions of the image, each shifted diagonally like sliding panels. Each panel uses a muted color overlay: beige, dusty rose, and soft grey. Add subtle shadows behind panels."
+    },
+    
+    {
+      "name": "Filtres Film Vintage",
+      "gender": "g",
+      "style_key": "grid_vintage_filters",
+      "description": "Grille avec filtres photo rétro : sépia, grain, délavé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_vintage.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant uses a different vintage film filter: faded sepia, dusty black & white, washed-out color, and grainy analog tone. Maintain a neutral frame and soft vignette."
+    },
+
+    {
+      "name": "Teintes Sombres Équilibrées",
+      "gender": "g",
+      "style_key": "grid_muted_tones",
+      "description": "Teintes sourdes et désaturées avec ambiance élégante",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_muted.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Use a muted color theme: dusty plum, forest green, navy blue, and taupe. Maintain clean white spacing, with soft shadows and a calm editorial tone."
+    },
+    {
+      "name": "Futurisme Digital",
+      "gender": "g",
+      "style_key": "grid_glitch_cyber",
+      "description": "Grille stylisée futuriste avec effets glitch et accents cybernétiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_glitch.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each square features subtle digital glitch effects and cyberpunk tints: neon magenta, acid green, cyan glow, and holographic silver. Keep the layout clean with sharp separation between quadrants."
+    },
+    {
+      "name": "Noir et Blanc Varié",
+      "gender": "g",
+      "style_key": "grid_bw_styles",
+      "description": "Variation de styles noir et blanc dans chaque encart",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_bw.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. All quadrants are black and white but use different treatments: high contrast, soft grainy, matte finish, and harsh film noir shadows. Keep spacing crisp and square."
+    },
+
+    {
+      "name": "Palette Chromatique Dégradée",
+      "gender": "g",
+      "style_key": "grid_gradient_palette",
+      "description": "Dégradé subtil à travers les 4 images dans des tons complémentaires",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_gradient.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant shifts hue slightly to form a visual gradient: lavender to blue, blue to green, green to yellow, yellow to coral. Keep contrast low and borders soft white."
+    },
+
+    {
+      "name": "Villes du Monde",
+      "gender": "g",
+      "style_key": "grid_city_backdrops",
+      "description": "Grille avec arrière-plans de grandes villes : Paris, Tokyo, New York, Rio",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_city_backdrops.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each version features a famous city in the background: Eiffel Tower in Paris, neon Tokyo street, New York skyline, and Rio's beach with Christ the Redeemer. Use soft lighting and thin white frames."
+    },
+    {
+      "name": "Saisons en Décor",
+      "gender": "g",
+      "style_key": "grid_season_backdrops",
+      "description": "Même sujet dans des décors saisonniers différents",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_season_backdrops.jpg",
+      "prompt": "Arrange four versions of the same portrait in a 2x2 grid. Each version has a seasonal background: snowy park for winter, blooming garden for spring, beach for summer, and falling leaves for autumn. Maintain consistent subject position."
+    },
+    {
+      "name": "Monuments Célèbres",
+      "gender": "g",
+      "style_key": "grid_world_landmarks",
+      "description": "Portrait devant quatre monuments iconiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_world_landmarks.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each has a different world monument as background: Pyramids of Giza, Colosseum in Rome, Taj Mahal, and Sydney Opera House. Align subject consistently, blend lighting naturally."
+    },
+    {
+      "name": "Ambiances Célestes",
+      "gender": "g",
+      "style_key": "grid_sky_backdrops",
+      "description": "Chaque fond représente un ciel différent : nuit étoilée, lever de soleil, ciel orageux, ciel rose",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_sky_backdrops.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each has a unique sky backdrop: starry night, golden sunrise, dramatic storm clouds, and pink sunset. Maintain clean framing and balance subject lighting to match."
+    },
+
+    {
+      "name": "Fonds Artistiques",
+      "gender": "g",
+      "style_key": "grid_artistic_backgrounds",
+      "description": "Chaque carré montre un fond graphique ou peint",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_artistic_backgrounds.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each frame has a stylized artistic background: watercolor wash, graffiti wall, geometric abstract pattern, and oil paint texture. Keep the subject natural with light color correction."
+    },
+
+
+    {
+      "name": "Univers de Contes",
+      "gender": "g",
+      "style_key": "grid_fairytale_worlds",
+      "description": "Quatre mondes de contes de fées différents : forêt magique, château, village médiéval, grotte enchantée",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_fairytale.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant places the subject in a fairytale world: enchanted forest, stone castle, medieval village, and glowing crystal cave. Lighting should match each scene’s mood."
+    },
+  
+    {
+      "name": "Paysages de Science-Fiction",
+      "gender": "g",
+      "style_key": "grid_fantasy_sci_fi",
+      "description": "Fonds imaginaires futuristes : planète rouge, ville volante, base lunaire, jungle alien",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_sci_fi_planets.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each version is placed in a sci-fi environment: red planet, flying city, moon base, and alien jungle. Match subject lighting to ambient tones."
+    },
+    {
+      "name": "Textures Murales",
+      "gender": "g",
+      "style_key": "grid_wall_textures",
+      "description": "Chaque fond est une texture murale différente : béton, brique, graffiti, tôle rouillée",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_walls.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: cracked concrete, red brick, graffiti mural, and rusted metal. Keep subject centered and clean."
+    },
+
+    {
+      "name": "Fonds Monochromes Profonds",
+      "gender": "g",
+      "style_key": "grid_deep_colors",
+      "description": "Fonds unis mais très saturés : bordeaux, bleu nuit, vert émeraude, orange foncé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_deepcolors.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each background is a solid, deep saturated color: burgundy, navy blue, emerald green, and burnt orange. Subject remains neutral and centered, with crisp lighting."
+    },
+
+
+
+
+
+    {
+      "name": "Bois & Matériaux Naturels",
+      "gender": "g",
+      "style_key": "grid_wood_nature",
+      "description": "Fonds en bois et matières naturelles",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_wood_nature.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: polished wood, bark texture, woven straw, and stone bricks. Keep subject centered and clean."
+    },
+ 
+    {
+      "name": "Textures Tissus",
+      "gender": "g",
+      "style_key": "grid_fabric_backgrounds",
+      "description": "Fonds doux inspirés de tissus textiles",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_fabric_backgrounds.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: linen, velvet, corduroy, and silk drapery. Keep subject centered and clean."
+    },
+    {
+      "name": "Ambiances Architecturales",
+      "gender": "g",
+      "style_key": "grid_architecture_patterns",
+      "description": "Fonds inspirés de structures architecturales",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_architecture_patterns.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: glass facade, wooden slats, mosaic tile wall, and concrete arch. Keep subject centered and clean."
+    },
+    {
+      "name": "Graphismes Modernes",
+      "gender": "g",
+      "style_key": "grid_modern_graphics",
+      "description": "Fonds géométriques et lignes modernes",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_modern_graphics.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: black-and-white chevron pattern, red diagonal stripes, grey geometric cubes, and soft color gradients. Keep subject centered and clean."
+    },
+    {
+      "name": "Ambiances Urbaines",
+      "gender": "g",
+      "style_key": "grid_urban_walls",
+      "description": "Fonds de ruelles ou de ville",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_urban_walls.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: tiled metro wall, subway map poster, painted alley wall, and stained concrete. Keep subject centered and clean."
+    },
+    {
+      "name": "Papier & Supports Créatifs",
+      "gender": "g",
+      "style_key": "grid_paper_variants",
+      "description": "Fonds en papier plié ou froissé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_paper_variants.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: wrinkled notebook paper, folded kraft, glossy magazine page, and torn newsprint. Keep subject centered and clean."
+    },
+
+
+    {
+      "name": "Ambiances Typographiques",
+      "gender": "g",
+      "style_key": "grid_typographic_surfaces",
+      "description": "Fonds avec typographies et lettrages artistiques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/grid_typographic_surfaces.jpg",
+      "prompt": "Arrange four versions of the same image in a 2x2 grid. Each quadrant has a different textured wall behind: chalkboard writing, graffiti tags, vintage sign lettering, and handwritten quotes. Keep subject centered and clean."
+    }
+   
+  ]
+}
+,
   {
     "id": "grandpeintre",
     "name": "Collection Grands Peintres",

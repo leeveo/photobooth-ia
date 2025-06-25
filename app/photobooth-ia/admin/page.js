@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { FiGrid, FiMusic, FiHelpCircle, FiRotateCcw, FiFilm } from 'react-icons/fi';
+import { FiGrid, FiMusic, FiHelpCircle } from 'react-icons/fi';
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
@@ -53,24 +53,7 @@ export default function AdminPage() {
       icon: <FiMusic className="w-5 h-5" />,
       color: 'bg-pink-100 text-pink-700 border-pink-300'
     },
-    {
-      label: 'Quizz',
-      url: process.env.NEXT_PUBLIC_QUIZZ_URL,
-      icon: <FiHelpCircle className="w-5 h-5" />,
-      color: 'bg-green-100 text-green-700 border-green-300'
-    },
-    {
-      label: 'Roue de la fortune',
-      url: process.env.NEXT_PUBLIC_ROUE_FORTUNE_URL,
-      icon: <FiRotateCcw className="w-5 h-5" />,
-      color: 'bg-yellow-100 text-yellow-700 border-yellow-300'
-    },
-    {
-      label: 'Fresque animée',
-      url: process.env.NEXT_PUBLIC_FRESQUE_ANIMEE_URL,
-      icon: <FiFilm className="w-5 h-5" />,
-      color: 'bg-purple-100 text-purple-700 border-purple-300'
-    },
+   
   ];
 
   if (loading) {
