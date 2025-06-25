@@ -11,7 +11,15 @@ const supabase = createClient(
 
 export async function POST(req) {
   try {
-    const { priceId } = await req.json();
+    const body = await req.json();
+    const { priceId } = body;
+    console.log('[API] create-checkout-session called with priceId:', priceId);
+
+    // Vérifie que le priceId est bien présent
+    if (!priceId) {
+      console.error('[API] No priceId provided');
+      return NextResponse.json({ error: 'Aucun priceId fourni.' }, { status: 400 });
+    }
 
     // Récupérer l'utilisateur connecté (par exemple via session ou JWT)
     // Ici, on suppose que l'ID admin est dans un cookie ou header (à adapter selon ton auth)
@@ -21,24 +29,32 @@ export async function POST(req) {
     // const email = ...;
 
     // Créer la session Stripe Checkout
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'subscription',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      // TODO: remplacer par l'email de l'utilisateur connecté
-      // customer_email: email,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?success=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?canceled=1`,
-      // metadata: { adminId },
-    });
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        // TODO: remplacer par l'email de l'utilisateur connecté
+        // customer_email: email,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?success=1`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?canceled=1`,
+        // metadata: { adminId },
+      });
+      console.log('[API] Stripe session created:', session.id);
+    } catch (stripeErr) {
+      console.error('[API] Stripe error:', stripeErr);
+      return NextResponse.json({ error: stripeErr.message }, { status: 500 });
+    }
 
     return NextResponse.json({ sessionId: session.id });
   } catch (err) {
+    console.error('[API] General error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

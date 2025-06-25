@@ -7,21 +7,21 @@ const PLANS = [
   {
     name: 'Starter',
     price: 10,
-    priceId: 'prod_SZ1euXXnbAAkPJ',
+    priceId: 'price_1RdtbBIgKYOzHnxEwrDVPJdI', // Remplace par ton vrai price_id Stripe
     quota: 100,
     description: '100 photos / mois',
   },
   {
     name: 'Pro',
     price: 29,
-    priceId: 'prod_SZ1eoeGY4eMxeZ',
+    priceId: 'price_1RdtbYIgKYOzHnxE7NSZjxCP', // Remplace par ton vrai price_id Stripe
     quota: 500,
     description: '500 photos / mois',
   },
   {
     name: 'Entreprise',
     price: 99,
-    priceId: 'prod_SZ1gxyOIv9BwgZ',
+    priceId: 'price_xxx3', // Remplace par ton vrai price_id Stripe
     quota: 5000,
     description: '5000 photos / mois',
   },
@@ -34,17 +34,22 @@ export default function ChoosePlanPage() {
   const handleSubscribe = async (priceId) => {
     setLoading(true);
     setError(null);
+    console.log('[ChoosePlan] handleSubscribe called with priceId:', priceId);
     try {
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceId }),
       });
+      console.log('[ChoosePlan] Response status:', res.status);
       const data = await res.json();
+      console.log('[ChoosePlan] Response data:', data);
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la création de la session Stripe');
       const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+      console.log('[ChoosePlan] Stripe loaded:', !!stripe, 'SessionId:', data.sessionId);
       await stripe.redirectToCheckout({ sessionId: data.sessionId });
     } catch (err) {
+      console.error('[ChoosePlan] Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
