@@ -13,7 +13,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: 30,
+    price: 29,
     priceId: 'price_xxx2',
     quota: 500,
     description: '500 photos / mois',
