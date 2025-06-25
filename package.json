@@ -21,6 +21,7 @@
     "@fal-ai/serverless-client": "^0.8.2",
     "@fal-ai/serverless-proxy": "^0.7.4",
     "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@stripe/stripe-js": "^7.4.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.50.0",
     "@types/js-cookie": "^3.0.6",
@@ -52,6 +53,7 @@
     "sharp": "^0.34.1",
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
+    "stripe": "^18.2.1",
     "swiper": "^11.1.14",
     "uuid": "^11.1.0"
   },

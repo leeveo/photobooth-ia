@@ -112,6 +112,20 @@ export default function ProjectsPage() {
       setError("Vous n'êtes pas connecté. Veuillez vous reconnecter.");
       return;
     }
+
+    // Vérifier le plan de l'utilisateur
+    const { data: admin, error: adminError } = await supabase
+      .from('admin_users')
+      .select('plan, stripe_subscription_id')
+      .eq('id', currentAdminId)
+      .single();
+
+    if (adminError || !admin || !admin.stripe_subscription_id) {
+      setError("Vous devez souscrire à un plan pour créer un projet.");
+      // Rediriger vers la page de choix de plan
+      router.push('/photobooth-ia/admin/choose-plan');
+      return;
+    }
     
     try {
       setCreatingProject(true);
