@@ -51,7 +51,7 @@ export default function ProjectMosaic() {
     return { backgroundColor: mosaicSettings.bg_color };
   };
 
-  // Charger les détails du projet et les paramètres de mosaïque
+  // Charger les détails du projet et les paramètres de mosaïque à chaque affichage
   useEffect(() => {
     if (!projectId) return;
 
@@ -90,7 +90,6 @@ export default function ProjectMosaic() {
             qr_position: settingsData.qr_position || 'center'
           });
         } else {
-          // Si aucun paramètre, fallback sur le nom du projet
           setMosaicSettings(prev => ({
             ...prev,
             title: projectData.name || ''
@@ -103,7 +102,7 @@ export default function ProjectMosaic() {
     }
 
     loadProjectDataAndSettings();
-  }, [projectId, supabase]);
+  }, [projectId, supabase, /* Ajoute un trigger sur reload si besoin */]);
   
   // Charger les images du projet depuis la table sessions
   useEffect(() => {
