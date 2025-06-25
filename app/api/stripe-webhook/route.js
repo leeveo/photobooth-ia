@@ -18,12 +18,32 @@ export async function POST(request) {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
+  // Utilitaire pour obtenir le quota selon le plan
+  function getQuotaFromPriceId(priceId) {
+    if (priceId === 'price_1RdtbBIgKYOzHnxEwrDVPJdI') return 100;
+    if (priceId === 'price_1RdtbYIgKYOzHnxE7NSZjxCP') return 500;
+    if (priceId === 'price_xxx3') return 5000;
+    return 0;
+  }
+
   // Gérer l'événement d'abonnement créé ou payé
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const email = session.customer_email;
     const subscriptionId = session.subscription;
 
+    // Récupérer la subscription Stripe pour obtenir le priceId
+    let subscription;
+    try {
+      subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    } catch (e) {
+      return new Response(`Stripe subscription fetch error: ${e.message}`, { status: 500 });
+    }
+    const priceId = subscription.items.data[0].price.id;
+    const planName = subscription.items.data[0].price.nickname || subscription.items.data[0].price.id;
+    const quota = getQuotaFromPriceId(priceId);
+
+    // Mettre à jour l'utilisateur dans Supabase
     const { data: user } = await supabase
       .from('admin_users')
       .select('id')
@@ -36,11 +56,15 @@ export async function POST(request) {
         .update({
           stripe_customer_id: session.customer,
           stripe_subscription_id: subscriptionId,
-          plan: session.display_items?.[0]?.plan?.nickname || null,
+          plan: planName,
+          photo_quota: quota,
+          photo_quota_reset_at: new Date().toISOString(),
         })
         .eq('id', user.id);
     }
   }
+
+  // Tu peux aussi gérer d'autres événements Stripe ici (ex: abonnement annulé, etc.)
 
   return new Response(JSON.stringify({ received: true }), { status: 200 });
 }
