@@ -231,12 +231,13 @@ export default function CameraCapture({ params }) {
   const [countdownNumber, setCountdownNumber] = useState(3);
   const [showCountdown, setShowCountdown] = useState(false);
   
-  // New states for photo quota management
+  // Quota states
   const [quota, setQuota] = useState(null);
-  const [quotaResetAt, setQuotaResetAt] = useState(null);
-  const [photosTaken, setPhotosTaken] = useState(0);
-  const [quotaExceeded, setQuotaExceeded] = useState(false);
-  
+  const [quotaUsed, setQuotaUsed] = useState(null);
+  const [quotaLoading, setQuotaLoading] = useState(true);
+  const [quotaAtteint, setQuotaAtteint] = useState(false);
+  const [quotaRestant, setQuotaRestant] = useState(null);
+
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
@@ -408,6 +409,9 @@ export default function CameraCapture({ params }) {
       
       // Store in localStorage
       localStorage.setItem("faceImage", imageDataURL);
+      
+      // Recharge le quota après la prise de photo
+      fetchQuota();
     } catch (error) {
       console.error("Error in processCapture:", error);
       setCameraError(`Erreur lors de la capture: ${error.message}`);
@@ -634,7 +638,6 @@ export default function CameraCapture({ params }) {
     }));
   
   // Add these utility functions for image processing
-  
   // Function to fetch thumbnail from canvas_layouts
   const fetchProjectThumbnail = async (projectId) => {
     try {
@@ -1162,9 +1165,182 @@ export default function CameraCapture({ params }) {
   } finally {
       setProcessing(false);
       setElapsedTime(Date.now() - start);
+      // Recharge le quota après la génération
+      fetchQuota();
+    }
+};
+
+// Ajoute cette fonction pour générer l'image via Replicate
+const generateImageReplicate = async () => {
+  setProcessing(true);
+  setError(null);
+  setLogs([]);
+  setElapsedTime(0);
+
+  const start = Date.now();
+  try {
+    const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+    const image = imageFile; // base64
+
+    setLogs(["Envoi de la requête à Replicate..."]);
+
+    const response = await fetch('/api/replicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "black-forest-labs/flux-kontext-pro",
+        input: {
+          prompt,
+          input_image: image,
+          output_format: "jpg",
+          width: 970,
+          height: 651
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Erreur Replicate");
+    }
+
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "Erreur Replicate");
+
+    const resultUrl = typeof data.output === 'string'
+      ? data.output
+      : Array.isArray(data.output)
+        ? data.output[0]
+        : data.output?.url || data.output?.image || data.output;
+
+    if (!resultUrl) throw new Error("Aucune image générée");
+
+    setLogs(["Image générée avec succès !"]);
+    localStorage.setItem("faceURLResult", resultUrl);
+
+    // --- AJOUT : ENREGISTREMENT DANS LA TABLE SESSIONS ---
+    try {
+      await supabase.from('sessions').insert({
+        user_email: null,
+        style_id: localStorage.getItem('selectedStyleId'),
+        style_key: localStorage.getItem('selectedStyleKey') || null,
+        gender: styleGender,
+        result_image_url: resultUrl,
+        processing_time_ms: Date.now() - start,
+        is_success: true,
+        project_id: project?.id,
+        created_at: new Date().toISOString()
+      });
+      setLogs(logs => [...logs, "Session enregistrée dans la base."]);
+    } catch (sessionError) {
+      setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+      console.error("Erreur insertion session:", sessionError);
+    }
+    // --- FIN AJOUT ---
+
+    setTimeout(() => {
+      router.push(`/photobooth-premium/${slug}/result`);
+    }, 1000);
+
+  } catch (err) {
+    setError(err.message || "Erreur lors de la génération");
+    setLogs([err.message]);
+    // Enregistre l'échec dans sessions pour garder la cohérence du quota
+    try {
+      await supabase.from('sessions').insert({
+        user_email: null,
+        style_id: localStorage.getItem('selectedStyleId'),
+        style_key: localStorage.getItem('selectedStyleKey') || null,
+        gender: styleGender,
+        result_image_url: null,
+        processing_time_ms: Date.now() - start,
+        is_success: false,
+        error_message: err.message,
+        project_id: project?.id,
+        created_at: new Date().toISOString()
+      });
+    } catch {}
+  } finally {
+    setProcessing(false);
+    setElapsedTime(Date.now() - start);
   }
 };
 
+  // Fonction pour charger le quota (une seule version)
+  const fetchQuota = useCallback(async () => {
+    setQuotaLoading(true);
+    try {
+      if (!project?.id) {
+        setQuota(null);
+        setQuotaUsed(null);
+        setQuotaRestant(null);
+        setQuotaAtteint(false);
+        setQuotaLoading(false);
+        return;
+      }
+      // Récupérer l'admin lié au projet
+      const { data: projectData } = await supabase
+        .from('projects')
+        .select('id, created_by')
+        .eq('id', project.id)
+        .single();
+      const adminUserId = projectData?.created_by;
+
+      // Récupérer le dernier paiement pour le quota et la date de reset
+      let quotaValue = 0;
+      let quotaResetAt = null;
+      if (adminUserId) {
+        const { data: lastPayment } = await supabase
+          .from('admin_payments')
+          .select('photo_quota, photo_quota_reset_at')
+          .eq('admin_user_id', adminUserId)
+          .order('photo_quota_reset_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastPayment) {
+          quotaValue = lastPayment.photo_quota || 0;
+          quotaResetAt = lastPayment.photo_quota_reset_at;
+        }
+      }
+
+      // Compter les sessions pour ce projet depuis le reset
+      let used = 0;
+      if (quotaResetAt) {
+        const { count } = await supabase
+          .from('sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('project_id', project.id)
+          .gte('created_at', quotaResetAt);
+        used = count || 0;
+      } else {
+        const { count } = await supabase
+          .from('sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('project_id', project.id);
+        used = count || 0;
+      }
+
+      setQuota(quotaValue);
+      setQuotaUsed(used);
+      setQuotaRestant(quotaValue !== null ? Math.max(0, quotaValue - used) : null);
+      setQuotaAtteint(quotaValue !== null && used >= quotaValue);
+    } catch (e) {
+      setQuota(null);
+      setQuotaUsed(null);
+      setQuotaRestant(null);
+      setQuotaAtteint(false);
+    }
+    setQuotaLoading(false);
+  }, [project, supabase]);
+
+  // Charge le quota au chargement du projet
+  useEffect(() => {
+    if (project && supabase) {
+      fetchQuota();
+    }
+  }, [project, supabase, fetchQuota]);
+
+  // Affichage du quota (inchangé)
   if (loading) {
     return (
       <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center">
@@ -1496,7 +1672,8 @@ export default function CameraCapture({ params }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          {!enabled ? (
+          {/* Affiche le bouton uniquement si quota non atteint */}
+          {!enabled && !quotaAtteint ? (
             <>
               {/* Debug info for development */}
               {process.env.NODE_ENV === 'development' && (
@@ -1513,12 +1690,11 @@ export default function CameraCapture({ params }) {
                   // Direct approach without unnecessary complexity
                   setShowCountdown(true);
                   setCountdownNumber(3);
-                  
                   setTimeout(() => setCountdownNumber(2), 1000);
                   setTimeout(() => setCountdownNumber(1), 2000);
                   setTimeout(() => {
                     setShowCountdown(false);
-                    processCapture(); // Direct call to processCapture
+                    processCapture();
                   }, 3000);
                 }}
                 className="px-8 py-3 rounded-lg font-bold text-xl relative"
@@ -1529,15 +1705,13 @@ export default function CameraCapture({ params }) {
                 }}
                 whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
                 whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
-                disabled={!cameraLoaded || showCountdown || quotaExceeded}
+                disabled={!cameraLoaded || showCountdown}
               >
-                {quotaExceeded
-                  ? "Quota atteint"
-                  : showCountdown
-                    ? 'PRISE DE PHOTO...'
-                    : cameraLoaded
-                      ? 'PRENDRE UNE PHOTO'
-                      : 'ATTENTE DE LA CAMÉRA...'}
+                {showCountdown
+                  ? 'PRISE DE PHOTO...'
+                  : cameraLoaded
+                    ? 'PRENDRE UNE PHOTO'
+                    : 'ATTENTE DE LA CAMÉRA...'}
                 {cameraLoaded && !showCountdown && (
                   <motion.span
                     className="absolute inset-0 rounded-lg border-2"
@@ -1548,43 +1722,41 @@ export default function CameraCapture({ params }) {
                 )}
               </motion.button>
             </>
-          ) : (
-            <motion.div 
-              className="flex space-x-4"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <motion.button 
+          ) : null}
+
+          {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée */}
+          {enabled && (
+            <div className="flex space-x-4">
+              <button 
                 onClick={retake}
                 className="px-6 py-3 rounded-lg font-medium"
                 style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.3)' }}
-                whileTap={{ scale: 0.95 }}
               >
                 REPRENDRE
-              </motion.button>
-              <motion.button 
-                onClick={generateImageSwap}
+              </button>
+              <button 
+                onClick={generateImageReplicate}
                 className="px-8 py-3 rounded-lg font-bold"
                 style={{ backgroundColor: secondaryColor, color: primaryColor }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={processing}
               >
-                CONFIRMER
-              </motion.button>
-            </motion.div>
+                {processing ? "Génération..." : "GÉNÉRER MON IMAGE"}
+              </button>
+            </div>
           )}
           
-          {/* Back to styles button - always visible */}
-          {!enabled && (
-            <Link 
-              href={`/photobooth-premium/${slug}/style`}
-              className="mt-4 text-white/70 hover:text-white text-sm"
-            >
-              Retour à la sélection de style
-            </Link>
-          )}
+          {/* Affichage du quota restant ou message quota atteint */}
+          <div className="mb-4 text-center">
+            {quotaLoading ? (
+              <span className="text-white/70 text-sm">Chargement du quota...</span>
+            ) : quotaAtteint ? (
+              <span className="text-red-400 font-bold text-lg">Quota Atteint, veuillez recharger.</span>
+            ) : quotaRestant !== null ? (
+              <span className="text-white/80 text-sm">
+                Quota restant : {quotaRestant} / {quota}
+              </span>
+            ) : null}
+          </div>
         </motion.div>
       </motion.div>
     </main>

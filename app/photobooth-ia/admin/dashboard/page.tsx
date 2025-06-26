@@ -364,6 +364,12 @@ export default function Dashboard() {
               <div className="text-xs text-white text-opacity-70 mt-1">
                 Sur la période actuelle : {photosThisPeriod} / {quotaInfo.quota} utilisées
               </div>
+              {/* Message d'alerte si moins de 10 photos restantes */}
+              {quotaInfo.quota > 0 && quotaInfo.quota - photosThisPeriod <= 10 && quotaInfo.quota - photosThisPeriod > 0 && (
+                <div className="mt-1 text-xs font-bold text-yellow-300 bg-yellow-900 bg-opacity-40 px-2 py-1 rounded">
+                  Attention : il ne vous reste plus que {quotaInfo.quota - photosThisPeriod} photo{quotaInfo.quota - photosThisPeriod > 1 ? 's' : ''} à prendre avant d’atteindre votre quota !
+                </div>
+              )}
             </div>
           </div>
           {/* Projets */}

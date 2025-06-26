@@ -3936,6 +3936,73 @@
     ]
   },
   {
+  "id": "fisheye-animal-selfies",
+  "name": "Selfies Fisheye Animaux Fantaisistes",
+  "description": "Montages en style selfie fisheye avec animaux variés dans un salon lumineux",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_collection.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Fisheye Selfie 1",
+      "gender": "g",
+      "style_key": "fisheye_animals_1",
+      "description": "Selfie avec effet fisheye et 5 fluffy dogs wearing sunglasses",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_1.jpg",
+      "prompt": "make this  with [cats, dogs] smilling  . all making silly, exaggerated faces. fisheye selfie format",
+      "variations": 1
+    },
+   {
+      "name": "Fisheye Selfie 1",
+      "gender": "g",
+      "style_key": "fisheye_cat",
+      "description": "Selfie avec effet fisheye et chats",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_cats.jpg",
+      "prompt": "make this a Ultra-realistic 3D 9:16 vertical format fisheye selfie with 10 cats smilling . We're all making silly, exaggerated faces. Set in a small, bright living room with white tones. High camera angle. Extreme fisheye distortion. Realistic, cinematic lighting, anime characters integrated with stylized realism.",
+      "variations": 1
+    },
+    {
+      "name": "Fisheye Selfie 2",
+      "gender": "g",
+      "style_key": "fisheye_animals_2",
+      "description": "Selfie avec effet fisheye et 8 parrots with neon feathers perched around",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_2.jpg",
+      "prompt": "make this a Ultra-realistic 3D 9:16 vertical format fisheye selfie with 8 parrots with neon feathers perched around. We're all making silly, exaggerated faces. Set in a small, bright living room with white tones. High camera angle. Extreme fisheye distortion. Realistic, cinematic lighting, anime characters integrated with stylized realism.",
+      "variations": 1
+    },
+    {
+      "name": "Fisheye Selfie 3",
+      "gender": "g",
+      "style_key": "fisheye_animals_3",
+      "description": "Selfie avec effet fisheye et a group of 6 raccoons holding snacks",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_3.jpg",
+      "prompt": "make this a Ultra-realistic 3D 9:16 vertical format fisheye selfie with a group of 6 raccoons holding snacks. We're all making silly, exaggerated faces. Set in a small, bright living room with white tones. High camera angle. Extreme fisheye distortion. Realistic, cinematic lighting, anime characters integrated with stylized realism.",
+      "variations": 1
+    },
+ 
+    {
+      "name": "Fisheye Selfie 5",
+      "gender": "g",
+      "style_key": "fisheye_animals_5",
+      "description": "Selfie avec effet fisheye et 4 baby goats jumping mid-air",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_5.jpg",
+      "prompt": "make this a Ultra-realistic 3D 9:16 vertical format fisheye selfie with 4 baby goats jumping mid-air. We're all making silly, exaggerated faces. Set in a small, bright living room with white tones. High camera angle. Extreme fisheye distortion. Realistic, cinematic lighting, anime characters integrated with stylized realism.",
+      "variations": 1
+    },
+    {
+      "name": "Fisheye Selfie 6",
+      "gender": "g",
+      "style_key": "fisheye_animals_6",
+      "description": "Selfie avec effet fisheye et 7 robots making funny faces",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fisheye_animals_6.jpg",
+      "prompt": "make this a fisheye selfie with [zebra, elepant, lion] smilling . We're all making silly, exaggerated faces. ",
+      "variations": 1
+    }
+
+
+  ]
+},
+
+  {
     "id": "villes-iconiques",
     "name": "Collection Villes Iconiques",
     "description": "Styles inspirés des grandes villes et métropoles du monde",
