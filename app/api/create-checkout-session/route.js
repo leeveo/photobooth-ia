@@ -40,11 +40,12 @@ export async function POST(req) {
             quantity: 1,
           },
         ],
-        // TODO: remplacer par l'email de l'utilisateur connecté
+        // Ajoute l'email si tu l'as, ou laisse Stripe demander à l'utilisateur
         // customer_email: email,
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?success=1`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?canceled=1`,
-        // metadata: { adminId },
+        // Ajoute l'id utilisateur en metadata si tu veux
+        // metadata: { admin_user_id: ... }
       });
       console.log('[API] Stripe session created:', session.id);
     } catch (stripeErr) {

@@ -28,10 +28,9 @@ export async function POST(request) {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // Gérer l'événement d'abonnement créé ou payé
+  // Paiement initial via checkout.session.completed
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    // Correction ici : récupère l'email depuis customer_details si besoin
     const email = session.customer_email || (session.customer_details && session.customer_details.email);
     const subscriptionId = session.subscription;
     console.log('[WEBHOOK] checkout.session.completed for email:', email, 'subscription:', subscriptionId);
@@ -54,10 +53,7 @@ export async function POST(request) {
     const planName = subscription.items.data[0].price.nickname || subscription.items.data[0].price.id;
     const quota = getQuotaFromPriceId(priceId);
 
-    // Log pour debug
-    console.log('[WEBHOOK] priceId:', priceId, 'planName:', planName, 'quota:', quota);
-
-    // Mettre à jour l'utilisateur dans Supabase
+    // Récupérer l'utilisateur par email
     const { data: user, error: userError } = await supabase
       .from('admin_users')
       .select('id')
@@ -69,23 +65,87 @@ export async function POST(request) {
       return new Response('User not found', { status: 404 });
     }
 
-    const { error: updateError } = await supabase
-      .from('admin_users')
-      .update({
+    // Insérer le paiement initial dans admin_payments
+    const { error: paymentError } = await supabase
+      .from('admin_payments')
+      .insert([{
+        admin_user_id: user.id,
         stripe_customer_id: session.customer,
         stripe_subscription_id: subscriptionId,
         plan: planName,
         photo_quota: quota,
         photo_quota_reset_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+        amount: subscription.items.data[0].price.unit_amount || 0,
+        status: 'succeeded',
+        stripe_payment_id: session.payment_intent || null,
+        images_included: quota,
+        created_at: new Date().toISOString()
+      }]);
 
-    if (updateError) {
-      console.error('[WEBHOOK] Error updating user:', updateError);
-      return new Response('Error updating user', { status: 500 });
+    if (paymentError) {
+      console.error('[WEBHOOK] Error inserting payment:', paymentError);
+      return new Response('Error inserting payment', { status: 500 });
     }
 
-    console.log('[WEBHOOK] User updated successfully:', user.id);
+    console.log('[WEBHOOK] Payment inserted successfully for user:', user.id);
+  }
+
+  // Paiements récurrents via invoice.paid
+  if (event.type === 'invoice.paid') {
+    const invoice = event.data.object;
+    const customerId = invoice.customer;
+    const subscriptionId = invoice.subscription;
+    const amount = invoice.amount_paid;
+    const status = invoice.status;
+    const stripePaymentId = invoice.payment_intent || null;
+    const createdAt = new Date(invoice.created * 1000).toISOString();
+
+    // Récupérer l'utilisateur par customerId
+    const { data: paymentUser, error: paymentUserError } = await supabase
+      .from('admin_payments')
+      .select('admin_user_id')
+      .eq('stripe_customer_id', customerId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (paymentUserError || !paymentUser) {
+      console.error('[WEBHOOK] invoice.paid: No user found for customerId', customerId, paymentUserError);
+      return new Response('No user found for this customer', { status: 404 });
+    }
+
+    // Récupérer le plan et quota du dernier paiement
+    const { data: lastPayment } = await supabase
+      .from('admin_payments')
+      .select('plan, photo_quota, images_included')
+      .eq('admin_user_id', paymentUser.admin_user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Insérer le paiement récurrent
+    const { error: recurringPaymentError } = await supabase
+      .from('admin_payments')
+      .insert([{
+        admin_user_id: paymentUser.admin_user_id,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: subscriptionId,
+        plan: lastPayment?.plan || null,
+        photo_quota: lastPayment?.photo_quota || null,
+        photo_quota_reset_at: createdAt,
+        amount: amount || 0,
+        status: status,
+        stripe_payment_id: stripePaymentId,
+        images_included: lastPayment?.images_included || null,
+        created_at: createdAt
+      }]);
+
+    if (recurringPaymentError) {
+      console.error('[WEBHOOK] Error inserting recurring payment:', recurringPaymentError);
+      return new Response('Error inserting recurring payment', { status: 500 });
+    }
+
+    console.log('[WEBHOOK] Recurring payment inserted for user:', paymentUser.admin_user_id);
   }
 
   return new Response(JSON.stringify({ received: true }), { status: 200 });

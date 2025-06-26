@@ -38,6 +38,13 @@ export async function middleware(req: NextRequest) {
   const hostname = req.nextUrl.hostname;
   const res = NextResponse.next();
 
+  // Permettre le bypass de l'auth en local (localhost ou 127.0.0.1)
+  const isLocalhost =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('localhost:') ||
+    hostname.startsWith('127.0.0.1:');
+
   // Redirection racine UNIQUEMENT sur photobooth.waibooth.app
   if (
     (path === '/' || path === '') &&
@@ -63,65 +70,76 @@ export async function middleware(req: NextRequest) {
 
   // Si route admin et pas exclue
   if (isAdminRoute && !isExcluded) {
-    const customAuthCookie = req.cookies.get('admin_session')?.value;
+    // Bypass auth en local
+    if (isLocalhost) {
+      // Log pour debug
+      console.log('Bypass admin_session check en local');
+    } else {
+      const customAuthCookie = req.cookies.get('admin_session')?.value;
 
-    if (!customAuthCookie) {
-      return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
-    }
-
-    // Toujours poser le cookie partagé si admin_session existe
-    try {
-      const decoded = Buffer.from(customAuthCookie, 'base64').toString();
-      const adminSession = JSON.parse(decoded);
-      const userId = adminSession.userId;
-
-      if (userId) {
-        const newSharedToken = await generateSharedToken(userId);
-        if (newSharedToken) {
-          // Pose le cookie shared_auth_token sur .waibooth.app même en dev
-          res.cookies.set('shared_auth_token', newSharedToken, {
-            path: '/',
-            httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7,
-            domain: '.waibooth.app'
-          });
-          console.log('Cookie shared_auth_token posé sur .waibooth.app');
-
-          setSharedAuthCookie(res, newSharedToken);
-          // Partager explicitement le cookie admin_session avec tous les sous-domaines
-          res.cookies.set('admin_session', customAuthCookie, {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24, // 1 jour
-            domain: '.waibooth.app' // Le point au début est crucial pour partager entre sous-domaines
-          });
-          // Ajouter un log pour vérifier
-          console.log('Cookie admin_session partagé avec tous les sous-domaines de .waibooth.app');
-        }
+      if (!customAuthCookie) {
+        return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
       }
-    } catch (error) {
-      console.error('Erreur lors de la création du token partagé:', error);
+
+      // Toujours poser le cookie partagé si admin_session existe
+      try {
+        const decoded = Buffer.from(customAuthCookie, 'base64').toString();
+        const adminSession = JSON.parse(decoded);
+        const userId = adminSession.userId;
+
+        if (userId) {
+          const newSharedToken = await generateSharedToken(userId);
+          if (newSharedToken) {
+            // Pose le cookie shared_auth_token sur .waibooth.app même en dev
+            res.cookies.set('shared_auth_token', newSharedToken, {
+              path: '/',
+              httpOnly: true,
+              secure: true,
+              sameSite: 'lax',
+              maxAge: 60 * 60 * 24 * 7,
+              domain: '.waibooth.app'
+            });
+            console.log('Cookie shared_auth_token posé sur .waibooth.app');
+
+            setSharedAuthCookie(res, newSharedToken);
+            // Partager explicitement le cookie admin_session avec tous les sous-domaines
+            res.cookies.set('admin_session', customAuthCookie, {
+              path: '/',
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+              maxAge: 60 * 60 * 24, // 1 jour
+              domain: '.waibooth.app' // Le point au début est crucial pour partager entre sous-domaines
+            });
+            // Ajouter un log pour vérifier
+            console.log('Cookie admin_session partagé avec tous les sous-domaines de .waibooth.app');
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création du token partagé:', error);
+      }
     }
   }
 
   // Protect /admin routes
   if (path === '/admin' || path.startsWith('/admin/')) {
-    if (!isAuthenticated(req)) {
-      console.log('Not authenticated, redirecting to login');
-      const loginBaseUrl =
-        process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ||
-        'https://photobooth.waibooth.app/photobooth-ia/admin/login';
-      const currentUrl = req.nextUrl.toString();
-      const callbackUrl = new URL('/auth-callback', req.nextUrl.origin);
-      const loginUrl = new URL(loginBaseUrl);
-      loginUrl.searchParams.set('returnUrl', currentUrl);
-      loginUrl.searchParams.set('callbackUrl', callbackUrl.toString());
-      loginUrl.searchParams.set('shared', 'true');
-      return NextResponse.redirect(loginUrl);
+    // Bypass auth en local
+    if (isLocalhost) {
+      console.log('Bypass /admin auth en local');
+    } else {
+      if (!isAuthenticated(req)) {
+        console.log('Not authenticated, redirecting to login');
+        const loginBaseUrl =
+          process.env.NEXT_PUBLIC_AUTH_LOGIN_URL ||
+          'https://photobooth.waibooth.app/photobooth-ia/admin/login';
+        const currentUrl = req.nextUrl.toString();
+        const callbackUrl = new URL('/auth-callback', req.nextUrl.origin);
+        const loginUrl = new URL(loginBaseUrl);
+        loginUrl.searchParams.set('returnUrl', currentUrl);
+        loginUrl.searchParams.set('callbackUrl', callbackUrl.toString());
+        loginUrl.searchParams.set('shared', 'true');
+        return NextResponse.redirect(loginUrl);
+      }
     }
   }
 
