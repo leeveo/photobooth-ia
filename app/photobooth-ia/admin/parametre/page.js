@@ -17,19 +17,29 @@ export default function ParametrePage() {
     async function fetchUser() {
       // Récupère l'ID de l'admin connecté depuis la session (comme dans tes autres pages)
       const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
-      if (!sessionStr) return;
+      if (!sessionStr) {
+        setLoading(false);
+        return;
+      }
       let decodedSession = sessionStr;
       try { decodedSession = atob(sessionStr); } catch {}
       const sessionData = JSON.parse(decodedSession);
       const userId = sessionData.user_id || sessionData.userId;
-      if (!userId) return;
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('id', userId)
         .single();
-      if (!error) setUser(data);
+      if (!error && data) {
+        setUser(data);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     }
     fetchUser();
@@ -44,7 +54,8 @@ export default function ParametrePage() {
         return;
       }
       setPaymentsLoading(true);
-      // Nouvelle table : admin_payments, clé étrangère admin_user_id
+      // Debug log
+      console.log('[ParametrePage] Fetching payments for admin_user_id:', user.id);
       const { data, error } = await supabase
         .from('admin_payments')
         .select('*')
@@ -56,10 +67,13 @@ export default function ParametrePage() {
         console.error("Erreur Supabase admin_payments:", error);
       } else {
         setPayments(data || []);
+        console.log('[ParametrePage] Payments loaded:', data);
       }
       setPaymentsLoading(false);
     }
-    if (user?.id) fetchPayments();
+    if (user && user.id) {
+      fetchPayments();
+    }
   }, [user, supabase]);
 
   if (loading) return <div className="flex justify-center items-center min-h-[40vh]">Chargement...</div>;
@@ -88,8 +102,6 @@ export default function ParametrePage() {
             <div><strong>Stripe subscription ID :</strong> {payments[0]?.stripe_subscription_id || '-'}</div>
           </div>
         </div>
-        {/* Bouton gérer abonnement (optionnel) */}
-        {/* <button className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Gérer mon abonnement</button> */}
       </div>
 
       {/* Paiements Stripe */}
@@ -111,44 +123,66 @@ export default function ParametrePage() {
         {paymentsLoading ? (
           <div className="p-6 text-center text-gray-500">Chargement des paiements...</div>
         ) : payments.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">Aucun paiement trouvé.</div>
+          <div className="p-6 text-center text-gray-500">Aucun paiement trouvé pour cet utilisateur.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Montant</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Plan</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Images incluses</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map(payment => (
-                  <tr key={payment.id} className="border-b last:border-0 hover:bg-gray-50">
-                    <td className="px-4 py-2">{new Date(payment.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-2">{(payment.amount / 100).toFixed(2)} €</td>
-                    <td className="px-4 py-2">{payment.plan_name || '-'}</td>
-                    <td className="px-4 py-2">{payment.images_included || '-'}</td>
-                    <td className="px-4 py-2">
-                      {payment.status === 'succeeded' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-                          <RiCheckLine className="w-4 h-4 mr-1" /> Payé
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800">
-                          <RiCloseLine className="w-4 h-4 mr-1" /> {payment.status}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">{payment.stripe_payment_id || '-'}</td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Montant</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Plan</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Images incluses</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {payments.map(payment => (
+                    <tr key={payment.id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-2">{new Date(payment.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2">{(payment.amount / 100).toFixed(2)} €</td>
+                      <td className="px-4 py-2">{payment.plan || payment.plan_name || '-'}</td>
+                      <td className="px-4 py-2">{payment.images_included || '-'}</td>
+                      <td className="px-4 py-2">
+                        {payment.status === 'succeeded' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                            <RiCheckLine className="w-4 h-4 mr-1" /> Payé
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                            <RiCloseLine className="w-4 h-4 mr-1" /> {payment.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">{payment.stripe_payment_id || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Détails de chaque commande Stripe */}
+            <div className="divide-y divide-gray-100 mt-8">
+              {payments.map(payment => (
+                <div key={payment.id} className="p-4">
+                  <h4 className="font-semibold text-indigo-700 mb-2">Détails de la commande Stripe du {new Date(payment.created_at).toLocaleString()}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <div><strong>Montant :</strong> {(payment.amount / 100).toFixed(2)} €</div>
+                    <div><strong>Statut :</strong> {payment.status}</div>
+                    <div><strong>Plan :</strong> {payment.plan || payment.plan_name || '-'}</div>
+                    <div><strong>Images incluses :</strong> {payment.images_included || '-'}</div>
+                    <div><strong>Stripe customer ID :</strong> {payment.stripe_customer_id}</div>
+                    <div><strong>Stripe subscription ID :</strong> {payment.stripe_subscription_id}</div>
+                    <div><strong>Stripe payment ID :</strong> {payment.stripe_payment_id}</div>
+                    <div><strong>Quota photos :</strong> {payment.photo_quota || '-'}</div>
+                    <div><strong>Prochain reset quota :</strong> {payment.photo_quota_reset_at ? new Date(payment.photo_quota_reset_at).toLocaleString() : '-'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
         {error && <div className="p-4 text-red-600">{error}</div>}
       </div>

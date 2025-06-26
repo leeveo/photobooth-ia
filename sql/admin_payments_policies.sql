@@ -2,10 +2,10 @@
 alter table public.admin_payments enable row level security;
 
 -- Policy: Un utilisateur peut voir ses propres paiements
--- create policy "Allow user to view own payments"
--- on public.admin_payments
--- for select
--- using (auth.uid()::uuid = admin_user_id);
+create policy "Allow user to view own payments"
+on public.admin_payments
+for select
+using (admin_user_id = auth.uid()::uuid);
 
 -- Policy: Un utilisateur peut insérer un paiement pour lui-même (optionnel, sinon réservé au backend)
 -- create policy "Allow user to insert own payment"
@@ -26,3 +26,9 @@ for all
 to service_role
 using (true)
 with check (true);
+
+-- Policy: Autoriser tous les SELECT (pour debug)
+create policy "Allow all select"
+on public.admin_payments
+for select
+using (true);

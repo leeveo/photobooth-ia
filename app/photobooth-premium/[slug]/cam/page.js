@@ -231,6 +231,12 @@ export default function CameraCapture({ params }) {
   const [countdownNumber, setCountdownNumber] = useState(3);
   const [showCountdown, setShowCountdown] = useState(false);
   
+  // New states for photo quota management
+  const [quota, setQuota] = useState(null);
+  const [quotaResetAt, setQuotaResetAt] = useState(null);
+  const [photosTaken, setPhotosTaken] = useState(0);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
+  
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
@@ -1523,10 +1529,15 @@ export default function CameraCapture({ params }) {
                 }}
                 whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
                 whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
-                disabled={!cameraLoaded || showCountdown}
+                disabled={!cameraLoaded || showCountdown || quotaExceeded}
               >
-                {showCountdown ? 'PRISE DE PHOTO...' : 
-                 cameraLoaded ? 'PRENDRE UNE PHOTO' : 'ATTENTE DE LA CAMÉRA...'}
+                {quotaExceeded
+                  ? "Quota atteint"
+                  : showCountdown
+                    ? 'PRISE DE PHOTO...'
+                    : cameraLoaded
+                      ? 'PRENDRE UNE PHOTO'
+                      : 'ATTENTE DE LA CAMÉRA...'}
                 {cameraLoaded && !showCountdown && (
                   <motion.span
                     className="absolute inset-0 rounded-lg border-2"

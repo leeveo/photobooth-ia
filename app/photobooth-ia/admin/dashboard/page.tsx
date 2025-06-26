@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
-import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine, RiPaletteLine, RiFilter3Line, RiCloseLine, RiInformationLine } from 'react-icons/ri';
+import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine, RiPaletteLine, RiFilter3Line, RiCloseLine, RiInformationLine, RiPieChart2Line } from 'react-icons/ri';
 import Loader from '../../../components/ui/Loader';
 import { useRouter } from 'next/navigation';
 // Importer les données de style
@@ -42,7 +42,11 @@ export default function Dashboard() {
   // État pour le modal de détails des styles
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<{ quota: number, used: number, resetAt: string | null }>({ quota: 0, used: 0, resetAt: null });
   
+  // Ajoute un nouvel état pour le nombre de photos prises sur la période de quota
+  const [photosThisPeriod, setPhotosThisPeriod] = useState(0);
+
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
     const getAdminSession = () => {
@@ -241,6 +245,76 @@ export default function Dashboard() {
     document.body.style.overflow = 'auto';
   };
 
+  // Remplace le useEffect de quota par une version qui utilise une requête SQL personnalisée pour le décompte :
+  useEffect(() => {
+    async function fetchQuotaAndPhotos() {
+      if (!currentAdminId) return;
+
+      // 1. Récupérer le quota et la date de reset du dernier paiement
+      const { data: lastPayment, error: paymentError } = await supabase
+        .from('admin_payments')
+        .select('photo_quota, photo_quota_reset_at')
+        .eq('admin_user_id', currentAdminId)
+        .order('photo_quota_reset_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (paymentError || !lastPayment || !lastPayment.photo_quota_reset_at) {
+        setQuotaInfo({ quota: 0, used: 0, resetAt: null });
+        setPhotosThisPeriod(0);
+        return;
+      }
+
+      const quota = lastPayment.photo_quota || 0;
+      const resetAt = lastPayment.photo_quota_reset_at;
+
+      // 2. Utilise une requête SQL personnalisée pour compter les photos prises depuis le reset
+      const { data, error } = await supabase.rpc('photos_count_for_admin', {
+        admin_id: currentAdminId
+      });
+
+      // Si tu n'as pas de fonction SQL côté Supabase, tu peux utiliser la requête SQL brute :
+      // const { data, error } = await supabase
+      //   .rpc('execute_sql', {
+      //     sql: `
+      //       SELECT COUNT(s.id) AS photos_count
+      //       FROM sessions s
+      //       JOIN projects p ON s.project_id = p.id
+      //       JOIN admin_users u ON p.created_by = u.id
+      //       WHERE u.id = '${currentAdminId}'
+      //         AND s.created_at >= '${resetAt}'
+      //     `
+      //   });
+
+      // Si tu ne peux pas utiliser de RPC, tu peux faire le décompte côté JS :
+      // 1. Récupère tous les projets de l'admin
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('created_by', currentAdminId);
+
+      const projectIds = projects?.map(p => p.id) || [];
+
+      // 2. Compte les sessions pour ces projets depuis le reset
+      const { count, error: countError } = await supabase
+        .from('sessions')
+        .select('id', { count: 'exact', head: true })
+        .in('project_id', projectIds)
+        .gte('created_at', resetAt);
+
+      setQuotaInfo({
+        quota,
+        used: count || 0,
+        resetAt
+      });
+      setPhotosThisPeriod(count || 0);
+    }
+
+    fetchQuotaAndPhotos();
+    const interval = setInterval(fetchQuotaAndPhotos, 10000);
+    return () => clearInterval(interval);
+  }, [currentAdminId, supabase]);
+
   if (error) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 rounded-xl shadow-sm">
@@ -274,7 +348,7 @@ export default function Dashboard() {
       {/* Header Stats Card */}
       <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white">
         <h3 className="text-xl font-medium mb-6">Statistiques Globales</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Photos */}
           <div className="flex items-center space-x-4">
             <div className="bg-white bg-opacity-10 rounded-lg p-3 flex items-center justify-center">
@@ -285,6 +359,10 @@ export default function Dashboard() {
               <div className="flex items-center">
                 <span className="text-4xl font-bold">{stats.totalPhotos}</span>
                 <span className="ml-2 text-sm text-white text-opacity-70">images</span>
+              </div>
+              {/* Ajoute ici le décompte sur la période de quota */}
+              <div className="text-xs text-white text-opacity-70 mt-1">
+                Sur la période actuelle : {photosThisPeriod} / {quotaInfo.quota} utilisées
               </div>
             </div>
           </div>
@@ -298,6 +376,28 @@ export default function Dashboard() {
               <div className="flex items-center">
                 <span className="text-4xl font-bold">{stats.totalProjects}</span>
                 <span className="ml-2 text-sm text-white text-opacity-70">projets</span>
+              </div>
+            </div>
+          </div>
+          {/* Quota */}
+          <div className="flex items-center space-x-4">
+            <div className="bg-white bg-opacity-10 rounded-lg p-3 flex items-center justify-center">
+              <RiPieChart2Line className="h-10 w-10 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white text-opacity-80">Quota photos</p>
+              <div className="flex items-center">
+                <span className="text-4xl font-bold">
+                  {quotaInfo.quota - quotaInfo.used >= 0 ? quotaInfo.quota - quotaInfo.used : 0}
+                </span>
+                <span className="ml-2 text-sm text-white text-opacity-70">
+                  / {quotaInfo.quota} restantes
+                </span>
+              </div>
+              <div className="text-xs text-white text-opacity-70 mt-1">
+                {quotaInfo.resetAt && (
+                  <>Reset le {new Date(quotaInfo.resetAt).toLocaleDateString()}</>
+                )}
               </div>
             </div>
           </div>
