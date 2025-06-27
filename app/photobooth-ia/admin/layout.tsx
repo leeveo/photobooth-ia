@@ -230,18 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: <FiHelpCircle className="w-5 h-5" />,
       color: 'bg-green-100 text-green-700 border-green-300',
     },
-    {
-      label: 'Roue de la fortune',
-      url: process.env.NEXT_PUBLIC_ROUE_FORTUNE_URL,
-      icon: <FiRotateCcw className="w-5 h-5" />,
-      color: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-    },
-    {
-      label: 'Fresque animée',
-      url: process.env.NEXT_PUBLIC_FRESQUE_ANIMEE_URL,
-      icon: <FiFilm className="w-5 h-5" />,
-      color: 'bg-purple-100 text-purple-700 border-purple-300',
-    },
+  
   ];
 
   return (

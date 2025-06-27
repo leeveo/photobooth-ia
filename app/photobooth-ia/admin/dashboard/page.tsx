@@ -405,6 +405,17 @@ export default function Dashboard() {
                   <>Reset le {new Date(quotaInfo.resetAt).toLocaleDateString()}</>
                 )}
               </div>
+              {/* Bouton d'accès à la page de plans */}
+              <div className="mt-4 flex justify-center">
+                <Link
+                  href="/photobooth-ia/admin/choose-plan"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 via-indigo-600 to-purple-600 text-white font-bold text-base shadow-lg hover:from-pink-600 hover:to-purple-700 transition-all border-4 border-white"
+                  style={{ boxShadow: '0 4px 24px 0 rgba(99,102,241,0.25)' }}
+                >
+                  <RiArrowRightSLine className="w-6 h-6" />
+                  Augmenter mon quota / Changer de plan
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -598,6 +609,15 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
+          {/* Explication positionnée juste sous le titre */}
+          <div className="mt-3">
+            <p className="text-sm text-gray-700 bg-indigo-50 rounded-lg px-4 py-3 shadow">
+              <span className="font-semibold text-indigo-700">Astuce :</span>
+              {' '}
+              Les styles dont la miniature montre un <span className="font-semibold">groupe de personnes</span> peuvent être utilisés aussi bien pour les photos de groupe que pour les photos individuelles.
+              Les styles avec une seule personne en miniature sont conçus pour une utilisation individuelle.
+            </p>
+          </div>
         </div>
         
         {/* Categories Tabs */}
@@ -644,10 +664,8 @@ export default function Dashboard() {
               >
                 <div 
                   className="relative h-48 w-full overflow-hidden cursor-pointer"
-                  onClick={() => setExpandedCollections(prev => ({
-                    ...prev, 
-                    [collection.id]: !prev[collection.id]
-                  }))}
+                  // Ouvre le popup de détails au clic sur l'image/encart du style
+                  onClick={() => openStyleDetailsModal(collection)}
                 >
                   {collection.image ? (
                     <Image
@@ -695,61 +713,7 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
-                
-                {expandedCollections[collection.id] && (
-                  <div className="p-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-3">
-                      <h5 className="font-medium">Styles dans cette collection</h5>
-                      <button 
-                        onClick={() => setExpandedCollections(prev => ({...prev, [collection.id]: false}))}
-                        className="text-xs text-gray-500 hover:text-gray-700"
-                      >
-                        Fermer
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                      {collection.styles.slice(0, 6).map(style => (
-                        <div 
-                          key={style.style_key} 
-                          className="flex flex-col items-center border border-gray-100 rounded p-2 hover:bg-gray-50"
-                        >
-                          {style.preview_image ? (
-                            <div className="relative h-16 w-full rounded overflow-hidden">
-                              <Image
-                                src={style.preview_image}
-                                alt={style.name}
-                                fill
-                                sizes="100px"
-                                style={{ objectFit: "cover" }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-16 w-full bg-gray-100 rounded flex items-center justify-center">
-                              <RiFilter3Line className="h-8 w-8 text-gray-400" />
-                            </div>
-                          )}
-                          <span className="text-xs font-medium mt-1 text-center line-clamp-1">{style.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {collection.styles.length > 6 && (
-                      <div className="mt-3 text-center">
-                        <Link
-                          href={`/photobooth-ia/admin/styles?collection=${collection.id}`}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                        >
-                          Voir les {collection.styles.length - 6} autres styles
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
                 <div className="px-4 py-3 bg-gray-50 flex justify-between items-center">
-                 
-                  
                   <button
                     onClick={() => openStyleDetailsModal(collection)}
                     className="text-xs font-medium text-gray-600 hover:text-gray-800 flex items-center"
@@ -765,118 +729,96 @@ export default function Dashboard() {
 
       {/* Modal de détails des styles */}
       {isModalOpen && selectedCollection && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl animate-fadeIn">
-            {/* En-tête du modal */}
-            <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center space-x-3">
-                <RiPaletteLine className="text-indigo-600 h-6 w-6" />
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900">{selectedCollection.name}</h3>
-                  <p className="text-sm text-gray-500">{selectedCollection.description}</p>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-4xl transform transition-all">
+            <div className="relative">
+              {/* Header avec image de couverture et titre */}
+              <div className="h-40 bg-gradient-to-r from-indigo-600 to-purple-600 relative overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-40"
+                  style={{ backgroundImage: `url(${selectedCollection.image})` }}
+                ></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold">{selectedCollection.name}</h3>
+                  <p className="text-gray-200 text-sm mt-1">{selectedCollection.description}</p>
                 </div>
-              </div>
-              <button 
-                onClick={closeStyleDetailsModal}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <RiCloseLine className="h-6 w-6 text-gray-500" />
-              </button>
-            </div>
-            
-            {/* Badges de compatibilité */}
-            <div className="px-6 py-3 border-b border-gray-200 flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">Compatible avec:</span>
-              {selectedCollection.compatibleWith.map(type => (
-                <span 
-                  key={type}
-                  className={`
-                    text-xs font-bold px-2 py-1 rounded
-                    ${type === 'premium' ? 'bg-amber-500 text-white' : 
-                      type === 'standard' ? 'bg-blue-500 text-white' : 
-                      type === 'photobooth2' ? 'bg-green-500 text-white' : 
-                      type === 'avatar' ? 'bg-purple-500 text-white' : 'bg-gray-500 text-white'}
-                  `}
+                {/* Bouton de fermeture */}
+                <button
+                  onClick={closeStyleDetailsModal}
+                  className="absolute top-4 right-4 bg-black bg-opacity-40 rounded-full p-2 text-white hover:bg-opacity-60 transition-all"
                 >
-                  {type === 'premium' ? 'Premium' : 
-                   type === 'standard' ? 'Standard' : 
-                   type === 'photobooth2' ? 'MiniMax' : 
-                   type === 'avatar' ? 'Avatar IA' : type}
-                </span>
-              ))}
-              <span className="ml-auto bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                {selectedCollection.styles.length} styles
-              </span>
-            </div>
-            
-            {/* Corps du modal avec grille de styles */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {selectedCollection.styles.map(style => (
-                  <div 
-                    key={style.style_key} 
-                    className="flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    {style.preview_image ? (
-                      <div className="relative h-32 w-full">
-                        <Image
-                          src={style.preview_image}
-                          alt={style.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                          style={{ objectFit: "cover" }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-32 w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                        <RiFilter3Line className="h-10 w-10 text-gray-400" />
-                      </div>
-                    )}
-                    
-                    <div className="p-3">
-                      <h4 className="font-medium text-sm">{style.name}</h4>
-                      {style.description && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{style.description}</p>
-                      )}
-                      
-                      {/* Badges additionnels */}
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {style.gender && (
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${
-                            style.gender === 'f' ? 'bg-pink-100 text-pink-800' : 
-                            style.gender === 'm' ? 'bg-blue-100 text-blue-800' : 
-                            'bg-purple-100 text-purple-800'
-                          }`}>
-                            {style.gender === 'f' ? 'Féminin' : 
-                             style.gender === 'm' ? 'Masculin' : 
-                             'Universel'}
-                          </span>
+                  <RiCloseLine className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-white">
+                    <span className="text-gray-300">{selectedCollection.styles.length} styles disponibles</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto p-2">
+                  {selectedCollection.styles.map((style, index) => (
+                    <div
+                      key={style.style_key}
+                      className="relative bg-gray-800 rounded-xl overflow-hidden transition-all border border-gray-700"
+                    >
+                      {/* Aperçu du style */}
+                      <div className="h-56">
+                        {style.preview_image ? (
+                          <img
+                            src={style.preview_image}
+                            alt={style.name}
+                            className="w-full h-full object-cover transition-transform hover:scale-105"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/placeholder-style.png';
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-gray-700">
+                            <span className="text-gray-400">Aucune image</span>
+                          </div>
                         )}
-                        
-                        {style.variations && style.variations > 1 && (
-                          <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">
-                            {style.variations} variations
-                          </span>
-                        )}
+                      </div>
+                      <div className="p-3 text-white">
+                        <h4 className="font-medium text-md">{style.name}</h4>
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{style.description}</p>
+                        {/* Affichage des tags individuels */}
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {(style.tags || []).map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                                tag === 'homme'
+                                  ? 'bg-blue-600/30 text-blue-300 border border-blue-600'
+                                  : tag === 'femme'
+                                  ? 'bg-pink-600/30 text-pink-300 border border-pink-600'
+                                  : 'bg-purple-600/30 text-purple-300 border border-purple-600'
+                              }`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            {/* Pied du modal */}
-            <div className="border-t border-gray-200 px-6 py-4 flex justify-between items-center">
-              <div className="text-sm text-gray-500 flex items-center">
-                <RiInformationLine className="h-4 w-4 mr-1" />
-                Utilisez ces styles dans vos projets
+
+              {/* Footer */}
+              <div className="bg-gray-900 px-6 py-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={closeStyleDetailsModal}
+                  className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg"
+                >
+                  Fermer
+                </button>
               </div>
-              <button
-                onClick={closeStyleDetailsModal}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Fermer
-              </button>
             </div>
           </div>
         </div>
