@@ -1383,7 +1383,7 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
                       stroke="#cccccc"
                       strokeWidth={2}
                       dash={[5, 5]}
-                      fill="transparent"
+                      fill="transparent" // <-- Assure la transparence du fond du canvas
                     />
                     
                     {/* Rendu des éléments */}
