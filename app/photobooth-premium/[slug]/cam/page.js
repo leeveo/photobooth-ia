@@ -687,120 +687,57 @@ export default function CameraCapture({ params }) {
   const combineImagesWithTransparentOverlay = async (baseImageUrl, overlayImageUrl) => {
     if (!baseImageUrl || !overlayImageUrl) {
       console.error('Missing image URLs for combination');
-      return baseImageUrl; // Return original if we can't combine
+      return baseImageUrl;
     }
-    
+
     try {
-      // Load both images
-      const loadImage = (url) => {
-        return new Promise((resolve, reject) => {
-          // Use window.Image to explicitly use the browser's Image constructor, not Next.js Image
-          const img = new window.Image();
-          img.crossOrigin = 'Anonymous'; // Handle CORS
-          img.onload = () => resolve(img);
-          img.onerror = (e) => {
-            console.error(`Failed to load image: ${url}`, e);
-            reject(e);
-          };
-          img.src = url;
-        });
-      };
-      
-      console.log('Loading base image:', baseImageUrl.substring(0, 50) + '...');
-      console.log('Loading overlay image:', overlayImageUrl);
-      
-      // Load images with proper error handling
-      let baseImage, overlayImage;
-      try {
-        [baseImage, overlayImage] = await Promise.all([
-          loadImage(baseImageUrl),
-          loadImage(overlayImageUrl)
-        ]);
-        console.log('Both images loaded successfully');
-        console.log('Base image dimensions:', baseImage.width, 'x', baseImage.height);
-        console.log('Overlay image dimensions:', overlayImage.width, 'x', overlayImage.height);
-      } catch (imgError) {
-        console.error('Failed to load one or both images:', imgError);
-        return baseImageUrl;
-      }
-      
-      // Create canvas for the combined image - ensure it's exactly 970x651
+      // Chargement des deux images
+      const loadImage = (url) => new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
+
+      const [baseImage, overlayImage] = await Promise.all([
+        loadImage(baseImageUrl),
+        loadImage(overlayImageUrl)
+      ]);
+
+      // Création du canvas final
       const canvas = document.createElement('canvas');
       canvas.width = 970;
       canvas.height = 651;
       const ctx = canvas.getContext('2d');
-      
-      // If base image doesn't match our target dimensions, resize it properly
+
+      // Dessin de l'image de base (redimensionnée si besoin)
       if (baseImage.width !== 970 || baseImage.height !== 651) {
-        console.log('Resizing base image to match required dimensions (970x651)');
         const baseAspect = baseImage.width / baseImage.height;
         const targetAspect = 970 / 651;
-        
         let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-        
         if (baseAspect > targetAspect) {
-          // Base image is wider than target
           drawHeight = 651;
           drawWidth = drawHeight * baseAspect;
           offsetX = (970 - drawWidth) / 2;
         } else {
-          // Base image is taller than target
           drawWidth = 970;
           drawHeight = drawWidth / baseAspect;
           offsetY = (651 - drawHeight) / 2;
         }
-        
-        // Draw resized image centered on canvas
         ctx.drawImage(baseImage, offsetX, offsetY, drawWidth, drawHeight);
       } else {
-        // Draw the base image directly if dimensions already match
         ctx.drawImage(baseImage, 0, 0, 970, 651);
       }
-      
-      console.log('Base image drawn to canvas');
-      
-      // Create a temporary canvas for the overlay to process transparency
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = overlayImage.width;
-      tempCanvas.height = overlayImage.height;
-      const tempCtx = tempCanvas.getContext('2d');
-      
-      // Draw the overlay to the temp canvas
-      tempCtx.drawImage(overlayImage, 0, 0);
-      console.log('Overlay drawn to temp canvas');
-      
-      // Process the overlay to make black pixels transparent
-      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imageData.data;
-      
-      let transparentPixelCount = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        // Check if pixel is black or nearly black (allowing for some compression artifacts)
-        if (data[i] < 10 && data[i + 1] < 10 && data[i + 2] < 10) {
-          // Make it transparent
-          data[i + 3] = 0;
-          transparentPixelCount++;
-        }
-      }
-      console.log(`Made ${transparentPixelCount} black pixels transparent`);
-      
-      // Put the processed image data back
-      tempCtx.putImageData(imageData, 0, 0);
-      
-      // Scale overlay to match canvas dimensions if needed
-      // Assume the overlay should be sized to match the canvas exactly
-      ctx.drawImage(tempCanvas, 0, 0, overlayImage.width, overlayImage.height, 
-                  0, 0, 970, 651);
-      
-      console.log('Overlay drawn at full canvas size (970x651)');
-      
-      // Convert the final canvas to a data URL
-      const finalImageUrl = canvas.toDataURL('image/jpeg', 0.95);
-      console.log('Successfully generated combined image with dimensions 970x651!');
-      return finalImageUrl;
+
+      // Dessin du layout PNG par-dessus (la transparence native sera respectée)
+      ctx.drawImage(overlayImage, 0, 0, 970, 651);
+
+      // Export du résultat
+      return canvas.toDataURL('image/jpeg', 0.95);
     } catch (error) {
       console.error('Error combining images:', error);
-      return baseImageUrl; // Return original if combination fails
+      return baseImageUrl;
     }
   };
   
