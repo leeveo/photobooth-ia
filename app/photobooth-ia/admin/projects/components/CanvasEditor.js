@@ -804,115 +804,60 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }, 3000);
   };
   
-  // Remplacer la fonction generateTransparentThumbnail par cette version plus robuste
+  // Remplacer la fonction generateTransparentThumbnail par une version qui conserve la transparence
   const generateTransparentThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
-    
+
     try {
-      console.log('Génération d\'une miniature PNG avec fond noir...');
-      
-      // Étape 1: Créer un canvas temporaire hors-DOM
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = stageSize.width;
-      tempCanvas.height = stageSize.height;
-      const ctx = tempCanvas.getContext('2d');
-      
-      // Remplir avec un fond noir
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-      
-      // Étape 2: Capturer la scène complète
-      // Utiliser toDataURL directement au lieu d'essayer d'accéder aux enfants
-      try {
-        const dataURL = stageRef.current.toDataURL({
-          pixelRatio: 1,
-          mimeType: 'image/png',
-          quality: 1
-        });
-        
-        // Étape 3: Charger l'image dans le canvas avec le fond noir
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            // Dessiner l'image sur notre canvas avec fond noir
-            ctx.drawImage(img, 0, 0);
-            
-            // Générer l'URL finale
-            const finalDataURL = tempCanvas.toDataURL('image/png');
-            setThumbnailUrl(finalDataURL);
-            resolve(finalDataURL);
-          };
-          img.src = dataURL;
-        });
-      } catch (innerError) {
-        console.error('Erreur lors de la capture de scène:', innerError);
-        // Continuer avec la méthode de secours
-        return null;
-      }
+      // Sauvegarder l'échelle actuelle
+      const originalScale = stageSize.scale;
+      // Mettre l'échelle à 1 pour l'export
+      stageRef.current.scale({ x: 1, y: 1 });
+      stageRef.current.batchDraw();
+
+      // Exporter le PNG avec transparence (pas de fond noir !)
+      const dataURL = stageRef.current.toDataURL({
+        pixelRatio: 1,
+        mimeType: 'image/png',
+        quality: 1
+      });
+
+      // Restaurer l'échelle d'origine
+      stageRef.current.scale({ x: originalScale, y: originalScale });
+      stageRef.current.batchDraw();
+
+      setThumbnailUrl(dataURL);
+      return Promise.resolve(dataURL);
     } catch (error) {
       console.error('Erreur lors de la génération de la miniature:', error);
       return null;
     }
   }, [stageSize]);
   
-  // Fonction de secours modifiée pour être plus robuste
+  // Fonction de secours : ne pas remplir de fond noir, garder la transparence
   const generateFallbackTransparentThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
-    
+
     try {
-      console.log('Génération de miniature avec fond noir (méthode de secours)...');
-      
-      // Créer un canvas vide de la taille du stage
-      const canvas = document.createElement('canvas');
-      canvas.width = stageSize.width;
-      canvas.height = stageSize.height;
-      const ctx = canvas.getContext('2d');
-      
-      // Remplir avec un fond noir
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Capture directe sans manipuler les éléments internes
+      // Même logique que la principale, mais sans fond noir
+      const originalScale = stageSize.scale;
+      stageRef.current.scale({ x: 1, y: 1 });
+      stageRef.current.batchDraw();
+
       const dataURL = stageRef.current.toDataURL({
         pixelRatio: 1,
         mimeType: 'image/png',
         quality: 1
       });
-      
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
-          const finalDataURL = canvas.toDataURL('image/png');
-          setThumbnailUrl(finalDataURL);
-          resolve(finalDataURL);
-        };
-        img.onerror = () => {
-          // En cas d'erreur, générer au moins une vignette noire
-          const blackThumbnail = canvas.toDataURL('image/png');
-          setThumbnailUrl(blackThumbnail);
-          resolve(blackThumbnail);
-        };
-        img.src = dataURL;
-      });
+
+      stageRef.current.scale({ x: originalScale, y: originalScale });
+      stageRef.current.batchDraw();
+
+      setThumbnailUrl(dataURL);
+      return Promise.resolve(dataURL);
     } catch (error) {
       console.error('Erreur lors de la génération de la miniature de secours:', error);
-      
-      // Dernier recours: retourner juste un canvas noir
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = stageSize.width;
-        canvas.height = stageSize.height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const blackThumbnail = canvas.toDataURL('image/png');
-        setThumbnailUrl(blackThumbnail);
-        return blackThumbnail;
-      } catch (finalError) {
-        console.error('Échec complet de la génération de miniature:', finalError);
-        return null;
-      }
+      return null;
     }
   }, [stageSize]);
 
@@ -1710,7 +1655,7 @@ const handleSelectTemplate = (template) => {
             {activeTab === 'unsplash' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2  0 00-2 2v12a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Images Unsplash
               </>
@@ -1740,7 +1685,7 @@ const handleSelectTemplate = (template) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                     <p className="mt-4 text-gray-500">
-                      Aucun template disponible.
+Aucun template disponible.
                     </p>
                   </div>
                 )}
@@ -2018,16 +1963,16 @@ const handleSelectTemplate = (template) => {
                 }}
                 className="bg-transparent"
                 style={{ boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
-                backgroundColor="transparent" // Ajouter cette propriété
+                backgroundColor="transparent"
               >
                 <Layer>
-                  {/* Rectangle d'arrière-plan avec id explicite pour le cibler plus facilement */}
+                  {/* Rectangle d'arrière-plan transparent */}
                   <Rect
                     x={0}
                     y={0}
                     width={stageSize.width}
                     height={stageSize.height}
-                    fill="transparent" // <-- Remplacer "#000000" par "transparent"
+                    fill="transparent"
                     name="background-rect"
                     id="background-rect"
                     className="background-rect"
