@@ -815,18 +815,18 @@ export default function CameraCapture({ params }) {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
-    
+
     const start = Date.now();
-    
-    // Récupérer le prompt depuis localStorage au lieu d'une image cible
-    const stylePrompt = localStorage.getItem('stylePrompt');
-    if (!stylePrompt) {
-      setError("Prompt de style manquant. Veuillez choisir un style.");
-      setProcessing(false);
-      return;
-    }
-    
+    let progressTimer;
     try {
+      // Récupérer le prompt depuis localStorage au lieu d'une image cible
+      const stylePrompt = localStorage.getItem('stylePrompt');
+      if (!stylePrompt) {
+        setError("Prompt de style manquant. Veuillez choisir un style.");
+        setProcessing(false);
+        return;
+      }
+      
       // Log pour débogage des variables d'entrée
       console.log('Flux transformation input:', {
           prompt: stylePrompt,
@@ -845,8 +845,8 @@ export default function CameraCapture({ params }) {
       // Ajouter un log pour suivre la progression
       setLogs(prevLogs => [...prevLogs, "Initialisation de la requête API..."]);
       
-      // Timer pour simuler la progression
-      const progressTimer = setInterval(() => {
+      // Timer pour simuler la progression (NE PAS STOPPER AVANT LA FIN)
+      progressTimer = setInterval(() => {
           setElapsedTime(Date.now() - start);
           
           // Ajouter des messages de progression pour garder l'utilisateur informé
@@ -858,7 +858,7 @@ export default function CameraCapture({ params }) {
               setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
               setLoadingProgress(50);
           } else if (elapsedSeconds === 15) {
-              setLogs(prevLogs => [...prevLogs, "Finalisation du rendu..."]);
+              setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
               setLoadingProgress(75);
           } else {
               // Update loading progress based on elapsed time
@@ -908,268 +908,111 @@ export default function CameraCapture({ params }) {
       if (!data.success) {
         throw new Error(data.error || "Erreur lors de la génération de l'image");
       }
-      
       const result = data.output;
-      
-      // Arrêter le timer de progression
-      clearInterval(progressTimer);
-      
-      console.log('Replicate result:', result);
-      setResultFaceSwap(result);
-      setLogs(prevLogs => [...prevLogs, "Génération terminée avec succès!"]);
-      setLoadingProgress(80); // Set to 80% before starting thumbnail processing
-      
-      // Mettre à jour l'étape de traitement
-      setProcessingStep(2);
-      
-      // Le résultat du modèle est directement l'URL de l'image ou les données binaires de l'image
+      setLogs(prevLogs => [...prevLogs, "Image générée par Replicate !"]);
+
       const resultImageUrl = typeof result === 'string' ? result : 
-                            Array.isArray(result) ? result[0] : 
-                            result.url || result.image || result;
-      
+        Array.isArray(result) ? result[0] : 
+        result.url || result.image || result;
+
       if (!resultImageUrl) {
-          console.error("URL d'image non trouvée dans la réponse:", result);
-          throw new Error("URL d'image non trouvée dans la réponse");
+        throw new Error("URL d'image non trouvée dans la réponse");
       }
-      
-      // NEW CODE: Fetch thumbnail and combine images
-      setLogs(prevLogs => [...prevLogs, "Récupération du watermark du projet..."]);
+
+      setLogs(prevLogs => [...prevLogs, "Récupération du layout du projet..."]);
       const thumbnailUrl = await fetchProjectThumbnail(project?.id);
-      
+
       let finalImageUrl = resultImageUrl;
       let hasWatermark = false;
-      
+
       if (thumbnailUrl) {
-        setLogs(prevLogs => [...prevLogs, "Application du watermark sur l'image..."]);
+        setLogs(prevLogs => [...prevLogs, "Fusion de l'image avec le layout..."]);
         setLoadingProgress(90);
-        
         try {
-          // Combine the generated image with the thumbnail overlay
-          console.log('Attempting to combine images with thumbnail overlay');
           const combinedImageDataUrl = await combineImagesWithTransparentOverlay(resultImageUrl, thumbnailUrl);
-          
           if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
-            console.log('Successfully created combined image with watermark');
             finalImageUrl = combinedImageDataUrl;
             hasWatermark = true;
-            setLogs(prevLogs => [...prevLogs, "Watermark appliqué avec succès!"]);
+            setLogs(prevLogs => [...prevLogs, "Fusion réussie avec le layout !"]);
           } else {
-            console.log('Failed to apply watermark, using original image');
-            setLogs(prevLogs => [...prevLogs, "Impossible d'appliquer le watermark, utilisation de l'image originale."]);
+            setLogs(prevLogs => [...prevLogs, "Fusion échouée, utilisation de l'image originale."]);
           }
         } catch (watermarkError) {
-          console.error('Error applying watermark:', watermarkError);
-          setLogs(prevLogs => [...prevLogs, "Erreur lors de l'application du watermark. Utilisation de l'image originale."]);
+          setLogs(prevLogs => [...prevLogs, "Erreur lors de la fusion du layout."]);
         }
       } else {
-        console.log('No thumbnail/watermark found for this project');
-        setLogs(prevLogs => [...prevLogs, "Aucun watermark trouvé pour ce projet."]);
+        setLogs(prevLogs => [...prevLogs, "Aucun layout trouvé pour ce projet."]);
       }
-      
-      setLoadingProgress(100);
-      
-      // Store generation metadata with watermark status
-      const generationMetadata = {
-          requestTime: new Date().toISOString(),
-          processingTime: Date.now() - start,
-          modelUsed: 'black-forest-labs/flux-kontext-pro',
-          parameters: {
-              prompt: stylePrompt,
-              input_image: '[BASE64_IMAGE]',
-              output_format: 'jpg'
-          },
-          projectId: project?.id,
-          styleId: localStorage.getItem('selectedStyleId'),
-          hasWatermark: hasWatermark
-      };
-      
-      // Store the URL and metadata
-      localStorage.setItem("faceURLResult", finalImageUrl);
-      localStorage.setItem("falGenerationMetadata", JSON.stringify(generationMetadata));
-      
-      try {
-        // Avant de tenter un upload S3, d'abord convertir l'URL replicate en base64 si nécessaire
-        let uploadableImage = finalImageUrl;
-        
-        // Si l'image n'est pas déjà en format base64, la télécharger et convertir
-        if (finalImageUrl.startsWith('http')) {
-          try {
-            console.log("Converting HTTP URL to base64 for S3 upload:", finalImageUrl.substring(0, 50) + '...');
-            setLogs(prevLogs => [...prevLogs, "Préparation de l'image pour stockage cloud..."]);
-            
-            uploadableImage = await toDataURL(finalImageUrl);
-            console.log("Successfully converted HTTP URL to base64");
-          } catch (convError) {
-            console.error("Failed to convert HTTP URL to base64:", convError);
-            setLogs(prevLogs => [...prevLogs, "Erreur lors de la préparation pour le stockage cloud."]);
-            // Continuer avec l'URL d'origine, l'API gérera l'erreur
-          }
-        }
-        
-        // Maintenant tenter l'upload S3 avec l'image convertie ou d'origine
-        if (uploadableImage && uploadableImage.startsWith('data:')) {
-          const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
-          console.log("Creating file for S3 upload:", uniqueFilename);
-          
-          const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
-          
-          if (!uploadFile) {
-            console.error("Failed to create file from data URL");
-            throw new Error("Échec de la préparation du fichier pour l'upload");
-          }
-          
-          // Créer FormData pour l'upload S3
-          const formData = new FormData();
-          formData.append('file', uploadFile);
-          formData.append('projectId', project?.id || 'unknown');
-          
-          console.log("Starting S3 upload for:", uploadableImage.substring(0, 50) + '...');
-          setLogs(prevLogs => [...prevLogs, "Téléchargement de l'image vers le stockage cloud..."]);
-          
-          // Upload to S3
-          const uploadResponse = await fetch('/api/upload-to-s3', {
-            method: 'POST',
-            body: formData
-          });
-          
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            console.error("S3 upload failed:", uploadResponse.status, errorText);
-            throw new Error(`Échec de l'upload: ${uploadResponse.status}`);
-          }
-          
-          const uploadData = await uploadResponse.json();
-          console.log("S3 upload response:", uploadData);
-          
-          if (uploadData && uploadData.url) {
-            // Succès! On a l'URL S3
-            console.log("✅ S3 upload successful:", uploadData.url);
-            setLogs(prevLogs => [...prevLogs, "Image stockée avec succès dans le cloud!"]);
-            
-            // Mettre à jour les URLs avec la nouvelle version
-            const s3Url = uploadData.url;
-            
-            // Stocker l'URL S3 pour référence
-            localStorage.setItem("faceURLResultS3", s3Url);
-            
-            // Enregistrer la session avec l'URL S3
-            try {
-              // Pour la session, on peut quand même garder l'URL S3
-              await supabase.from('sessions').insert({
-                user_email: null,
-                style_id: localStorage.getItem('selectedStyleId'),
-                style_key: localStorage.getItem('selectedStyleKey') || null,
-                gender: styleGender,
-                result_image_url: finalImageUrl, // URL originale pour compatibilité
-                result_s3_url: s3Url, // URL S3 explicite
-                processing_time_ms: Date.now() - start,
-                is_success: true,
-                project_id: project?.id,
-                has_watermark: hasWatermark
-              });
-              
 
-              console.log("Session recorded with S3 URL");
-            } catch (sessionError) {
-              console.error("Error recording session:", sessionError);
-            }
-          } else {
-            throw new Error("Réponse S3 invalide - URL manquante");
-          }
-        } else {
-          // Si on n'a pas pu convertir en base64, on utilise l'URL directe
-          console.log("Using direct URL for session:", finalImageUrl.substring(0, 50) + '...');
-          
-          // Enregistrer la session avec l'URL directe
-          try {
-            await supabase.from('sessions').insert({
-              user_email: null,
-              style_id: localStorage.getItem('selectedStyleId'),
-              style_key: localStorage.getItem('selectedStyleKey') || null,
-              gender: styleGender,
-              result_image_url: finalImageUrl,
-              result_s3_url: finalImageUrl.startsWith('http') ? finalImageUrl : null,
-              processing_time_ms: Date.now() - start,
-              is_success: true,
-              project_id: project?.id,
-              has_watermark: hasWatermark
-            });
-            
-            console.log("Session recorded with direct URL");
-          } catch (sessionError) {
-            console.error("Error recording session:", sessionError);
-          }
-        }
-        
-        // Toujours stocker en base64 pour l'affichage local
-        if (!finalImageUrl.startsWith('data:')) {
-          try {
-            const dataUrl = await toDataURL(finalImageUrl);
-            localStorage.setItem("resulAIBase64", dataUrl);
-          } catch (convError) {
-            console.warn("Could not convert to base64 for local storage:", convError);
-          }
-        } else {
-          localStorage.setItem("resulAIBase64", finalImageUrl);
-        }
-      } catch (uploadError) {
-        console.error("Error during S3 upload process:", uploadError);
-        setLogs(prevLogs => [...prevLogs, `Erreur lors du stockage: ${uploadError.message}`]);
-        
-        // Fallback: enregistrer la session avec l'URL directe
+      setLoadingProgress(95);
+
+      // Préparation pour upload S3
+      let uploadableImage = finalImageUrl;
+      if (finalImageUrl.startsWith('http')) {
+        setLogs(prevLogs => [...prevLogs, "Conversion de l'image pour l'upload S3..."]);
         try {
-          await supabase.from('sessions').insert({
-            user_email: null,
-            style_id: localStorage.getItem('selectedStyleId'),
-            style_key: localStorage.getItem('selectedStyleKey') || null,
-            gender: styleGender,
-            result_image_url: finalImageUrl,
-            result_s3_url: finalImageUrl.startsWith('http') ? finalImageUrl : null,
-            processing_time_ms: Date.now() - start,
-            is_success: true,
-            project_id: project?.id,
-            has_watermark: hasWatermark,
-            error_message: uploadError.message
-          });
-        } catch (fallbackError) {
-          console.error("Complete failure to record session:", fallbackError);
+          uploadableImage = await toDataURL(finalImageUrl);
+        } catch (convError) {
+          setLogs(prevLogs => [...prevLogs, "Erreur conversion base64, upload direct."]);
         }
       }
-      
+
+      // Upload S3
+      if (uploadableImage && uploadableImage.startsWith('data:')) {
+        setLogs(prevLogs => [...prevLogs, "Envoi de l'image fusionnée vers le cloud..."]);
+        const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
+        const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        formData.append('projectId', project?.id || 'unknown');
+        // --- Correction : le backend met déjà dans /layouts/ ---
+
+        const uploadResponse = await fetch('/api/upload-to-s3', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          setLogs(prevLogs => [...prevLogs, "Erreur lors de l'upload S3."]);
+          throw new Error("Erreur upload S3");
+        }
+        const uploadData = await uploadResponse.json();
+        if (uploadData && uploadData.url) {
+          setLogs(prevLogs => [...prevLogs, "Image stockée dans le cloud !"]);
+          // --- Correction : c'est l'URL S3 qui doit être affichée ---
+          localStorage.setItem("faceURLResult", uploadData.url);
+          localStorage.setItem("faceURLResultS3", uploadData.url);
+          setLogs(prevLogs => [...prevLogs, "Image prête à être affichée !"]);
+        } else {
+          throw new Error("Réponse S3 invalide");
+        }
+      } else {
+        setLogs(prevLogs => [...prevLogs, "Upload direct de l'image sans conversion."]);
+        localStorage.setItem("faceURLResult", finalImageUrl);
+      }
+
+      setLoadingProgress(100);
+
+      // Arrêter le timer de progression à la toute fin
+      clearInterval(progressTimer);
+
       // Rediriger vers la page de résultat
       setTimeout(() => {
-          router.push(`/photobooth-premium/${slug}/result`);
+        setProcessing(false);
+        router.push(`/photobooth-premium/${slug}/result`);
       }, 1000);
-  } catch (error) {
-      console.error("Erreur lors de la génération de l'image:", error);
+
+    } catch (error) {
+      if (progressTimer) clearInterval(progressTimer);
       setError(error.message || "Une erreur est survenue");
-      
-      // Enregistrer l'échec dans Supabase
-      try {
-          // Récupérer l'ID de l'utilisateur admin si disponible
-          const adminUserId = localStorage.getItem('adminUserId') || null;
-          
-          await supabase.from('sessions').insert({
-            user_email: null,
-            style_id: localStorage.getItem('selectedStyleId'),
-            style_key: localStorage.getItem('selectedStyleKey') || null,
-            gender: styleGender,
-            processing_time_ms: Date.now() - start,
-            is_success: false,
-            error_message: error.message,
-            project_id: project?.id,
-            created_by: adminUserId
-          });
-      } catch (logError) {
-          console.error("Error logging failed session:", logError);
-      }
-  } finally {
       setProcessing(false);
+      setLogs(prevLogs => [...prevLogs, "Erreur : " + (error.message || "inconnue")]);
+    } finally {
       setElapsedTime(Date.now() - start);
       // Recharge le quota après la génération
       fetchQuota();
     }
-};
+  };
 
 
 // Ajoute cette fonction pour générer l'image via Replicate
