@@ -27,17 +27,41 @@ const getS3Client = () => {
   });
 };
 
-// Add this utility function near the top of your file, before the component
-const dataURLtoFile = (dataurl, filename) => {
-  const arr = dataurl.split(',');
-  const mime = arr[0].match(/:(.*?);/)[1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
+// Utility to convert dataURL or HTTP URL to File
+const dataURLtoFile = async (dataurl, filename) => {
+  // If already a data URL, convert directly
+  if (dataurl && dataurl.startsWith('data:')) {
+    const arr = dataurl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch || !mimeMatch[1]) throw new Error("Invalid data URL");
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
   }
-  return new File([u8arr], filename, { type: mime });
+  // If it's an HTTP(S) URL, fetch and convert to dataURL first
+  if (dataurl && (dataurl.startsWith('http://') || dataurl.startsWith('https://'))) {
+    const response = await fetch(dataurl);
+    const blob = await response.blob();
+    const mime = blob.type || 'image/jpeg';
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onloadend = () => {
+        try {
+          const base64data = reader.result;
+          // Recursively call to handle as dataURL
+          dataURLtoFile(base64data, filename).then(resolve).catch(reject);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  throw new Error("Unsupported image format for upload");
 };
 
 export default function Result({ params }) {
@@ -182,8 +206,7 @@ export default function Result({ params }) {
   };
   
   const uploadToS3 = async (imageUrl) => {
-    logWithTimestamp('Starting S3 upload for:', imageUrl.substring(0, 100) + '...');
-    
+    logWithTimestamp('Starting S3 upload for:', (imageUrl || '').substring(0, 100) + '...');
     try {
       // Récupérer les données complètes du projet pour garantir l'ID complet
       let projectName = project?.name || 'unknown-project';
@@ -195,13 +218,12 @@ export default function Result({ params }) {
       
       // Structure du nom de fichier 
       const fileName = `photobooth-premium-${fullProjectId}-${projectName}-${projectOwner}-${Date.now()}.jpg`;
-      
       logWithTimestamp('Uploading via server-side API...');
       setLoadingUpload(true);
-      
-      // Convert the image URL to a file
-      const imageFile = dataURLtoFile(imageUrl, fileName);
-      
+
+      // Always convert to File (handles both dataURL and HTTP URL)
+      const imageFile = await dataURLtoFile(imageUrl, fileName);
+
       // Use FormData for uploading the file
       const formData = new FormData();
       formData.append('file', imageFile);

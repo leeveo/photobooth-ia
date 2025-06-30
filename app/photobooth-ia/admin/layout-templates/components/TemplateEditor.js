@@ -981,44 +981,43 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
   // Fonction pour gérer l'upload de fichiers
   const handleFileUpload = async (e) => {
     const files = e.target.files;
-    
-    if (!files || files.length === 0) return;
-    
+    if (!files || files.length === 0) {
+      console.log('Aucun fichier sélectionné');
+      return;
+    }
+
     setUploading(true);
     setUploadProgress(0);
-    
+
     try {
-      const uploadedImagesList = [...uploadedImages];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-          const imageUrl = event.target.result;
-          
-          // Ajouter l'image à la liste des images téléchargées
-          uploadedImagesList.push({
-            id: Date.now().toString() + i,
-            name: file.name,
-            src: imageUrl
-          });
-          
-          // Mettre à jour la progression
-          setUploadProgress(Math.round((i + 1) / files.length * 100));
-          
-          // Mettre à jour la liste des images
-          if (i === files.length - 1) {
-            setUploadedImages(uploadedImagesList);
-            setUploading(false);
-            setUploadProgress(0);
-          }
-        };
-        
-        reader.readAsDataURL(file);
-      }
+      // Utiliser Promise.all pour attendre la lecture de tous les fichiers
+      const fileReadPromises = Array.from(files).map((file, i) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({
+              id: Date.now().toString() + '-' + i,
+              name: file.name,
+              src: event.target.result
+            });
+          };
+          reader.onerror = (err) => {
+            console.error('Erreur lors de la lecture du fichier:', file.name, err);
+            resolve(null); // Ignore le fichier en erreur
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const results = await Promise.all(fileReadPromises);
+      const validImages = results.filter(Boolean);
+
+      setUploadedImages(prev => [...prev, ...validImages]);
+      setUploading(false);
+      setUploadProgress(0);
+      console.log('Upload terminé, images ajoutées:', validImages);
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('Erreur lors de l\'upload des fichiers:', error);
       setUploading(false);
       setUploadProgress(0);
     } finally {
