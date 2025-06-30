@@ -93,8 +93,8 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [stageSize, setStageSize] = useState(() => {
     const defaultFormat = formats[0];
     return {
-      width: defaultFormat.pixelWidth,
-      height: defaultFormat.pixelHeight,
+      width: defaultFormat.pixelWidth,   // largeur du canvas (970)
+      height: defaultFormat.pixelHeight, // hauteur du canvas (651)
       scale: 1
     };
   });
@@ -325,10 +325,9 @@ const checkBucketExists = useCallback(async (bucketName) => {
   }
 }, [supabase]);
 
-  // Fonction améliorée pour charger les images du bucket 'assets'
+  // Fonction améliorée pour charger dynamiquement toutes les images du dossier stickers sur AWS S3 (leeveostockage)
   const loadLibraryImages = useCallback(async () => {
     try {
-      // Ne pas charger les images si nous sommes en mode template et qu'il n'y a pas d'ID de projet valide
       if (isTemplateMode && (!projectId || projectId === 'template-editor')) {
         console.log('Mode template: chargement d\'images génériques');
         // Charger des images génériques pour le mode template
@@ -340,29 +339,32 @@ const checkBucketExists = useCallback(async (bucketName) => {
         setLibraryImages(genericImages);
         return;
       }
-      
-      console.log('Tentative de chargement des images depuis le bucket assets...');
-      
-      // URL de base confirmée fonctionnelle
-      const baseUrl = "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/assets//";
-      
-      // Images confirmées par l'utilisateur
-      const knownWorkingFiles = ['001.png', '002.png', '003.png'];
-      
-      // Créer les objets image directement à partir des fichiers qui fonctionnent
-      const images = knownWorkingFiles.map((filename, index) => {
-        const directUrl = `${baseUrl}${filename}`;
-        return {
-          id: `asset-${index}`,
-          name: filename,
-          src: directUrl,
-          src_nocache: `${directUrl}?t=${Date.now()}`
-        };
+
+      // --- AWS S3 LEEVEOSTOCKAGE: Génération d'URL directe ---
+      // On ne peut pas lister le contenu d'un bucket S3 public côté client sans API ou index.
+      // Donc, il faut soit :
+      // 1. Connaitre la liste des fichiers (ex: stickers-001.png à stickers-5000.png)
+      // 2. OU avoir un index JSON généré côté serveur
+      // Ici, on génère une liste d'URL basée sur un pattern connu
+
+      const s3BaseUrl = "https://leeveostockage.s3.eu-west-3.amazonaws.com/stickers/";
+      const stickersCount = 100; // <-- Mettez ici le nombre réel de stickers ou un nombre raisonnable
+
+      // Génère stickers-001.png à stickers-100.png
+      const stickerFiles = Array.from({ length: stickersCount }, (_, i) => {
+        const num = String(i + 1).padStart(3, '0');
+        return `stickers-${num}.png`;
       });
-      
-      console.log('Images connues chargées:', images);
+
+      const images = stickerFiles.map((filename, index) => ({
+        id: `sticker-${index}`,
+        name: filename,
+        src: `${s3BaseUrl}${filename}`,
+        src_nocache: `${s3BaseUrl}${filename}?t=${Date.now()}`
+      }));
+
       setLibraryImages(images);
-      
+
     } catch (error) {
       console.error('Erreur lors du chargement des images:', error);
       setLibraryImages([]);
@@ -1859,7 +1861,11 @@ Aucun template disponible.
             {activeTab === 'library' && (
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Bibliothèque d'images</h4>
-                
+                {/* 
+                  Les images affichées dans cette section proviennent désormais du bucket AWS S3 'leeveostockage',
+                  dossier 'stickers' : https://leeveostockage.s3.eu-west-3.amazonaws.com/stickers/...
+                  (voir la fonction loadLibraryImages ci-dessus).
+                */}
                 <div className="grid grid-cols-2 gap-2">
                   {libraryImages.map(image => (
                     <div
@@ -1977,18 +1983,6 @@ Aucun template disponible.
                     id="background-rect"
                     className="background-rect"
                     listening={false}
-                  />
-                  
-                  {/* Cadre de délimitation du format d'impression */}
-                  <Rect
-                    x={0}
-                    y={0}
-                    width={stageSize.width}
-                    height={stageSize.height}
-                    stroke="#cccccc"
-                    strokeWidth={2}
-                    dash={[5, 5]}
-                    fill="transparent"
                   />
                   
                   {/* Rendu des éléments du canvas */}
@@ -2251,8 +2245,7 @@ Aucun template disponible.
           {/* Information sur le format d'impression - mise à jour */}
           <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100">
             <p className="text-xs text-blue-700">
-              Ce canvas représente un format d'impression de 10x15 cm (orientation horizontale).
-              La taille est fixée à 970×651 pixels pour une meilleure qualité d'affichage.
+              Ce canvas correspond exactement au format d'impression 10x15 cm (970×651 px). Tout ce qui dépasse sera coupé à l'impression.
             </p>
           </div>
         </div>

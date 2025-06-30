@@ -855,34 +855,33 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
   // Fonction améliorée pour générer une miniature PNG haute qualité
   const generateThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
-    
+
     try {
       console.log('Génération de la miniature PNG pour S3...');
-      
+
       // Mémoriser l'échelle actuelle
       const originalScale = stageSize.scale;
-      
+
       // Réinitialiser l'échelle à 1 pour capturer en pleine résolution
       stageRef.current.scale({ x: 1, y: 1 });
-      
+
       // Forcer un rendu avant la capture
       stageRef.current.batchDraw();
-      
+
       // Créer une URL de données à partir du stage
+      // --- MODIFICATION: miniature en 320x215px (ratio 970/651) ---
       const dataURL = stageRef.current.toDataURL({
-        pixelRatio: 2,       // Résolution x2 pour meilleure qualité
-        mimeType: 'image/png', // Spécifier PNG pour S3
-        quality: 1,          // Qualité maximale
-        x: 0,
-        y: 0,
-        width: stageSize.width,
-        height: stageSize.height
+        pixelRatio: 1,
+        mimeType: 'image/png',
+        quality: 1,
+        width: 320,
+        height: 215
       });
-      
+
       // Restaurer l'échelle d'origine
       stageRef.current.scale({ x: originalScale, y: originalScale });
       stageRef.current.batchDraw();
-      
+
       console.log('Miniature PNG générée avec succès pour S3');
       setThumbnailUrl(dataURL);
       return dataURL;
@@ -1374,18 +1373,15 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
                   style={{ boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
                 >
                   <Layer>
-                    {/* Cadre de délimitation */}
+                    {/* Rectangle d'arrière-plan transparent (pas de cadre pointillé) */}
                     <Rect
                       x={0}
                       y={0}
                       width={stageSize.width}
                       height={stageSize.height}
-                      stroke="#cccccc"
-                      strokeWidth={2}
-                      dash={[5, 5]}
-                      fill="transparent" // <-- Assure la transparence du fond du canvas
+                      fill="transparent"
+                      listening={false}
                     />
-                    
                     {/* Rendu des éléments */}
                     {elements.map((element) => {
                       if (element.type === 'rect') {

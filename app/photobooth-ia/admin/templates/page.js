@@ -711,10 +711,13 @@ export default function LayoutTemplates() {
                         <div className="mb-3">
                           <p className="text-gray-500 mb-2">Aperçu du template:</p>
                           <div className="mx-auto w-40 h-28 overflow-hidden border border-gray-300 rounded">
+                            {/* La miniature affichée ici fait 320x215 px (ratio 970/651) */}
                             <img 
                               src={thumbnailData} 
                               alt="Aperçu du template" 
                               className="w-full h-full object-cover"
+                              width={320}
+                              height={215}
                             />
                           </div>
                         </div>
@@ -845,7 +848,7 @@ export default function LayoutTemplates() {
                             e.target.parentNode.innerHTML = `
                               <div class="text-center text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <p class="text-sm mt-1">Erreur de chargement</p>
                               </div>
