@@ -2266,6 +2266,44 @@
     }
   ]
 },
+
+
+{
+  "id": "halloween-extreme-facial-expressions",
+  "name": "Transformations Halloween – Expressions Extrêmes",
+  "description": "Série de transformations avec des expressions faciales exagérées (peur, joie, tristesse, grimaces), tout en conservant chaque visage identifiable",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_styles.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Panique Totale",
+      "gender": "g",
+      "style_key": "extreme_fear",
+      "description": "Groupe en pleine terreur, dans une scène de manoir hanté",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/expression_fear.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the full identity and facial structure of each person. Apply an exaggerated fear expression: wide eyes, raised eyebrows, open mouths mid-scream, clenched jaws, or frozen stares. Dress the group in casual or Halloween-themed clothes with sweat, dust, or torn fabric details. Set the scene inside a haunted mansion hallway with flickering lights, floating shadows, and eerie fog. Maintain original composition and spacing. Lighting should emphasize facial contours and expression intensity. Photorealistic rendering required—faces must remain perfectly identifiable despite emotional exaggeration."
+    },
+    {
+      "name": "Silly Squad",
+      "gender": "g",
+      "style_key": "silly_expression_group",
+      "description": "Groupe aux grimaces absurdes et costumes décalés dans une foire nocturne",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/expression_silly.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Keep full identity and anatomical accuracy for all individuals. Exaggerate facial expressions into ridiculous poses: puffed cheeks, tongue out, cross-eyed, one eyebrow raised comically. Dress each person in mismatched, colorful costumes (mix of clowns, food, animals). Background: a festive night carnival with colorful tents, popcorn stands, and blinking lights. Maintain consistent composition and character spacing. Use vivid lighting and strong color contrast while ensuring each face is clearly recognizable under the exaggerated expression."
+    },
+    {
+      "name": "Joie Délirante",
+      "gender": "g",
+      "style_key": "extreme_joy",
+      "description": "Groupe euphorique dans un décor de fête magique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/expression_joy.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Keep all facial features and proportions intact. Amplify expressions of extreme joy: huge open smiles, eyes squinting with laughter, raised cheeks, hands in motion. Dress everyone in glowing party-themed attire with sparkles, fun accessories like hats or glowing glasses. Set the scene in a glowing garden party with string lights, floating lanterns, and fireworks in the sky. Preserve the identity of each individual, and maintain original pose and grouping. Use soft lighting and bokeh effects to support the festive atmosphere while emphasizing realistic facial detail."
+    }
+
+
+  ]
+}
+,
 {
   "id": "clothing_styles",
   "name": "Collection Styles Vestimentaires",
@@ -3998,6 +4036,383 @@
       "variations": 1
     }
 
+
+  ]
+},
+
+
+{
+  "id": "halloween-expressions-series",
+  "name": "Transformations Halloween – Expressions Variées",
+  "description": "Déguisements d’Halloween photoréalistes avec expressions faciales variées et cohérence d’identité",
+   "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_series.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Squelette Comique",
+      "gender": "g",
+      "style_key": "funny_skeleton",
+      "description": "Déguisement de squelette coloré avec grimace absurde",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_skeleton_funny.jpg",
+      "prompt": "Use the attached image as accurate reference for each face. Preserve every person’s identity, face shape, skin tone, and eye structure. Style each person in a full-body colorful skeleton costume with neon bone patterns glowing under blacklight. Apply face paint resembling a stylized skull but allowing the real face structure to remain visible. Use exaggerated silly expressions: bulging eyes, puffed cheeks, comically open mouths or tongue-out faces. Background should be a glow-in-the-dark haunted house party with blacklight decorations and fog machines. Ensure photorealistic textures on skin, costume, and paint. Maintain overall composition and character consistency."
+    },
+
+    {
+      "name": "Citrouille Déjantée",
+      "gender": "g",
+      "style_key": "crazy_pumpkin",
+      "description": "Clown citrouille avec grimaces absurdes et costume lumineux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_pumpkin_crazy.jpg",
+      "prompt": "Use the attached image as accurate reference for each face. Do not modify facial structure or identity. Style each subject with painted orange-like makeup, keeping parts of their real face visible for recognition. Dress them in exaggerated Halloween carnival costumes with glowing elements. Add silly or wildly joyful expressions—oversized smiles, exaggerated eye squints, puffed cheeks. Change the background to a nighttime Halloween fairground filled with lit jack-o’-lanterns, confetti, and fog. Use warm, ambient lighting and realistic skin blending with paint. Preserve composition and face clarity across the group."
+    },
+ 
+    {
+      "name": "Monstre Glitché Numérique",
+      "gender": "g",
+      "style_key": "glitched_monster",
+      "description": "Créature d’Halloween digitale avec bugs visuels et expression de panique ou confusion",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_glitch.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the full facial identity of each person. Transform each into a glitch-infected Halloween monster: fragmented pixel textures on the skin, glowing cracks across the face, semi-transparent overlays, and code flickering on parts of the clothing. Facial expressions should show shock, confusion, or fearful awe—wide eyes, open mouths, frozen stares. Place the scene in a corrupted digital hallway with broken neon lights and data distortions. Blend realistic facial texture with digital effects, ensuring characters remain identifiable while the environment distorts."
+    },
+
+
+
+    {
+      "name": "Squelettes Colorés",
+      "gender": "g",
+      "style_key": "colorful_skeletons",
+      "description": "Groupe déguisé en squelettes fluo sous lumière noire",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_group_skeletons.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the full facial identity and skin tone of each subject. Transform the group into vibrant Halloween skeletons with black bodysuits and glowing neon bone designs in different colors. Paint face masks or makeup with skull motifs that still let real features show through. Facial expressions should range from over-the-top silliness (mouth wide open, exaggerated grins) to more playful or proud poses. Keep the original composition and spacing of the group. Set the background in a darkened party hall with ultraviolet lights and glowing Halloween props. Ensure a consistent lighting and rendering style across the scene."
+    },
+    {
+      "name": "Famille des Chapeaux Pointus",
+      "gender": "g",
+      "style_key": "pointy_hat_witches",
+      "description": "Groupe de sorciers/sorcières joyeux avec chapeaux magiques et grimoires",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_group_witches.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Keep all individual facial details intact. Dress each person in a unique witch or wizard costume with pointy hats, cloaks, and magical emblems. Add accessories like flying books, glowing wands, or potions in hand. Vary facial expressions within the group: some joyful and silly, others quietly mischievous or curious. Place them in a colorful mystical library or enchanted classroom filled with candles, floating scrolls, and magical orbs. Maintain original body posture, spacing, and group composition. Ensure identity fidelity with sharp rendering and soft magical lighting."
+    },
+    {
+      "name": "Monstres Mignons du Quartier",
+      "gender": "g",
+      "style_key": "cute_monsters",
+      "description": "Groupe costumés en petits monstres adorables dans une rue animée d’Halloween",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_group_monsters.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Keep the full facial identity and head angle of each group member. Transform everyone into uniquely designed cute Halloween monsters: fuzzy onesies, pastel horns, glowing eyes, tiny claws, or slime patterns. Facial expressions should show childish energy: funny grimaces, laughter, mock-growls. Maintain the original layout and group dynamics. Background should be a joyful suburban Halloween night scene with candy trails, inflatable decorations, and costumed kids running in the distance. Render textures, lighting, and ambient shadows realistically while keeping character identity clearly readable."
+    },
+    {
+      "name": "Clowns Fous d’Halloween",
+      "gender": "g",
+      "style_key": "halloween_silly_clowns",
+      "description": "Clowns loufoques dans un décor de foire illuminée, expressions absurdes",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_group_clowns.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the facial structure and identity of each person. Dress the entire group in colorful Halloween clown outfits: striped overalls, oversized shoes, balloon hats, and polka-dotted ties. Apply vibrant clown makeup with exaggerated features but allow real skin texture to show. Add silly facial expressions to each: tongue out, wide grins, surprised eyes, or cross-eyed glances. Set the background in a night carnival with broken lights, foggy booths, and oversized candy props. Maintain composition and perspective of the original image. Focus on consistent lighting, realism in makeup textures, and emotion clarity."
+    },
+
+
+ {
+      "name": "Épouvantails du Champ Magique",
+      "gender": "g",
+      "style_key": "scarecrow_group",
+      "description": "Groupe déguisé en épouvantails joyeux dans un champ au crépuscule",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_group_scarecrows.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the full facial identity and unique expression of each person in the group. Transform each individual into a whimsical scarecrow character: patchwork clothing, burlap textures, stitched straw hats, and loose rope accessories. Add subtle face paint: stitched smiles, rosy cheeks, and light smudges of dirt—but keep facial structures clearly recognizable. Facial expressions should vary from playful surprise to mischievous smirks. Set the background in a golden cornfield at dusk, with pumpkins, birds on posts, and floating embers in the air. Maintain photorealistic skin texture, consistent group composition, and soft autumn lighting across the entire image."
+    },
+
+    {
+      "name": "Famille de Monstres Mignons",
+      "gender": "g",
+      "style_key": "cute_monster_family",
+      "description": "Groupe familial transformé en monstres doux et colorés avec expressions variées",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/halloween_family_monsters.jpg",
+      "prompt": "Use the attached image as accurate reference for every face. Preserve the identity, facial structure, and emotional expression of each person in the group. Transform each individual into a unique cute monster: fluffy or scaly textures, colorful horns, soft claws, googly eyes, and patterned bodysuits. Allow face paint or masks to complement rather than cover facial features. Expressions should range from wide silly grins to gentle curiosity. Set the scene in a playful Halloween night street filled with candy buckets, monster-themed decorations, and glowing lanterns. Keep the original composition and body posture. Render high-detail textures on both skin and costume, ensuring realism and identity retention."
+    }
+
+  ]
+}
+,
+{
+  "id": "clown-transformations-group",
+  "name": "Transformations Clowns Réalistes",
+  "description": "Ajout de maquillage de clown photoréaliste à un groupe de personnes tout en conservant l'identité faciale",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_series.jpg",
+    "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Clown Classique",
+      "gender": "g",
+      "style_key": "classic_clown",
+      "description": "Maquillage blanc, nez rouge, yeux colorés, style cirque traditionnel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_classic.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Maintain exact facial features, expression, skin tone, and hairstyle for each individual in the group. Do not change the position or orientation of any subject. Apply detailed, photorealistic clown makeup to each person: white foundation, red round nose, colorful eyeshadow, blue and red painted eyebrows, and lips exaggerated into a friendly smile. Vary makeup slightly per person to preserve uniqueness. Keep the original group composition, lighting, and background intact. Ensure full character consistency—every person should remain instantly recognizable with added clown makeup only. Use realistic blending of paint on the skin, preserving all skin texture and lighting dynamics."
+    },
+    {
+      "name": "Clown Effrayant",
+      "gender": "g",
+      "style_key": "scary_clown",
+      "description": "Clown d’horreur avec maquillage craqué et regard menaçant",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_horror.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Preserve the exact facial identity, proportions, and expression of each person. Keep hairstyles and clothing unchanged. Apply eerie horror clown makeup: cracked white foundation, dark smudged eyes, red paint running from the mouth into sharp smile extensions, blackened nose tip. Each individual should appear sinister but still instantly recognizable. Maintain original lighting and composition. Emphasize realistic skin detail and shadow falloff under the makeup. Avoid changing background or posture. Character consistency across all edits is mandatory—transform the look, not the identity."
+    },
+    {
+      "name": "Clown Glam Pop",
+      "gender": "g",
+      "style_key": "glam_clown",
+      "description": "Clown moderne inspiré du glam rock, avec paillettes et motifs symétriques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_glam.jpg",
+      "prompt": "Use the attached image as accurate reference for the face of each group member. Do not alter facial structure, expression, or skin tone. Apply glamorous clown makeup inspired by glam rock: metallic eyeshadow in gold and purple, symmetrical star shapes around the eyes, a silver diamond on the forehead, and glossy red lips. Add subtle glitter overlay on cheeks. Preserve all face proportions and lighting. Maintain original clothing, hairstyle, and photo composition. The clown styling must enhance the subject visually without distorting identity. Photorealistic rendering with emphasis on texture realism and light behavior across makeup."
+    },
+    {
+      "name": "Clown de Carnaval",
+      "gender": "g",
+      "style_key": "carnival_clown",
+      "description": "Clown joyeux avec maquillage coloré et ambiance festive",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_carnival.jpg",
+      "prompt": "Use the attached image as accurate reference for every person’s face. Retain all facial features, proportions, and expressions with absolute consistency. Add vibrant, festive clown makeup: rainbow-colored designs across the cheeks, bright stars under the eyes, red heart-shaped nose, and yellow accents near the temples. Maintain the original composition, lighting direction, and skin detail. Ensure makeup appears realistically applied with visible texture blending into the skin. Background and clothing remain untouched. Identity clarity is essential—faces must remain fully recognizable with colorful clown enhancement only."
+    },
+    {
+      "name": "Clown Triste Poétique",
+      "gender": "g",
+      "style_key": "sad_poetic_clown",
+      "description": "Clown mélancolique avec maquillage minimaliste noir et blanc",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_sad.jpg",
+      "prompt": "Use the attached image as accurate reference for each face. Keep all facial identity traits, including emotion, skin tone, eye shape, and mouth curvature. Add poetic sad clown makeup in black and white: pale skin wash, dark downward teardrops under each eye, subtle linework across eyebrows, and a faint, downturned mouth painted below the lips. Do not alter the posture, background, or hairstyle. The entire image should remain grounded in photorealism, with makeup applied like authentic face paint. Each person must stay fully identifiable, with expressive melancholy reflected through detailed makeup only."
+    },
+
+
+
+ {
+      "name": "Clown de Cirque Enchanté",
+      "gender": "g",
+      "style_key": "circus_clown",
+      "description": "Clown exubérant dans un chapiteau magique, costume à volants et lumière colorée",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_circus.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Maintain each person’s unique facial identity, structure, and expression. Dress each subject in a vibrant, traditional circus clown outfit with oversized buttons, striped pants, frilled collars, and pointed hats. Add colorful face paint: blue stars, red cheeks, white base with exaggerated expressions. Background should be a magical circus tent interior, lit by colorful spotlights and decorative string lights. Add props like balloons and juggling pins. Each subject should exhibit a unique silly or joyful expression. Ensure realism in fabric texture, lighting on faces, and painted details, while preserving identity and composition."
+    },
+    {
+      "name": "Clown de la Ville-Lumière",
+      "gender": "g",
+      "style_key": "urban_clown",
+      "description": "Clown urbain extravagant dans un décor nocturne parisien avec néons",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_paris.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Keep facial identity, structure, and skin tone intact. Style each person as a flamboyant urban clown: sleek multicolored blazers, shimmering bow ties, and oversized shoes. Apply elegant, asymmetrical clown makeup with glitter highlights and artistic eyeliner strokes. Change the background to a vibrant night-time Paris street scene with wet cobblestones, glowing neon signs, and distant traffic lights. Add dynamic expressions: extreme joy, laughing mid-motion, open arms. Maintain a photorealistic look with crisp contrast and atmospheric reflections, while ensuring every face remains clearly identifiable."
+    },
+    {
+      "name": "Clown de Villa Post-Apocalyptique",
+      "gender": "g",
+      "style_key": "apocalypse_clown",
+      "description": "Clown délirant au cœur d’une ruine post-apocalyptique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_apocalypse.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Preserve full character consistency and facial features. Transform each person into a chaotic post-apocalyptic clown: torn colorful outfits mixed with armor pieces, gas masks hanging from belts, weathered gloves. Apply chaotic face paint: black tears, asymmetrical smears, cracked white foundation. Change the background to a ruined villa with fire-lit skies, broken neon signs, and debris-filled streets. Add extreme facial expressions: manic joy, creepy smiles, wild stares. Keep lighting directional and realistic with dust and ambient smoke. Maintain the composition and pose while transforming environment and attire completely."
+    },
+
+    {
+      "name": "Clown Grotesque et Grotesquement Heureux",
+      "gender": "g",
+      "style_key": "grotesque_happy_clown",
+      "description": "Clown grotesque avec exagération des traits, éclats de rire et arrière-plan coloré",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_grotesque.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Preserve exact identity and face structure. Style each person with hyper-exaggerated clown costumes: oversized polka-dot jumpsuits, giant rainbow wigs, spinning bow ties. Apply intense, loud face paint with surreal proportions but keep the real face shape and skin tone underneath. Set the background as a psychedelic carnival with rainbow tents, giant lollipops, and spinning wheels. Each person should have an exaggerated silly expression: wide open mouth, tongue out, raised eyebrows. Emphasize absurdity without losing facial recognition. Realistic rendering with strong contrast, soft edges on makeup, and crisp detail in costume fabric."
+    },
+
+
+    {
+      "name": "Clown Cyber-Détraqué",
+      "gender": "g",
+      "style_key": "cyber_clown",
+      "description": "Clown futuriste avec circuits lumineux, glitchs visuels et ambiance dystopique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_cyber.jpg",
+      "prompt": "Use the attached image as accurate reference for all faces. Preserve exact facial features, expressions, and proportions of each individual. Style each person as a cyber-clown: neon-accented bodysuits with chrome textures, glowing circuit patterns across the clothing, and headwear shaped like digital jester hats. Apply high-tech clown makeup: glowing eyeshadow, digital face tattoos, geometric shapes in cyan, magenta, and green. Replace the background with a glitchy urban cyberpunk alley lit by holographic signs, rain-slicked surfaces, and data streams in mid-air. Add screen-like reflections on faces and metallic makeup sheens. Each subject should show expressions of joy, madness, or playful defiance. Maintain full identity recognition with photorealistic digital blending and neon lighting effects."
+    }
+  ]
+}
+,
+{
+  "id": "superheroes-transformation",
+  "name": "Transformations Super-Héros",
+  "description": "Transformations visuelles de personnages en super-héros avec fond thématique et visage d'origine",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/superheroes.jpg",
+  "compatibleWith": ["premium"],
+  "styles": [
+    {
+      "name": "Héros Classique",
+      "gender": "g",
+      "style_key": "classic_superhero",
+      "description": "Héros rouge et bleu volant au-dessus des gratte-ciels",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/classic_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. Make this person look like a superhero in a green and pink suit with cape, flying above a city skyline. Backgrounded by a city with tall skyscrapers and cloudy sky."
+    },
+    {
+      "name": "Héros Futuriste",
+      "gender": "g",
+      "style_key": "futuristic_armor_hero",
+      "description": "Super-héros en armure high-tech avec lignes lumineuses",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/futuristic_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person .  Turn this person into a futuristic armored superhero with glowing blue energy lines. Backgrounded by a neon-lit cyberpunk city."
+    },
+    {
+      "name": "Vigilante Nocturne",
+      "gender": "g",
+      "style_key": "night_vigilante",
+      "description": "Héros masqué sur un toit sous la pluie",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/night_vigilante.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person. Transform this person into a masked vigilante with a black suit and cape. Backgrounded by a stormy rooftop with thunder and lightning."
+    },
+    {
+      "name": "Héros Technologique",
+      "gender": "g",
+      "style_key": "tech_powered_hero",
+      "description": "Héros avec bras robotiques et énergie digitale",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tech_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot . Make this person a tech-enhanced superhero with robotic arms and glowing circuits. Backgrounded by a digital lab full of floating holograms."
+    },
+    {
+      "name": "Héros de la Vitesse",
+      "gender": "g",
+      "style_key": "speedster_flash",
+      "description": "Héros courant à toute vitesse avec traînées électriques",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/speedster.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot . Reimagine this person as a ultra fast superhero mid-run with motion blur and electric trails. wearing a green suits .Backgrounded by a blurred urban street at night."
+    },
+    {
+      "name": "Héros du Feu",
+      "gender": "g",
+      "style_key": "fire_aura_hero",
+      "description": "Super-héros en feu avec aura incandescente",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fire_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. Create a fiery superhero with glowing red aura and flaming hands. Backgrounded by a scorched battlefield and smoke clouds."
+    },
+    {
+      "name": "Héros Cosmique",
+      "gender": "g",
+      "style_key": "cosmic_space_hero",
+      "description": "Super-héros flottant dans l’espace avec lumière cosmique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cosmic_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot .Make this person float in space like a cosmic superhero glowing with stardust. Backgrounded by galaxies, planets and deep space."
+    },
+
+    {
+      "name": "Héros Magique",
+      "gender": "g",
+      "style_key": "mystic_magic_hero",
+      "description": "Héros magique avec symboles anciens et cape flottante",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/magic_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face.the camera focus on the half body of the person , high range contrast , cinematic shot . Create a magical hero with glowing symbols and floating cloak. Backgrounded by a swirling portal and mystical runes."
+    },
+    {
+      "name": "Héros Aquatique",
+      "gender": "g",
+      "style_key": "underwater_hero",
+      "description": "Héros sous-marin nageant avec armure fluide",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/water_hero.jpg",
+      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot .Turn this person into an aquatic superhero with fins and underwater armor. Backgrounded by an ocean trench with glowing corals.A shark with open mouse is behind the person . "
+    }
+  ]
+}
+,
+{
+  "id": "ultrarealistic-face-scenes",
+    "description": "Scenes impossibles avec des visages ultra-réalistes",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/scene-impossibles.jpg",
+    "compatibleWith": ["premium"],
+    "styles": [
+ 
+    {
+      "name": "Skatepark après la pluie",
+      "gender": "g",
+      "style_key": "skatepark_postrain",
+      "description": "Portrait après la pluie dans un skatepark couvert de graffitis",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/skatepark_postrain.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), sitting relaxed on a tilted concrete ledge in a graffiti-covered skatepark. Puddles and wet ramps surround the scene. They're wearing a navy windbreaker, ripped jeans, and beat-up skate shoes. They hold a cracked phone in one hand and a half-melted popsicle in the other. A mischievous 3D Pixar-style raccoon is next to them, mimicking the same posture with crossed arms. The light is soft and silver, filtered by lingering clouds after the rain. Background shows bent railings, a wet ramp and faded skate stickers. Reflections of both are visible in a puddle, along with a blurred neon arrow sign."
+    },
+    {
+      "name": "Café rétro de nuit",
+      "gender": "g",
+      "style_key": "retro_diner_night",
+      "description": "Portrait stylisé dans un café rétro sous une pluie fine",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/retro_diner_night.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), sitting at a booth in a retro diner, next to a rain-streaked window with neon reflections. They're wearing a red varsity jacket, white shirt, and vintage blue jeans. They stir a cup of coffee while gazing out the window. A 3D Pixar-style cat sits across the booth, mirroring their hand on chin pose, with a small umbrella next to it. The floor is shiny with rain residue, and soft diner jazz music colors the mood. Blurred neon reads 'OPEN 24/7' in the window."
+    },
+    {
+      "name": "Bibliothèque Futuriste",
+      "gender": "g",
+      "style_key": "futuristic_library_scene",
+      "description": "Portrait dans une bibliothèque high-tech sous éclairage LED",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/futuristic_library.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), sitting calmly in a chrome and glass library with neon-blue light strips. They’re wearing a long dark coat with subtle holographic patterns, sleek glasses, and minimalist black sneakers. One hand holds a floating transparent tablet, while the other is under the chin. A small 3D Pixar-style owl hovers nearby, projecting holographic shapes. The bookshelves around them glow with soft embedded lights, and reflections flicker across the polished floor."
+    },
+    {
+      "name": "Jungle Dinosaure",
+      "style_key": "jungle_dinosaur_chase",
+      "description": "Course dans la jungle, poursuivi par un dinosaure",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/jungle_dinosaur.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), running through a dense jungle trail, rain-soaked leaves brushing past, pursued by a giant roaring velociraptor in the background. They're wearing a ripped hoodie and muddy sneakers, their expression a mix of panic and thrill. The jungle is foggy and cinematic, with birds fleeing the treetops and heavy breathing in the atmosphere."
+    },
+
+    {
+      "name": "Terrain de Foot Boueux",
+      "style_key": "muddy_football_match",
+      "description": "Scne sous la pluie sur un terrain de football boueux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/football_mud.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on the front of the person (Use attached image as accurate reference for the face.), standing in the middle of a muddy football field under heavy rain. Their white T-shirt is soaked and covered in mud splashes. They hold a deflated ball, hair dripping wet, while a 3D Pixar-style dog mascot jumps beside them covered in mud too. The goalposts are barely visible in the foggy, soaked background."
+    },
+    {
+      "name": "Scne Créative 4",
+      "style_key": "creative_scene_4",
+      "description": "Scne creative ultra-realiste numero 4",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/creative_scene_4.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on the half body of the person (Use attached image as accurate reference for the face.), performing a cinematic action scene number 4 in a surreal environment with rain, debris, neon lights or fog. A 3D Pixar-style character joins the moment with a humorous pose or reaction the 3d caracter looks like the person . Their clothes are soaked, tousled, or dirtied, matching the atmosphere. The composition emphasizes depth, emotion, and cinematic style."
+    },
+{
+      "name": "Rue Japonaise et Chat Affamé",
+      "gender": "g",
+      "style_key": "tokyo_cat_chase",
+      "description": "Chassé dans une ruelle japonaise par un chat affamé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/japan_cat.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), sprinting down a neon-lit alley in Tokyo at night. A huge 3D Pixar-style street cat with exaggerated silly expression chases from behind, paws outstretched. The person is wearing a damp hoodie and clutching a half-eaten fish bun. Neon signs reflect off the wet pavement, and manga posters flap in the wind."
+    },
+{
+      "name": "Café Rétro sous la Pluie",
+      "gender": "g",
+      "style_key": "retro_diner_scene",
+      "description": "Scène calme dans un café rétro avec pluie en arrière-plan",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/retro_diner_night002.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on the half body of the person (Use attached image as accurate reference for the face.), sitting alone at a diner booth by the window, steam rising from their coffee. Outside, rain streaks the glass. Neon reflections paint their face. A 3D Pixar-style frog with a napkin is seated across, copying their pose. The mood is quiet, cinematic, with soft jazz atmosphere."
+    },
+    {
+      "name": "Parking OVNI",
+      "gender": "g",
+      "style_key": "ufo_parking_scene",
+      "description": "Un OVNI apparaît dans un parking de nuit",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ufo_parking.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on the half body of the  person (Use attached image as accurate reference for the face.), standing in an empty supermarket parking lot at night, looking up in awe. Above them, a huge UFO glows, beaming a light cone. Their hoodie flaps in the wind. A ultra-realistic alien hangs from their backpack. The asphalt is wet and full of reflections."
+    },
+    {
+      "name": "Foire Abandonnée",
+      "gender": "g",
+      "style_key": "abandoned_fairground",
+      "description": "Seul dans une foire abandonnée au coucher du soleil",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fairground_abandoned.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on the half body of the  person (Use attached image as accurate reference for the face.), walking through an abandoned fairground, surrounded by broken rides and faded colors. A ultra-giant 3D Pixar-style teddy bear floats on a balloon nearby. The sky is dark orange, and puddles shimmer with twilight hues."
+    },
+    {
+      "name": "Atelier d’Artiste",
+      "gender": "g",
+      "style_key": "art_studio_chaos",
+      "description": "Atelier d'art en désordre, ambiance créative",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/art_studio.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), sitting cross-legged in a messy art studio, surrounded by paint tubes, sketches, and canvases. Their shirt is stained with color. A 3D Pixar-style mouse is holding a tiny paintbrush, copying them. Light beams through dusty windows."
+    },
+    {
+      "name": "Métro Bondé",
+      "gender": "g",
+      "style_key": "crowded_subway_pixar",
+      "description": "Scène stylisée dans un métro bondé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/crowded_subway.jpg",
+      "prompt": "Use attached image as accurate reference for the face. make this as A digital photo in ultra-realistic style, in UHD 8K quality, very clear and detailed, as if shot with an iPhone 15 Pro Max in Cinema Portrait mode. The camera is pointed straight at the subject. The focus is on a person (Use attached image as accurate reference for the face.), crushed in a crowded subway train, gripping a pole. Graffiti and stickers cover the walls. A 3D Pixar-style cat peeks out from a backpack. The interior is chaotic, colorful, yet cinematic."
+    }
+   
 
   ]
 },
