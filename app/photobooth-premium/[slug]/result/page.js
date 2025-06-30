@@ -390,24 +390,44 @@ export default function Result({ params }) {
         {/* Result Image Display - Full Size Container */}
         {imageResultAI ? (
           <div className="relative mx-auto flex items-center justify-center" style={{ width: '100%' }}>
-            <Image 
-              src={imageResultAI} 
-              width={1200} 
-              height={1600} 
-              alt="Résultat"
-              className="w-auto h-auto rounded-lg shadow-2xl" 
-              priority
-              onError={(e) => {
-                console.error("Error loading image:", e);
-                setError("Impossible de charger l'image");
-              }}
-              style={{
-                maxHeight: '75vh',
-                maxWidth: '100%',
-                objectFit: 'contain',
-                display: 'block'
-              }}
-            />
+            {/^https?:\/\/(replicate\.delivery|leeveostockage\.s3|.*amazonaws\.com)/.test(imageResultAI) ? (
+              <img
+                src={imageResultAI}
+                width={1200}
+                height={1600}
+                alt="Résultat"
+                className="w-auto h-auto rounded-lg shadow-2xl"
+                style={{
+                  maxHeight: '75vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
+                onError={(e) => {
+                  console.error("Error loading image:", e);
+                  setError("Impossible de charger l'image");
+                }}
+              />
+            ) : (
+              <Image
+                src={imageResultAI}
+                width={1200}
+                height={1600}
+                alt="Résultat"
+                className="w-auto h-auto rounded-lg shadow-2xl"
+                priority
+                onError={(e) => {
+                  console.error("Error loading image:", e);
+                  setError("Impossible de charger l'image");
+                }}
+                style={{
+                  maxHeight: '75vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
+              />
+            )}
             {/* Bouton de téléchargement visible uniquement sur mobile */}
             {linkQR && (
               <a

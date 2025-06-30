@@ -476,7 +476,7 @@ export default function CameraCapture({ params }) {
           // Fetch project data by slug with more specific select
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
-            .select('id, name, slug, logo_url, primary_color, secondary_color, is_active')
+            .select('id, name, slug, logo_url, primary_color, secondary_color, is_active', { head: false })
             .eq('slug', slug)
             .eq('is_active', true)
             .single();
@@ -493,7 +493,7 @@ export default function CameraCapture({ params }) {
             // First get the settings ID that matches the project
             const { data: settingsIdData } = await supabase
               .from('project_settings')
-              .select('id')
+              .select('id', { head: false })
               .eq('project_id', projectData.id)
               .single();
               
@@ -501,7 +501,7 @@ export default function CameraCapture({ params }) {
               // Then query for specific settings using the settings ID
               const { data: settingsData } = await supabase
                 .from('project_settings')
-                .select('show_countdown, max_processing_time')
+                .select('show_countdown, max_processing_time', { head: false })
                 .eq('id', settingsIdData.id)
                 .single();
               
@@ -1068,6 +1068,7 @@ export default function CameraCapture({ params }) {
                 has_watermark: hasWatermark
               });
               
+
               console.log("Session recorded with S3 URL");
             } catch (sessionError) {
               console.error("Error recording session:", sessionError);
@@ -1169,6 +1170,7 @@ export default function CameraCapture({ params }) {
       fetchQuota();
     }
 };
+
 
 // Ajoute cette fonction pour générer l'image via Replicate
 const generateImageReplicate = async () => {
@@ -1735,7 +1737,7 @@ const generateImageReplicate = async () => {
                 REPRENDRE
               </button>
               <button 
-                onClick={generateImageReplicate}
+                onClick={generateImageSwap} // <-- Remplace generateImageReplicate par generateImageSwap
                 className="px-8 py-3 rounded-lg font-bold"
                 style={{ backgroundColor: secondaryColor, color: primaryColor }}
                 disabled={processing}
