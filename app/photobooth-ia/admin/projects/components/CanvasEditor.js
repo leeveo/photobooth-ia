@@ -467,7 +467,7 @@ const loadFrameImages = useCallback(async () => {
 
     const frames = frameFiles.map((filename, index) => ({
       id: `frame${index}`,
-      name: filename,
+      
       src: `${s3BaseUrl}${filename}`,
       src_nocache: `${s3BaseUrl}${filename}?t=${Date.now()}`
     }));
@@ -493,34 +493,39 @@ const loadFrameImages = useCallback(async () => {
         return;
       }
       
+      // Option 1: Si vous stockez les URLs des images dans une table Supabase
+      // Remplacez 'uploaded_images' par le nom de votre table
       const { data, error } = await supabase
-        .storage
-        .from('uploads')
-        .list(`${projectId}/`);
+        .from('uploaded_images')
+        .select('id, name, url')
+        .eq('project_id', projectId);
         
-      if (error) throw error;
+      if (error) {
+        console.log('Aucune image trouvée en base de données, utilisation des images locales');
+        // Continuer avec des images locales ou vide
+      } else if (data && data.length > 0) {
+        // Si des images sont trouvées en base de données, les utiliser
+        const images = data.map(img => ({
+          id: img.id,
+          name: img.name,
+          src: img.url
+        }));
+        
+        setUploadedImages(images);
+        return;
+      }
       
-      // Filtrer pour ne garder que les fichiers PNG et JPG
-      const imageFiles = (data || []).filter(file => 
-        file.name.toLowerCase().endsWith('.png') || 
-        file.name.toLowerCase().endsWith('.jpg') || 
-        file.name.toLowerCase().endsWith('.jpeg')
-      );
+      // Option 2: Si vous n'avez pas de table spécifique, initialisez avec un tableau vide
+      // ou des images de test pour le développement
+      setUploadedImages([]);
       
-      // Créer les URLs pour chaque image
-      const images = imageFiles.map(file => ({
-        id: file.id,
-        name: file.name,
-        src: supabase.storage.from('uploads').getPublicUrl(`${projectId}/${file.name}`).data.publicUrl
-      }));
-      
-      setUploadedImages(images);
     } catch (error) {
       console.error('Error loading uploaded images:', error);
+      setUploadedImages([]);
     }
   }, [projectId, supabase, isTemplateMode]); // Ajout des dépendances
   
-  // Fonction pour gérer l'upload de fichiers
+  // Fonction pour gérer l'upload de fichiers - modifiée pour utiliser AWS S3
   const handleFileUpload = async (e) => {
     const files = e.target.files;
     
@@ -535,24 +540,33 @@ const loadFrameImages = useCallback(async () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileName = `${Date.now()}_${file.name}`;
+        const s3Path = `photobooth_uploads/${projectId}/${fileName}`;
         
-        // Upload du fichier vers Supabase
-        const { data, error } = await supabase
-          .storage
-          .from('uploads')
-          .upload(`${projectId}/${fileName}`, file);
-          
-        if (error) throw error;
+        // Créer FormData pour l'upload vers S3 via l'API
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', 'leeveostockage');
+        formData.append('path', s3Path);
         
-        // Créer l'URL de l'image
-        const imageUrl = supabase
-          .storage
-          .from('uploads')
-          .getPublicUrl(`${projectId}/${fileName}`).data.publicUrl;
+        // Upload du fichier vers AWS S3 via l'API existante
+        const uploadResponse = await fetch('/api/upload-s3', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        const imageUrl = uploadResult.url;
+        
+        // Enregistrer l'URL dans la base de données si nécessaire
+        // Vous pouvez ajouter ici un appel à l'API pour stocker l'URL dans votre base de données
         
         // Ajouter l'image à la liste des images téléchargées
         uploadedImagesList.push({
-          id: data.id || Date.now().toString(),
+          id: `s3-${Date.now()}-${i}`,
           name: fileName,
           src: imageUrl
         });
@@ -562,9 +576,13 @@ const loadFrameImages = useCallback(async () => {
       }
       
       setUploadedImages(uploadedImagesList);
+      
+      // Afficher une notification de succès
+      showNotification('Images téléchargées avec succès', 'success');
+      
     } catch (error) {
       console.error('Error uploading files:', error);
-      alert('Erreur lors du téléchargement des fichiers');
+      showNotification(`Erreur lors du téléchargement: ${error.message}`, 'error');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -1709,8 +1727,8 @@ const handleSelectTemplate = (template) => {
             {activeTab === 'layouts' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0   012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
                 Layouts
               </>
             )}

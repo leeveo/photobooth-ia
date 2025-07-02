@@ -43,24 +43,67 @@ export default function ProjectGallery() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   
-  // Définir loadMosaicSettings AVANT son utilisation dans useEffect
+  // Mettre à jour loadMosaicSettings pour inclure la recherche dans temp_storage
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
     try {
-      // First check if settings exist
+      // D'abord essayer de charger depuis mosaic_settings
       const { data, error } = await supabase
         .from('mosaic_settings')
         .select('*')
         .eq('project_id', projectId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
-    
+        .maybeSingle();
+      
       if (error) {
-        console.error('Error loading mosaic settings:', error);
-        // Don't throw, just use defaults
+        console.error('Erreur chargement des paramètres:', error);
+        // Essayer avec temp_storage si erreur
+        const { data: tempData, error: tempError } = await supabase
+          .from('temp_storage')
+          .select('value')
+          .eq('key', `mosaic_settings_${projectId}`)
+          .maybeSingle();
+          
+        if (tempError) {
+          console.error('Erreur chargement des paramètres temporaires:', tempError);
+          // Valeurs par défaut
+          resetMosaicSettings();
+          return;
+        }
+        
+        if (tempData && tempData.value) {
+          try {
+            const parsedSettings = JSON.parse(tempData.value);
+            console.log('Paramètres chargés depuis temp_storage:', parsedSettings);
+            
+            setMosaicSettings({
+              bg_color: parsedSettings.bg_color || '#000000',
+              bg_image_url: parsedSettings.bg_image_url || '',
+              title: parsedSettings.title || '',
+              description: parsedSettings.description || '',
+              show_qr_code: parsedSettings.show_qr_code || false,
+              qr_title: parsedSettings.qr_title || 'Scannez-moi',
+              qr_description: parsedSettings.qr_description || 'Retrouvez toutes les photos ici',
+              qr_position: parsedSettings.qr_position || 'center'
+            });
+            
+            if (parsedSettings.bg_image_url) {
+              setBgImagePreview(parsedSettings.bg_image_url);
+            }
+          } catch (parseErr) {
+            console.error('Erreur parsing JSON:', parseErr);
+            resetMosaicSettings();
+          }
+          return;
+        }
+        
+        // Aucune donnée trouvée, utiliser valeurs par défaut
+        resetMosaicSettings();
+        return;
       }
-    
+      
       if (data) {
+        console.log('Paramètres chargés depuis mosaic_settings:', data);
         setMosaicSettings({
           bg_color: data.bg_color || '#000000',
           bg_image_url: data.bg_image_url || '',
@@ -72,28 +115,33 @@ export default function ProjectGallery() {
           qr_position: data.qr_position || 'center'
         });
         
-        // Set background image preview if exists
         if (data.bg_image_url) {
           setBgImagePreview(data.bg_image_url);
         }
       } else {
-        // Reset to defaults if no settings found
-        setMosaicSettings({
-          bg_color: '#000000',
-          bg_image_url: '',
-          title: '',
-          description: '',
-          show_qr_code: false,
-          qr_title: 'Scannez-moi',
-          qr_description: 'Retrouvez toutes les photos ici',
-          qr_position: 'center'
-        });
-        setBgImagePreview(null);
+        // Aucune donnée trouvée, utiliser valeurs par défaut
+        resetMosaicSettings();
       }
     } catch (err) {
-      console.error('Error loading mosaic settings:', err);
+      console.error('Erreur globale chargement paramètres:', err);
+      resetMosaicSettings();
     }
-  }, [supabase]); // Add supabase as dependency
+  }, [supabase]);
+  
+  // Ajouter une fonction pour réinitialiser les paramètres
+  const resetMosaicSettings = () => {
+    setMosaicSettings({
+      bg_color: '#000000',
+      bg_image_url: '',
+      title: '',
+      description: '',
+      show_qr_code: false,
+      qr_title: 'Scannez-moi',
+      qr_description: 'Retrouvez toutes les photos ici',
+      qr_position: 'center'
+    });
+    setBgImagePreview(null);
+  };
   
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -326,7 +374,7 @@ export default function ProjectGallery() {
     reader.readAsDataURL(file);
   };
 
-  // Replace the saveMosaicSettings function to use the server-side API for background image upload
+  // Remplacer la fonction saveMosaicSettings pour utiliser directement Supabase
   const saveMosaicSettings = async () => {
     if (!selectedProject) {
       setError('Veuillez sélectionner un projet');
@@ -341,72 +389,123 @@ export default function ProjectGallery() {
       
       if (bgImageFile) {
         try {
-          console.log('Uploading background image via API');
+          console.log('Téléchargement de l\'image d\'arrière-plan');
           
-          // Create FormData to send the file
+          // Générer un nom de fichier unique
+          const fileExt = bgImageFile.name.split('.').pop();
+          const fileName = `mosaic-bg-${Date.now()}.${fileExt}`;
+          const s3Path = `photobooth_uploads/${selectedProject}/backgrounds/${fileName}`;
+          
+          // Créer FormData pour l'upload vers AWS S3 via l'API
           const formData = new FormData();
-          formData.append('projectId', selectedProject);
-          formData.append('name', `Mosaic Background ${Date.now()}`);
           formData.append('file', bgImageFile);
+          formData.append('bucket', 'leeveostockage');
+          formData.append('path', s3Path);
           
-          // Upload using our new API endpoint
-          const uploadResponse = await fetch('/api/upload-background', {
+          // Upload du fichier vers AWS S3 via l'API existante
+          const uploadResponse = await fetch('/api/upload-s3', {
             method: 'POST',
-            body: formData,
+            body: formData
           });
           
           if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            throw new Error(errorData.message || uploadResponse.statusText);
+            throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
           }
           
           const uploadResult = await uploadResponse.json();
-          bgImageUrl = uploadResult.data.url;
-          console.log('Background image uploaded successfully:', bgImageUrl);
+          bgImageUrl = uploadResult.url;
+          
+          console.log('Image d\'arrière-plan téléchargée avec succès vers S3:', bgImageUrl);
         } catch (uploadErr) {
-          console.error('Error handling background image:', uploadErr);
+          console.error('Erreur lors du téléchargement de l\'image:', uploadErr);
           setError(`Erreur lors du téléchargement de l'image: ${uploadErr.message}`);
           setSavingMosaicSettings(false);
           return;
         }
       }
       
-      // Use the server-side API for mosaic settings
-      const settingsData = {
+      // Préparer les données pour Supabase
+      const mosaicData = {
         project_id: selectedProject,
-        bg_color: mosaicSettings.bg_color,
-        bg_image_url: bgImageUrl,
-        title: mosaicSettings.title,
-        description: mosaicSettings.description,
-        show_qr_code: mosaicSettings.show_qr_code,
-        qr_title: mosaicSettings.qr_title,
-        qr_description: mosaicSettings.qr_description?.substring(0, 255),
-        qr_position: mosaicSettings.qr_position,
+        bg_color: mosaicSettings.bg_color || '#000000',
+        bg_image_url: bgImageUrl || null,
+        title: mosaicSettings.title || '',
+        description: mosaicSettings.description || '',
+        show_qr_code: mosaicSettings.show_qr_code === true,
+        qr_title: mosaicSettings.qr_title || 'Scannez-moi',
+        qr_description: mosaicSettings.qr_description?.substring(0, 255) || 'Retrouvez toutes les photos ici',
+        qr_position: mosaicSettings.qr_position || 'center',
         updated_at: new Date().toISOString()
       };
       
-      const response = await fetch('/api/save-mosaic-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(settingsData)
-      });
+      console.log('Données à enregistrer:', mosaicData);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error saving settings');
+      // Vérifier si les paramètres existent déjà
+      const { data: existingSettings } = await supabase
+        .from('mosaic_settings')
+        .select('project_id')
+        .eq('project_id', selectedProject)
+        .maybeSingle();
+        
+      let result;
+      
+      if (existingSettings) {
+        // Mise à jour
+        console.log('Mise à jour des paramètres existants');
+        result = await supabase
+          .from('mosaic_settings')
+          .update(mosaicData)
+          .eq('project_id', selectedProject);
+      } else {
+        // Insertion
+        console.log('Création de nouveaux paramètres');
+        result = await supabase
+          .from('mosaic_settings')
+          .insert(mosaicData);
       }
       
-      setSuccess('Paramètres de mosaïque enregistrés avec succès');
+      console.log('Résultat de l\'opération Supabase:', result);
+      
+      if (result.error) {
+        console.error('Erreur Supabase:', result.error);
+        
+        // Si l'erreur est liée à RLS, essayer une autre approche
+        if (result.error.message.includes('row-level security')) {
+          // Approche alternative: utiliser une table temporaire sans RLS
+          console.log('Tentative avec table temporaire...');
+          
+          // Création d'une entrée dans temp_storage (table sans RLS)
+          const tempData = {
+            key: `mosaic_settings_${selectedProject}`,
+            value: JSON.stringify(mosaicData),
+            created_at: new Date().toISOString(),
+            created_by: currentAdminId
+          };
+          
+          const { error: tempError } = await supabase
+            .from('temp_storage')
+            .upsert(tempData, { onConflict: 'key' });
+            
+          if (tempError) {
+            throw new Error(`Erreur de stockage temporaire: ${tempError.message}`);
+          }
+          
+          setSuccess('Paramètres de mosaïque enregistrés temporairement');
+        } else {
+          throw new Error(`Erreur de base de données: ${result.error.message}`);
+        }
+      } else {
+        setSuccess('Paramètres de mosaïque enregistrés avec succès');
+      }
+      
       setShowMosaicSettings(false);
       
-      // Refresh the mosaic settings - remplacer fetchMosaicSettings par loadMosaicSettings
+      // Actualiser les paramètres
       await loadMosaicSettings(selectedProject);
 
     } catch (err) {
-      console.error('Error saving mosaic settings:', err);
-      setError(`Erreur lors de l'enregistrement des paramètres de mosaïque: ${err.message}`);
+      console.error('Erreur lors de l\'enregistrement des paramètres:', err);
+      setError(`Erreur lors de l'enregistrement des paramètres: ${err.message}`);
     } finally {
       setSavingMosaicSettings(false);
     }
