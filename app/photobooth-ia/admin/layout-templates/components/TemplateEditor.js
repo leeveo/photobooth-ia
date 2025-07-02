@@ -134,52 +134,53 @@ const TemplatesTab = ({ onSelectTemplate }) => {
   );
 };
 
-// Define the ElementsTab component
-const ElementsTab = ({ 
-  addElement, 
-  selectedColor, 
-  setSelectedColor, 
-  showColorPicker, 
-  setShowColorPicker, 
-  colorPickerTarget, 
+// Update ElementsTab to use a single column for the element buttons
+const ElementsTab = ({
+  addElement,
+  selectedColor,
+  setSelectedColor,
+  showColorPicker,
+  setShowColorPicker,
+  colorPickerTarget,
   setColorPickerTarget,
   handleColorSelect,
   presetColors = ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00']
 }) => {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
+      {/* Change grid-cols-2 to grid-cols-1 for a single column */}
+      <div className="grid grid-cols-1 gap-2">
         <button
           onClick={() => addElement('rect')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <div className="w-6 h-6 bg-blue-500 rounded-sm mr-2"></div>
           <span>Rectangle</span>
         </button>
         <button
           onClick={() => addElement('circle')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <div className="w-6 h-6 bg-green-500 rounded-full mr-2"></div>
           <span>Cercle</span>
         </button>
         <button
           onClick={() => addElement('text')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <span className="text-xl font-bold mr-2">T</span>
           <span>Texte</span>
         </button>
         <button
           onClick={() => addElement('ellipse')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <div className="w-6 h-4 bg-purple-500 rounded-full mr-2"></div>
           <span>Ellipse</span>
         </button>
         <button
           onClick={() => addElement('star')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
@@ -188,7 +189,7 @@ const ElementsTab = ({
         </button>
         <button
           onClick={() => addElement('regularPolygon')}
-          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center justify-center"
+          className="p-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L4 8.44v7.12L12 22l8-6.44V8.44L12 2z" />
@@ -482,6 +483,13 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
+  // Ajout pour les orientations
+  const [orientations, setOrientations] = useState([]);
+  const [selectedOrientation, setSelectedOrientation] = useState(initialData?.id_orientation || '');
+
+  // Nouvelle variable pour l'encart photo de l'orientation sélectionnée
+  const [photoFrame, setPhotoFrame] = useState(null);
+
   const supabase = createClientComponentClient();
   const stageRef = useRef();
   const transformerRef = useRef();
@@ -501,23 +509,32 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     }
   ], []);
   
-  // Fonction pour ajuster la taille du stage en fonction du conteneur
+  // Définir la taille fixe du container de référence
+  const REFERENCE_WIDTH = 1200;
+  const REFERENCE_HEIGHT = 800;
+
+  // Fonction pour ajuster la taille du stage pour qu'il rentre dans le container de référence et soit centré
   const checkSize = useCallback(() => {
-    if (containerRef.current) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const containerHeight = window.innerHeight * 0.6;
-      const format = formats[0];
-      
-      const scaleByWidth = containerWidth / format.pixelWidth;
-      const scaleByHeight = containerHeight / format.pixelHeight;
-      const scale = Math.min(1, scaleByWidth, scaleByHeight);
-      
-      setStageSize(prevSize => ({
-        ...prevSize,
-        scale: scale
-      }));
+    const canvasWidth = stageSize.width;
+    const canvasHeight = stageSize.height;
+
+    // Pourcentage de réduction supplémentaire (ex: 90%)
+    const REDUCTION_PERCENT = 0.9; // 90%
+
+    // Calculer le scale pour que le stage rentre dans le container, puis appliquer la réduction
+    let scale = 1;
+    if (canvasWidth > 0 && canvasHeight > 0) {
+      scale = Math.min(
+        REFERENCE_WIDTH / canvasWidth,
+        REFERENCE_HEIGHT / canvasHeight
+      ) * REDUCTION_PERCENT;
     }
-  }, [formats]);
+
+    setStageSize(prevSize => ({
+      ...prevSize,
+      scale: scale
+    }));
+  }, [stageSize.width, stageSize.height]);
   
   // Appliquer checkSize au chargement et au redimensionnement
   useEffect(() => {
@@ -529,6 +546,12 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
       };
     }
   }, [checkSize]);
+  
+  // Appliquer checkSize quand la taille du canvas change
+  useEffect(() => {
+    checkSize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageSize.width, stageSize.height]);
   
   // Mise à jour du transformer quand la sélection change
   useEffect(() => {
@@ -544,6 +567,35 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
       transformerRef.current.getLayer().batchDraw();
     }
   }, [selectedId]);
+  
+  // Met à jour la taille du canvas et l'encart photo quand l'orientation change
+  useEffect(() => {
+    if (!selectedOrientation || orientations.length === 0) return;
+    const orientation = orientations.find(o => String(o.id_orientation) === String(selectedOrientation));
+    if (orientation) {
+      setStageSize(prev => ({
+        ...prev,
+        width: orientation.width,
+        height: orientation.height
+      }));
+      // Mettre à jour la frame photo si les champs existent
+      if (
+        orientation.position_x !== undefined &&
+        orientation.position_y !== undefined &&
+        orientation.width_encart_photo !== undefined &&
+        orientation.height_encart_photo !== undefined
+      ) {
+        setPhotoFrame({
+          x: orientation.position_x,
+          y: orientation.position_y,
+          width: orientation.width_encart_photo,
+          height: orientation.height_encart_photo
+        });
+      } else {
+        setPhotoFrame(null);
+      }
+    }
+  }, [selectedOrientation, orientations]);
   
   // Function to handle color selection
   const handleColorSelect = useCallback((color) => {
@@ -962,7 +1014,8 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
         onSave({
           elements,
           stageSize,
-          thumbnailUrl: thumbnailPublicUrl || thumbnail // Utiliser l'URL publique si disponible
+          thumbnailUrl: thumbnailPublicUrl || thumbnail, // Utiliser l'URL publique si disponible
+          id_orientation: selectedOrientation // Ajout de l'orientation
         });
         
         console.log('Template et miniature PNG sauvegardés avec succès');
@@ -1062,11 +1115,44 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
     }
   };
   
+  // Charger les orientations depuis Supabase
+  useEffect(() => {
+    const fetchOrientations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('photobooth_orientation')
+          .select('*');
+        if (!error) setOrientations(data || []);
+      } catch (e) {
+        // Optionnel : gestion d'erreur
+      }
+    };
+    fetchOrientations();
+  }, [supabase]);
+  
   return (
     <div className="bg-white shadow-sm rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
           <h3 className="text-lg font-medium text-gray-900">Éditeur de Template</h3>
+          {/* Liste déroulante orientation sous le nom du template */}
+          <div className="flex flex-col items-start">
+            <label className="text-m bold text-gray-500 mb-1">
+              Orientation et dimension de la photo (champs obligatoire)
+            </label>
+            <select
+              value={selectedOrientation}
+              onChange={e => setSelectedOrientation(e.target.value)}
+              className="p-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="">Sélectionner une orientation</option>
+              {orientations.map(o => (
+                <option key={o.id_orientation} value={o.id_orientation}>
+                  {o.label || o.id_orientation}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex space-x-2">
             {thumbnailUrl && (
               <div className="hidden md:block">
@@ -1093,7 +1179,7 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
               onClick={saveTemplate}
               className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700"
             >
-              Enregistrer le template
+              Enregistrer la création
             </button>
           </div>
         </div>
@@ -1338,26 +1424,39 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
           {/* Canvas */}
           <div className="w-full lg:flex-grow">
             <div className="mb-2 text-sm text-gray-500">
-              <span>Format: 10x15 cm (Horizontal) - {stageSize.width}×{stageSize.height} pixels ({Math.round(stageSize.scale * 100)}%)</span>
+              <span>Format de la photo - {stageSize.width}×{stageSize.height} pixels ({Math.round(stageSize.scale * 100)}%) - l'encadrement rouge en pointillé correspond à l'emplacement de la photo prise par les utilisateurs</span>
             </div>
             
             <div 
-              ref={containerRef} 
-              className="border border-gray-300 rounded-lg bg-gray-100 overflow-hidden flex justify-center items-center p-2 md:p-4"
+              ref={containerRef}
+              className="border border-gray-300 rounded-lg bg-gray-100 flex justify-center items-center"
               style={{
-                minHeight: '300px',
-                height: 'auto',
-                maxHeight: 'calc(70vh - 100px)',
-                aspectRatio: 15/10 // Format 10x15
+                width: REFERENCE_WIDTH,
+                height: REFERENCE_HEIGHT,
+                background: '#e5e7eb',
+                position: 'relative',
+                margin: '0 auto',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              {/* Stage container avec mise à l'échelle */}
-              <div style={{ 
-                transform: `scale(${stageSize.scale})`, 
-                transformOrigin: 'center center',
-                width: stageSize.width,
-                height: stageSize.height
-              }}>
+              {/* Stage container centré et réduit */}
+              <div
+                style={{
+                  width: stageSize.width,
+                  height: stageSize.height,
+                  transform: `scale(${stageSize.scale})`,
+                  background: '#fff',
+                  border: '2px solid #222',
+                  boxSizing: 'content-box',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 <Stage
                   width={stageSize.width}
                   height={stageSize.height}
@@ -1373,15 +1472,33 @@ const TemplateEditor = ({ onSave, initialData = null }) => {
                   style={{ boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}
                 >
                   <Layer>
-                    {/* Rectangle d'arrière-plan transparent (pas de cadre pointillé) */}
+                    {/* Rectangle d'arrière-plan visible pour bien voir les contours */}
                     <Rect
                       x={0}
                       y={0}
                       width={stageSize.width}
                       height={stageSize.height}
-                      fill="transparent"
+                      fill="#fff"
+                      stroke="#222"
+                      strokeWidth={3}
                       listening={false}
                     />
+                    {/* Affichage de l'encart photo si défini */}
+                    {photoFrame && (
+                      <Rect
+                        x={photoFrame.x}
+                        y={photoFrame.y}
+                        width={photoFrame.width}
+                        height={photoFrame.height}
+                        stroke="#e11d48"
+                        strokeWidth={4}
+                        dash={[12, 8]}
+                        listening={false}
+                        fillEnabled={false}
+                        perfectDrawEnabled={false}
+                        cornerRadius={8}
+                      />
+                    )}
                     {/* Rendu des éléments */}
                     {elements.map((element) => {
                       if (element.type === 'rect') {

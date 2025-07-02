@@ -47,56 +47,15 @@ const presetColors = [
 // Composant séparé pour les images Konva pour respecter les règles des hooks
 const KonvaImageElement = ({ element, isSelected, onSelect, onDragEnd, onTransformEnd }) => {
   const [image, setImage] = useState(null);
-  const [loadError, setLoadError] = useState(false);
   
   useEffect(() => {
     const img = new window.Image();
-    img.crossOrigin = 'anonymous'; // Critical for CORS
-    
-    // Add timestamp to bust cache for S3 URLs
-    const imageUrl = element.src.includes('leeveostockage.s3') 
-      ? `${element.src}?t=${Date.now()}` 
-      : element.src;
-      
-    img.src = imageUrl;
-    
+    img.src = element.src;
     img.onload = () => {
-      setLoadError(false);
       setImage(img);
-      console.log(`Image loaded successfully: ${imageUrl}`);
-    };
-    
-    img.onerror = (e) => {
-      console.error(`Failed to load image: ${imageUrl}`, e);
-      setLoadError(true);
-      
-      // Try without crossOrigin as fallback
-      if (img.crossOrigin) {
-        console.log('Retrying without crossOrigin...');
-        const fallbackImg = new window.Image();
-        fallbackImg.src = imageUrl;
-        fallbackImg.onload = () => {
-          setLoadError(false);
-          setImage(fallbackImg);
-          console.log(`Fallback image loaded: ${imageUrl}`);
-        };
-      }
-    };
-    
-    return () => {
-      img.onload = null;
-      img.onerror = null;
     };
   }, [element.src]);
   
-  if (loadError) {
-    return null; // Or render a placeholder/error image
-  }
-
-  if (!image) {
-    return null; // Loading
-  }
-
   return (
     <KonvaImage
       key={element.id}
@@ -117,74 +76,31 @@ const KonvaImageElement = ({ element, isSelected, onSelect, onDragEnd, onTransfo
 };
 
 const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = false }) => {
-  // --- NOUVEAU : États pour les orientations depuis Supabase ---
-  const [orientations, setOrientations] = useState([]);
-  const [selectedOrientationId, setSelectedOrientationId] = useState(null);
-
-  const supabase = createClientComponentClient();
-
-  // Charger les orientations depuis la table photobooth_orientation
-  useEffect(() => {
-    async function fetchOrientations() {
-      try {
-        const { data, error } = await supabase
-          .from('photobooth_orientation')
-          .select('*')
-          .order('id_orientation', { ascending: true });
-        if (error) throw error;
-        setOrientations(data || []);
-        // Sélectionner la première orientation par défaut
-        if (data && data.length > 0) {
-          setSelectedOrientationId(data[0].id_orientation);
-        }
-      } catch (err) {
-        console.error('Erreur chargement orientations:', err);
-      }
+  // Formats ne devrait pas changer, donc on le déplace hors du composant ou on le mémorise
+  const formats = useMemo(() => [
+    { 
+      id: '10x15', 
+      name: '10x15 cm (Horizontal)', 
+      width: 15, 
+      height: 10, 
+      ratio: 15/10,
+      pixelWidth: 970,
+      pixelHeight: 651
     }
-    fetchOrientations();
-  }, [supabase]);
-
-  // Ajout pour l'encart photo de l'orientation sélectionnée
-  const [photoFrame, setPhotoFrame] = useState(null);
-
-  // Met à jour la taille du canvas selon l'orientation sélectionnée
-  useEffect(() => {
-    if (!orientations.length || !selectedOrientationId) return;
-    const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
-    if (orientation) {
-      setStageSize({
-        width: orientation.width,
-        height: orientation.height,
-        scale: 1
-      });
-      // Ajout : met à jour l'encart photo si les champs sont présents
-      if (
-        orientation.position_x !== undefined &&
-        orientation.position_y !== undefined &&
-        orientation.width_encart_photo !== undefined &&
-        orientation.height_encart_photo !== undefined &&
-        orientation.width_encart_photo !== null &&
-        orientation.height_encart_photo !== null
-      ) {
-        setPhotoFrame({
-          x: orientation.position_x,
-          y: orientation.position_y,
-          width: orientation.width_encart_photo,
-          height: orientation.height_encart_photo
-        });
-      } else {
-        setPhotoFrame(null);
-      }
-    }
-  }, [orientations, selectedOrientationId]);
-
+  ], []);
+  
   // État pour stocker les dimensions du canvas en pixels
-  const [stageSize, setStageSize] = useState({
-    width: 970,    // valeur par défaut (ex: 10x15cm en pixels)
-    height: 651,   // valeur par défaut
-    scale: 1
+  const [stageSize, setStageSize] = useState(() => {
+    const defaultFormat = formats[0];
+    return {
+      width: defaultFormat.pixelWidth,   // largeur du canvas (970)
+      height: defaultFormat.pixelHeight, // hauteur du canvas (651)
+      scale: 1
+    };
   });
   
+  // Nouvel état pour le format sélectionné
+  const [selectedFormat, setSelectedFormat] = useState('10x15');
   // Liste des formats disponibles
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -198,7 +114,6 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [projectName, setProjectName] = useState(''); // Ajouter un état pour le nom du projet
   // Nouvelles variables d'état pour les fonctionnalités ajoutées
   const [libraryImages, setLibraryImages] = useState([]);
-    const [frameImages, setFrameImages] = useState([]);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -226,6 +141,8 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   // Ajouter un état pour le statut RLS
   const [rlsStatus, setRlsStatus] = useState({ checked: false, ok: false });
   
+  const supabase = createClientComponentClient();
+
 
   useEffect(() => {
   const loadTemplates = async () => {
@@ -454,35 +371,6 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }
   }, [isTemplateMode, projectId]);
 
-
-const loadFrameImages = useCallback(async () => {
-  try {
-    const s3BaseUrl = "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_encadrement/";
-    const framesCount = 100; // Adapte à ton nombre réel d'encadrements
-
-    const frameFiles = Array.from({ length: framesCount }, (_, i) => {
-      const num = String(i + 1).padStart(3, '0');
-      return `frame${num}.png`; // adapte au nom réel des fichiers
-    });
-
-    const frames = frameFiles.map((filename, index) => ({
-      id: `frame${index}`,
-      name: filename,
-      src: `${s3BaseUrl}${filename}`,
-      src_nocache: `${s3BaseUrl}${filename}?t=${Date.now()}`
-    }));
-
-    setFrameImages(frames);
-  } catch (error) {
-    console.error("Erreur chargement encadrements:", error);
-    setFrameImages([]);
-  }
-}, []);
-
-
-
-
-
   // Fonction pour charger les images téléchargées par l'utilisateur
   const loadUploadedImages = useCallback(async () => {
     try {
@@ -578,34 +466,32 @@ const loadFrameImages = useCallback(async () => {
   
   // Fonction checkSize corrigée
   const checkSize = useCallback(() => {
-    if (containerRef.current && orientations.length && selectedOrientationId) {
+    if (containerRef.current) {
       const containerWidth = containerRef.current.offsetWidth;
       const containerHeight = window.innerHeight * 0.6; // Use 60% of viewport height as max height
-      const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
-      if (!orientation) return;
+      const format = formats.find(f => f.id === selectedFormat) || formats[0];
+      
       // Calculate the scale that fits both width and height constraints while maintaining aspect ratio
-      const scaleByWidth = containerWidth / orientation.width;
-      const scaleByHeight = containerHeight / orientation.height;
+      const scaleByWidth = containerWidth / format.pixelWidth;
+      const scaleByHeight = containerHeight / format.pixelHeight;
       const scale = Math.min(1, scaleByWidth, scaleByHeight); // Never scale up beyond 1
       
       setStageSize(prevSize => {
         // If the size hasn't changed, don't trigger a re-render
-        if (
-          prevSize.width === orientation.width &&
-          prevSize.height === orientation.height &&
-          prevSize.scale === scale
-        ) {
+        if (prevSize.width === format.pixelWidth && 
+            prevSize.height === format.pixelHeight && 
+            prevSize.scale === scale) {
           return prevSize;
         }
         
         return {
-          width: orientation.width,
-          height: orientation.height,
+          width: format.pixelWidth,
+          height: format.pixelHeight,
           scale: scale
         };
       });
     }
-  }, [orientations, selectedOrientationId]);
+  }, [formats, selectedFormat]);
   
   // Resize handler for responsive canvas
   useEffect(() => {
@@ -634,7 +520,7 @@ const loadFrameImages = useCallback(async () => {
     if (containerRef.current) {
       checkSize();
     }
-  }, [selectedOrientationId, checkSize]); // checkSize est stable et ne devrait pas causer de boucle
+  }, [selectedFormat, checkSize]); // checkSize est stable et ne devrait pas causer de boucle
   
   // Update transformer when selection changes
   useEffect(() => {
@@ -694,9 +580,8 @@ const loadFrameImages = useCallback(async () => {
     setElements(updatedElements);
   };
   
-  // Ensure unique keys for elements
+  // Mise à jour de la fonction addElement pour supporter les propriétés personnalisées
   const addElement = (type, src = null, name = 'New Element', customProps = null) => {
-    const uniqueId = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     if (type === 'image') {
       // Pour les images, créer un élément Image qui s'adapte au format du canvas
       const img = new window.Image();
@@ -722,7 +607,7 @@ const loadFrameImages = useCallback(async () => {
         
         // Créer le nouvel élément avec les dimensions calculées
         const newElement = {
-          id: uniqueId,
+          id: `${type}-${Date.now()}`,
           type,
           // Centrer l'image dans le canvas
           x: (stageSize.width - newWidth) / 2,
@@ -742,7 +627,7 @@ const loadFrameImages = useCallback(async () => {
       img.onerror = () => {
         // Fallback en cas d'erreur de chargement
         const fallbackElement = {
-          id: uniqueId,
+          id: `${type}-${Date.now()}`,
           type,
           x: stageSize.width / 2 - 150,
           y: stageSize.height / 2 - 100,
@@ -759,7 +644,7 @@ const loadFrameImages = useCallback(async () => {
     } else {
       // Create a new element based on type
       let newElement = {
-        id: uniqueId,
+        id: `${type}-${Date.now()}`,
         type,
         x: stageSize.width / 2,
         y: stageSize.height / 2,
@@ -894,36 +779,10 @@ const loadFrameImages = useCallback(async () => {
   };
   
   const removeSelected = () => {
-    if (!selectedId) {
-      console.log('No element selected to remove');
-      return;
-    }
+    if (!selectedId) return;
     
-    console.log('Removing element with ID:', selectedId);
-    
-    // Create a new array without the selected element
-    const updatedElements = elements.filter(el => el.id !== selectedId);
-    
-    // Check if element was actually removed
-    if (updatedElements.length === elements.length) {
-      console.warn('Element with ID', selectedId, 'not found in elements array');
-    } else {
-      console.log('Element removed successfully');
-    }
-    
-    // Update the state with the new array
-    setElements(updatedElements);
-    
-    // Clear the selection
+    setElements(elements.filter(el => el.id !== selectedId));
     setSelectedId(null);
-    
-    // Force Konva layer to update if transformer is active
-    if (transformerRef.current) {
-      transformerRef.current.nodes([]);
-      if (transformerRef.current.getLayer()) {
-        transformerRef.current.getLayer().batchDraw();
-      }
-    }
   };
   
   // États pour la notification de sauvegarde
@@ -931,13 +790,6 @@ const loadFrameImages = useCallback(async () => {
     show: false,
     message: '',
     type: 'success' // success ou error
-  });
-  
-  // Add state for the custom popup
-  const [savePopup, setSavePopup] = useState({
-    visible: false,
-    message: '',
-    type: 'success' // or 'error'
   });
   
   // Fonction pour afficher une notification
@@ -1013,146 +865,294 @@ const loadFrameImages = useCallback(async () => {
 
   // Modifiez également la fonction saveLayout pour améliorer la gestion des erreurs
   const saveLayout = async () => {
-    try {
-      // 1. Generate the thumbnail
-      const thumbnail = await generateTransparentThumbnail();
-      if (!thumbnail) {
-        console.error('Thumbnail generation failed.');
-        setSavePopup({
-          visible: true,
-          message: 'Erreur lors de la génération de la miniature.',
-          type: 'error'
+    // En mode template, on ne sauvegarde pas dans la base de données
+    // mais on appelle directement la fonction onSave
+    if (isTemplateMode) {
+      if (onSave) {
+        onSave({
+          elements,
+          stageSize
         });
-        return;
+        showNotification('Template sauvegardé avec succès');
       }
-
-      console.log('Thumbnail generated successfully');
-      
-      // 2. Create a unique filename and layout data
-      const timestamp = Date.now();
-      const filename = `layout_${timestamp}.png`;
-      const layoutName = `Layout_${new Date().toISOString().slice(0, 10)}`;
-      
-      // 3. Convert the thumbnail to a file
-      const thumbnailFile = dataURLtoFile(thumbnail, filename);
-      
-      // 4. Create FormData for uploading to S3
-      const formData = new FormData();
-      formData.append('file', thumbnailFile);
-      formData.append('bucket', 'leeveostockage');
-      formData.append('path', `layouts/${filename}`);
-      
-      console.log('Uploading thumbnail to S3...');
-      
-      // 5. Upload thumbnail to S3 via API
-      const uploadResponse = await fetch('/api/upload-s3', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!uploadResponse.ok) {
-        throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
+      return;
+    }
+    
+    try {
+      // Vérifier si les politiques RLS sont configurées
+      if (!rlsStatus.checked || !rlsStatus.ok) {
+        // Solution de contournement immédiate - utiliser un service directement
+        try {
+          // Tentative directe de correction des politiques RLS
+          let adminToken;
+          
+          // Approche plus simple et directe pour récupérer le token
+          try {
+            // Essayer d'abord localStorage directement
+            adminToken = localStorage.getItem('admin_session');
+            
+            // Si pas dans localStorage, essayer sessionStorage
+            if (!adminToken) {
+              adminToken = sessionStorage.getItem('admin_session');
+            }
+            
+            // En dernier recours, essayer les cookies
+            if (!adminToken) {
+              const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+              const sessionCookie = cookies.find(cookie => cookie.startsWith('admin_session='));
+              if (sessionCookie) {
+                adminToken = sessionCookie.split('=')[1];
+              }
+            }
+            
+            if (adminToken) {
+              console.log('Token admin trouvé:', adminToken.substring(0, 20) + '...');
+            }
+          } catch (e) {
+            console.error('Erreur lors de la récupération du token:', e);
+          }
+          
+          if (adminToken) {
+            console.log('Tentative de sauvegarde avec authentification admin...');
+            
+            try {
+              // Utiliser le service pour contourner les restrictions RLS
+              const response = await fetch('/api/bypass-rls', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${adminToken}`
+                },
+                body: JSON.stringify({
+                  projectId,
+                  elements,
+                  stageSize
+                })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                console.log('Sauvegarde réussie via contournement RLS:', result);
+                showNotification('Layout sauvegardé avec succès via service admin');
+                
+                // Appeler onSave pour synchroniser l'interface
+                if (onSave) {
+                  onSave({
+                    elements,
+                    stageSize
+                  });
+                }
+                
+                // Ne pas utiliser return ici car nous sommes dans un bloc try
+                // L'instruction continue naturellement
+              }
+            } catch (responseError) {
+              console.error('Erreur lors de la requête bypass-rls:', responseError);
+              // Continuer avec la méthode standard en cas d'erreur
+            }
+          } else {
+            console.warn('Aucun token admin trouvé, utilisation de la méthode standard');
+          }
+        } catch (bypassError) {
+          console.error('Erreur lors du contournement RLS:', bypassError);
+          // Continuer avec la méthode normale
+        }
       }
       
-      const uploadResult = await uploadResponse.json();
-      const thumbnailUrl = uploadResult.url;
+      // 1. Générer un nom automatique basé sur le nom du projet
+      const generatedName = `${projectName || 'Layout'}_${new Date().toISOString().slice(0, 10)}`;
       
-      console.log('Thumbnail uploaded successfully to S3:', thumbnailUrl);
+      // 2. Générer la miniature PNG avec gestion améliorée des erreurs
+      console.log('Génération de la miniature PNG...');
+      let thumbnail = null;
       
-      // 6. Prepare layout data with the thumbnail URL
+      try {
+        thumbnail = await generateTransparentThumbnail();
+      } catch (thumbnailError) {
+        console.error('Erreur lors de la première méthode de génération:', thumbnailError);
+      }
+      
+      // Si la première méthode échoue, essayer la méthode de secours
+      if (!thumbnail) {
+        console.log('Première méthode échouée, tentative avec la méthode de secours...');
+        try {
+          thumbnail = await generateFallbackTransparentThumbnail();
+        } catch (fallbackError) {
+          console.error('Erreur avec la méthode de secours:', fallbackError);
+        }
+      }
+      
+      let thumbnailPublicUrl = null;
+      
+      // 3. Si la miniature est générée avec succès, l'uploader vers S3
+      if (thumbnail) {
+        try {
+          // Convertir le dataURL en fichier
+          const thumbnailFile = dataURLtoFile(thumbnail, `layout_${Date.now()}.png`);
+          
+          console.log('Envoi de la miniature vers S3 via API...');
+          
+          // Créer un FormData pour l'upload
+          const formData = new FormData();
+          formData.append('file', thumbnailFile);
+          
+          // Appeler l'API d'upload S3 avec gestion améliorée des erreurs
+          const response = await fetch('/api/upload-to-s3', {
+            method: 'POST',
+            body: formData
+          });
+          
+          // Vérifier la réponse
+          if (!response.ok) {
+            let errorData = {};
+            
+            try {
+              errorData = await response.json();
+            } catch (parseError) {
+              errorData = { message: 'Impossible de parser la réponse d\'erreur' };
+            }
+            
+            console.error('Erreur API:', errorData);
+            throw new Error(`Erreur d'upload: ${response.status} ${response.statusText}`);
+          }
+          
+          // 4. Récupérer l'URL réelle après upload réussi
+          const data = await response.json();
+          
+          if (data.url) {
+            thumbnailPublicUrl = data.url;
+            console.log('URL S3 réelle obtenue:', thumbnailPublicUrl);
+          } else {
+            console.warn('Pas d\'URL retournée par l\'API');
+            // Continuer sans l'URL de la miniature
+          }
+        } catch (thumbnailError) {
+          console.error('Erreur lors de l\'upload de la miniature:', thumbnailError);
+          // En cas d'erreur, on continue sans URL de miniature
+        }
+      } else {
+        console.warn('Aucune miniature n\'a pu être générée, continuant sans');
+      }
+      
+      // 5. Préparer les données du layout
       const layoutData = {
-        project_id: projectId,
-        name: layoutName,
+        name: generatedName,
         elements: JSON.stringify(elements),
         stage_size: JSON.stringify(stageSize),
-        thumbnail_url: thumbnailUrl,
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      console.log('Checking for existing layouts...');
-      
-      // 7. Check if a layout already exists for this project
-      const { data: existingLayouts, error: fetchError } = await supabase
-        .from('canvas_layouts')
-        .select('id')
-        .eq('project_id', projectId);
-    
-      if (fetchError) {
-        console.error('Error checking existing layouts:', fetchError);
-        throw fetchError;
+      // 6. Ajouter l'URL de la miniature seulement si elle a été correctement uploadée
+      if (thumbnailPublicUrl) {
+        layoutData.thumbnail_url = thumbnailPublicUrl;
+        console.log('URL de miniature S3 ajoutée aux données du layout:', thumbnailPublicUrl);
       }
-    
-      let result;
-    
-      if (existingLayouts && existingLayouts.length > 0) {
-        // Layout exists - UPDATE it
-        console.log('Updating existing layout with ID:', existingLayouts[0].id);
-        
-        const { data, error } = await supabase
-          .from('canvas_layouts')
-          .update(layoutData)
-          .eq('id', existingLayouts[0].id)
-          .select();
-        
-        if (error) throw error;
-        result = data;
-        
-        // If there are multiple layouts (shouldn't happen but just in case),
-        // delete the extras
-        if (existingLayouts.length > 1) {
-          console.log('Cleaning up extra layouts...');
-          const extraLayoutIds = existingLayouts.slice(1).map(l => l.id);
-          
-          const { error: deleteError } = await supabase
-            .from('canvas_layouts')
-            .delete()
-            .in('id', extraLayoutIds);
-            
-          if (deleteError) {
-            console.error('Error deleting extra layouts:', deleteError);
-            // Continue anyway since the main layout was updated
-          }
+      
+      // Vérifier la connexion Supabase avant de continuer
+      try {
+        const { error: testError } = await supabase.from('projects').select('count').limit(1);
+        if (testError) {
+          console.error('Erreur de connexion Supabase:', testError);
+          throw new Error('Problème de connexion à la base de données');
         }
-      } else {
-        // No layout exists - INSERT new one
-        console.log('Creating new layout for project:', projectId);
-        
-        const { data, error } = await supabase
-          .from('canvas_layouts')
-          .insert(layoutData)
-          .select();
-        
-        if (error) throw error;
-        result = data;
+      } catch (connError) {
+        console.error('Erreur lors du test de connexion:', connError);
+        showNotification('Problème de connexion à la base de données', 'error');
+        // Appeler onSave sans sauvegarder dans la BD
+        if (onSave) {
+          onSave({
+            elements,
+            stageSize,
+            thumbnailUrl: thumbnailPublicUrl
+          });
+        }
+        return;
       }
       
-      // 8. Update local state with the layout
-      const newLayout = result[0];
-      setSavedLayouts([newLayout]); // Set to an array with only this layout
+      // Vérifier si un layout existe déjà pour ce projet
+      const existingLayout = savedLayouts.length > 0 ? savedLayouts[0] : null;
       
-      // 9. Show success message with custom popup instead of alert
-      setSavePopup({
-        visible: true,
-        message: 'Layout sauvegardé avec succès!',
-        type: 'success'
-      });
+      let result;
+      try {
+        if (existingLayout) {
+          // Mettre à jour le layout existant
+          console.log('Mise à jour du layout existant:', existingLayout.id);
+          const { data, error } = await supabase
+            .from('canvas_layouts')
+            .update(layoutData)
+            .eq('id', existingLayout.id)
+            .eq('project_id', projectId)
+            .select();
+            
+          if (error) {
+            console.error('Erreur lors de la mise à jour du layout:', error);
+            throw error;
+          }
+          
+          result = data[0];
+          console.log('Layout mis à jour avec succès:', result);
+          
+          // Mettre à jour la liste des layouts sauvegardés
+          setSavedLayouts([result]);
+          showNotification('Layout mis à jour avec succès');
+        } else {
+          // Créer un nouveau layout
+          console.log('Création d\'un nouveau layout pour le projet:', projectId);
+          layoutData.project_id = projectId;
+          layoutData.created_at = new Date().toISOString();
+          
+          const { data, error } = await supabase
+            .from('canvas_layouts')
+            .insert(layoutData)
+            .select();
+            
+          if (error) {
+            console.error('Erreur lors de la création du layout:', error);
+            throw error;
+          }
+          
+          result = data[0];
+          console.log('Nouveau layout créé avec succès avec l\'URL S3:', result);
+          
+          // Mettre à jour la liste des layouts sauvegardés
+          setSavedLayouts([result]);
+          showNotification('Nouveau layout créé avec succès');
+        }
+      } catch (dbError) {
+        console.error('Erreur lors de l\'opération sur la base de données:', dbError);
+        showNotification('Erreur lors de la sauvegarde dans la base de données', 'error');
+        
+        // Même en cas d'erreur DB, appeler onSave pour sauvegarder côté client
+        if (onSave) {
+          onSave({
+            elements,
+            stageSize,
+            thumbnailUrl: thumbnailPublicUrl
+          });
+        }
+        return;
+      }
       
-      // 10. If onSave callback exists, call it (for template mode)
+      // Appeler la fonction onSave si elle existe
       if (onSave) {
         onSave({
           elements,
           stageSize,
-          thumbnailUrl
+          thumbnailUrl: thumbnailPublicUrl
         });
       }
+      
     } catch (error) {
       console.error('Error saving layout:', error);
-      setSavePopup({
-        visible: true,
-        message: `Erreur lors de la sauvegarde: ${error.message}`,
-        type: 'error'
-      });
+      showNotification('Erreur lors de la sauvegarde du layout: ' + error.message, 'error');
+      
+      // Appeler onSave malgré l'erreur pour sauvegarder côté client
+      if (onSave) {
+        onSave({
+          elements,
+          stageSize
+        });
+      }
     }
   };
   
@@ -1256,10 +1256,6 @@ const loadFrameImages = useCallback(async () => {
         loadUploadedImages().catch(error => {
           console.error("Erreur lors du chargement initial des uploads:", error);
         });
-
-        loadFrameImages().catch(error => {
-  console.error("Erreur chargement initial encadrements:", error);
-});
       }, 0);
       
       return () => clearTimeout(timer);
@@ -1267,8 +1263,9 @@ const loadFrameImages = useCallback(async () => {
   }, [loading, loadLibraryImages, loadUploadedImages]);
   
   // Add the missing handleFormatChange function with useCallback
-const handleOrientationChange = useCallback((e) => {
-  setSelectedOrientationId(Number(e.target.value));
+const handleFormatChange = useCallback((e) => {
+  const newFormat = e.target.value;
+  setSelectedFormat(newFormat);
 }, []);
 
 // Add the missing handleColorSelect function inside the component
@@ -1383,54 +1380,6 @@ const handleSelectTemplate = (template) => {
   // Modifier le bouton de test URL directe pour utiliser la fonction définie
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
-      {/* Custom Save Popup */}
-      {savePopup.visible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop with blur effect */}
-          <div 
-            className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-            onClick={() => setSavePopup(prev => ({ ...prev, visible: false }))}
-          ></div>
-          
-          {/* Popup content */}
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 relative z-10 transform transition-all">
-            <div className="flex items-center mb-4">
-              {savePopup.type === 'success' ? (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </div>
-              )}
-              <h3 className="text-lg font-medium text-gray-900">
-                {savePopup.type === 'success' ? 'Sauvegarde réussie' : 'Erreur'}
-              </h3>
-            </div>
-            
-            <p className="text-gray-700 mb-5">{savePopup.message}</p>
-            
-            <div className="flex justify-end">
-              <button
-                onClick={() => setSavePopup(prev => ({ ...prev, visible: false }))}
-                className={`px-4 py-2 rounded-md text-white font-medium ${
-                  savePopup.type === 'success' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Notification popup */}
       {notification.show && (
         <div 
@@ -1470,20 +1419,20 @@ const handleSelectTemplate = (template) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
         <h3 className="text-lg font-medium text-gray-900">Éditeur de Canvas</h3>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
-          {/* --- NOUVEAU : Sélection d'orientation dynamique --- */}
+          {/* Format selection dropdown */}
           <div className="w-full sm:w-auto">
-            <label htmlFor="orientation-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Orientation
+            <label htmlFor="format-select" className="block text-sm font-medium text-gray-700 mb-1">
+              Format
             </label>
             <select
-              id="orientation-select"
-              value={selectedOrientationId || ''}
-              onChange={handleOrientationChange}
+              id="format-select"
+              value={selectedFormat}
+              onChange={handleFormatChange}
               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             >
-              {orientations.map(o => (
-                <option key={o.id_orientation} value={o.id_orientation}>
-                  {o.label}
+              {formats.map(format => (
+                <option key={format.id} value={format.id}>
+                  {format.name}
                 </option>
               ))}
             </select>
@@ -1530,11 +1479,7 @@ const handleSelectTemplate = (template) => {
               </div>
             )}
             <button
-              onClick={(e) => {
-    e.preventDefault(); // Prevent any event bubbling
-    e.stopPropagation(); // Stop propagation
-    removeSelected();
-  }}
+              onClick={removeSelected}
               disabled={!selectedId}
               className={`px-3 py-1.5 text-sm rounded-md flex-1 sm:flex-none ${
                 selectedId 
@@ -1560,20 +1505,18 @@ const handleSelectTemplate = (template) => {
         {/* Column 1: Vertical tabs */}
         <div className="w-full lg:w-16 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-lg flex lg:flex-col shadow-lg">
           {/* Onglet Templates en premier */}
-           {/* Nouvel onglet Encadrement */}
           <button
             className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
-              activeTab === 'frames' 
+              activeTab === 'templates' 
                 ? 'bg-white bg-opacity-20 text-white' 
                 : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
             }`}
-            onClick={() => setActiveTab('frames')}
+            onClick={() => setActiveTab('templates')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-              <rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
-            <span className="text-xs font-medium">Encart</span>
+            <span className="text-xs font-medium">Templates</span>
           </button>
           
           <button
@@ -1629,9 +1572,21 @@ const handleSelectTemplate = (template) => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-xs font-medium">Stickers</span>
+            <span className="text-xs font-medium">Bibliothèque</span>
           </button>
-
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'layouts' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('layouts')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span className="text-xs font-medium">Layouts</span>
+          </button>
           {/* Nouvel onglet Unsplash */}
           <button
             className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
@@ -1646,23 +1601,8 @@ const handleSelectTemplate = (template) => {
             </svg>
             <span className="text-xs font-medium">Images</span>
           </button>
-          
-          <button
-            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
-              activeTab === 'layouts' 
-                ? 'bg-white bg-opacity-20 text-white' 
-                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
-            }`}
-            onClick={() => setActiveTab('layouts')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <span className="text-xs font-medium">Layouts</span>
-          </button>
-          
-         
         </div>
+        
         {/* Column 2: Tab content */}
         <div className="w-full lg:w-68 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
           <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
@@ -1722,15 +1662,6 @@ const handleSelectTemplate = (template) => {
                 Images Unsplash
               </>
             )}
-            {activeTab === 'frames' && (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  <rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
-                </svg>
-                Images d'encadrement
-              </>
-            )}
           </h4>
           
           <div className="flex-grow overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-20rem)]">
@@ -1744,7 +1675,6 @@ const handleSelectTemplate = (template) => {
                   </div>
                 )}
                 
-               
                 {templatesError && (
                   <div className="p-4 text-sm text-red-700 bg-red-100 rounded-md">
                     {templatesError}
@@ -1758,7 +1688,7 @@ const handleSelectTemplate = (template) => {
                     </svg>
                     <p className="mt-4 text-gray-500">
 Aucun template disponible.
-                                       </p>
+                    </p>
                   </div>
                 )}
                 
@@ -1787,7 +1717,6 @@ Aucun template disponible.
                                   e.target.onerror = null;
                                   e.target.src = 'https://via.placeholder.com/120x96?text=No+Image';
                                 }}
-                             
                               />
                             ) : (
                               <div className="text-gray-400">
@@ -1995,38 +1924,6 @@ Aucun template disponible.
                 addElement={addElement}
               />
             )}
-            
-            {/* Encadrement tab content */}
-            {activeTab === 'frames' && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Images d'encadrement</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {frameImages.map(image => (
-                    <div
-                      key={image.id}
-                      className="border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition-all"
-                      onClick={() => addElement('image', image.src, image.name)}
-                    >
-                      <div className="h-20 bg-gray-100 flex items-center justify-center">
-                        <img
-                          src={image.src}
-                          alt={image.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      </div>
-                      <div className="p-2">
-                        <p className="text-xs text-gray-700 truncate">{image.name}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {frameImages.length === 0 && (
-                    <div className="col-span-2 text-center py-4 text-sm text-gray-500">
-                      <p>Aucune image d'encadrement trouvée</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         
@@ -2034,7 +1931,7 @@ Aucun template disponible.
         <div className="w-full lg:flex-grow">
           <div className="mb-2 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-1 sm:space-y-0">
             <span>
-              Orientation: {orientations.find(o => o.id_orientation === selectedOrientationId)?.label || ''}
+              Format: {formats.find(f => f.id === selectedFormat)?.name}
             </span>
             <span>
               Dimensions: {stageSize.width}×{stageSize.height} pixels ({Math.round(stageSize.scale * 100)}%)
@@ -2048,12 +1945,10 @@ Aucun template disponible.
               minHeight: '300px',
               height: 'auto',
               maxHeight: 'calc(70vh - 100px)',
-              aspectRatio: (() => {
-                const o = orientations.find(o => o.id_orientation === selectedOrientationId);
-                return o ? o.width / o.height : 1.5;
-              })()
+              aspectRatio: formats.find(f => f.id === selectedFormat)?.ratio || 1.5
             }}
           >
+           
             {/* Conteneur pour le stage avec mise à l'échelle */}
             <div style={{ 
               transform: `scale(${stageSize.scale})`, 
@@ -2089,22 +1984,7 @@ Aucun template disponible.
                     className="background-rect"
                     listening={false}
                   />
-                  {/* Affichage de l'encart photo si défini */}
-                  {photoFrame && (
-                    <Rect
-                      x={photoFrame.x}
-                      y={photoFrame.y}
-                      width={photoFrame.width}
-                      height={photoFrame.height}
-                      stroke="#e11d48"
-                      strokeWidth={4}
-                      dash={[12, 8]}
-                      listening={false}
-                      fillEnabled={false}
-                      perfectDrawEnabled={false}
-                      cornerRadius={8}
-                    />
-                  )}
+                  
                   {/* Rendu des éléments du canvas */}
                   {elements.map((element) => {
                     if (element.type === 'rect') {
@@ -2365,7 +2245,7 @@ Aucun template disponible.
           {/* Information sur le format d'impression - mise à jour */}
           <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100">
             <p className="text-xs text-blue-700">
-              Ce canvas correspond exactement au format d'impression sélectionné. Tout ce qui dépasse sera coupé à l'impression.
+              Ce canvas correspond exactement au format d'impression 10x15 cm (970×651 px). Tout ce qui dépasse sera coupé à l'impression.
             </p>
           </div>
         </div>
