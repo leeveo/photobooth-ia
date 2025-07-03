@@ -560,7 +560,7 @@ export default function ProjectGallery() {
       setLoading(true);
       
       // Appeler notre nouvelle API pour marquer l'image comme modérée
-      const response = await fetch('/api/mod-session', {
+      const response = await fetch('/api/moderate-img', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -632,7 +632,7 @@ export default function ProjectGallery() {
       setLoading(true);
       
       // Appeler notre API pour démodérer l'image
-      const response = await fetch('/api/unmod-session', {
+      const response = await fetch('/api/unmoderate-img', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
