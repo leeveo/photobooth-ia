@@ -18,7 +18,6 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Update the session to set moderation to 'M'
     const { error } = await supabase
       .from('sessions')
       .update({ moderation: 'M' })
@@ -37,6 +36,7 @@ export default async function handler(req, res) {
     console.error('Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
+}
 }
       .select('moderation')
       .eq('id', sessionId)
