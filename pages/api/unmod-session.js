@@ -30,30 +30,30 @@ export default async function handler(req, res) {
       return res.status(500).json({ success: false, message: error.message });
     }
 
+    // Verify the update was successful
+    const { data: checkData, error: checkError } = await supabase
+      .from('sessions')
+      .select('moderation')
+      .eq('id', sessionId)
+      .single();
+
+    if (checkError) {
+      console.warn('Verification after unmoderation failed:', checkError);
+    } else {
+      console.log('Status after unmoderation:', checkData);
+    }
+
     // Return success response
     return res.status(200).json({ 
       success: true, 
-      message: 'Image unmoderated successfully'
+      message: 'Image unmoderated successfully',
+      moderation: checkData?.moderation || null
     });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 }
-      .single();
-
-    if (checkError) {
-      console.warn('Vérification après démodération impossible:', checkError);
-    } else {
-      console.log('État après démodération:', checkData);
-    }
-
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Image démodérée avec succès',
-      moderation: checkData?.moderation
-    });
-  } catch (error) {
     console.error('Erreur générale lors de la démodération:', error);
     return res.status(500).json({ 
       success: false, 
