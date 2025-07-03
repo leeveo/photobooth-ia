@@ -151,25 +151,31 @@ export default function ProjectMosaic() {
       try {
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('sessions')
-          .select('id, result_s3_url, result_image_url, created_at')
+          .select('id, result_s3_url, result_image_url, created_at, moderation')
           .eq('project_id', projectId)
+          .is('moderation', null)  // Ne sélectionner que les images non modérées
           .order('created_at', { ascending: false });
 
         if (sessionsError) {
           setProjectImages([]);
         } else {
-          const images = (sessionsData || []).map(session => ({
-            id: session.id,
-            image_url: session.result_s3_url || session.result_image_url,
-            created_at: session.created_at,
-            metadata: {
-              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-              size: null
-            }
-          })).filter(img => img.image_url);
+          const images = (sessionsData || [])
+            .map(session => ({
+              id: session.id,
+              image_url: session.result_s3_url || session.result_image_url,
+              created_at: session.created_at,
+              metadata: {
+                fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+                size: null
+              }
+            }))
+            .filter(img => img.image_url); // Vérifier que l'image a une URL valide
+        
           setProjectImages(images);
+          console.log(`Chargement de ${images.length} images non modérées pour la mosaïque`);
         }
       } catch (err) {
+        console.error('Erreur de chargement des images:', err);
         setProjectImages([]);
       } finally {
         setLoading(false);

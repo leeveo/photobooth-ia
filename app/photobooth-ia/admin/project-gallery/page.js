@@ -12,7 +12,8 @@ import {
   RiCloseFill, 
   RiArrowLeftLine, 
   RiImageLine, 
-  RiSettings3Line 
+  RiSettings3Line,
+  RiDeleteBin6Line // Ajout de l'icône de suppression
 } from 'react-icons/ri';
 
 export default function ProjectGallery() {
@@ -39,6 +40,7 @@ export default function ProjectGallery() {
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // Ajout de l'état pour la confirmation de suppression
   
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -281,7 +283,7 @@ export default function ProjectGallery() {
               fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
               size: null
             },
-            isModerated: false
+            isModerated: session.moderation === 'M' // Vérifier si l'image est modérée
           }));
           setProjectImages(images);
         }
@@ -542,6 +544,154 @@ export default function ProjectGallery() {
     }
   };
 
+  // Fonction pour la suppression d'image
+  const deleteImage = async (id, url) => {
+    // Afficher la boîte de dialogue de confirmation
+    setDeleteConfirm({ id, url });
+  };
+  
+  // Fonction pour gérer la suppression après confirmation
+  const handleConfirmedDeletion = async () => {
+    if (!deleteConfirm) return;
+    
+    const { id, url } = deleteConfirm;
+    
+    try {
+      setLoading(true);
+      
+      // Appeler notre nouvelle API pour marquer l'image comme modérée
+      const response = await fetch('/api/mod-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId: id }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Erreur lors de la modération');
+      }
+      
+      console.log('Réponse API modération:', result);
+      
+      // Mettre à jour l'interface pour montrer l'image comme modérée
+      setProjectImages(prevImages => prevImages.map(img => 
+        img.id === id 
+          ? {...img, isModerated: true} 
+          : img
+      ));
+      
+      setSuccess("Image marquée comme modérée avec succès");
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Recharger les images après une courte pause pour s'assurer que les changements sont reflétés
+      setTimeout(() => {
+        if (selectedProject) {
+          const projectIdToQuery = String(selectedProject).trim();
+          supabase
+            .from('sessions')
+            .select('*')
+            .eq('project_id', projectIdToQuery)
+            .then(({ data }) => {
+              if (data) {
+                const images = (data || []).map(session => ({
+                  id: session.id,
+                  image_url: session.result_s3_url || session.result_image_url,
+                  created_at: session.created_at,
+                  metadata: {
+                    fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+                    size: null
+                  },
+                  isModerated: session.moderation === 'M'
+                }));
+                setProjectImages(images);
+              }
+            });
+        }
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Erreur lors de la modération:', err);
+      setError(`Erreur lors de la modération: ${err.message}`);
+    } finally {
+      setLoading(false);
+      setDeleteConfirm(null);
+    }
+  };
+  
+  // Annuler la suppression
+  const cancelDeletion = () => {
+    setDeleteConfirm(null);
+  };
+
+  // Fonction pour la démodération d'image
+  const unmoderateImage = async (id, url) => {
+    try {
+      setLoading(true);
+      
+      // Appeler notre API pour démodérer l'image
+      const response = await fetch('/api/unmod-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId: id }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Erreur lors de la démodération');
+      }
+      
+      console.log('Réponse API démodération:', result);
+      
+      // Mettre à jour l'interface pour montrer l'image comme non modérée
+      setProjectImages(prevImages => prevImages.map(img => 
+        img.id === id 
+          ? {...img, isModerated: false} 
+          : img
+      ));
+      
+      setSuccess("Image démodérée avec succès");
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Recharger les images après une courte pause
+      setTimeout(() => {
+        if (selectedProject) {
+          const projectIdToQuery = String(selectedProject).trim();
+          supabase
+            .from('sessions')
+            .select('*')
+            .eq('project_id', projectIdToQuery)
+            .then(({ data }) => {
+              if (data) {
+                const images = (data || []).map(session => ({
+                  id: session.id,
+                  image_url: session.result_s3_url || session.result_image_url,
+                  created_at: session.created_at,
+                  metadata: {
+                    fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+                    size: null
+                  },
+                  isModerated: session.moderation === 'M'
+                }));
+                setProjectImages(images);
+              }
+            });
+        }
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Erreur lors de la démodération:', err);
+      setError(`Erreur lors de la démodération: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
@@ -681,7 +831,7 @@ export default function ProjectGallery() {
                 <div 
                   key={image.id} 
                   className={`relative border border-gray-200 rounded-lg overflow-hidden group ${
-                    image.isModerated ? 'opacity-50' : ''
+                    image.isModerated ? 'opacity-50 grayscale' : ''
                   }`}
                 >
                   <div className="aspect-w-2 aspect-h-3 bg-gray-100 relative" style={{ height: '200px' }}>
@@ -695,7 +845,7 @@ export default function ProjectGallery() {
                       onError={(e) => {
                         console.error('Erreur de chargement image:', image.image_url);
                         e.target.onerror = null;
-                        e.target.src = '/placeholder-image.png';
+                        e.target.src = 'https://via.placeholder.com/300x200?text=Image+non+disponible';
                       }}
                     />
                   </div>
@@ -718,13 +868,26 @@ export default function ProjectGallery() {
                       >
                         <RiDownloadLine className="h-5 w-5" />
                       </button>
-                      {!image.isModerated && (
+                      
+                      {image.isModerated ? (
+                        // Bouton de démodération pour les images modérées
                         <button
-                          onClick={() => moderateImage(image.id, image.image_url)}
-                          className="p-2 bg-gradient-to-br from-red-500 to-pink-600 text-white rounded-full hover:from-red-600 hover:to-pink-700"
+                          onClick={() => unmoderateImage(image.id, image.image_url)}
+                          className="p-2 bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-full hover:from-green-600 hover:to-teal-700"
+                          title="Démodérer cette image"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      ) : (
+                        // Bouton de modération pour les images non modérées
+                        <button
+                          onClick={() => deleteImage(image.id, image.image_url)}
+                          className="p-2 bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-full hover:from-red-600 hover:to-orange-700"
                           title="Modérer cette image"
                         >
-                          <RiCloseFill className="h-5 w-5" />
+                          <RiDeleteBin6Line className="h-5 w-5" />
                         </button>
                       )}
                     </div>
@@ -989,6 +1152,53 @@ export default function ProjectGallery() {
                   type="button"
                   onClick={() => setShowMosaicSettings(false)}
                   className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <div className="fixed z-40 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <RiDeleteBin6Line className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                      Confirmer la modération
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Êtes-vous sûr de vouloir modérer cette image ? Elle sera grisée et apparaîtra comme modérée dans la galerie.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button 
+                  type="button" 
+                  onClick={handleConfirmedDeletion}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Modérer
+                </button>
+                <button 
+                  type="button" 
+                  onClick={cancelDeletion}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Annuler
                 </button>

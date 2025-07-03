@@ -1,0 +1,69 @@
+import { createClient } from '@supabase/supabase-js';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Méthode non autorisée' });
+  }
+
+  const { sessionId } = req.body;
+  
+  if (!sessionId) {
+    return res.status(400).json({ message: 'ID de session requis' });
+  }
+
+  try {
+    console.log('Tentative de démodérer la session:', sessionId);
+    
+    // Créer une connexion Supabase côté serveur avec clé service (privilèges élevés)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Mise à jour directe avec l'opération update, en définissant NULL
+    const { data, error } = await supabaseAdmin
+      .from('sessions')
+      .update({ moderation: null })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Erreur lors de la démodération via Supabase:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Erreur de mise à jour: ${error.message}`,
+        error: error
+      });
+    }
+
+    // Vérifier que la mise à jour a bien été effectuée
+    const { data: checkData, error: checkError } = await supabaseAdmin
+      .from('sessions')
+      .select('moderation')
+      .eq('id', sessionId)
+      .single();
+
+    if (checkError) {
+      console.warn('Vérification après démodération impossible:', checkError);
+    } else {
+      console.log('État après démodération:', checkData);
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Image démodérée avec succès',
+      moderation: checkData?.moderation
+    });
+  } catch (error) {
+    console.error('Erreur générale lors de la démodération:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+}

@@ -1076,6 +1076,7 @@ const loadFrameImages = useCallback(async () => {
       const thumbnailUrl = uploadResult.url;
       
       console.log('Thumbnail uploaded successfully to S3:', thumbnailUrl);
+      console.log('Saving layout with orientation ID:', selectedOrientationId);
       
       // 6. Prepare layout data with the thumbnail URL
       const layoutData = {
@@ -1084,6 +1085,7 @@ const loadFrameImages = useCallback(async () => {
         elements: JSON.stringify(elements),
         stage_size: JSON.stringify(stageSize),
         thumbnail_url: thumbnailUrl,
+        orientation_id: selectedOrientationId, // Ajout de l'ID d'orientation sélectionné
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -1727,7 +1729,7 @@ const handleSelectTemplate = (template) => {
             {activeTab === 'layouts' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0   012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
                 Layouts
               </>

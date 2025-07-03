@@ -231,6 +231,9 @@ export default function CameraCapture({ params }) {
   const [countdownNumber, setCountdownNumber] = useState(3);
   const [showCountdown, setShowCountdown] = useState(false);
   
+  // Add videoVisible state that was missing
+  const [videoVisible, setVideoVisible] = useState(true);
+  
   // Quota states
   const [quota, setQuota] = useState(null);
   const [quotaUsed, setQuotaUsed] = useState(null);
@@ -333,8 +336,8 @@ export default function CameraCapture({ params }) {
   const processCapture = () => {
     console.log("processCapture called");
     try {
-      // Set state to show we're processing the capture
-      setEnabled(true);
+      // Ne pas masquer la vidéo immédiatement
+      // setEnabled(true); <- Commentons cette ligne qui masque la vidéo
       setCaptured(false);
       
       const canvas = previewRef.current;
@@ -347,6 +350,7 @@ export default function CameraCapture({ params }) {
       }
       
       console.log("Video and canvas elements found, processing capture");
+      console.log("Video visibility state:", videoRef.current.style.display);
       
       // Get video dimensions
       const videoWidth = video.videoWidth || 1280;
@@ -410,12 +414,18 @@ export default function CameraCapture({ params }) {
       // Store in localStorage
       localStorage.setItem("faceImage", imageDataURL);
       
+      // Seulement maintenant, après la capture, on active l'affichage du canvas
+      setEnabled(true);
+      // Et on indique explicitement que la vidéo doit être masquée
+      setVideoVisible(false);
+      
       // Recharge le quota après la prise de photo
       fetchQuota();
     } catch (error) {
       console.error("Error in processCapture:", error);
       setCameraError(`Erreur lors de la capture: ${error.message}`);
       setEnabled(false);
+      setVideoVisible(true); // S'assurer que la vidéo reste visible en cas d'erreur
     }
   };
   
@@ -623,8 +633,18 @@ export default function CameraCapture({ params }) {
   
   const retake = () => {
     setEnabled(false);
+    setVideoVisible(true); // Réactiver explicitement la vidéo
     setImageFile(null);
     setError(null);
+    
+    // Ajouter un délai pour s'assurer que le DOM est mis à jour
+    setTimeout(() => {
+      if (videoRef.current) {
+        console.log("Retake: Setting video display to block");
+        videoRef.current.style.display = 'block';
+        videoRef.current.style.visibility = 'visible';
+      }
+    }, 100);
   };
   
   // Helper function to convert URL to base64
@@ -646,25 +666,25 @@ export default function CameraCapture({ params }) {
       // First check if there are any canvas_layouts for this project
       const { data: layoutsData, error: layoutsError } = await supabase
         .from('canvas_layouts')
-        .select('id')
+        .select('id, orientation_id')
         .eq('project_id', projectId);
         
       if (layoutsError) {
         console.error('Error checking for layouts:', layoutsError);
-        return null;
+        return { thumbnailUrl: null, orientationData: null };
       }
       
       if (!layoutsData || layoutsData.length === 0) {
         console.log('No layouts found for this project');
-        return null;
+        return { thumbnailUrl: null, orientationData: null };
       }
       
-      console.log(`Found ${layoutsData.length} layouts, fetching thumbnail...`);
+      console.log(`Found ${layoutsData.length} layouts, fetching thumbnail and orientation...`);
       
-      // Now get the thumbnail URL from the first layout
+      // Get the thumbnail URL and orientation_id from the most recent layout
       const { data, error } = await supabase
         .from('canvas_layouts')
-        .select('thumbnail_url')
+        .select('thumbnail_url, orientation_id')
         .eq('project_id', projectId)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -672,19 +692,41 @@ export default function CameraCapture({ params }) {
         
       if (error) {
         console.error('Error fetching thumbnail:', error);
-        return null;
+        return { thumbnailUrl: null, orientationData: null };
       }
       
-      console.log('Thumbnail URL found:', data?.thumbnail_url || 'null');
-      return data?.thumbnail_url || null;
+      const thumbnailUrl = data?.thumbnail_url || null;
+      const orientationId = data?.orientation_id || null;
+      
+      console.log('Thumbnail URL found:', thumbnailUrl || 'null');
+      console.log('Orientation ID found:', orientationId || 'null');
+      
+      // Fetch orientation data if we have an orientation_id
+      let orientationData = null;
+      if (orientationId) {
+        const { data: orientationResult, error: orientationError } = await supabase
+          .from('photobooth_orientation')
+          .select('width, height, position_x, position_y, width_encart_photo, height_encart_photo')
+          .eq('id_orientation', orientationId)
+          .single();
+          
+        if (!orientationError && orientationResult) {
+          orientationData = orientationResult;
+          console.log('Orientation data found:', orientationData);
+        } else {
+          console.error('Error fetching orientation data:', orientationError);
+        }
+      }
+      
+      return { thumbnailUrl, orientationData };
     } catch (error) {
       console.error('Exception in fetchProjectThumbnail:', error);
-      return null;
+      return { thumbnailUrl: null, orientationData: null };
     }
   };
   
   // Function to make black background transparent and combine images
-  const combineImagesWithTransparentOverlay = async (baseImageUrl, overlayImageUrl) => {
+  const combineImagesWithTransparentOverlay = async (baseImageUrl, overlayImageUrl, orientationData) => {
     if (!baseImageUrl || !overlayImageUrl) {
       console.error('Missing image URLs for combination');
       return baseImageUrl;
@@ -705,35 +747,82 @@ export default function CameraCapture({ params }) {
         loadImage(overlayImageUrl)
       ]);
 
+      // Dimensions du canvas final (basées sur l'overlay)
+      const canvasWidth = orientationData?.width || 970;
+      const canvasHeight = orientationData?.height || 651;
+
+      console.log(`Creating canvas with dimensions: ${canvasWidth}x${canvasHeight}`);
+
       // Création du canvas final
       const canvas = document.createElement('canvas');
-      canvas.width = 970;
-      canvas.height = 651;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
       const ctx = canvas.getContext('2d');
 
-      // Dessin de l'image de base (redimensionnée si besoin)
-      if (baseImage.width !== 970 || baseImage.height !== 651) {
+      // Si nous avons des données d'orientation valides avec dimensions de l'encart photo
+      if (orientationData && 
+          orientationData.width_encart_photo && 
+          orientationData.height_encart_photo && 
+          orientationData.position_x !== undefined && 
+          orientationData.position_y !== undefined) {
+        
+        console.log(`Using orientation data for placement: 
+          x=${orientationData.position_x}, y=${orientationData.position_y}, 
+          width=${orientationData.width_encart_photo}, height=${orientationData.height_encart_photo}`);
+        
+        // Calculer les ratios pour maintenir l'aspect ratio de l'image source
         const baseAspect = baseImage.width / baseImage.height;
-        const targetAspect = 970 / 651;
-        let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-        if (baseAspect > targetAspect) {
-          drawHeight = 651;
+        const encartAspect = orientationData.width_encart_photo / orientationData.height_encart_photo;
+        
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        // Ajuster l'image pour qu'elle s'adapte à l'encart tout en maintenant son ratio
+        if (baseAspect > encartAspect) {
+          // L'image est plus large (proportionnellement) que l'encart
+          drawHeight = orientationData.height_encart_photo;
           drawWidth = drawHeight * baseAspect;
-          offsetX = (970 - drawWidth) / 2;
+          offsetX = orientationData.position_x + (orientationData.width_encart_photo - drawWidth) / 2;
+          offsetY = orientationData.position_y;
         } else {
-          drawWidth = 970;
+          // L'image est plus haute (proportionnellement) que l'encart
+          drawWidth = orientationData.width_encart_photo;
           drawHeight = drawWidth / baseAspect;
-          offsetY = (651 - drawHeight) / 2;
+          offsetX = orientationData.position_x;
+          offsetY = orientationData.position_y + (orientationData.height_encart_photo - drawHeight) / 2;
         }
+        
+        // Dessiner l'image de base à la position et taille calculées
         ctx.drawImage(baseImage, offsetX, offsetY, drawWidth, drawHeight);
       } else {
-        ctx.drawImage(baseImage, 0, 0, 970, 651);
+        // Fallback si nous n'avons pas les données d'orientation complètes
+        console.log('No detailed orientation data, using default image placement');
+        
+        // Dessin de l'image de base (redimensionnée si besoin)
+        if (baseImage.width !== canvasWidth || baseImage.height !== canvasHeight) {
+          const baseAspect = baseImage.width / baseImage.height;
+          const targetAspect = canvasWidth / canvasHeight;
+          let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+          
+          if (baseAspect > targetAspect) {
+            drawHeight = canvasHeight;
+            drawWidth = drawHeight * baseAspect;
+            offsetX = (canvasWidth - drawWidth) / 2;
+          } else {
+            drawWidth = canvasWidth;
+            drawHeight = drawWidth / baseAspect;
+            offsetY = (canvasHeight - drawHeight) / 2;
+          }
+          
+          ctx.drawImage(baseImage, offsetX, offsetY, drawWidth, drawHeight);
+        } else {
+          ctx.drawImage(baseImage, 0, 0, canvasWidth, canvasHeight);
+        }
       }
 
-      // Dessin du layout PNG par-dessus (la transparence native sera respectée)
-      ctx.drawImage(overlayImage, 0, 0, 970, 651);
+      // Dessiner l'overlay par-dessus à pleine taille
+      ctx.drawImage(overlayImage, 0, 0, canvasWidth, canvasHeight);
 
-      // Export du résultat
+      // Exporter le résultat
       return canvas.toDataURL('image/jpeg', 0.95);
     } catch (error) {
       console.error('Error combining images:', error);
@@ -857,16 +946,25 @@ export default function CameraCapture({ params }) {
       }
 
       setLogs(prevLogs => [...prevLogs, "Récupération du layout du projet..."]);
-      const thumbnailUrl = await fetchProjectThumbnail(project?.id);
+      const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
 
       let finalImageUrl = resultImageUrl;
       let hasWatermark = false;
 
       if (thumbnailUrl) {
         setLogs(prevLogs => [...prevLogs, "Fusion de l'image avec le layout..."]);
+        setLogs(prevLogs => [...prevLogs, orientationData 
+          ? "Dimensions d'encart détectées, adaptation de l'image..." 
+          : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
+        
         setLoadingProgress(90);
         try {
-          const combinedImageDataUrl = await combineImagesWithTransparentOverlay(resultImageUrl, thumbnailUrl);
+          const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
+            resultImageUrl, 
+            thumbnailUrl, 
+            orientationData
+          );
+          
           if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
             finalImageUrl = combinedImageDataUrl;
             hasWatermark = true;
@@ -880,7 +978,7 @@ export default function CameraCapture({ params }) {
       } else {
         setLogs(prevLogs => [...prevLogs, "Aucun layout trouvé pour ce projet."]);
       }
-
+      
       setLoadingProgress(95);
 
       // Préparation pour upload S3
@@ -1386,8 +1484,10 @@ const generateImageReplicate = async () => {
             className="w-full h-full object-cover"
             style={{ 
               transform: 'scaleX(-1)', // Mirror effect for selfie mode
-              display: enabled ? 'none' : 'block', // Only hide when showing captured image
-              maxHeight: '75vh'
+              display: enabled && !videoVisible ? 'none' : 'block', // Condition améliorée
+              visibility: enabled && !videoVisible ? 'hidden' : 'visible', // Ajout de la visibilité explicite
+              maxHeight: '75vh',
+              backgroundColor: '#000' // Ajout d'un fond noir explicite
             }} 
             playsInline
             autoPlay
@@ -1405,14 +1505,15 @@ const generateImageReplicate = async () => {
             }}
           />
           
-          {/* Canvas element */}
+          {/* Canvas element - modifions la visibilité */}
           <canvas 
             ref={previewRef} 
             className="w-full h-full"
             style={{ 
               display: enabled ? 'block' : 'none',
               maxHeight: '75vh', 
-              objectFit: 'contain'
+              objectFit: 'contain',
+              backgroundColor: '#222' // Ajout d'un fond gris foncé pour voir si le canvas est visible
             }}
           />
           

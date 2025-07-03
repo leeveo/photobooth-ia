@@ -372,12 +372,7 @@ export default function Result({ params }) {
       )}
 
       <div className="w-full max-w-full mx-auto mt-[15vh] mb-8">
-        <h2 
-          className="text-xl font-bold text-center mb-6"
-          style={{ color: secondaryColor }}
-        >
-          Votre photo est prête !
-        </h2>
+       
         
         {error && (
           <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg">
