@@ -14,30 +14,30 @@ export default async function handler(req, res) {
   try {
     console.log('Tentative de démodérer la session:', sessionId);
     
-    // Créer une connexion Supabase côté serveur avec clé service (privilèges élevés)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Mise à jour directe avec l'opération update, en définissant NULL
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('sessions')
       .update({ moderation: null })
       .eq('id', sessionId);
 
     if (error) {
-      console.error('Erreur lors de la démodération via Supabase:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: `Erreur de mise à jour: ${error.message}`,
-        error: error
-      });
+      console.error('Erreur:', error);
+      return res.status(500).json({ success: false, message: error.message });
     }
 
-    // Vérifier que la mise à jour a bien été effectuée
-    const { data: checkData, error: checkError } = await supabaseAdmin
-      .from('sessions')
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Image démodérée avec succès'
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
       .select('moderation')
       .eq('id', sessionId)
       .single();

@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     // Créer une connexion Supabase côté serveur avec clé service (privilèges élevés)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     // Mise à jour directe avec l'opération update
