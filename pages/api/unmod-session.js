@@ -17,13 +17,7 @@ export default async function handler(req, res) {
     // Créer une connexion Supabase côté serveur avec clé service (privilèges élevés)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY
     );
 
     // Mise à jour directe avec l'opération update, en définissant NULL
@@ -61,6 +55,12 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Erreur générale lors de la démodération:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+}
     return res.status(500).json({ 
       success: false, 
       message: error.message 
