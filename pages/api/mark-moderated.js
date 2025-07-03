@@ -11,56 +11,72 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('Attempting to unmoderate session:', sessionId);
+    console.log('Attempting to moderate session:', sessionId);
     
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Update the session to set moderation to null
+    // Update the session to set moderation to 'M'
     const { error } = await supabase
       .from('sessions')
-      .update({ moderation: null })
+      .update({ moderation: 'M' })
       .eq('id', sessionId);
 
     if (error) {
-      console.error('Error during unmoderation:', error);
+      console.error('Error during moderation:', error);
       return res.status(500).json({ success: false, message: error.message });
     }
 
     return res.status(200).json({ 
       success: true, 
-      message: 'Image unmoderated successfully'
+      message: 'Image marked as moderated'
     });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 }
-      console.warn('Verification after unmoderation failed:', checkError);
+      .select('moderation')
+      .eq('id', sessionId)
+      .single();
+
+    if (checkError) {
+      console.warn('Vérification après mise à jour impossible:', checkError);
     } else {
-      console.log('Status after unmoderation:', checkData);
+      console.log('État après mise à jour:', checkData);
     }
 
-    // Return success response
     return res.status(200).json({ 
       success: true, 
-      message: 'Image unmoderated successfully',
-      moderation: checkData?.moderation || null
+      message: 'Image marquée comme modérée',
+      moderation: checkData?.moderation || 'M'
     });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-}
-    console.error('Erreur générale lors de la démodération:', error);
+    console.error('Erreur générale lors de la modération:', error);
     return res.status(500).json({ 
       success: false, 
       message: error.message 
     });
   }
 }
+    }
+
+    // Vérifier que la mise à jour a bien été effectuée
+    const { data: checkData, error: checkError } = await supabaseAdmin
+      .from('sessions')
+      .select('moderation')
+      .eq('id', sessionId)
+      .single();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Image marquée comme modérée',
+      moderation: checkData?.moderation || null
+    });
+  } catch (error) {
+    console.error('Erreur lors de la modération:', error);
     return res.status(500).json({ 
       success: false, 
       message: error.message 
