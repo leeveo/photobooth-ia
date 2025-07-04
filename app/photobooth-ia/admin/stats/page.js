@@ -22,6 +22,7 @@ export default function StatsPage() {
     activeProjects: 0,
     totalPhotos: 0,
     topProjects: [],
+    archivedProjects: [],
     photosByMonth: []
   });
   const [selectedProject, setSelectedProject] = useState(null);
@@ -95,7 +96,12 @@ export default function StatsPage() {
         .order('created_at', { ascending: false });
 
       if (projectsError) throw projectsError;
-      setProjects(projectsData || []);
+      
+      // Séparer les projets actifs et archivés
+      const activeProjects = projectsData?.filter(p => !p.archive) || [];
+      const archivedProjects = projectsData?.filter(p => p.archive === true) || [];
+      
+      setProjects(activeProjects); // Mettre à jour pour n'afficher que les projets actifs dans le sélecteur
 
       // Compter les photos pour chaque projet depuis la table sessions
       let totalPhotos = 0;
@@ -119,11 +125,16 @@ export default function StatsPage() {
       }
       setProjectsWithPhotoCount(photoCounts);
 
-      // Top 5 projets par nombre de photos
-      const topProjects = [...(projectsData || [])]
+      // Top 5 projets ACTIFS par nombre de photos
+      const topProjects = [...activeProjects]
         .map(p => ({ ...p, photoCount: photoCounts[p.id] || 0 }))
         .sort((a, b) => b.photoCount - a.photoCount)
         .slice(0, 5);
+
+      // Projets archivés avec leur nombre de photos
+      const archivedProjectsWithCounts = archivedProjects
+        .map(p => ({ ...p, photoCount: photoCounts[p.id] || 0 }))
+        .sort((a, b) => b.photoCount - a.photoCount);
 
       // Statistiques par mois (si possible)
       let photosByMonth = [];
@@ -148,9 +159,10 @@ export default function StatsPage() {
 
       setStats({
         totalProjects: projectsData.length,
-        activeProjects: projectsData.filter(p => p.is_active).length,
+        activeProjects: activeProjects.length,
         totalPhotos,
         topProjects,
+        archivedProjects: archivedProjectsWithCounts,
         photosByMonth
       });
     } catch (err) {
@@ -260,13 +272,13 @@ export default function StatsPage() {
         </div>
       </div>
 
-      {/* Top projets */}
+      {/* Top projets actifs */}
       <div className="bg-white shadow rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">Top 5 projets par nombre de photos</h2>
+        <h2 className="text-lg font-semibold mb-4">Top 5 projets actifs par nombre de photos</h2>
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             {stats.topProjects.length === 0 ? (
-              <div className="text-gray-500">Aucun projet trouvé.</div>
+              <div className="text-gray-500">Aucun projet actif trouvé.</div>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {stats.topProjects.map((p, idx) => (
@@ -316,6 +328,79 @@ export default function StatsPage() {
           )}
         </div>
       </div>
+
+      {/* Nouvelle section: Projets archivés */}
+      {stats.archivedProjects && stats.archivedProjects.length > 0 && (
+        <div className="bg-white shadow rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <RiFolder2Line className="text-amber-500 mr-2 w-5 h-5" />
+            Projets archivés
+          </h2>
+          <div className="overflow-hidden border border-gray-200 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projet</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photos</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date d'archivage</th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {stats.archivedProjects.map((project) => (
+                  <tr key={project.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 relative">
+                          {project.logo_url ? (
+                            <Image
+                              src={project.logo_url}
+                              alt={project.name}
+                              fill
+                              className="object-cover rounded-md"
+                              sizes="40px"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
+                              <RiFolder2Line className="h-5 w-5 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                          <div className="text-sm text-gray-500">/{project.slug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{project.photoCount} photos</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {project.archived_at 
+                          ? new Date(project.archived_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })
+                          : 'Date inconnue'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Link
+                        href={`/photobooth-ia/admin/projects/${project.id}`}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        Voir
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Statistiques par mois */}
       {stats.photosByMonth.length > 0 && (
@@ -420,6 +505,7 @@ export default function StatsPage() {
                       </div>
                     </div>
                   ))}
+
                 </div>
                 
                 {/* Bouton "Charger plus" */}
