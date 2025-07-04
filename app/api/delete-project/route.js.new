@@ -24,7 +24,6 @@ export async function POST(request) {
       .single();
       
     if (checkError) {
-      console.error("Erreur lors de la vérification du projet:", checkError);
       return NextResponse.json({ 
         success: false, 
         error: 'Projet non trouvé',
@@ -34,28 +33,18 @@ export async function POST(request) {
     
     console.log(`Projet trouvé: ${project.name} (${projectId})`);
     
-    // Vérifier la structure de la table (debug)
-    console.log("Structure du projet:", Object.keys(project));
-    
-    // 2. Archiver le projet en utilisant la méthode update
+    // 2. Archiver le projet (au lieu de le supprimer)
     console.log("Archivage du projet...");
-    
-    // Utiliser uniquement le champ archive qui existe dans la table
-    const updateData = { 
-      archive: true
-      // Suppression de archived_at qui n'existe pas dans le schéma
-    };
-    
-    console.log("Données d'update:", updateData);
-    
-    const { data: updateResult, error: archiveError } = await supabase
+    const { error: archiveError } = await supabase
       .from('projects')
-      .update(updateData)
-      .eq('id', projectId)
-      .select();
+      .update({ 
+        archive: true,
+        archived_at: new Date().toISOString()
+      })
+      .eq('id', projectId);
     
     if (archiveError) {
-      console.error('Erreur détaillée lors de l\'archivage:', archiveError);
+      console.warn('Erreur lors de l\'archivage du projet:', archiveError);
       return NextResponse.json({ 
         success: false, 
         error: 'Impossible d\'archiver le projet',
@@ -63,20 +52,12 @@ export async function POST(request) {
       }, { status: 500 });
     }
     
-    console.log("Résultat de l'update:", updateResult);
-    
     // 3. Vérification finale
-    const { data: finalCheck, error: checkFinalError } = await supabase
+    const { data: finalCheck } = await supabase
       .from('projects')
-      .select('*')
+      .select('archive')
       .eq('id', projectId)
       .single();
-    
-    if (checkFinalError) {
-      console.error("Erreur lors de la vérification finale:", checkFinalError);
-    }
-    
-    console.log("État final du projet:", finalCheck);
     
     if (finalCheck && finalCheck.archive === true) {
       console.log("Vérification finale: Le projet a bien été archivé");
@@ -90,8 +71,7 @@ export async function POST(request) {
     return NextResponse.json({ 
       success: false, 
       error: 'Impossible d\'archiver le projet',
-      suggestion: 'Le champ "archive" existe-t-il dans la table projects?',
-      projectData: project
+      suggestion: 'Vérifiez que le champ "archive" existe bien dans la table projects'
     }, { status: 500 });
     
   } catch (error) {

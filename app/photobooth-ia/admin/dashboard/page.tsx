@@ -103,11 +103,13 @@ export default function Dashboard() {
     console.log(`Chargement des projets pour l'admin ID: ${adminId}`);
     
     try {
-      // Filtrer les projets par l'ID de l'admin connecté dans le champ created_by
+      // Filtrer les projets par l'ID de l'admin connecté
+      // et inclure les projets où archive est NULL ou false
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .eq('created_by', adminId) // Filtre par ID admin
+        .or('archive.is.null,archive.eq.false') // Inclure les projets où archive est NULL ou false
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -251,15 +253,16 @@ export default function Dashboard() {
       if (!currentAdminId) return;
 
       // 1. Récupérer le quota et la date de reset du dernier paiement
+      // Modification pour éviter d'utiliser plan_type
       const { data: lastPayment, error: paymentError } = await supabase
         .from('admin_payments')
         .select('photo_quota, photo_quota_reset_at')
         .eq('admin_user_id', currentAdminId)
-        .order('photo_quota_reset_at', { ascending: false })
+        .order('created_at', { ascending: false })  // Utilisez created_at au lieu de photo_quota_reset_at
         .limit(1)
         .maybeSingle();
 
-      if (paymentError || !lastPayment || !lastPayment.photo_quota_reset_at) {
+      if (paymentError || !lastPayment) {
         setQuotaInfo({ quota: 0, used: 0, resetAt: null });
         setPhotosThisPeriod(0);
         return;

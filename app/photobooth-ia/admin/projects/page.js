@@ -78,11 +78,12 @@ export default function ProjectsPage() {
     console.log(`Fetching projects from Supabase for admin ID: ${currentAdminId}...`);
     setLoading(true);
     try {
-      // Filtrer les projets par l'ID de l'admin connecté
+      // Filtrer les projets par l'ID de l'admin connecté et non archivés (incluant NULL)
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('created_by', currentAdminId) // Filtrer par l'admin connecté
+        .eq('created_by', currentAdminId)
+        .or('archive.is.null,archive.eq.false') // Accepter les projets où archive est NULL ou false
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -160,7 +161,7 @@ export default function ProjectsPage() {
     try {
       setDeleteLoading(true);
       setDeletingProject(true);
-      console.log(`Début de la suppression du projet ${projectId} (${projectName})`);
+      console.log(`Début de l'archivage du projet ${projectId} (${projectName})`);
       
       // Vérifier que le projet appartient bien à l'admin connecté
       const { data: projectData, error: projectError } = await supabase
@@ -171,34 +172,58 @@ export default function ProjectsPage() {
         .single();
         
       if (projectError || !projectData) {
-        throw new Error("Vous n'êtes pas autorisé à supprimer ce projet");
+        throw new Error("Vous n'êtes pas autorisé à archiver ce projet");
       }
       
-      // Utiliser l'API pour supprimer le projet
-      const response = await fetch('/api/delete-project', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ projectId }),
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Échec de la suppression du projet');
+      // Méthode 1: Utiliser l'API
+      try {
+        console.log("Tentative d'archivage via API...");
+        const response = await fetch('/api/delete-project', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ projectId }),
+        });
+        
+        const result = await response.json();
+        console.log("Réponse API:", result);
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'API: Échec de l\'archivage');
+        }
+        
+        console.log('Projet archivé avec succès via API');
+      } catch (apiError) {
+        console.warn("L'API a échoué, tentative d'archivage direct:", apiError.message);
+        
+        // Méthode 2: Archiver directement depuis le client (si l'API échoue)
+        const { data: updateData, error: updateError } = await supabase
+          .from('projects')
+          .update({ 
+            archive: true
+            // Suppression de archived_at qui n'existe pas dans le schéma
+          })
+          .eq('id', projectId)
+          .select();
+        
+        if (updateError) {
+          throw new Error(`Archivage direct: ${updateError.message}`);
+        }
+        
+        console.log("Résultat de l'archivage direct:", updateData);
       }
       
-      console.log('Projet supprimé avec succès:', result);
-      setDeleteSuccess(`Le projet "${projectName}" a été supprimé avec succès.`);
+      // Afficher le message de succès
+      setDeleteSuccess(`Le projet "${projectName}" a été archivé avec succès.`);
       setTimeout(() => setDeleteSuccess(null), 5000);
       
       // Rafraîchir la liste des projets
       await fetchProjects();
       
     } catch (error) {
-      console.error('Erreur lors de la suppression du projet:', error);
-      setError(`Erreur lors de la suppression du projet: ${error.message}`);
+      console.error('Erreur lors de l\'archivage du projet:', error);
+      setError(`Erreur lors de l\'archivage du projet: ${error.message}`);
     } finally {
       setDeleteLoading(false);
       setDeletingProject(false);
@@ -206,30 +231,60 @@ export default function ProjectsPage() {
     }
   }
 
-  // Replace any existing loading state like this:
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader 
-          size="large" 
-          message="Chargement des projets..." 
-          variant="premium" 
-        />
-      </div>
-    );
-  }
+  // Add CSS animations for the archive popup
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const style = document.createElement('style');
+      style.innerHTML = `
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes checkmark {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .animate-success-popup {
+          animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .animate-success-icon {
+          animation: checkmark 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+        
+        .animate-success-text {
+          opacity: 0;
+          animation: fadeInUp 0.5s ease forwards;
+          animation-delay: 0.3s;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
+  // Replace the existing deleteConfirm modal with this enhanced version
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Projets</h1>
-        <button
-          onClick={handleCreateProject}
-          className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-sm flex items-center gap-2"
+        {/* Create new project button */}
+        <Link 
+          href="/photobooth-ia/admin/projects/create" 
+          className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
         >
-          <RiAddLine className="w-5 h-5" />
+          <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
           Créer un nouveau projet
-        </button>
+        </Link>
       </div>
 
       {error && (
@@ -249,37 +304,69 @@ export default function ProjectsPage() {
       )}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center text-red-600 mb-4">
-              <RiAlertLine className="w-6 h-6 mr-2" />
-              <h3 className="text-lg font-medium">Confirmation de suppression</h3>
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+               onClick={(e) => e.stopPropagation()}>
+            {/* Header with AMBER gradient effect */}
+            <div className="h-28 bg-gradient-to-r from-amber-500 to-amber-700 relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-cover bg-center opacity-20" 
+                   style={{ backgroundImage: `url(${deleteConfirm.logo_url || ''})` }}></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+              
+              {/* Archive icon with animation */}
+              <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                <RiDeleteBin6Line className="h-12 w-12 text-white" />
+              </div>
             </div>
             
-            <p className="mb-4 text-gray-700">
-              Êtes-vous sûr de vouloir supprimer le projet <strong>"{deleteConfirm.name}"</strong> ?
-              <br /><br />
-              Cette action est irréversible et supprimera également :
-            </p>
+            {/* Content */}
+            <div className="p-6 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmation d'archivage</h3>
+              <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                Êtes-vous sûr de vouloir archiver le projet <span className="font-semibold text-amber-400">{deleteConfirm.name}</span> ?
+              </p>
+              
+              {/* Project preview */}
+              {deleteConfirm.logo_url && (
+                <div className="flex justify-center mt-6 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                  <div className="w-32 h-32 relative rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+                    <Image
+                      src={deleteConfirm.logo_url}
+                      alt={deleteConfirm.name}
+                      fill
+                      style={{ objectFit: "contain" }}
+                      className="rounded-lg"
+                    />
+                    
+                    {/* Project name */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-1 text-center">
+                      <span className="text-white text-xs truncate block">{deleteConfirm.name}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6 bg-amber-900 bg-opacity-30 p-4 rounded-lg border border-amber-800 text-sm text-amber-300 animate-success-text" style={{ animationDelay: "0.25s" }}>
+                <RiAlertLine className="inline-block h-4 w-4 mr-1" />
+                Le projet sera masqué mais ses données seront conservées. Vous pourrez le restaurer ultérieurement.
+              </div>
+            </div>
             
-            <ul className="list-disc list-inside mb-4 text-sm text-gray-600">
-              <li>Tous les styles associés</li>
-              <li>Tous les arrière-plans</li>
-              <li>Tous les paramètres du projet</li>
-            </ul>
-            
-            <div className="flex justify-end gap-3 mt-6">
+            {/* Footer with buttons */}
+            <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
               <button
+                type="button"
                 onClick={() => setDeleteConfirm(null)}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
                 disabled={deleteLoading}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Annuler
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteProject(deleteConfirm.id, deleteConfirm.name)}
+                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
                 disabled={deleteLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
               >
                 {deleteLoading ? (
                   <>
@@ -287,12 +374,12 @@ export default function ProjectsPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Suppression...
+                    Archivage...
                   </>
                 ) : (
                   <>
-                    <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                    Supprimer définitivement
+                    <RiDeleteBin6Line className="h-4 w-4 mr-1" />
+                    Archiver le projet
                   </>
                 )}
               </button>
@@ -308,13 +395,6 @@ export default function ProjectsPage() {
               <RiFolder2Line className="w-8 h-8 text-indigo-500" />
             </div>
             <p className="text-gray-500 mb-4">Aucun projet trouvé. Créez votre premier projet !</p>
-            <button
-              onClick={handleCreateProject}
-              className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-sm inline-flex items-center gap-2"
-            >
-              <RiAddLine className="w-5 h-5" />
-              Créer un projet
-            </button>
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
@@ -352,10 +432,10 @@ export default function ProjectsPage() {
                       </Link>
                       <button
                         onClick={() => setDeleteConfirm(project)}
-                        className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                        className="inline-flex items-center px-3 py-1.5 border border-amber-300 text-xs font-medium rounded text-amber-700 bg-white hover:bg-amber-50"
                       >
                         <RiDeleteBin6Line className="w-4 h-4 mr-1" />
-                        Supprimer
+                        Archiver
                       </button>
                     </div>
                   </div>

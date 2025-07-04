@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line } from 'react-icons/ri';
+import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
 import dynamic from 'next/dynamic';
@@ -16,7 +16,6 @@ import ProjectInfoForm from '../components/ProjectInfoForm';
 import PhotoboothTypeManager from '../components/PhotoboothTypeManager';
 import StyleManager from '../components/StyleManager';
 import BackgroundManager from '../components/BackgroundManager';
-import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -449,63 +448,14 @@ export default function ProjectDetails({ params }) {
     setError(errorMessage);
   };
 
-  // Fonction pour supprimer le projet et ses dépendances
+  // Fonction pour archiver le projet et ses dépendances
   async function handleDeleteProject() {
     setDeleteLoading(true);
     
     try {
-      console.log(`Début de la suppression du projet ${projectId} (${project.name})`);
+      console.log(`Début de l'archivage du projet ${projectId} (${project.name})`);
       
-      // Première étape: Supprimer les enregistrements dans toutes les tables liées
-      // 1. Supprimer les styles liés au projet
-      const { error: stylesError } = await supabase
-        .from('styles')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (stylesError) {
-        console.warn("Erreur lors de la suppression des styles:", stylesError);
-      } else {
-        console.log("Styles supprimés avec succès");
-      }
-      
-      // 2. Supprimer les arrière-plans liés au projet
-      const { error: backgroundsError } = await supabase
-        .from('backgrounds')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (backgroundsError) {
-        console.warn("Erreur lors de la suppression des arrière-plans:", backgroundsError);
-      } else {
-        console.log("Arrière-plans supprimés avec succès");
-      }
-      
-      // 3. Supprimer les paramètres du projet
-      const { error: settingsError } = await supabase
-        .from('project_settings')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (settingsError) {
-        console.warn("Erreur lors de la suppression des paramètres:", settingsError);
-      } else {
-        console.log("Paramètres supprimés avec succès");
-      }
-
-      // 4. Vérifier et supprimer d'autres tables potentiellement liées
-      // Canvas layouts
-      const { error: canvasError } = await supabase
-        .from('canvas_layouts')
-        .delete()
-        .eq('project_id', projectId);
-      
-      if (canvasError && canvasError.code !== 'PGRST116') { // Ignorer si table n'existe pas
-        console.warn("Erreur lors de la suppression des layouts de canvas:", canvasError);
-      }
-      
-      // Deuxième étape: Utiliser l'API pour supprimer le projet principal
-      // et toute autre donnée que nous n'avons pas pu nettoyer directement
+      // Utiliser l'API pour archiver le projet
       const response = await fetch('/api/delete-project', {
         method: 'POST',
         headers: {
@@ -513,30 +463,16 @@ export default function ProjectDetails({ params }) {
         },
         body: JSON.stringify({ 
           projectId,
-          fullCleanup: true // Indiquer qu'une suppression complète est nécessaire
         }),
       });
       
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || 'Échec de la suppression du projet');
-      }
-      
       const result = await response.json();
-      console.log('Réponse API de suppression:', result);
       
-      // Troisième étape: Vérifier que le projet a bien été supprimé
-      const { data: checkProject, error: checkError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', projectId)
-        .single();
-      
-      if (!checkError && checkProject) {
-        throw new Error("Le projet existe toujours après la tentative de suppression");
+      if (!response.ok) {
+        throw new Error(result.error || 'Échec de l\'archivage du projet');
       }
       
-      console.log('Projet supprimé avec succès:', result);
+      console.log('Projet archivé avec succès:', result);
       
       // Rediriger vers la liste des projets après un court délai
       setTimeout(() => {
@@ -544,30 +480,8 @@ export default function ProjectDetails({ params }) {
       }, 500);
       
     } catch (error) {
-      console.error('Erreur lors de la suppression du projet:', error);
-      
-      // Tentative de nettoyage final direct en cas d'échec de l'API
-      try {
-        console.log("Tentative de suppression directe du projet...");
-        const { error: finalError } = await supabase
-          .from('projects')
-          .delete()
-          .eq('id', projectId);
-          
-        if (finalError) {
-          console.error("Échec de la suppression finale:", finalError);
-        } else {
-          console.log("Suppression directe réussie");
-          setTimeout(() => {
-            router.push('/photobooth-ia/admin/projects');
-          }, 500);
-          return; // Sortir si la suppression a finalement réussi
-        }
-      } catch (finalErr) {
-        console.error("Erreur lors de la tentative finale:", finalErr);
-      }
-      
-      setError(`Erreur lors de la suppression du projet: ${error.message}`);
+      console.error('Erreur lors de l\'archivage du projet:', error);
+      setError(`Erreur lors de l'archivage du projet: ${error.message}`);
       setDeleteConfirm(false);
       setDeleteLoading(false);
     }
@@ -658,10 +572,10 @@ export default function ProjectDetails({ params }) {
             </Link>
             <button
               onClick={() => setDeleteConfirm(true)}
-              className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 shadow-sm"
+              className="inline-flex items-center px-4 py-2 border border-amber-300 text-sm font-medium rounded-lg text-amber-700 bg-white hover:bg-amber-50 shadow-sm"
             >
               <RiDeleteBin6Line className="mr-2 h-4 w-4" />
-              Supprimer
+              Archiver
             </button>
           </div>
         </div>
@@ -896,21 +810,93 @@ export default function ProjectDetails({ params }) {
         </div>
       </div>
 
-      {/* Delete Project Confirmation Modal */}
-      <DeleteConfirmationModal 
-        isOpen={deleteConfirm}
-        title="Confirmation de suppression"
-        message={`Êtes-vous sûr de vouloir supprimer le projet "${project?.name}" ?`}
-        dangerText="Cette action est irréversible et supprimera également tous les styles, arrière-plans et paramètres associés."
-        onCancel={() => setDeleteConfirm(false)}
-        onConfirm={handleDeleteProject}
-        isDeleting={deleteLoading}
-        confirmText="Supprimer définitivement"
-        itemToDelete={{
-          name: project?.name,
-          imageUrl: project?.logo_url
-        }}
-      />
+      {/* Delete Project Confirmation Modal - Styled like StyleManager's popup */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4" 
+          role="dialog" 
+          aria-modal="true">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+               onClick={(e) => e.stopPropagation()}>
+            {/* Header with AMBER gradient effect */}
+            <div className="h-28 bg-gradient-to-r from-amber-500 to-amber-700 relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-cover bg-center opacity-20" 
+                   style={{ backgroundImage: `url(${project?.logo_url || ''})` }}></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+              
+              {/* Archive icon with animation */}
+              <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                <RiDeleteBin6Line className="h-12 w-12 text-white" />
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmation d'archivage</h3>
+              <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                Êtes-vous sûr de vouloir archiver le projet <span className="font-semibold text-amber-400">{project?.name}</span> ?
+              </p>
+              
+              {/* Project preview */}
+              {project?.logo_url && (
+                <div className="flex justify-center mt-6 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                  <div className="w-32 h-32 relative rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+                    <Image
+                      src={project.logo_url}
+                      alt={project.name}
+                      fill
+                      style={{ objectFit: "contain" }}
+                      className="rounded-lg"
+                    />
+                    
+                    {/* Project name */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-1 text-center">
+                      <span className="text-white text-xs truncate block">{project.name}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6 bg-amber-900 bg-opacity-30 p-4 rounded-lg border border-amber-800 text-sm text-amber-300 animate-success-text" style={{ animationDelay: "0.25s" }}>
+                <RiAlertLine className="inline-block h-4 w-4 mr-1" />
+                Le projet sera masqué mais ses données seront conservées. Vous pourrez le restaurer ultérieurement.
+              </div>
+            </div>
+            
+            {/* Footer with buttons */}
+            <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(false)}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                disabled={deleteLoading}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProject}
+                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Archivage...
+                  </>
+                ) : (
+                  <>
+                    <RiDeleteBin6Line className="h-4 w-4 mr-1" />
+                    Archiver le projet
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Background templates popup */}
       {showBackgroundTemplates && (
@@ -965,6 +951,41 @@ export default function ProjectDetails({ params }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add popup animations styles */}
+      {typeof document !== 'undefined' && (
+        <style jsx global>{`
+          @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+          }
+
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          @keyframes checkmark {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+
+          .animate-success-popup {
+            animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          }
+
+          .animate-success-icon {
+            animation: checkmark 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+          }
+
+          .animate-success-text {
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+            animation-delay: 0.3s;
+          }
+        `}</style>
       )}
     </>
   );

@@ -38,6 +38,9 @@ export async function middleware(req: NextRequest) {
   const hostname = req.nextUrl.hostname;
   const res = NextResponse.next();
 
+  // Ajouter un log pour voir toutes les requêtes qui passent par le middleware
+  console.log(`Middleware: ${req.method} ${path}`);
+
   // Permettre le bypass de l'auth en local (localhost ou 127.0.0.1)
   const isLocalhost =
     hostname === 'localhost' ||
@@ -66,10 +69,21 @@ export async function middleware(req: NextRequest) {
     path === '/photobooth-ia/admin/logout' ||
     path === '/photobooth-ia/admin/register' ||
     path === '/photobooth-ia/admin/oauth-callback' ||
-    path === '/photobooth-ia/admin/dashboard';
+    path === '/photobooth-ia/admin/dashboard' ||
+    path === '/photobooth-ia/admin/choose-plan' ||
+    // Ajouter des exclusions pour les routes liées à la création de projet
+    path === '/photobooth-ia/admin/projects/create' ||
+    path.startsWith('/photobooth-ia/admin/projects/create/');
 
   // Si route admin et pas exclue
   if (isAdminRoute && !isExcluded) {
+    // Log pour débogage
+    console.log(`Vérification d'authentification pour: ${path}`);
+    
+    // Properly access cookies without using entries() method
+    const cookieNames = Object.keys(req.cookies.getAll());
+    console.log(`Cookies présents:`, cookieNames.join(', '));
+    
     // Bypass auth en local
     if (isLocalhost) {
       // Log pour debug
@@ -78,6 +92,24 @@ export async function middleware(req: NextRequest) {
       const customAuthCookie = req.cookies.get('admin_session')?.value;
 
       if (!customAuthCookie) {
+        console.log(`Redirection vers login depuis: ${path} - Pas de cookie admin_session`);
+        return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
+      }
+
+      // Essayer de décoder le cookie pour vérifier sa validité
+      try {
+        const decoded = Buffer.from(customAuthCookie, 'base64').toString();
+        const adminSession = JSON.parse(decoded);
+        const userId = adminSession.userId || adminSession.user_id;
+
+        if (!userId) {
+          console.log(`Cookie admin_session invalide (pas d'userId) pour: ${path}`);
+          return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
+        }
+
+        console.log(`Session valide pour l'utilisateur: ${userId} sur: ${path}`);
+      } catch (error) {
+        console.error(`Erreur de décodage du cookie admin_session:`, error);
         return NextResponse.redirect(new URL('/photobooth-ia/admin/login', req.url));
       }
 
@@ -85,7 +117,7 @@ export async function middleware(req: NextRequest) {
       try {
         const decoded = Buffer.from(customAuthCookie, 'base64').toString();
         const adminSession = JSON.parse(decoded);
-        const userId = adminSession.userId;
+        const userId = adminSession.userId || adminSession.user_id;
 
         if (userId) {
           const newSharedToken = await generateSharedToken(userId);

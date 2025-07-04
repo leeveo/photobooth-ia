@@ -1830,15 +1830,7 @@
       "prompt": "Make the hair short classic men's cut, and silver grey.",
       "variations": 1
     },
-    {
-      "name": "Mohawk stylé neon blue",
-      "gender": "g",
-      "style_key": "mohawk_style_neon_blue",
-      "description": "Mohawk stylé, couleur neon blue",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mohawk_style_neon_blue.jpg",
-      "prompt": "Make the hair sharp mohawk with shaved sides, and neon blue.",
-      "variations": 1
-    },
+ 
     {
       "name": "Cheveux mi-longs en dégradé sandy blonde",
       "gender": "g",
@@ -2270,9 +2262,9 @@
 
 {
   "id": "halloween-extreme-facial-expressions",
-  "name": "Transformations Halloween – Expressions Extrêmes",
+  "name": "Expressions Extrêmes",
   "description": "Série de transformations avec des expressions faciales exagérées (peur, joie, tristesse, grimaces), tout en conservant chaque visage identifiable",
-  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_styles.jpg",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/expression_silly.jpg",
   "compatibleWith": ["premium"],
   "styles": [
     {
@@ -4259,14 +4251,7 @@
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/night_vigilante.jpg",
       "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person. Transform this person into a masked vigilante with a black suit and cape. Backgrounded by a stormy rooftop with thunder and lightning."
     },
-    {
-      "name": "Héros Technologique",
-      "gender": "g",
-      "style_key": "tech_powered_hero",
-      "description": "Héros avec bras robotiques et énergie digitale",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tech_hero.jpg",
-      "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot . Make this person a tech-enhanced superhero with robotic arms and glowing circuits. Backgrounded by a digital lab full of floating holograms."
-    },
+
     {
       "name": "Héros de la Vitesse",
       "gender": "g",
@@ -4275,14 +4260,7 @@
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/speedster.jpg",
       "prompt": "Use attached image as accurate reference for the face. the camera focus on the half body of the person , high range contrast , cinematic shot . Reimagine this person as a ultra fast superhero mid-run with motion blur and electric trails. wearing a green suits .Backgrounded by a blurred urban street at night."
     },
-    {
-      "name": "Héros du Feu",
-      "gender": "g",
-      "style_key": "fire_aura_hero",
-      "description": "Super-héros en feu avec aura incandescente",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fire_hero.jpg",
-      "prompt": "Use attached image as accurate reference for the face. Create a fiery superhero with glowing red aura and flaming hands. Backgrounded by a scorched battlefield and smoke clouds."
-    },
+
     {
       "name": "Héros Cosmique",
       "gender": "g",
@@ -4313,6 +4291,7 @@
 ,
 {
   "id": "ultrarealistic-face-scenes",
+  "name": "Scene Impossibles in real life ",
     "description": "Scenes impossibles avec des visages ultra-réalistes",
     "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/scene-impossibles.jpg",
     "compatibleWith": ["premium"],
