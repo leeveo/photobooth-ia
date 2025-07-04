@@ -456,19 +456,84 @@ export default function ProjectDetails({ params }) {
     try {
       console.log(`Début de la suppression du projet ${projectId} (${project.name})`);
       
-      // Utiliser l'API pour supprimer le projet
+      // Première étape: Supprimer les enregistrements dans toutes les tables liées
+      // 1. Supprimer les styles liés au projet
+      const { error: stylesError } = await supabase
+        .from('styles')
+        .delete()
+        .eq('project_id', projectId);
+      
+      if (stylesError) {
+        console.warn("Erreur lors de la suppression des styles:", stylesError);
+      } else {
+        console.log("Styles supprimés avec succès");
+      }
+      
+      // 2. Supprimer les arrière-plans liés au projet
+      const { error: backgroundsError } = await supabase
+        .from('backgrounds')
+        .delete()
+        .eq('project_id', projectId);
+      
+      if (backgroundsError) {
+        console.warn("Erreur lors de la suppression des arrière-plans:", backgroundsError);
+      } else {
+        console.log("Arrière-plans supprimés avec succès");
+      }
+      
+      // 3. Supprimer les paramètres du projet
+      const { error: settingsError } = await supabase
+        .from('project_settings')
+        .delete()
+        .eq('project_id', projectId);
+      
+      if (settingsError) {
+        console.warn("Erreur lors de la suppression des paramètres:", settingsError);
+      } else {
+        console.log("Paramètres supprimés avec succès");
+      }
+
+      // 4. Vérifier et supprimer d'autres tables potentiellement liées
+      // Canvas layouts
+      const { error: canvasError } = await supabase
+        .from('canvas_layouts')
+        .delete()
+        .eq('project_id', projectId);
+      
+      if (canvasError && canvasError.code !== 'PGRST116') { // Ignorer si table n'existe pas
+        console.warn("Erreur lors de la suppression des layouts de canvas:", canvasError);
+      }
+      
+      // Deuxième étape: Utiliser l'API pour supprimer le projet principal
+      // et toute autre donnée que nous n'avons pas pu nettoyer directement
       const response = await fetch('/api/delete-project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ 
+          projectId,
+          fullCleanup: true // Indiquer qu'une suppression complète est nécessaire
+        }),
       });
       
-      const result = await response.json();
-      
       if (!response.ok) {
+        const result = await response.json();
         throw new Error(result.error || 'Échec de la suppression du projet');
+      }
+      
+      const result = await response.json();
+      console.log('Réponse API de suppression:', result);
+      
+      // Troisième étape: Vérifier que le projet a bien été supprimé
+      const { data: checkProject, error: checkError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .single();
+      
+      if (!checkError && checkProject) {
+        throw new Error("Le projet existe toujours après la tentative de suppression");
       }
       
       console.log('Projet supprimé avec succès:', result);
@@ -480,6 +545,28 @@ export default function ProjectDetails({ params }) {
       
     } catch (error) {
       console.error('Erreur lors de la suppression du projet:', error);
+      
+      // Tentative de nettoyage final direct en cas d'échec de l'API
+      try {
+        console.log("Tentative de suppression directe du projet...");
+        const { error: finalError } = await supabase
+          .from('projects')
+          .delete()
+          .eq('id', projectId);
+          
+        if (finalError) {
+          console.error("Échec de la suppression finale:", finalError);
+        } else {
+          console.log("Suppression directe réussie");
+          setTimeout(() => {
+            router.push('/photobooth-ia/admin/projects');
+          }, 500);
+          return; // Sortir si la suppression a finalement réussi
+        }
+      } catch (finalErr) {
+        console.error("Erreur lors de la tentative finale:", finalErr);
+      }
+      
       setError(`Erreur lors de la suppression du projet: ${error.message}`);
       setDeleteConfirm(false);
       setDeleteLoading(false);

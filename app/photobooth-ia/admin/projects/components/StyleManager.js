@@ -212,14 +212,7 @@ const StyleManager = ({
             Ajouter des styles depuis un template
           </button>
           
-          <button
-            onClick={() => setAddingStyle(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            disabled={!typeValidated}
-          >
-            <RiAddLine className="mr-2 h-4 w-4" />
-            Ajouter style manuellement
-          </button>
+          
         </div>
       </div>
       
