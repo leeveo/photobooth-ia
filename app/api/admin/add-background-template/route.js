@@ -83,34 +83,7 @@ export async function POST(request) {
       );
     }
 
-    console.log('Returning backgrounds:', backgrounds);
 
-    return NextResponse.json({ data: backgrounds || [] });
-
-  } catch (error) {
-    console.error('Template background API error:', error);
-    return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
-      { status: 500 }
-    );
-  }
-}
-    console.log('Background inserted successfully:', newBackground);
-
-    // Return the new backgrounds for this project
-    const { data: backgrounds, error: fetchError } = await supabaseServiceRole
-      .from('backgrounds')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('is_active', true);
-
-    if (fetchError) {
-      console.error('Error fetching backgrounds:', fetchError);
-      return NextResponse.json(
-        { error: 'Erreur lors de la récupération des arrière-plans' },
-        { status: 500 }
-      );
-    }
 
     console.log('Returning backgrounds:', backgrounds);
 

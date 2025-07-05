@@ -221,7 +221,13 @@ export default function HowToUse({ params }) {
             whileHover={{ scale: 1.05, rotate: 2 }}
             transition={{ type: "spring", damping: 15 }}
           >
-        
+            <Image 
+              src={project.logo_url} 
+              fill
+              alt={project.name} 
+              className="object-contain drop-shadow-2xl" 
+              priority 
+            />
             {/* Glow effect behind logo */}
             <motion.div
               className="absolute inset-0 blur-xl opacity-50 -z-10"
