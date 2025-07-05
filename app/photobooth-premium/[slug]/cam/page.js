@@ -1048,7 +1048,7 @@ export default function CameraCapture({ params }) {
       fetchQuota();
     }
   };
-
+  
 
 // Ajoute cette fonction pour générer l'image via Replicate
 const generateImageReplicate = async () => {
@@ -1239,33 +1239,109 @@ const generateImageReplicate = async () => {
 
   return (
     <main 
-      className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
+      className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
     >
-      <motion.div 
-        className="fixed top-0 left-0 right-0 flex justify-center mt-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        {project.logo_url ? (
-          <div className="w-[250px] h-[100px] relative">
-            <Image 
-              src={project.logo_url} 
-              fill
-              alt={project.name} 
-              className="object-contain" 
-              priority 
-            />
-          </div>
-        ) : (
-          <h1 
-            className="text-xl font-bold text-center" 
-            style={{ color: secondaryColor }}
-          >
-            {project.name}
-          </h1>
-        )}
-      </motion.div>
+      {/* Animated gradient background */}
+      <motion.div
+        className="fixed inset-0 z-0"
+        style={{
+          background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
+        }}
+        animate={{
+          background: [
+            `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
+            `linear-gradient(225deg, ${secondaryColor}20, ${primaryColor}10, ${secondaryColor}15, ${primaryColor}25)`,
+            `linear-gradient(315deg, ${primaryColor}20, ${secondaryColor}15, ${primaryColor}10, ${secondaryColor}20)`,
+            `linear-gradient(45deg, ${secondaryColor}15, ${primaryColor}20, ${secondaryColor}10, ${primaryColor}15)`,
+          ]
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+
+      {/* Floating background elements */}
+      <div className="fixed inset-0 z-0 overflow-hidden">
+        {/* Large floating orbs */}
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`orb-${i}`}
+            className="absolute rounded-full opacity-20 backdrop-blur-sm"
+            style={{
+              backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
+              width: `${100 + Math.random() * 200}px`,
+              height: `${100 + Math.random() * 200}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              x: [0, Math.random() * 100 - 50, 0],
+              y: [0, Math.random() * 100 - 50, 0],
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.3, 0.1],
+            }}
+            transition={{
+              duration: 10 + Math.random() * 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+
+        {/* Small sparkle particles */}
+        {[...Array(30)].map((_, i) => (
+          <motion.div
+            key={`sparkle-${i}`}
+            className="absolute w-1 h-1 rounded-full"
+            style={{
+              backgroundColor: i % 3 === 0 ? primaryColor : secondaryColor,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0, 1.5, 0],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 2 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+
+        {/* Geometric shapes */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`shape-${i}`}
+            className="absolute opacity-10"
+            style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: i % 2 === 0 ? '50%' : '0%',
+              backgroundColor: 'transparent',
+              border: `2px solid ${i % 2 === 0 ? primaryColor : secondaryColor}`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              rotate: [0, 360],
+              scale: [1, 1.5, 1],
+              opacity: [0.1, 0.3, 0.1],
+            }}
+            transition={{
+              duration: 15 + Math.random() * 10,
+              repeat: Infinity,
+              ease: "linear",
+              delay: Math.random() * 3,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Processing Overlay */}
       <AnimatePresence>
@@ -1366,7 +1442,7 @@ const generateImageReplicate = async () => {
       </AnimatePresence>
 
       <motion.div 
-        className={`w-full max-w-2xl mx-auto mt-[15vh] ${processing ? 'opacity-20 pointer-events-none' : ''}`}
+        className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: processing ? 0.2 : 1, y: 0 }}
         transition={{ duration: 0.7 }}
@@ -1386,13 +1462,13 @@ const generateImageReplicate = async () => {
           <button id="retryCamera" onClick={retryCamera}>Retry Camera</button>
         </div>
         
-        {/* Camera viewfinder with dimensions matching result page - simple approach to ensure camera is visible */}
+        {/* Camera viewfinder with larger dimensions */}
         <motion.div 
           className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
           style={{ 
             width: '100%',
-            maxWidth: '1200px',
-            aspectRatio: '970/651', // Exact aspect ratio to match final output
+            maxWidth: '1400px', // Increased from 1200px
+            aspectRatio: '970/651',
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
             backgroundColor: 'black'
           }}
@@ -1478,16 +1554,17 @@ const generateImageReplicate = async () => {
             )}
           </AnimatePresence>
 
-          {/* Video element - simplified to ensure it's displayed properly */}
+          {/* Video element with improved sizing */}
           <video 
             ref={videoRef} 
             className="w-full h-full object-cover"
             style={{ 
-              transform: 'scaleX(-1)', // Mirror effect for selfie mode
-              display: enabled && !videoVisible ? 'none' : 'block', // Condition améliorée
-              visibility: enabled && !videoVisible ? 'hidden' : 'visible', // Ajout de la visibilité explicite
-              maxHeight: '75vh',
-              backgroundColor: '#000' // Ajout d'un fond noir explicite
+              transform: 'scaleX(-1)',
+              display: enabled && !videoVisible ? 'none' : 'block',
+              visibility: enabled && !videoVisible ? 'hidden' : 'visible',
+              minHeight: '400px', // Minimum height for better visibility
+              maxHeight: '80vh', // Increased from 75vh
+              backgroundColor: '#000'
             }} 
             playsInline
             autoPlay
@@ -1505,15 +1582,16 @@ const generateImageReplicate = async () => {
             }}
           />
           
-          {/* Canvas element - modifions la visibilité */}
+          {/* Canvas element with improved sizing */}
           <canvas 
             ref={previewRef} 
             className="w-full h-full"
             style={{ 
               display: enabled ? 'block' : 'none',
-              maxHeight: '75vh', 
+              minHeight: '400px',
+              maxHeight: '80vh',
               objectFit: 'contain',
-              backgroundColor: '#222' // Ajout d'un fond gris foncé pour voir si le canvas est visible
+              backgroundColor: '#222'
             }}
           />
           
@@ -1566,7 +1644,7 @@ const generateImageReplicate = async () => {
                 </div>
               )}
               
-              {/* SIMPLIFIED camera button with direct approach */}
+              {/* Enhanced photo button with animations */}
               <motion.button
                 onClick={() => {
                   console.log("🔴 PHOTO button clicked, camera state:", { cameraLoaded, cameraError });
@@ -1580,26 +1658,170 @@ const generateImageReplicate = async () => {
                     processCapture();
                   }, 3000);
                 }}
-                className="px-8 py-3 rounded-lg font-bold text-xl relative"
+                className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor,
-                  opacity: cameraLoaded && !showCountdown ? 1 : 0.5 
+                  opacity: cameraLoaded && !showCountdown ? 1 : 0.5,
+                  boxShadow: `0 20px 40px ${secondaryColor}40`
                 }}
-                whileHover={cameraLoaded && !showCountdown ? { scale: 1.05 } : {}}
+                whileHover={cameraLoaded && !showCountdown ? { 
+                  scale: 1.05,
+                  boxShadow: `0 25px 50px ${secondaryColor}60`
+                } : {}}
                 whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
                 disabled={!cameraLoaded || showCountdown}
               >
-                {showCountdown
-                  ? 'PRISE DE PHOTO...'
-                  : cameraLoaded
-                    ? 'PRENDRE UNE PHOTO'
-                    : 'ATTENTE DE LA CAMÉRA...'}
+                {/* Animated floating bubbles */}
+                {[...Array(6)].map((_, i) => (
+                  <motion.div
+                    key={`photo-bubble-${i}`}
+                    className="absolute rounded-full opacity-30"
+                    style={{
+                      backgroundColor: primaryColor,
+                      width: `${6 + Math.random() * 12}px`,
+                      height: `${6 + Math.random() * 12}px`,
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      y: [0, -15, 0],
+                      x: [0, Math.random() * 15 - 7.5, 0],
+                      scale: [1, 1.3, 1],
+                      opacity: [0.3, 0.6, 0.3],
+                    }}
+                    transition={{
+                      duration: 2 + Math.random() * 1.5,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                      ease: "easeInOut"
+                    }}
+              />
+                ))}
+
+                {/* Animated wave pattern */}
+                <motion.div
+                  className="absolute inset-0 opacity-15"
+                  style={{
+                    background: `repeating-linear-gradient(
+                      45deg,
+                      transparent,
+                      transparent 8px,
+                      ${primaryColor}30 8px,
+                      ${primaryColor}30 16px
+                    )`
+                  }}
+                  animate={{
+                    backgroundPosition: ["0px 0px", "32px 32px"],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+
+                {/* Pulsing rings */}
+                {[...Array(2)].map((_, i) => (
+                  <motion.div
+                    key={`photo-ring-${i}`}
+                    className="absolute rounded-full border-2 opacity-30"
+                    style={{
+                      borderColor: primaryColor,
+                      width: `${40 + i * 20}px`,
+                      height: `${40 + i * 20}px`,
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                    animate={{
+                      scale: [0.8, 1.1, 0.8],
+                      opacity: [0.3, 0.1, 0.3],
+                      rotate: [0, 360]
+                    }}
+                    transition={{
+                      duration: 2.5 + i * 0.3,
+                      repeat: Infinity,
+                      delay: i * 0.4,
+                      ease: "easeInOut"
+                    }}
+              />
+                ))}
+
+                {/* Rotating gradient overlay */}
+                <motion.div
+                  className="absolute inset-0 opacity-20 rounded-2xl"
+                  style={{
+                    background: `conic-gradient(from 0deg, transparent, ${primaryColor}30, transparent, ${primaryColor}40, transparent)`
+                  }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+
+                {/* Sparkle explosion on hover */}
+                <motion.div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                >
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={`photo-sparkle-${i}`}
+                      className="absolute w-1 h-1 rounded-full"
+                      style={{
+                        backgroundColor: primaryColor,
+                        left: '50%',
+                        top: '50%',
+                      }}
+                      animate={{
+                        x: [0, (Math.cos(i * 45 * Math.PI / 180) * 40)],
+                        y: [0, (Math.sin(i * 45 * Math.PI / 180) * 40)],
+                        opacity: [1, 0],
+                        scale: [0, 1.2, 0],
+                      }}
+                      transition={{
+                        duration: 0.8,
+                        repeat: Infinity,
+                        delay: i * 0.1,
+                        ease: "easeOut"
+                      }}
+                    />
+                  ))}
+                </motion.div>
+
+                {/* Animated background shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                />
+
+                {/* Button text */}
+                <span className="relative z-10 flex items-center gap-3">
+                  📸
+                  {showCountdown
+                    ? 'PRISE DE PHOTO...'
+                    : cameraLoaded
+                      ? 'PRENDRE UNE PHOTO'
+                      : 'ATTENTE DE LA CAMÉRA...'}
+                </span>
+
+                {/* Enhanced pulse effect when ready */}
                 {cameraLoaded && !showCountdown && (
                   <motion.span
-                    className="absolute inset-0 rounded-lg border-2"
-                    style={{ borderColor: secondaryColor }}
-                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    className="absolute inset-0 rounded-2xl border-2"
+                    style={{ borderColor: primaryColor }}
+                    animate={{ 
+                      opacity: [0.2, 0.5, 0.2],
+                      scale: [1, 1.05, 1]
+                    }}
                     transition={{ duration: 2, repeat: Infinity }}
                   ></motion.span>
                 )}
@@ -1609,22 +1831,225 @@ const generateImageReplicate = async () => {
 
           {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée */}
           {enabled && (
-            <div className="flex space-x-4">
-              <button 
-                onClick={retake}
-                className="px-6 py-3 rounded-lg font-medium"
-                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-              >
-                REPRENDRE
-              </button>
-              <button 
-                onClick={generateImageSwap} // <-- Remplace generateImageReplicate par generateImageSwap
-                className="px-8 py-3 rounded-lg font-bold"
-                style={{ backgroundColor: secondaryColor, color: primaryColor }}
+            <div className="flex flex-col space-y-4 items-center">
+              {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
+              <motion.button 
+                onClick={generateImageSwap}
+                className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
+                style={{ 
+                  backgroundColor: secondaryColor, 
+                  color: primaryColor,
+                  boxShadow: `0 20px 40px ${secondaryColor}40`
+                }}
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: `0 25px 50px ${secondaryColor}60`
+                }}
+                whileTap={{ scale: 0.95 }}
                 disabled={processing}
               >
-                {processing ? "Génération..." : "GÉNÉRER MON IMAGE"}
-              </button>
+                {/* Animated floating bubbles */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={`generate-bubble-${i}`}
+                    className="absolute rounded-full opacity-30"
+                    style={{
+                      backgroundColor: primaryColor,
+                      width: `${8 + Math.random() * 16}px`,
+                      height: `${8 + Math.random() * 16}px`,
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      y: [0, -20, 0],
+                      x: [0, Math.random() * 20 - 10, 0],
+                      scale: [1, 1.5, 1],
+                      opacity: [0.3, 0.7, 0.3],
+                    }}
+                    transition={{
+                      duration: 2 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                      ease: "easeInOut"
+                    }}
+              />
+                ))}
+
+                {/* Animated wave pattern */}
+                <motion.div
+                  className="absolute inset-0 opacity-15"
+                  style={{
+                    background: `repeating-linear-gradient(
+                      45deg,
+                      transparent,
+                      transparent 10px,
+                      ${primaryColor}40 10px,
+                      ${primaryColor}40 20px
+                    )`
+                  }}
+                  animate={{
+                    backgroundPosition: ["0px 0px", "40px 40px"],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+
+                {/* Pulsing rings */}
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={`generate-ring-${i}`}
+                    className="absolute rounded-full border-2 opacity-30"
+                    style={{
+                      borderColor: primaryColor,
+                      width: `${50 + i * 25}px`,
+                      height: `${50 + i * 25}px`,
+                      left: '50%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                    animate={{
+                      scale: [0.8, 1.2, 0.8],
+                      opacity: [0.3, 0.1, 0.3],
+                      rotate: [0, 360]
+                    }}
+                    transition={{
+                      duration: 3 + i * 0.5,
+                      repeat: Infinity,
+                      delay: i * 0.5,
+                      ease: "easeInOut"
+                    }}
+              />
+                ))}
+
+                {/* Shooting stars */}
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={`generate-star-${i}`}
+                    className="absolute"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      x: [0, 80],
+                      y: [0, -40],
+                      opacity: [0, 1, 0],
+                      scale: [0, 1, 0]
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: i * 0.6,
+                      ease: "easeOut"
+                    }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                    <motion.div
+                      className="absolute top-0 left-0 w-12 h-0.5 origin-left"
+                      style={{ backgroundColor: primaryColor }}
+                      animate={{ scaleX: [0, 1, 0] }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.6,
+                      }}
+                    />
+                  </motion.div>
+                ))}
+
+                {/* Rotating gradient overlay */}
+                <motion.div
+                  className="absolute inset-0 opacity-20 rounded-2xl"
+                  style={{
+                    background: `conic-gradient(from 0deg, transparent, ${primaryColor}30, transparent, ${primaryColor}50, transparent)`
+                  }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+
+                {/* Sparkle explosion on hover */}
+                <motion.div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                >
+                  {[...Array(12)].map((_, i) => (
+                    <motion.div
+                      key={`generate-sparkle-${i}`}
+                      className="absolute w-1 h-1 rounded-full"
+                      style={{
+                        backgroundColor: primaryColor,
+                        left: '50%',
+                        top: '50%',
+                      }}
+                      animate={{
+                        x: [0, (Math.cos(i * 30 * Math.PI / 180) * 50)],
+                        y: [0, (Math.sin(i * 30 * Math.PI / 180) * 50)],
+                        opacity: [1, 0],
+                        scale: [0, 1.5, 0],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.1,
+                        ease: "easeOut"
+                      }}
+                    />
+                  ))}
+                </motion.div>
+
+                {/* Animated background shine */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                />
+
+                {/* Button text with icon */}
+                <span className="relative z-10 flex items-center gap-3">
+                  ✨
+                  {processing ? "GÉNÉRATION..." : "GÉNÉRER MON IMAGE"}
+                  ⚡
+                </span>
+
+                {/* Enhanced pulse effect */}
+                <motion.span
+                  className="absolute inset-0 rounded-2xl border-2"
+                  style={{ borderColor: primaryColor }}
+                  animate={{ 
+                    opacity: [0.2, 0.6, 0.2],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                ></motion.span>
+              </motion.button>
+
+              {/* Smaller REPRENDRE button */}
+              <motion.button 
+                onClick={retake}
+                className="px-6 py-3 rounded-lg font-medium text-base backdrop-blur-md border border-white/30"
+                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                whileHover={{ 
+                  scale: 1.05,
+                  backgroundColor: 'rgba(255,255,255,0.25)'
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                🔄 REPRENDRE
+              </motion.button>
             </div>
           )}
           

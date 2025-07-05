@@ -5,7 +5,14 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import backgroundData from '../data/backgroundTemplates.json';
 
-export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onError, onClose }) {
+const BackgroundTemplates = ({ 
+  projectId, 
+  onBackgroundsAdded, 
+  onError, 
+  onClose,
+  useApiEndpoint = false,
+  disableDirectSave = false 
+}) => {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
@@ -82,93 +89,81 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
   });
 
   // Save the selected background to the project
-  const handleSaveBackground = async () => {
-    if (!selectedTemplate) {
-      onError && onError('Veuillez sélectionner un arrière-plan');
-      return;
-    }
-
+  const handleSaveBackground = async (template) => {
+    console.log('Début du processus de remplacement d\'arrière-plan');
+    console.log('ID du projet:', projectId);
+    console.log('Template sélectionné:', template);
+    
     try {
       setSavingBackground(true);
       
-      console.log("Début du processus de remplacement d'arrière-plan");
-      console.log("ID du projet:", projectId);
-      console.log("Template sélectionné:", selectedTemplate);
-      
-      // If it's an uploaded image, upload it to Supabase first
-      if (selectedTemplate.isUploaded && uploadedImage?.file) {
-        // Use FormData to send the file
-        const formData = new FormData();
-        formData.append('file', uploadedImage.file);
-        formData.append('projectId', projectId);
-        formData.append('name', selectedTemplate.name);
+      if (useApiEndpoint || disableDirectSave) {
+        // Use the API endpoint instead of direct database calls
+        console.log('Utilisation de l\'API endpoint pour ajouter le template');
         
-        // Use API route to bypass RLS
-        const response = await fetch('/api/admin/add-background', {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Erreur lors de l'ajout de l'arrière-plan");
-        }
-        
-        const { data } = await response.json();
-        console.log('Added background via API:', data);
-        
-        // Call the callback with the added background
-        onBackgroundsAdded && onBackgroundsAdded(data);
-      } else {
-        // It's a template from the JSON file - use API endpoint
-        console.log('Ajout du template comme nouvel arrière-plan:', selectedTemplate.name);
-        
-        try {
-          // Supprimer d'abord l'arrière-plan existant
-          const deleteResponse = await fetch('/api/admin/backgrounds', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: projectId })
-          });
-          
-          if (!deleteResponse.ok) {
-            const errorData = await deleteResponse.json();
-            throw new Error(errorData.error || "Erreur lors de la suppression de l'arrière-plan existant");
-          }
-          
-          // Puis ajouter le nouvel arrière-plan
-          const response = await fetch('/api/admin/backgrounds', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId: projectId,
-              name: selectedTemplate.name,
-              imageUrl: selectedTemplate.url
-            })
-          });
-          
-          const responseData = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(responseData.error || "Erreur lors de l'ajout de l'arrière-plan");
-          }
-          
-          console.log('API success response:', responseData);
-          
-          if (responseData.success && responseData.data) {
-            onBackgroundsAdded && onBackgroundsAdded(responseData.data);
-          } else {
-            console.warn('Unexpected API response format:', responseData);
-            throw new Error("Format de réponse API inattendu");
-          }
-        } catch (error) {
-          console.error('Error saving background:', error);
-          onError && onError('Erreur: ' + error.message);
-        }
-        
-        // Close the popup
-        onClose && onClose();
+        // Call the callback with the template data
+        // The parent component will handle the API call
+        onBackgroundsAdded(template);
+        return;
       }
+
+      // Original direct database logic (keep for backward compatibility)
+      console.log('Ajout du template comme nouvel arrière-plan:', template.name);
+      
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session expirée, veuillez vous reconnecter');
+      }
+
+      // Delete existing backgrounds for this project
+      const { error: deleteError } = await supabase
+        .from('backgrounds')
+        .delete()
+        .eq('project_id', projectId);
+
+      if (deleteError) {
+        console.error('Erreur lors de la suppression des arrière-plans existants:', deleteError);
+        throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
+      }
+
+      // Insert the new background
+      const { data: newBackground, error: insertError } = await supabase
+        .from('backgrounds')
+        .insert({
+          project_id: projectId,
+          name: template.name,
+          image_url: template.url || template.path,
+          storage_path: null,
+          is_active: true,
+          created_by: session.user.id
+        })
+        .select();
+
+      if (insertError) {
+        console.error('Erreur lors de l\'insertion:', insertError);
+        throw new Error(`Erreur lors de l'ajout: ${insertError.message}`);
+      }
+
+      console.log('✅ Arrière-plan ajouté avec succès:', newBackground);
+
+      // Get all backgrounds for this project
+      const { data: allBackgrounds, error: fetchError } = await supabase
+        .from('backgrounds')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('is_active', true);
+
+      if (fetchError) {
+        console.error('Erreur lors de la récupération:', fetchError);
+        throw new Error(`Erreur lors de la récupération: ${fetchError.message}`);
+      }
+
+      console.log('✅ Tous les arrière-plans récupérés:', allBackgrounds);
+
+      // Call the callback with the updated backgrounds
+      onBackgroundsAdded(allBackgrounds || []);
+
     } catch (error) {
       console.error('Error saving background:', error);
       onError && onError('Erreur lors de l\'enregistrement de l\'arrière-plan: ' + error.message);
@@ -395,7 +390,7 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
           </button>
           <button
             type="button"
-            onClick={handleSaveBackground}
+            onClick={() => handleSaveBackground(selectedTemplate)}
             disabled={!selectedTemplate || savingBackground}
             className={`px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white ${
               !selectedTemplate
@@ -420,3 +415,5 @@ export default function BackgroundTemplates({ projectId, onBackgroundsAdded, onE
     </div>
   );
 }
+
+export default BackgroundTemplates;

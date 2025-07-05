@@ -16,6 +16,7 @@ import ProjectInfoForm from '../components/ProjectInfoForm';
 import PhotoboothTypeManager from '../components/PhotoboothTypeManager';
 import StyleManager from '../components/StyleManager';
 import BackgroundManager from '../components/BackgroundManager';
+import DataCaptureManager from '../components/DataCaptureManager';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -636,6 +637,15 @@ export default function ProjectDetails({ params }) {
                     projectId={projectId}
                     backgrounds={backgrounds}
                     setBackgrounds={setBackgrounds}
+                    setError={setError}
+                    setSuccess={setSuccess}
+                  />
+
+                  {/* Data Capture Manager Section */}
+                  <DataCaptureManager
+                    projectId={projectId}
+                    project={project}
+                    setProject={setProject}
                     setError={setError}
                     setSuccess={setSuccess}
                   />

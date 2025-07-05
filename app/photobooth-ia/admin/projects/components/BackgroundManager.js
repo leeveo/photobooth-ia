@@ -48,6 +48,14 @@ const BackgroundManager = ({
         return;
       }
       
+      // Get the current session to ensure we have authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Session expirée, veuillez vous reconnecter");
+        setAddingBackgroundLoading(false);
+        return;
+      }
+      
       // Create FormData to send the file and metadata
       const formData = new FormData();
       formData.append('projectId', projectId);
@@ -55,9 +63,12 @@ const BackgroundManager = ({
       formData.append('isActive', 'true');
       formData.append('file', backgroundFile);
       
-      // Use the API endpoint instead of direct Supabase calls
+      // Use the API endpoint with proper headers
       const response = await fetch('/api/admin/add-background', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: formData
       });
       
@@ -93,7 +104,15 @@ const BackgroundManager = ({
     
     try {
       setError(null);
-      // Delete the background from the database
+      
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Session expirée, veuillez vous reconnecter");
+        return;
+      }
+      
+      // Delete the background from the database with proper auth context
       const { error } = await supabase
         .from('backgrounds')
         .delete()
@@ -110,38 +129,61 @@ const BackgroundManager = ({
     }
   }
 
-  // Updated function to handle backgrounds added from templates
-  const handleBackgroundTemplatesAdded = (addedBackgrounds) => {
-    console.log(`✅ Background templates callback received:`, addedBackgrounds);
+  // Updated function to handle backgrounds added from templates via API
+  const handleBackgroundTemplatesAdded = async (templateData) => {
+    console.log(`✅ Background template selected:`, templateData);
     
-    // Close the template popup
-    setShowBackgroundTemplates(false);
-    
-    // Indicate we're refreshing
-    setIsRefreshing(true);
-    
-    // Set a success message
-    setSuccess(`Arrière-plan du projet remplacé avec succès !`);
-    
-    // Force a direct UI update first
-    if (Array.isArray(addedBackgrounds)) {
-      setBackgrounds(addedBackgrounds);
-    } else if (addedBackgrounds) {
-      setBackgrounds([addedBackgrounds]);
-    } else {
-      setBackgrounds([]);
+    try {
+      setIsRefreshing(true);
+      setError(null);
+      
+      // Close the template popup immediately
+      setShowBackgroundTemplates(false);
+      
+      // Use API endpoint to add template as background
+      const response = await fetch('/api/admin/add-background-template', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectId: projectId,
+          templateData: templateData
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'ajout du template");
+      }
+      
+      const { data } = await response.json();
+      
+      // Update backgrounds with the new data
+      setBackgrounds(data);
+      
+      // Set success message
+      setSuccess(`Template "${templateData.name}" ajouté avec succès !`);
+      
+    } catch (error) {
+      console.error("Error adding template:", error);
+      setError(error.message);
+    } finally {
+      setIsRefreshing(false);
     }
-    
-    // After a delay, refresh from the database to ensure we have the latest data
-    setTimeout(() => {
-      refreshBackgroundsFromDatabase();
-    }, 500);
   };
 
   // Add this new function to refresh backgrounds directly from the database
   const refreshBackgroundsFromDatabase = async () => {
     try {
       console.log("Refreshing backgrounds from database...");
+      
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Session expirée, veuillez vous reconnecter");
+        return;
+      }
       
       // Get fresh data from the database
       const { data, error } = await supabase
@@ -171,6 +213,7 @@ const BackgroundManager = ({
   // Function to handle template errors
   const handleBackgroundTemplatesError = (errorMessage) => {
     setError(errorMessage);
+    setShowBackgroundTemplates(false);
   };
 
   // Helper function to ensure we have a full URL
@@ -389,11 +432,13 @@ const BackgroundManager = ({
             onBackgroundsAdded={handleBackgroundTemplatesAdded}
             onError={handleBackgroundTemplatesError}
             onClose={() => setShowBackgroundTemplates(false)}
+            disableDirectSave={true}
           />
         </div>
       )}
     </div>
   );
 };
+
 
 export default BackgroundManager;
