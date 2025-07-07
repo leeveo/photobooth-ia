@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+
 import { 
   RiFilterLine, 
   RiDownloadLine, 
