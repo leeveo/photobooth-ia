@@ -500,3 +500,17 @@ export default function DataCapture() {
                     <RiShieldCheckLine className="h-8 w-8 mr-3" />
                     <div>
                       <div className="text-2xl font-bold">
+                        {capturedData.filter(d => d.rgpd_text).length}
+                      </div>
+                      <div className="text-sm opacity-80">RGPD Accepté</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
