@@ -216,6 +216,288 @@
     ]
   },
   {
+  "id": "photo_lut_filters",
+  "name": "Filtres LUT et effets photo",
+  "description": "Collection de filtres photographiques et LUT pour embellir les images",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/photo_lut_filters.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "LUT Lumière Naturelle",
+      "style_key": "lut_natural_light",
+      "description": "Rehausse la luminosité et le contraste avec des tons naturels et équilibrés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_natural_light.jpg",
+      "prompt": "Enhance the image with a natural light LUT. Boost midtones, balance highlights and shadows, and apply soft contrast with realistic warmth. Preserve true-to-life skin tones and ambient softness."
+    },
+    {
+      "name": "LUT Teal & Orange",
+      "style_key": "lut_teal_orange",
+      "description": "Ajoute un contraste cinématique entre les ombres bleu-vert et les tons chauds de la peau",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_teal_orange.jpg",
+      "prompt": "Apply a cinematic teal and orange LUT. Cool down shadows with teal tones, enhance skin tones with warm orange highlights, and add punchy contrast. Ideal for dramatic and polished visuals."
+    },
+    {
+      "name": "LUT Douceur Pastel",
+      "style_key": "lut_pastel_soft",
+      "description": "Adoucit l'image avec des tons pastels et un contraste réduit pour un rendu poétique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_pastel_soft.jpg",
+      "prompt": "Use a pastel soft LUT to reduce harsh contrast and infuse the image with light, airy colors. Apply low saturation and soft highlights for a gentle, dreamy mood."
+    },
+    {
+      "name": "LUT Contraste Profond",
+      "style_key": "lut_deep_contrast",
+      "description": "Renforce les ombres et la profondeur des couleurs pour un rendu intense",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_deep_contrast.jpg",
+      "prompt": "Enhance the image with a deep contrast LUT. Darken shadows, boost color saturation, and add richness to tones. Preserve details in highlights and midtones for a dramatic effect."
+    },
+    {
+      "name": "LUT Golden Glow",
+      "style_key": "lut_golden_glow",
+      "description": "Simule une lumière dorée du soir avec un éclat chaleureux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_golden_glow.jpg",
+      "prompt": "Apply a golden hour LUT to create a soft warm glow. Enhance highlights with golden tones, soften edges with light haze, and evoke the warm ambiance of sunset lighting."
+    },
+    {
+      "name": "LUT Cinéma Mat",
+      "style_key": "lut_cinema_matte",
+      "description": "Donne un look cinéma avec tons mats et profondeur des couleurs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cinema_matte.jpg",
+      "prompt": "Use a cinematic matte LUT. Flatten highlights slightly, deepen blacks, and apply desaturated color tones for a moody, filmic style. Ideal for cinematic storytelling."
+    },
+    {
+      "name": "LUT Haute Définition",
+      "style_key": "lut_high_def",
+      "description": "Améliore la netteté, la texture et les micro-détails",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_high_def.jpg",
+      "prompt": "Apply a high-definition LUT that enhances clarity and detail. Accentuate micro-textures in skin and fabric, add controlled sharpening and subtle contrast to bring out structure."
+    },
+    {
+      "name": "LUT Contraste Doux",
+      "style_key": "lut_soft_contrast",
+      "description": "Réduit le contraste pour un rendu plus doux et naturel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_soft_contrast.jpg",
+      "prompt": "Apply a soft contrast LUT. Lighten shadows slightly and reduce highlight intensity. Maintain natural skin tones and a balanced, gentle visual flow throughout the image."
+    },
+    {
+      "name": "LUT Mode Editorial",
+      "style_key": "lut_editorial",
+      "description": "Apporte une finition haut de gamme type magazine",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_editorial.jpg",
+      "prompt": "Use an editorial-style LUT to simulate fashion photography lighting. Emphasize facial contours, boost cool highlights, and subtly desaturate background tones for a premium look."
+    },
+    {
+      "name": "LUT Film Retro",
+      "style_key": "lut_film_retro",
+      "description": "Ajoute une ambiance rétro façon film des années 70",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_film_retro.jpg",
+      "prompt": "Apply a retro film LUT inspired by 1970s cinema. Use faded highlights, warm yellow-green tones, and mild grain for a nostalgic, vintage movie aesthetic."
+    },
+    {
+      "name": "LUT Ambiance Nocturne",
+      "style_key": "lut_night_ambience",
+      "description": "Renforce les bleus et violets pour un rendu nocturne cinématographique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_night_ambience.jpg",
+      "prompt": "Apply a cinematic midnight ambience LUT with clear blues and purples. Enhance middle-light mood, reduce saturation slightly, and create a cool mysterious tone throughout the image."
+    },
+
+    {
+      "name": "LUT Portrait Satiné",
+      "style_key": "lut_portrait_satin",
+      "description": "Adoucit la peau et ajoute une finition satinée haut de gamme",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_portrait_satin.jpg",
+      "prompt": "Apply a satin portrait LUT that smooths skin tones, reduces red hues, and adds subtle shine. Emphasize facial symmetry and soften highlights for a glossy magazine look."
+    },
+    {
+      "name": "LUT Urbain Contrasté",
+      "style_key": "lut_urban_contrast",
+      "description": "Contraste élevé pour un look urbain dynamique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_urban_contrast.jpg",
+      "prompt": "Use an urban contrast LUT to intensify city tones. Boost blacks, sharpen details, and add slight cyan-magenta tint to bring an energetic modern edge to architecture and street portraits."
+    },
+    {
+      "name": "LUT Cinéma Froid",
+      "style_key": "lut_cinema_cool",
+      "description": "Tons froids désaturés pour une ambiance dramatique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cinema_cool.jpg",
+      "prompt": "Apply a cool cinematic LUT with desaturated blue-grey tones. Create a serious, moody effect with softened contrast and subdued highlights, ideal for dramatic visual storytelling."
+    },
+    {
+      "name": "LUT Soleil Voilé",
+      "style_key": "lut_cloudy_warm",
+      "description": "Effet de lumière douce par temps couvert avec chaleur diffuse",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cloudy_warm.jpg",
+      "prompt": "Use a cloudy sunlight LUT that adds a soft warm glow with gentle haze. Midtones are slightly lifted, and the color palette shifts toward beige and pale amber for an overcast but cozy atmosphere."
+    },
+    {
+      "name": "LUT Détail HDR Léger",
+      "style_key": "lut_light_hdr",
+      "description": "Amélioration subtile du HDR avec conservation du naturel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_light_hdr.jpg",
+      "prompt": "Apply a soft HDR LUT to increase dynamic range without overprocessing. Brighten shadows, recover details in highlights, and balance tone curves for crisp yet natural clarity."
+    },
+    {
+      "name": "LUT Bronze & Cuivre",
+      "style_key": "lut_bronze_copper",
+      "description": "Ajoute des reflets bronze et cuivrés pour un look luxueux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_bronze_copper.jpg",
+      "prompt": "Use a bronze and copper LUT to give the image a rich metallic tint. Enhance golden undertones and create warm, radiant glow in hair and skin with smooth highlight blending."
+    },
+    {
+      "name": "LUT Épuré & Blanc",
+      "style_key": "lut_clean_white",
+      "description": "Blancs purs, lumières propres pour un look épuré et minimaliste",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_clean_white.jpg",
+      "prompt": "Apply a clean white LUT that lifts whites, softens shadows, and creates a bright minimalist aesthetic. Perfect for editorial, fashion, or lifestyle visuals with high key lighting."
+    },
+    {
+      "name": "LUT Automne Chaud",
+      "style_key": "lut_warm_autumn",
+      "description": "Rehausse les tons orangés, bruns et rouges pour un style automnal chaleureux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_warm_autumn.jpg",
+      "prompt": "Use a warm autumn LUT that enhances orange, brown, and deep red tones. Slightly matted highlights and gentle shadow roll-off create a cozy seasonal feeling with a cinematic twist."
+    },
+
+
+
+
+
+
+
+
+ {
+      "name": "LUT Froid Urbain",
+      "style_key": "lut_cool_urban",
+      "description": "Ajoute une teinte bleutée urbaine avec contraste subtil",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cool_urban.jpg",
+      "prompt": "Apply a cool urban LUT with slight blue tints and reduced saturation. Emphasize steel, asphalt, and glass textures for a modern city vibe."
+    },
+    {
+      "name": "LUT Mat Poussiéreux",
+      "style_key": "lut_dusty_matte",
+      "description": "Look délavé avec tons terreux et texture douce",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_dusty_matte.jpg",
+      "prompt": "Use a dusty matte LUT with beige, brown, and olive tones. Lower contrast and soften shadows for a worn, cinematic look."
+    },
+    {
+      "name": "LUT Contrast Clair-Obscur",
+      "style_key": "lut_chiaroscuro",
+      "description": "Inspiré du clair-obscur avec contrastes puissants et lumière directionnelle",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_chiaroscuro.jpg",
+      "prompt": "Simulate chiaroscuro lighting with a LUT that enhances directional shadows and dramatic light. Deep blacks and high contrast evoke classical portraiture."
+    },
+    {
+      "name": "LUT Jaune Poussière",
+      "style_key": "lut_dusty_yellow",
+      "description": "Filtre vintage avec dominante jaune et tons ocres",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_dusty_yellow.jpg",
+      "prompt": "Apply a dusty yellow LUT for a retro vibe. Warm up highlights with ochre tones and give the image a soft antique glow."
+    },
+    {
+      "name": "LUT Bleu Givré",
+      "style_key": "lut_frosted_blue",
+      "description": "Look froid et givré avec bleus désaturés et ambiance polaire",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_frosted_blue.jpg",
+      "prompt": "Use a frosted blue LUT that desaturates warm tones and amplifies cold hues. Ideal for wintry scenes and clinical, moody portraits."
+    },
+    {
+      "name": "LUT Jaune Cinématographique",
+      "style_key": "lut_cinema_yellow",
+      "description": "Lumière dorée intense et profondeur visuelle",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cinema_yellow.jpg",
+      "prompt": "Apply a cinematic yellow LUT that floods the scene with golden warmth and subtle haze. Ideal for nostalgic or summery cinematic shots."
+    },
+    {
+      "name": "LUT Couleur Laiton",
+      "style_key": "lut_brass_tone",
+      "description": "Tons métalliques chauds pour un effet brumeux et vintage",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_brass_tone.jpg",
+      "prompt": "Use a brass tone LUT that mixes bronze, gold, and sepia hues. Add mild blur and haze to evoke a luxurious antique photo aesthetic."
+    },
+    {
+      "name": "LUT Jungle Émeraude",
+      "style_key": "lut_emerald_jungle",
+      "description": "Accentue les verts profonds et les contrastes tropicaux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_emerald_jungle.jpg",
+      "prompt": "Apply an emerald jungle LUT with rich green tones and shadow depth. Perfect for foliage, forests, or nature shots."
+    },
+    {
+      "name": "LUT Soleil Californien",
+      "style_key": "lut_california_sun",
+      "description": "Effet lumineux et ensoleillé avec tons orange doux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_california_sun.jpg",
+      "prompt": "Use a California sun LUT with soft warm saturation and beach-toned highlights. Creates a relaxed, luminous summer atmosphere."
+    },
+    {
+      "name": "LUT Douceur Laitonnée",
+      "style_key": "lut_milky_soft",
+      "description": "Blancs crémeux et ambiance feutrée pastel",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_milky_soft.jpg",
+      "prompt": "Apply a milky soft LUT with creamy whites and pastel color fade. Low contrast and gentle color transitions ideal for delicate portraiture."
+    },
+   
+    {
+      "name": "LUT Rose Chaud Editorial",
+      "style_key": "lut_warm_rose",
+      "description": "Contraste rosé avec chaleur et rendu de mode",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_warm_rose.jpg",
+      "prompt": "Use a warm rose LUT to enhance skin tones and blush-like warmth. Ideal for beauty shots, with soft focus and a romantic feel."
+    },
+    {
+      "name": "LUT Clair Coton",
+      "style_key": "lut_cotton_clear",
+      "description": "Couleurs douces et propre clarté visuelle",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cotton_clear.jpg",
+      "prompt": "Apply a cotton-clear LUT that lifts whites, adds gentle blue tints, and simplifies tones for a clean, modern visual finish."
+    },
+    {
+      "name": "LUT Contour Mode",
+      "style_key": "lut_fashion_contour",
+      "description": "Accentue les contours et volumes pour effet éditorial",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_fashion_contour.jpg",
+      "prompt": "Use a fashion contour LUT to define face and body edges. Boost micro-contrast and add cool color shifts for a high-end editorial finish."
+    },
+    {
+      "name": "LUT Désert Chaud",
+      "style_key": "lut_hot_desert",
+      "description": "Rendu aride et lumineux avec saturation chaude",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_hot_desert.jpg",
+      "prompt": "Apply a hot desert LUT with bright oranges, warm sands, and strong light flares. Ideal for outdoor shots in sunny dry environments."
+    },
+    {
+      "name": "LUT Métal Froid",
+      "style_key": "lut_cold_metal",
+      "description": "Finition métallique bleutée pour un style high-tech",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_cold_metal.jpg",
+      "prompt": "Use a cold metal LUT with blue-steel highlights and reflective tonal balance. Great for tech or fashion with a futuristic look."
+    },
+   
+    {
+      "name": "LUT Perle Rosée",
+      "style_key": "lut_rose_pearl",
+      "description": "Reflets nacrés et tons rosés doux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_rose_pearl.jpg",
+      "prompt": "Use a rose pearl LUT that creates subtle opalescent highlights with soft pink reflection. Great for dreamy editorial beauty shots."
+    },
+    {
+      "name": "LUT Aubergine Crépusculaire",
+      "style_key": "lut_twilight_eggplant",
+      "description": "Tons sombres violets et ambiance crépusculaire",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_twilight_eggplant.jpg",
+      "prompt": "Apply a twilight eggplant LUT with moody purples and cool dusk shadows. Excellent for emotive, artistic portraits during low light."
+    },
+    {
+      "name": "LUT Lumière Blanche Propre",
+      "style_key": "lut_clean_light",
+      "description": "Lumière blanche pure et contours nets",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lut_clean_light.jpg",
+      "prompt": "Use a clean light LUT with white-balanced lighting and crisp edge enhancement. Maintain clarity and luminosity with minimal color distortion."
+    }
+  ]
+}
+,
+  {
     "id": "sciencefiction",
     "name": "Collection Science Fiction",
     "description": "Styles futuristes et de science-fiction",
@@ -3794,6 +4076,158 @@
       }
     ]
   },
+  {
+  "id": "camera_effect_styles",
+  "name": "Effets de Simulation Caméra",
+  "description": "Collection de rendus inspirés de différents types d'appareils photo",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_effect_styles.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Effet GoPro Action",
+      "style_key": "camera_gopro",
+      "description": "Simulation GoPro avec grand angle et contraste vif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_gopro.jpg",
+      "prompt": "Simulate a GoPro Hero camera image. Use wide-angle lens effect, fisheye effect ,high contrast, saturated colors, and dynamic field of view. "
+    },
+    {
+      "name": "Effet Canon DSLR",
+      "style_key": "camera_canon_dslr",
+      "description": "Rendu clair et équilibré d’un appareil Canon reflex",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_canon_dslr.jpg",
+      "prompt": "Simulate a Canon DSLR image with accurate color reproduction, soft background blur (bokeh), and professional clarity. Natural exposure and skin tone rendering."
+    },
+    {
+      "name": "Effet Nikon Reflex",
+      "style_key": "camera_nikon_dslr",
+      "description": "Style net et lumineux typique d’un Nikon reflex numérique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_nikon_dslr.jpg",
+      "prompt": "Simulate a Nikon DSLR photo. Emphasize brightness, vibrant colors, and sharp lens clarity. Use DSLR depth of field and subtle tonal curves."
+    },
+    {
+      "name": "Effet Sony Alpha Mirrorless",
+      "style_key": "camera_sony_alpha",
+      "description": "Look moderne avec haute dynamique et netteté Sony Alpha",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_sony_alpha.jpg",
+      "prompt": "Simulate a Sony Alpha mirrorless camera photo. High dynamic range, clean shadows, crisp details and vivid color accuracy. Mirrorless clarity and soft bokeh."
+    },
+    {
+      "name": "Effet iPhone Pro",
+      "style_key": "camera_iphone_pro",
+      "description": "Aspect photographique propre aux iPhones récents",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_iphone_pro.jpg",
+      "prompt": "Simulate an iPhone 14 Pro camera image. Balanced HDR, vivid but realistic colors, smooth skin rendering, and AI-assisted sharpening. Smartphone lens emulation."
+    },
+    {
+      "name": "Effet Fujifilm Classic",
+      "style_key": "camera_fujifilm_classic",
+      "description": "Teinte vintage Fujifilm avec contraste doux",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_fujifilm_classic.jpg",
+      "prompt": "Simulate a Fujifilm camera shot using Classic Chrome style. Muted tones, subtle shadows, vintage color profile, and light grain."
+    },
+    {
+      "name": "Effet Leica Numérique",
+      "style_key": "camera_leica_digital",
+      "description": "Look photographique haut de gamme façon Leica",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_leica_digital.jpg",
+      "prompt": "Simulate a Leica digital camera image. Add elegant microcontrast, rich shadow details, and a timeless rendering of skin tones and edges."
+    },
+    {
+      "name": "Effet Hasselblad Moyen Format",
+      "style_key": "camera_hasselblad",
+      "description": "Rendu net et profond d’un appareil moyen format Hasselblad",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_hasselblad.jpg",
+      "prompt": "Simulate a Hasselblad medium-format photo. Extra resolution, perfect tonal range, and smooth depth transitions. Balanced color grading with luxury finish."
+    },
+    {
+      "name": "Effet Caméra VHS",
+      "style_key": "camera_vhs",
+      "description": "Vidéo analogique basse résolution avec bruit VHS",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_vhs.jpg",
+      "prompt": "Simulate an old VHS camcorder recording. Add noise, scanlines, tape blur, chromatic shift, and timestamp overlay for retro home video effect."
+    },
+    {
+      "name": "Effet Caméra 8mm",
+      "style_key": "camera_8mm",
+      "description": "Aspect rétro film 8mm granuleux et saturé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_8mm.jpg",
+      "prompt": "Simulate a Super 8mm film camera shot. Add grain, soft focus, orange-yellow tint, and flicker effect. Vintage cinematic tone."
+    },
+    {
+      "name": "Effet Drone DJI",
+      "style_key": "camera_dji_drone",
+      "description": "Vue aérienne nette et contrastée typique DJI",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_dji_drone.jpg",
+      "prompt": "Simulate a DJI drone photo. High-contrast aerial perspective, clean lines, landscape clarity, and geometric composition."
+    },
+    {
+      "name": "Effet Polaroid Instantané",
+      "style_key": "camera_polaroid",
+      "description": "Photo instantanée Polaroid avec teintes désaturées",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_polaroid.jpg",
+      "prompt": "Simulate a vintage Polaroid camera. Add white frame, slightly washed-out tones, mild blur, and analog softness."
+    },
+    {
+      "name": "Effet Olympus OM-D",
+      "style_key": "camera_olympus_omd",
+      "description": "Rendu numérique net et équilibré Olympus",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_olympus_omd.jpg",
+      "prompt": "Simulate an Olympus OM-D digital photo. Use natural color balance, slight warmth, and midrange clarity."
+    },
+    {
+      "name": "Effet Blackmagic Cinema",
+      "style_key": "camera_blackmagic",
+      "description": "Rendu vidéo cinéma brut Blackmagic",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_blackmagic.jpg",
+      "prompt": "Simulate Blackmagic Cinema Camera output. Film log look, high dynamic range, minimal in-camera processing. Raw cinematic aesthetic."
+    },
+    {
+      "name": "Effet Panasonic Lumix",
+      "style_key": "camera_panasonic_lumix",
+      "description": "Simulation Lumix avec tons neutres et bonne netteté",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_panasonic_lumix.jpg",
+      "prompt": "Simulate a Panasonic Lumix camera shot. Neutral white balance, clean exposure, and stabilized image structure."
+    },
+    {
+      "name": "Effet Caméra de Surveillance",
+      "style_key": "camera_cctv",
+      "description": "Vue CCTV avec bruit, IR ou faible luminosité",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_cctv.jpg",
+      "prompt": "Simulate a CCTV security camera frame. Add timestamp, low resolution, grayscale or night vision IR effect, and grainy static."
+    },
+    {
+      "name": "Effet Caméra Web",
+      "style_key": "camera_webcam",
+      "description": "Aspect image webcam avec faible profondeur et compression",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_webcam.jpg",
+      "prompt": "Simulate a standard webcam feed. Low dynamic range, minimal bokeh, slight pixelation, soft focus, and flat lighting."
+    },
+    {
+      "name": "Effet RED Digital Cinema",
+      "style_key": "camera_red_digital",
+      "description": "Aspect cinéma numérique haut de gamme RED",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_red_digital.jpg",
+      "prompt": "Simulate a RED digital cinema camera shot. High dynamic range, film-grade detail retention, and RAW cinematic sharpness."
+    },
+    {
+      "name": "Effet Caméra Thermique",
+      "style_key": "camera_thermal",
+      "description": "Simulation de caméra thermique en fausses couleurs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_thermal.jpg",
+      "prompt": "Simulate thermal imaging view. Use false-color mapping, red-yellow for hot areas, blue-purple for cold. Add slight blur and digital noise."
+    },
+    {
+      "name": "Effet Caméra Lomo",
+      "style_key": "camera_lomo",
+      "description": "Effet lomographie colorée et vignettée",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/camera_lomo.jpg",
+      "prompt": "Simulate a Lomo camera style. Add color shift, strong vignetting, and saturated tones. Soft lens distortion and experimental film feel."
+    }
+  ]
+},
+
   {
     "id": "futuriste",
     "name": "Collection Futuriste",

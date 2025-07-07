@@ -17,6 +17,7 @@ import PhotoboothTypeManager from '../components/PhotoboothTypeManager';
 import StyleManager from '../components/StyleManager';
 import BackgroundManager from '../components/BackgroundManager';
 import DataCaptureManager from '../components/DataCaptureManager';
+import PhotoboothEmailTemplateEditor from '../components/PhotoboothEmailTemplateEditor';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -58,7 +59,14 @@ export default function ProjectDetails({ params }) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [canvasLayout, setCanvasLayout] = useState(null);
-  
+  const [emailTemplate, setEmailTemplate] = useState({ subject: '', html_content: '' });
+  const [emailTemplateId, setEmailTemplateId] = useState(null);
+  const [emailTemplateLoading, setEmailTemplateLoading] = useState(false);
+  const [emailTemplateSuccess, setEmailTemplateSuccess] = useState(null);
+  const [emailTemplateError, setEmailTemplateError] = useState(null);
+  const [showEmailEditor, setShowEmailEditor] = useState(false);
+  const [emailEnabled, setEmailEnabled] = useState(true);
+
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
     const getAdminSession = () => {
@@ -488,6 +496,181 @@ export default function ProjectDetails({ params }) {
     }
   }
   
+  // Charger le template d'email à l'ouverture
+  useEffect(() => {
+    const fetchEmailTemplate = async () => {
+      if (!projectId) return;
+      setEmailTemplateLoading(true);
+      setEmailTemplateError(null);
+      try {
+        const { data, error } = await supabase
+          .from('photobooth_emailtemplate')
+          .select('*')
+          .eq('id_project', projectId)
+          .maybeSingle();
+        if (error && error.code !== 'PGRST116') throw error;
+        if (data) {
+          setEmailTemplate({ subject: data.subject || '', html_content: data.html_content || '' });
+          setEmailTemplateId(data.id);
+        } else {
+          setEmailTemplate({ subject: '', html_content: '' });
+          setEmailTemplateId(null);
+        }
+      } catch (err) {
+        setEmailTemplateError("Erreur lors du chargement du template d'email");
+      } finally {
+        setEmailTemplateLoading(false);
+      }
+    };
+    fetchEmailTemplate();
+  }, [projectId]);
+
+  // Fonction de sauvegarde du template d'email
+  const handleSaveEmailTemplate = async () => {
+    setEmailTemplateLoading(true);
+    setEmailTemplateError(null);
+    setEmailTemplateSuccess(null);
+    try {
+      if (emailTemplateId) {
+        // Update
+        const { error } = await supabase
+          .from('photobooth_emailtemplate')
+          .update({
+            subject: emailTemplate.subject,
+            html_content: emailTemplate.html_content,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', emailTemplateId);
+        if (error) throw error;
+        setEmailTemplateSuccess('Template mis à jour avec succès');
+      } else {
+        // Insert
+        const { data, error } = await supabase
+          .from('photobooth_emailtemplate')
+          .insert({
+            id_project: projectId,
+            subject: emailTemplate.subject,
+            html_content: emailTemplate.html_content
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        setEmailTemplateId(data.id);
+        setEmailTemplateSuccess('Template créé avec succès');
+      }
+    } catch (err) {
+      setEmailTemplateError("Erreur lors de la sauvegarde du template d'email");
+    } finally {
+      setEmailTemplateLoading(false);
+    }
+  };
+
+  // Switch custom simple (à placer dans le composant)
+  function EmailSwitch({ checked, onChange }) {
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-indigo-600' : 'bg-gray-300'}`}
+      >
+        <span className="sr-only">Activer l'envoi d'email</span>
+        <span
+          className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+      </button>
+    );
+  }
+
+  // Ajoute une fonction pour gérer la sauvegarde depuis l'éditeur popup
+  const handleSaveEmailTemplateFromEditor = async ({ subject, html_content }) => {
+    setEmailTemplateLoading(true);
+    setEmailTemplateError(null);
+    setEmailTemplateSuccess(null);
+    try {
+      let now = new Date().toISOString();
+      console.log('[EmailTemplate] --- Début sauvegarde ---');
+      console.log('[EmailTemplate] projectId:', projectId);
+      console.log('[EmailTemplate] subject:', subject);
+      console.log('[EmailTemplate] html_content:', html_content);
+
+      // Vérifie si le projet existe et log le résultat
+      const { data: projectCheck, error: projectCheckError } = await supabase
+        .from('projects')
+        .select('id,created_by')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (projectCheckError) {
+        console.error('[EmailTemplate] Erreur SELECT project:', projectCheckError);
+      } else {
+        console.log('[EmailTemplate] Projet trouvé:', projectCheck);
+      }
+
+      // Vérifie s'il existe déjà un template pour ce projet
+      const { data: existing, error: selectError } = await supabase
+        .from('photobooth_emailtemplate')
+        .select('id')
+        .eq('id_project', projectId)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('[EmailTemplate] Erreur SELECT template:', selectError);
+      } else {
+        console.log('[EmailTemplate] Résultat SELECT template:', existing);
+      }
+
+      let templateId = existing?.id;
+
+      if (templateId) {
+        // Update
+        console.log('[EmailTemplate] Update du template existant id:', templateId);
+        const { error } = await supabase
+          .from('photobooth_emailtemplate')
+          .update({
+            subject,
+            html_content,
+            updated_at: now
+          })
+          .eq('id', templateId);
+        if (error) {
+          console.error('[EmailTemplate] Erreur UPDATE:', error);
+          throw error;
+        }
+        setEmailTemplateId(templateId);
+        setEmailTemplateSuccess('Template mis à jour avec succès');
+      } else {
+        // Insert
+        console.log('[EmailTemplate] Insert nouveau template');
+        const { data, error } = await supabase
+          .from('photobooth_emailtemplate')
+          .insert({
+            id_project: projectId,
+            subject,
+            html_content,
+            created_at: now,
+            updated_at: now
+          })
+          .select('id,subject,html_content')
+          .single();
+        if (error) {
+          console.error('[EmailTemplate] Erreur INSERT:', error);
+          throw error;
+        }
+        setEmailTemplateId(data.id);
+        setEmailTemplateSuccess('Template créé avec succès');
+      }
+      setEmailTemplate({ subject, html_content });
+      setShowEmailEditor(false);
+      console.log('[EmailTemplate] --- Fin sauvegarde OK ---');
+    } catch (err) {
+      setEmailTemplateError("Erreur lors de la sauvegarde du template d'email");
+      console.error('[EmailTemplate] Exception JS:', err);
+    } finally {
+      setEmailTemplateLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -650,6 +833,64 @@ export default function ProjectDetails({ params }) {
                     setSuccess={setSuccess}
                   />
 
+                  {/* Encart Email Template Editor avec switch et bouton édition */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="w-full">
+                      <h3 className="text-lg font-semibold mb-1">Personnalisation de l'email de partage d'image</h3>
+                      <p className="text-gray-500 text-sm mb-2">
+                        Gérez l'envoi automatique d'email aux participants et personnalisez le contenu.
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <EmailSwitch checked={emailEnabled} onChange={setEmailEnabled} />
+                        <span className="text-sm text-gray-700">
+                          {emailEnabled ? "Envoi d'email activé" : "Envoi d'email désactivé"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmailEditor(true)}
+                          className="ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-md shadow-sm hover:from-blue-700 hover:to-indigo-800 text-sm font-medium"
+                        >
+                          Éditer l'email
+                        </button>
+                      </div>
+                      {/* Aperçu de l'email sous le switch */}
+                      {emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
+                        <div className="mt-6 border rounded-md bg-white shadow p-4">
+                          <div className="mb-2 text-xs text-gray-400">Aperçu de l'email personnalisé :</div>
+                          <div className="mb-2 text-sm font-semibold text-gray-700">Sujet : {emailTemplate.subject}</div>
+                          <div className="border rounded bg-gray-50 p-3 overflow-auto" style={{ minHeight: 120 }}>
+                            <div dangerouslySetInnerHTML={{ __html: emailTemplate.html_content }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Popup éditeur d'email */}
+                  {showEmailEditor && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                      <div className="w-full max-w-5xl">
+                        <PhotoboothEmailTemplateEditor
+                          projectId={projectId}
+                          onTemplateChange={() => {}} // inutile ici
+                          initialSubject={emailTemplate.subject}
+                          initialHtmlContent={emailTemplate.html_content}
+                          onSave={handleSaveEmailTemplateFromEditor}
+                          onCancel={() => setShowEmailEditor(false)}
+                          isSaving={emailTemplateLoading}
+                        />
+                        <div className="flex justify-end mt-4">
+                          <button
+                            type="button"
+                            onClick={() => setShowEmailEditor(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            Fermer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Photobooth Type Manager Section */}
                   <PhotoboothTypeManager
                     project={project}
@@ -675,7 +916,7 @@ export default function ProjectDetails({ params }) {
                   <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
                     <div className="flex items-center mb-6">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                        <span className="text-white font-semibold">4</span>
+                        <span className="text-white font-semibold">5</span>
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900">Editeur de cadres photos</h3>
                     </div>

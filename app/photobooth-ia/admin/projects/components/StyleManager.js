@@ -185,7 +185,7 @@ const StyleManager = ({
       <div className="flex justify-between items-center mb-4 relative">
         <div className="flex items-center mb-6">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-            <span className="text-white font-semibold">3</span>
+            <span className="text-white font-semibold">4</span>
           </div>
           <h3 className="text-xl font-semibold text-gray-900">Choix du modèle</h3>
         </div>

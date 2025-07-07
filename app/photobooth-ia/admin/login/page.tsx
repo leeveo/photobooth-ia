@@ -207,7 +207,7 @@ export default function AdminLoginPage() {
       {/* RIGHT SIDE */}
       <div
         className="w-full md:w-2/3 relative bg-cover bg-center flex items-center justify-center p-10"
-        style={{ backgroundImage: "url('/images/login-bg.png')" }}
+        style={{ backgroundImage: "url('/images/login-bg.jpg')" }}
       >
         <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-8 text-white">
           <h2 className="text-2xl font-bold mb-6 text-center">Connexion</h2>
