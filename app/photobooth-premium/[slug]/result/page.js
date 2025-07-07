@@ -64,6 +64,22 @@ const dataURLtoFile = async (dataurl, filename) => {
   throw new Error("Unsupported image format for upload");
 };
 
+// Nouvelle fonction pour envoyer l'email via l'API Next.js
+async function sendPhotoByEmail({ to, project, imageUrl }) {
+  if (!to) return;
+  const response = await fetch('/api/send-photo-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, project, imageUrl }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Erreur lors de l\'envoi de l\'email');
+  }
+  // Log de succès
+  console.log(`[API] Email envoyé avec succès à ${to} pour le projet ${project?.name || project?.id}`);
+}
+
 export default function Result({ params }) {
   const slug = params.slug;
   const supabase = createClientComponentClient();
@@ -252,14 +268,12 @@ export default function Result({ params }) {
       
       // Fermer le formulaire
       setShowDataCapture(false);
-      
-      // Maintenant procéder à l'upload et affichage du QR code
       setLoadingUpload(true);
-      
+
       try {
         // Upload to S3
         const s3Url = await uploadToS3(imageResultAI);
-        
+
         if (s3Url) {
           // Update session record with S3 URL
           try {
@@ -272,6 +286,20 @@ export default function Result({ params }) {
           
           setLinkQR(s3Url);
           setGenerateQR(true);
+
+          // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
+          if (project?.email_enabled && dataCapture.email) {
+            try {
+              await sendPhotoByEmail({
+                to: dataCapture.email,
+                project,
+                imageUrl: s3Url,
+              });
+              // Log déjà fait dans sendPhotoByEmail
+            } catch (mailErr) {
+              setError("Erreur lors de l'envoi de l'email : " + mailErr.message);
+            }
+          }
         } else {
           throw new Error("Échec de l'upload de l'image");
         }
@@ -735,3 +763,4 @@ export default function Result({ params }) {
     </main>
   );
 }
+            

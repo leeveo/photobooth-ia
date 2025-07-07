@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiAddLine, RiCheckboxCircleLine, RiInformationLine, RiRefreshLine } from 'react-icons/ri';
 // Import the style templates data from the JSON file
-import styleTemplates from './styleTemplatesData.json';
+import styleTemplatesData from './styleTemplatesData.json';
 
 /**
  * Composant de sélection de templates de styles prédéfinis
  */
-export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError, existingStyles = [] }) {
+export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError, existingStyles = [], onClose }) {
   // Vérification des props requises pour éviter les erreurs de rendu
   if (!projectId || !photoboothType) {
     console.error("StyleTemplates: Missing required props (projectId or photoboothType)");
@@ -52,6 +52,40 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       setError("Erreur lors du chargement des styles existants");
     }
   }, [existingStyles]);
+
+  // Log pour debug
+  useEffect(() => {
+    console.log('[StyleTemplates] photoboothType:', photoboothType);
+    console.log('[StyleTemplates] styleTemplatesData:', styleTemplatesData);
+  }, [photoboothType]);
+
+  // Show a clear error if photoboothType is missing
+  if (!photoboothType) {
+    return (
+      <div className="p-4 border border-red-300 bg-red-50 rounded-md text-red-700">
+        <p className="font-medium">Erreur : type de photobooth non défini</p>
+        <p className="text-sm">Impossible d’afficher les templates sans type de photobooth.</p>
+      </div>
+    );
+  }
+
+  // Filtrer les templates compatibles
+  let compatibleTemplates = styleTemplatesData.filter(
+    tpl => Array.isArray(tpl.compatibleWith) && tpl.compatibleWith.includes(photoboothType)
+  );
+  if (compatibleTemplates.length === 0 && photoboothType === 'standard') {
+    // fallback : afficher les templates "premium" si aucun pour "standard"
+    compatibleTemplates = styleTemplatesData.filter(
+      tpl => Array.isArray(tpl.compatibleWith) && tpl.compatibleWith.includes('premium')
+    );
+  }
+
+  // Rassembler tous les styles compatibles (pour affichage simple)
+  const allStyles = compatibleTemplates.flatMap(tpl => tpl.styles || []);
+
+  // Exclure les styles déjà présents dans le projet (par style_key)
+  const existingKeys = new Set(existingStyles.map(s => s.style_key));
+  const availableStyles = allStyles.filter(style => !existingKeys.has(style.style_key));
 
   // Helper function to determine tags for a specific style
   const getTagsForStyle = (templateId, styleName) => {
@@ -103,7 +137,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
 
   // Fonction pour ouvrir le popup de détails avec les styles du template
   const openDetailsPopup = (templateId) => {
-    const template = styleTemplates.find(t => t.id === templateId);
+    const template = styleTemplatesData.find(t => t.id === templateId);
     if (template) {
       setSelectedTemplate(template);
       
@@ -363,9 +397,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       
       {/* Section d'affichage des templates avec les tags ajoutés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {styleTemplates
-          .filter(template => template.compatibleWith.includes(photoboothType))
-          .map(template => (
+        {compatibleTemplates.length === 0 ? (
+          <div className="col-span-full text-center text-gray-400 py-12">
+            Aucun template de styles n'est disponible pour ce type de photobooth.<br />
+            <span className="text-xs">Type demandé : <b>{photoboothType}</b></span>
+          </div>
+        ) : (
+          compatibleTemplates.map(template => (
             <div 
               key={template.id}
               className={`border rounded-lg overflow-hidden cursor-pointer transition-all ${
@@ -409,7 +447,8 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                 </div>
               </div>
             </div>
-          ))}
+          ))
+        )}
       </div>
       
       {/* Popup de détails des styles avec sélection de genre */}

@@ -206,6 +206,13 @@ export default function ProjectDetails({ params }) {
     }
   }, [project]);
 
+  // Charger la valeur de email_enabled depuis la table projects
+  useEffect(() => {
+    if (project && typeof project.email_enabled === 'boolean') {
+      setEmailEnabled(project.email_enabled);
+    }
+  }, [project]);
+
   async function saveSettings(e) {
     e.preventDefault();
     setError(null);
@@ -671,6 +678,23 @@ export default function ProjectDetails({ params }) {
     }
   };
 
+  // Ajoutez cette fonction juste avant le return du composant
+  const handleEmailEnabledChange = async (enabled) => {
+    setEmailEnabled(enabled);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ email_enabled: enabled })
+        .eq('id', projectId);
+      if (error) throw error;
+      setSuccess(enabled ? "L'envoi d'email a été activé." : "L'envoi d'email a été désactivé.");
+      setProject(prev => prev ? { ...prev, email_enabled: enabled } : prev);
+    } catch (err) {
+      setError("Erreur lors de la mise à jour de l'activation email.");
+      setEmailEnabled(!enabled);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -841,14 +865,17 @@ export default function ProjectDetails({ params }) {
                         Gérez l'envoi automatique d'email aux participants et personnalisez le contenu.
                       </p>
                       <div className="flex items-center gap-4">
-                        <EmailSwitch checked={emailEnabled} onChange={setEmailEnabled} />
+                        <EmailSwitch checked={emailEnabled} onChange={handleEmailEnabledChange} />
                         <span className="text-sm text-gray-700">
                           {emailEnabled ? "Envoi d'email activé" : "Envoi d'email désactivé"}
                         </span>
                         <button
                           type="button"
                           onClick={() => setShowEmailEditor(true)}
-                          className="ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-md shadow-sm hover:from-blue-700 hover:to-indigo-800 text-sm font-medium"
+                          className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-md shadow-sm text-sm font-medium
+                            ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-blue-700 hover:to-indigo-800'}
+                          `}
+                          disabled={!emailEnabled}
                         >
                           Éditer l'email
                         </button>
@@ -1166,8 +1193,8 @@ export default function ProjectDetails({ params }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
           <div className="w-full max-w-4xl">
             <StyleTemplates 
-              projectId={projectId} 
-              photoboothType={project.photobooth_type}
+              projectId={projectId}
+              photoboothType={project?.photobooth_type} // <-- assurez-vous que cette valeur est bien transmise
               onStylesAdded={handleStyleTemplatesAdded}
               onError={handleStyleTemplatesError}
               existingStyles={styles}

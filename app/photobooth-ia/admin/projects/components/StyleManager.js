@@ -246,10 +246,9 @@ const StyleManager = ({
         <div className="mb-8 border-b border-gray-200 pb-6">
           <StyleTemplates 
             projectId={projectId}
-            photoboothType={photoboothType}
+            photoboothType={photoboothType} // <-- doit être bien défini
             onStylesAdded={handleStyleTemplatesAdded}
             onStyleDeleted={(deletedStyleId) => {
-              // Remove the deleted style from the local state
               setStyles(styles.filter(s => s.id !== deletedStyleId));
               setSuccess(`Style supprimé avec succès`);
             }}
