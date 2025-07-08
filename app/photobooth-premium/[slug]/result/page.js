@@ -445,29 +445,72 @@ export default function Result({ params }) {
 
       {/* Formulaire de capture de données */}
       {showDataCapture && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center flex-col bg-black bg-opacity-90 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-center text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
+          <div
+            className={`
+              flex flex-col md:flex-row
+              bg-white rounded-2xl shadow-2xl w-full
+              max-w-2xl md:max-w-6xl xl:max-w-[90vw]
+              overflow-hidden
+              transition-all
+              ${project?.primary_color ? '' : ''}
+            `}
+            style={{
+              border: `4px solid ${secondaryColor}`,
+              boxShadow: `0 8px 32px 0 ${primaryColor}33`,
+            }}
+          >
+            {/* Colonne gauche (infos et RGPD) */}
+            <div
+              className="basis-full md:basis-1/3 flex flex-col justify-center items-center p-8"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor} 60%, ${secondaryColor} 100%)`,
+              }}
+            >
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-2 drop-shadow-lg">
                 Vos informations
               </h2>
-              <p className="text-sm text-gray-600 text-center mt-2">
+              <p className="text-base md:text-lg text-white/90 text-center mb-6">
                 Remplissez vos coordonnées pour recevoir votre photo
               </p>
+              {/* Texte RGPD du projet */}
+              {project?.rgpd_text && (
+                <div className="bg-white/80 p-4 rounded-lg border border-white/60 mt-2 max-h-40 overflow-y-auto w-full">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <h4 className="text-base font-semibold text-blue-900 mb-1">
+                        Protection des données personnelles (RGPD)
+                      </h4>
+                      <div className="text-sm text-blue-800 leading-relaxed">
+                        <p>{project.rgpd_text}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {/* Formulaire */}
-            <div className="p-6 space-y-4">
+            {/* Colonne droite (formulaire) */}
+            <div
+              className="basis-full md:basis-2/3 flex flex-col justify-center p-8"
+              style={{
+                background: `linear-gradient(120deg, #fff 80%, ${secondaryColor}22 100%)`,
+                backdropFilter: 'blur(2px)',
+                boxShadow: `0 2px 24px 0 ${secondaryColor}22`,
+              }}
+            >
               {error && (
-                <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200">
+                <div className="mb-4 p-3 text-base text-red-700 bg-red-100 rounded-lg border border-red-200">
                   {error}
                 </div>
               )}
-              
               {/* Nom (obligatoire) */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6">
+                <label htmlFor="name" className="block text-lg font-semibold text-gray-700 mb-2">
                   Nom complet <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -475,15 +518,15 @@ export default function Result({ params }) {
                   id="name"
                   value={dataCapture.name}
                   onChange={(e) => setDataCapture({...dataCapture, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
                   placeholder="Votre nom complet"
                   required
+                  style={{ fontSize: '1.15rem' }}
                 />
               </div>
-              
               {/* Email (optionnel) */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6">
+                <label htmlFor="email" className="block text-lg font-semibold text-gray-700 mb-2">
                   Email
                 </label>
                 <input
@@ -491,14 +534,14 @@ export default function Result({ params }) {
                   id="email"
                   value={dataCapture.email}
                   onChange={(e) => setDataCapture({...dataCapture, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
                   placeholder="votre@email.com"
+                  style={{ fontSize: '1.15rem' }}
                 />
               </div>
-              
               {/* Téléphone (optionnel) */}
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6">
+                <label htmlFor="phone" className="block text-lg font-semibold text-gray-700 mb-2">
                   Téléphone
                 </label>
                 <input
@@ -506,78 +549,66 @@ export default function Result({ params }) {
                   id="phone"
                   value={dataCapture.phone}
                   onChange={(e) => setDataCapture({...dataCapture, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
                   placeholder="06 12 34 56 78"
+                  style={{ fontSize: '1.15rem' }}
                 />
               </div>
-              
-              {/* Texte RGPD du projet */}
-              {project?.rgpd_text && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-blue-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                      </svg>
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                        Protection des données personnelles (RGPD)
-                      </h4>
-                      <div className="text-sm text-blue-800 leading-relaxed max-h-32 overflow-y-auto">
-                        <p>{project.rgpd_text}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Checkbox RGPD */}
-              <div className="flex items-start mt-4">
+              <div className="flex items-start mb-8">
                 <input
                   type="checkbox"
                   id="rgpd"
                   checked={dataCapture.rgpdAccepted}
                   onChange={(e) => setDataCapture({...dataCapture, rgpdAccepted: e.target.checked})}
-                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                   required
                 />
-                <label htmlFor="rgpd" className="ml-2 text-sm text-gray-700 leading-relaxed">
+                <label htmlFor="rgpd" className="ml-3 text-base text-gray-700 leading-relaxed">
                   J'accepte les conditions de traitement de mes données personnelles selon les conditions énoncées ci-dessus <span className="text-red-500">*</span>
                 </label>
               </div>
-            </div>
-            
-            {/* Boutons */}
-            <div className="p-6 border-t border-gray-200 flex space-x-3">
-              <button
-                onClick={() => setShowDataCapture(false)}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                disabled={savingDataCapture}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSaveDataCapture}
-                disabled={!isDataCaptureValid() || savingDataCapture}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                  isDataCaptureValid() && !savingDataCapture
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {savingDataCapture ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Enregistrement...
-                  </>
-                ) : (
-                  'Enregistrer et continuer'
-                )}
-              </button>
+              {/* Boutons */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <button
+                  onClick={() => setShowDataCapture(false)}
+                  className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-xl text-gray-700 bg-gray-50 hover:bg-gray-100 font-semibold text-lg transition-colors"
+                  disabled={savingDataCapture}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveDataCapture}
+                  disabled={!isDataCaptureValid() || savingDataCapture}
+                  className="flex-1 py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg"
+                  style={{
+                    background: isDataCaptureValid() && !savingDataCapture
+                      ? `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
+                      : '#e5e7eb',
+                    color: isDataCaptureValid() && !savingDataCapture
+                      ? '#fff'
+                      : '#888',
+                    cursor: isDataCaptureValid() && !savingDataCapture
+                      ? 'pointer'
+                      : 'not-allowed',
+                    boxShadow: isDataCaptureValid() && !savingDataCapture
+                      ? `0 4px 16px 0 ${secondaryColor}55`
+                      : 'none'
+                  }}
+                >
+                  {savingDataCapture ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enregistrement...
+                    </>
+                  ) : (
+                    'Enregistrer et envoyer'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -585,48 +616,71 @@ export default function Result({ params }) {
 
       {/* QR Code Sharing Overlay */}
       {generateQR && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center flex-col bg-black bg-opacity-80">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4 text-center">Scannez le QR Code</h2>
-            
-            <div className="flex justify-center mb-4">
-              <div className="border-4 border-black p-2 bg-white">
+        <div className="fixed inset-0 z-40 flex items-center justify-center flex-col bg-black/40 backdrop-blur-md">
+          <div
+            className="w-full max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden border-4"
+            style={{
+              background: `linear-gradient(135deg, ${primaryColor} 60%, ${secondaryColor} 100%)`,
+              borderColor: secondaryColor,
+              boxShadow: `0 8px 32px 0 ${primaryColor}33`,
+            }}
+          >
+            <div className="flex flex-col items-center justify-center px-8 py-8">
+              <h2
+                className="text-2xl font-extrabold mb-4 text-center"
+                style={{
+                  color: secondaryColor,
+                  textShadow: `0 2px 8px ${primaryColor}55`
+                }}
+              >
+                Scannez le QR Code
+              </h2>
+              <div
+                className="flex justify-center items-center mb-6 rounded-xl p-3"
+                style={{
+                  background: "#fff",
+                  border: `3px solid ${secondaryColor}`,
+                  boxShadow: `0 2px 16px 0 ${secondaryColor}33`
+                }}
+              >
                 <Canvas
                   text={linkQR}
                   options={{
                     errorCorrectionLevel: 'M',
                     margin: 3,
                     scale: 4,
-                    width: 250,
+                    width: 220,
                     color: {
-                      dark: '#000000',
+                      dark: primaryColor,
                       light: '#ffffff',
                     },
                   }}
                 />
               </div>
+              <p className="text-base text-white/90 mb-6 text-center">
+                Utilisez votre téléphone pour scanner ce code et récupérer votre photo
+              </p>
+              <div className="text-xs text-white/80 max-h-32 overflow-auto p-3 bg-white/10 mb-4 rounded">
+                {project.privacy_notice || (
+                  <>
+                    <p className="font-bold">INFORMATION SUR LA PROTECTION DES DONNÉES (RGPD)</p>
+                    <p>Photo générée via intelligence artificielle. Les images sont conservées 7 jours maximum.</p>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => setGenerateQR(false)}
+                className="w-full py-8 text-center font-extrabold rounded-3xl mt-6 text-3xl tracking-wider uppercase transition-all"
+                style={{
+                  background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                  color: '#fff',
+                  boxShadow: `0 8px 32px 0 ${secondaryColor}cc`,
+                  letterSpacing: '0.1em'
+                }}
+              >
+                Fermer
+              </button>
             </div>
-            
-            <p className="text-sm text-gray-600 mb-6 text-center">
-              Utilisez votre téléphone pour scanner ce code et récupérer votre photo
-            </p>
-            
-            <div className="text-xs text-gray-500 max-h-32 overflow-auto p-2 bg-gray-50 mb-4 rounded">
-              {project.privacy_notice || (
-                <>
-                  <p className="font-bold">INFORMATION SUR LA PROTECTION DES DONNÉES (RGPD)</p>
-                  <p>Photo générée via intelligence artificielle. Les images sont conservées 7 jours maximum.</p>
-                </>
-              )}
-            </div>
-            
-            <button
-              onClick={() => setGenerateQR(false)}
-              className="w-full py-2 text-center font-medium rounded"
-              style={{ backgroundColor: primaryColor, color: 'white' }}
-            >
-              Fermer
-            </button>
           </div>
         </div>
       )}
@@ -729,7 +783,7 @@ export default function Result({ params }) {
                   <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  <span>MES COORDONNÉES</span>
+                  <span>ENVOYER MA PHOTO</span>
                 </>
               ) : (
                 <>
@@ -763,4 +817,3 @@ export default function Result({ params }) {
     </main>
   );
 }
-            

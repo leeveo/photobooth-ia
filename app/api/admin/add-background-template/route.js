@@ -53,8 +53,8 @@ export async function POST(request) {
         name: templateData.name || 'Template Background',
         image_url: templateData.url || templateData.path,
         storage_path: null,
-        is_active: true,
-        created_by: null // Service role doesn't have a user context
+        is_active: true
+        // plus de created_by
       })
       .select();
 

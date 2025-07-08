@@ -1076,7 +1076,7 @@
       "style_key": "civilization_egyptian",
       "description": "Style inspiré de la civilisation Egyptian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_egyptian.jpg",
-      "prompt": "Make with an ancient Egyptian outfit with gold jewelry and eyeliner.",
+      "prompt": "While keeping exactly the same facial features make with an ancient Egyptian outfit with gold jewelry and eyeliner.",
       "variations": 1
     },
     {
@@ -1085,7 +1085,7 @@
       "style_key": "civilization_roman",
       "description": "Style inspiré de la civilisation Roman",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_roman.jpg",
-      "prompt": "Make with a Roman tunic with a laurel crown .",
+      "prompt": "While keeping exactly the same facial features make with a Roman tunic with a laurel crown .",
       "variations": 1
     },
     {
@@ -1094,7 +1094,7 @@
       "style_key": "civilization_greek",
       "description": "Style inspiré de la civilisation Greek",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_greek.jpg",
-      "prompt": "Make with a classical Greek robe with braided hair and golden accessories.",
+      "prompt": "While keeping exactly the same facial features make with a classical Greek robe with braided hair and golden accessories.",
       "variations": 1
     },
     {
@@ -1103,7 +1103,7 @@
       "style_key": "civilization_persian",
       "description": "Style inspiré de la civilisation Persian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_persian.jpg",
-      "prompt": "Make with a Persian royal outfit with embroidered patterns and turban.",
+      "prompt": "While keeping exactly the same facial features make with a Persian royal outfit with embroidered patterns and turban.",
       "variations": 1
     },
     {
@@ -1112,7 +1112,7 @@
       "style_key": "civilization_viking",
       "description": "Style inspiré de la civilisation Viking",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_viking.jpg",
-      "prompt": "Make with a Viking warrior outfit with fur cloak and braided beard.",
+      "prompt": "While keeping exactly the same facial features make with a Viking warrior outfit with fur cloak and braided beard.",
       "variations": 1
     },
     {
@@ -1121,7 +1121,7 @@
       "style_key": "civilization_aztec",
       "description": "Style inspiré de la civilisation Aztec",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_aztec.jpg",
-      "prompt": "Make with an Aztec outfit with feathers.",
+      "prompt": "While keeping exactly the same facial features make with an Aztec outfit with feathers.",
       "variations": 1
     },
     {
@@ -1139,7 +1139,7 @@
       "style_key": "civilization_chinese",
       "description": "Style inspiré de la civilisation Chinese Imperial",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_chinese.jpg",
-      "prompt": "Make with a Chinese imperial robe with dragon motifs and crown.",
+      "prompt": "While keeping exactly the same facial features make with a Chinese imperial robe with dragon motifs and crown.",
       "variations": 1
     },
     {
@@ -1148,7 +1148,7 @@
       "style_key": "civilization_samurai",
       "description": "Style inspiré de la civilisation Japanese Samurai",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_samurai.jpg",
-      "prompt": "Make with a samurai armor with helmet and katana.",
+      "prompt": "While keeping exactly the same facial features make with a samurai armor with helmet and katana.",
       "variations": 1
     },
     {
@@ -1157,7 +1157,7 @@
       "style_key": "civilization_zulu",
       "description": "Style inspiré de la civilisation Zulu",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_zulu.jpg",
-      "prompt": "Make with a traditional Zulu outfit with shield and body paint.",
+      "prompt": "While keeping exactly the same facial features make with a traditional Zulu outfit with shield and body paint.",
       "variations": 1
     },
     {
@@ -1166,7 +1166,7 @@
       "style_key": "civilization_inca",
       "description": "Style inspiré de la civilisation Inca",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_inca.jpg",
-      "prompt": "Make with an Inca royal outfit with colorful textiles and sun crown.",
+      "prompt": "While keeping exactly the same facial features make with an Inca royal outfit with colorful textiles and sun crown.",
       "variations": 1
     },
     {
@@ -1175,7 +1175,7 @@
       "style_key": "civilization_mesopotamian",
       "description": "Style inspiré de la civilisation Mesopotamian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_mesopotamian.jpg",
-      "prompt": "Make with a Mesopotamian robe with cuneiform patterns.",
+      "prompt": "While keeping exactly the same facial features make with a Mesopotamian robe with cuneiform patterns.",
       "variations": 1
     },
     {
@@ -1184,7 +1184,7 @@
       "style_key": "civilization_byzantine",
       "description": "Style inspiré de la civilisation Byzantine",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_byzantine.jpg",
-      "prompt": "Make with a Byzantine imperial robe with jeweled accents.",
+      "prompt": "While keeping exactly the same facial features make with a Byzantine imperial robe with jeweled accents.",
       "variations": 1
     },
     {
@@ -1193,7 +1193,7 @@
       "style_key": "civilization_mongol",
       "description": "Style inspiré de la civilisation Mongol",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_mongol.jpg",
-      "prompt": "Make with a Mongol warrior outfit with fur and bow.",
+      "prompt": "While keeping exactly the same facial features make with a Mongol warrior outfit with fur and bow.",
       "variations": 1
     },
     {
@@ -1202,7 +1202,7 @@
       "style_key": "civilization_maharaja",
       "description": "Style inspiré de la civilisation Indian Maharaja",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_maharaja.jpg",
-      "prompt": "Make with an Indian maharaja outfit with turban and jewels.",
+      "prompt": "While keeping exactly the same facial features make with an Indian maharaja outfit with turban and jewels.",
       "variations": 1
     },
     {
@@ -1211,7 +1211,7 @@
       "style_key": "civilization_celtic",
       "description": "Style inspiré de la civilisation Celtic",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_celtic.jpg",
-      "prompt": "Make with a Celtic druid outfit with runes and staff.",
+      "prompt": "While keeping exactly the same facial features make with a Celtic druid outfit with runes and staff.",
       "variations": 1
     },
     {
@@ -1220,7 +1220,7 @@
       "style_key": "civilization_native_american",
       "description": "Style inspiré de la civilisation Native American",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_native_american.jpg",
-      "prompt": "Make with a Native American outfit with feathers and beadwork.",
+      "prompt": "While keeping exactly the same facial features make with a Native American outfit with feathers and beadwork.",
       "variations": 1
     },
     {
@@ -1229,7 +1229,7 @@
       "style_key": "civilization_ottoman",
       "description": "Style inspiré de la civilisation Ottoman",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_ottoman.jpg",
-      "prompt": "Make with an Ottoman sultan outfit with ornate fabric and turban.",
+      "prompt": "While keeping exactly the same facial features make with an Ottoman sultan outfit with ornate fabric and turban.",
       "variations": 1
     },
     {
@@ -1238,7 +1238,7 @@
       "style_key": "civilization_tibetan",
       "description": "Style inspiré de la civilisation Tibetan",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_tibetan.jpg",
-      "prompt": "Make with a Tibetan monk robe with prayer beads.",
+      "prompt": "While keeping exactly the same facial features make with a Tibetan monk robe with prayer beads.",
       "variations": 1
     },
     {
@@ -1247,7 +1247,7 @@
       "style_key": "civilization_phoenician",
       "description": "Style inspiré de la civilisation Phoenician",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/civilization_phoenician.jpg",
-      "prompt": "Make with a Phoenician trader outfit with purple dye and cloak.",
+      "prompt": "While keeping exactly the same facial features make with a Phoenician trader outfit with purple dye and cloak.",
       "variations": 1
     }
   ]
@@ -1268,7 +1268,7 @@
       "style_key": "makeup_red_smoky",
       "description": "Makeup look featuring red lips and smoky eye makeup",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_smoky.jpg",
-      "prompt": "Make with red lips and smoky eye makeup.",
+      "prompt": "While keeping exactly the same facial features make with red lips and smoky eye makeup.",
       "variations": 1
     },
     {
@@ -1277,7 +1277,7 @@
       "style_key": "makeup_nude_bronze",
       "description": "Makeup look featuring nude lips and bronzed cheeks",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_nude_bronze.jpg",
-      "prompt": "Make with nude lips and bronzed cheeks.",
+      "prompt": "While keeping exactly the same facial features make with nude lips and bronzed cheeks.",
       "variations": 1
     },
     {
@@ -1286,7 +1286,7 @@
       "style_key": "makeup_pink_rosy",
       "description": "Makeup look featuring pink lips, rosy blush and subtle eyeliner",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pink_rosy.jpg",
-      "prompt": "Make with pink lips, rosy blush and subtle eyeliner.",
+      "prompt": "While keeping exactly the same facial features make with pink lips, rosy blush and subtle eyeliner.",
       "variations": 1
     },
     {
@@ -1295,7 +1295,7 @@
       "style_key": "makeup_glossy_gold",
       "description": "Makeup look featuring glossy lips and golden eyeshadow",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_glossy_gold.jpg",
-      "prompt": "Make with glossy lips and golden eyeshadow.",
+      "prompt": "While keeping exactly the same facial features make with glossy lips and golden eyeshadow.",
       "variations": 1
     },
     {
@@ -1304,7 +1304,7 @@
       "style_key": "makeup_matte_neutral",
       "description": "Makeup look featuring matte brown lips and neutral eye makeup",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_matte_neutral.jpg",
-      "prompt": "Make with matte brown lips and neutral eye makeup.",
+      "prompt": "While keeping exactly the same facial features make with matte brown lips and neutral eye makeup.",
       "variations": 1
     },
     {
@@ -1313,7 +1313,7 @@
       "style_key": "makeup_plum_silver",
       "description": "Makeup look featuring plum lips and shimmering silver eyeshadow",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_plum_silver.jpg",
-      "prompt": "Make with plum lips and shimmering silver eyeshadow.",
+      "prompt": "While keeping exactly the same facial features make with plum lips and shimmering silver eyeshadow.",
       "variations": 1
     },
     {
@@ -1322,7 +1322,7 @@
       "style_key": "makeup_peach_coral",
       "description": "Makeup look featuring peach lips and coral blush with light eye makeup",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_peach_coral.jpg",
-      "prompt": "Make with peach lips and coral blush with light eye makeup.",
+      "prompt": "While keeping exactly the same facial features make with peach lips and coral blush with light eye makeup.",
       "variations": 1
     },
     {
@@ -1331,7 +1331,7 @@
       "style_key": "makeup_dark_cat",
       "description": "Makeup look featuring dark red lips and sharp cat eye liner",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_dark_cat.jpg",
-      "prompt": "Make with dark red lips and sharp cat eye liner.",
+      "prompt": "While keeping exactly the same facial features make with dark red lips and sharp cat eye liner.",
       "variations": 1
     },
     {
@@ -1340,7 +1340,7 @@
       "style_key": "makeup_orange_sunset",
       "description": "Makeup look featuring orange lips and sunset-inspired eye makeup",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_orange_sunset.jpg",
-      "prompt": "Make with orange lips and sunset-inspired eye makeup.",
+      "prompt": "While keeping exactly the same facial features make with orange lips and sunset-inspired eye makeup.",
       "variations": 1
     },
     {
@@ -1349,7 +1349,7 @@
       "style_key": "makeup_pink_glitter",
       "description": "Makeup look featuring glossy pink lips and glittery eyeshadow",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pink_glitter.jpg",
-      "prompt": "Make with glossy pink lips and glittery eyeshadow.",
+      "prompt": "While keeping exactly the same facial features make with glossy pink lips and glittery eyeshadow.",
       "variations": 1
     },
     {
@@ -1358,7 +1358,7 @@
       "style_key": "makeup_vampy_contour",
       "description": "Makeup look featuring dark vampy lips and contoured cheekbones",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_vampy_contour.jpg",
-      "prompt": "Make with dark vampy lips and contoured cheekbones.",
+      "prompt": "While keeping exactly the same facial features make with dark vampy lips and contoured cheekbones.",
       "variations": 1
     },
     {
@@ -1367,7 +1367,7 @@
       "style_key": "makeup_metallic_holo",
       "description": "Makeup look featuring metallic lips and holographic eye shadow",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_metallic_holo.jpg",
-      "prompt": "Make with metallic lips and holographic eye shadow.",
+      "prompt": "While keeping exactly the same facial features make with metallic lips and holographic eye shadow.",
       "variations": 1
     },
     {
@@ -1376,7 +1376,7 @@
       "style_key": "makeup_pastel_soft",
       "description": "Makeup look featuring pastel eye makeup and soft pink lips",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_soft.jpg",
-      "prompt": "Make with pastel eye makeup and soft pink lips.",
+      "prompt": "While keeping exactly the same facial features make with pastel eye makeup and soft pink lips.",
       "variations": 1
     },
     {
@@ -1385,7 +1385,7 @@
       "style_key": "makeup_berry_mauve",
       "description": "Makeup look featuring berry lips and mauve blush with matching eyeshadow",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_berry_mauve.jpg",
-      "prompt": "Make with berry lips and mauve blush with matching eyeshadow.",
+      "prompt": "While keeping exactly the same facial features make with berry lips and mauve blush with matching eyeshadow.",
       "variations": 1
     },
     {
@@ -1394,7 +1394,7 @@
       "style_key": "makeup_red_winged",
       "description": "Makeup look featuring red glossy lips and dramatic winged eyeliner",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_winged.jpg",
-      "prompt": "Make with red glossy lips and dramatic winged eyeliner.",
+      "prompt": "While keeping exactly the same facial features make with red glossy lips and dramatic winged eyeliner.",
       "variations": 1
     },
     {
@@ -1403,7 +1403,7 @@
       "style_key": "makeup_fuchsia_lashes",
       "description": "Makeup look featuring fuchsia lips and voluminous eyelashes",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_fuchsia_lashes.jpg",
-      "prompt": "Make with fuchsia lips and voluminous eyelashes.",
+      "prompt": "While keeping exactly the same facial features make with fuchsia lips and voluminous eyelashes.",
       "variations": 1
     },
     {
@@ -1412,7 +1412,7 @@
       "style_key": "makeup_natural_freckles",
       "description": "Makeup look featuring natural makeup with nude lips and freckles",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_natural_freckles.jpg",
-      "prompt": "Make with natural makeup with nude lips .",
+      "prompt": "While keeping exactly the same facial features make with natural makeup with nude lips .",
       "variations": 1
     },
     {
@@ -1421,7 +1421,7 @@
       "style_key": "makeup_silver_icy",
       "description": "Makeup look featuring silver eyeliner and icy pink lips",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_silver_icy.jpg",
-      "prompt": "Make with silver eyeliner and icy pink lips.",
+      "prompt": "While keeping exactly the same facial features make with silver eyeliner and icy pink lips.",
       "variations": 1
     },
     {
@@ -1430,7 +1430,7 @@
       "style_key": "makeup_copper_nude",
       "description": "Makeup look featuring copper eyeshadow and nude matte lips",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_copper_nude.jpg",
-      "prompt": "Make with copper eyeshadow and nude matte lips.",
+      "prompt": "While keeping exactly the same facial features make with copper eyeshadow and nude matte lips.",
       "variations": 1
     },
     {
@@ -1439,7 +1439,7 @@
       "style_key": "makeup_golden_highlight",
       "description": "Makeup look featuring golden cheeks, highlighted skin and soft lips",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_golden_highlight.jpg",
-      "prompt": "Make with golden cheeks, highlighted skin and soft lips.",
+      "prompt": "While keeping exactly the same facial features make with golden cheeks, highlighted skin and soft lips.",
       "variations": 1
     }
   ]
@@ -1460,7 +1460,7 @@
       "style_key": "carnival_venetian_mask",
       "description": "Carnival costume: Venetian Mask",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_venetian_mask.jpg",
-      "prompt": "Make with an ornate Venetian mask with gold details and feathers, clothes.",
+      "prompt": "While keeping exactly the same facial features make with an ornate Venetian mask with gold details and feathers, clothes.",
       "variations": 1
     },
     {
@@ -1469,7 +1469,7 @@
       "style_key": "carnival_feathered",
       "description": "Carnival costume: Feathered Masquerade",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_feathered.jpg",
-      "prompt": "Make with a feathered masquerade costume with sparkling eyeshadow, carnaval clothes, venise background.",
+      "prompt": "While keeping exactly the same facial features make with a feathered masquerade costume with sparkling eyeshadow, carnaval clothes, venise background.",
       "variations": 1
     },
     {
@@ -1478,7 +1478,7 @@
       "style_key": "carnival_glitter_carnival",
       "description": "Carnival costume: Glitter Carnival",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_glitter_carnival.jpg",
-      "prompt": "Make with a carnival outfit with shimmering glitter makeup and sequins.",
+      "prompt": "While keeping exactly the same facial features make with a carnival outfit with shimmering glitter makeup and sequins.",
       "variations": 1
     },
     {
@@ -1487,7 +1487,7 @@
       "style_key": "carnival_mysterious_cloak",
       "description": "Carnival costume: Mysterious Cloak",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_mysterious_cloak.jpg",
-      "prompt": "Make with a black masquerade cloak with silver embroidery and dark mask.",
+      "prompt": "While keeping exactly the same facial features make with a black masquerade cloak with silver embroidery and dark mask.",
       "variations": 1
     },
     {
@@ -1496,7 +1496,7 @@
       "style_key": "carnival_jester",
       "description": "Carnival costume: Jester Costume",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_jester.jpg",
-      "prompt": "Make with a colorful jester costume with bells and checkered mask.",
+      "prompt": "While keeping exactly the same facial features make with a colorful jester costume with bells and checkered mask.",
       "variations": 1
     },
     {
@@ -1505,7 +1505,7 @@
       "style_key": "carnival_queen_carnival",
       "description": "Carnival costume: Queen of Carnival",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_queen_carnival.jpg",
-      "prompt": "Make with a regal carnival dress with a crystal mask and elegant fan.",
+      "prompt": "While keeping exactly the same facial features make with a regal carnival dress with a crystal mask and elegant fan.",
       "variations": 1
     },
     {
@@ -1514,7 +1514,7 @@
       "style_key": "carnival_harlequin",
       "description": "Carnival costume: Harlequin Style",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_harlequin.jpg",
-      "prompt": "Make with a harlequin-patterned mask with bold geometric makeup.",
+      "prompt": "While keeping exactly the same facial features make with a harlequin-patterned mask with bold geometric makeup.",
       "variations": 1
     },
     {
@@ -1523,7 +1523,7 @@
       "style_key": "carnival_peacock",
       "description": "Carnival costume: Fantasy Peacock",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_peacock.jpg",
-      "prompt": "Make with a peacock-inspired costume with blue and green feathers.",
+      "prompt": "While keeping exactly the same facial features make with a peacock-inspired costume with blue and green feathers.",
       "variations": 1
     },
     {
@@ -1532,7 +1532,7 @@
       "style_key": "carnival_fire_mask",
       "description": "Carnival costume: Mystic Fire Mask",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_fire_mask.jpg",
-      "prompt": "Make with a fiery red and orange mask with flame-shaped patterns.",
+      "prompt": "While keeping exactly the same facial features While keeping exactly the same facial features, make it with a fiery red and orange mask with flame-shaped patterns.",
       "variations": 1
     },
     {
@@ -1541,7 +1541,7 @@
       "style_key": "carnival_ice_mask",
       "description": "Carnival costume: Icy Masquerade",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_ice_mask.jpg",
-      "prompt": "Make with an icy silver-blue costume with snowflake mask.",
+      "prompt": "While keeping exactly the same facial features make with an icy silver-blue costume with snowflake mask.",
       "variations": 1
     },
     {
@@ -1550,7 +1550,7 @@
       "style_key": "carnival_moonlight",
       "description": "Carnival costume: Moonlight Masquerade",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_moonlight.jpg",
-      "prompt": "Make with a moon-themed mask with silver tones and soft glow.",
+      "prompt": "While keeping exactly the same facial features make with a moon-themed mask with silver tones and soft glow.",
       "variations": 1
     },
     {
@@ -1559,7 +1559,7 @@
       "style_key": "carnival_golden_angel",
       "description": "Carnival costume: Golden Angel",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_golden_angel.jpg",
-      "prompt": "Make with a white and gold costume with radiant mask and halo-like accessories.",
+      "prompt": "While keeping exactly the same facial features make with a white and gold costume with radiant mask and halo-like accessories.",
       "variations": 1
     },
     {
@@ -1568,7 +1568,7 @@
       "style_key": "carnival_dark_phantom",
       "description": "Carnival costume: Dark Phantom",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_dark_phantom.jpg",
-      "prompt": "Make with a dark phantom mask keeping skin with half-face coverage and red velvet cloak.",
+      "prompt": "While keeping exactly the same facial features, make it with a dark phantom mask keeping skin with half-face coverage and red velvet cloak.",
       "variations": 1
     },
     {
@@ -1577,7 +1577,7 @@
       "style_key": "carnival_rose_masque",
       "description": "Carnival costume: Rose Masque",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_rose_masque.jpg",
-      "prompt": "Make with a floral mask with red roses and elegant lace.",
+      "prompt": "While keeping exactly the same facial features, make it with a floral mask with red roses and elegant lace.",
       "variations": 1
     },
     {
@@ -1586,7 +1586,7 @@
       "style_key": "carnival_butterfly_veil",
       "description": "Carnival costume: Butterfly Veil",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_butterfly_veil.jpg",
-      "prompt": "Make with a butterfly-shaped mask with colorful wings and sparkling gems.",
+      "prompt": "While keeping exactly the same facial features, make it with a butterfly-shaped mask with colorful wings and sparkling gems.",
       "variations": 1
     },
     {
@@ -1595,7 +1595,7 @@
       "style_key": "carnival_pirate_mask",
       "description": "Carnival costume: Masquerade Pirate",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_pirate_mask.jpg",
-      "prompt": "Make with a pirate-themed costume with feathered hat and leather mask.",
+      "prompt": "While keeping exactly the same facial features, make it with a pirate-themed costume with feathered hat and leather mask.",
       "variations": 1
     },
     {
@@ -1604,7 +1604,7 @@
       "style_key": "carnival_crystal_shards",
       "description": "Carnival costume: Crystal Shards",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_crystal_shards.jpg",
-      "prompt": "Make with a mask with translucent crystal pieces and metallic accents.",
+      "prompt": "While keeping exactly the same facial features, make it with a mask with translucent crystal pieces and metallic accents.",
       "variations": 1
     },
     {
@@ -1613,7 +1613,7 @@
       "style_key": "carnival_sun_god",
       "description": "Carnival costume: Sun God",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_sun_god.jpg",
-      "prompt": "Make with a bright golden mask with radiant sun rays and warm tones.",
+      "prompt": "While keeping exactly the same facial features, make it with a bright golden mask with radiant sun rays and warm tones.",
       "variations": 1
     },
     {
@@ -1622,7 +1622,7 @@
       "style_key": "carnival_forest_spirit",
       "description": "Carnival costume: Forest Spirit",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_forest_spirit.jpg",
-      "prompt": "Make with a woodland-inspired mask with leaves, bark textures and green makeup.",
+      "prompt": "While keeping exactly the same facial features, make it with a woodland-inspired mask with leaves, bark textures and green makeup.",
       "variations": 1
     },
     {
@@ -1631,7 +1631,7 @@
       "style_key": "carnival_elegant_lace",
       "description": "Carnival costume: Elegant Lace",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_elegant_lace.jpg",
-      "prompt": "Make with a delicate lace masquerade mask with pearls and soft blush.",
+      "prompt": "While keeping exactly the same facial features, make it with a delicate lace masquerade mask with pearls and soft blush.",
       "variations": 1
     }
   ]
@@ -1653,7 +1653,7 @@
       "style_key": "music_jazz",
       "description": "Style Jazz avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_jazz.jpg",
-      "prompt": "Make with jazz outfit clothes and hat.",
+      "prompt": "While keeping exactly the same facial features, make it with jazz outfit clothes and hat.",
       "variations": 1
     },
     {
@@ -1662,7 +1662,7 @@
       "style_key": "music_rock",
       "description": "Style Rock avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_rock.jpg",
-      "prompt": "Make with rock outfit clothes and leather jacket.",
+      "prompt": "While keeping exactly the same facial features, make it with rock outfit clothes and leather jacket.",
       "variations": 1
     },
     {
@@ -1671,7 +1671,7 @@
       "style_key": "music_hiphop",
       "description": "Style Hip-hop avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_hiphop.jpg",
-      "prompt": "Make with hip-hop outfit clothes and gold chain.",
+      "prompt": "While keeping exactly the same facial features, make it with hip-hop outfit clothes and gold chain.",
       "variations": 1
     },
     {
@@ -1680,7 +1680,7 @@
       "style_key": "music_classical",
       "description": "Style Classical avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_classical.jpg",
-      "prompt": "Make with classical outfit clothes and violin.",
+      "prompt": "While keeping exactly the same facial features, make it with classical outfit clothes and violin.",
       "variations": 1
     },
     {
@@ -1689,7 +1689,7 @@
       "style_key": "music_pop",
       "description": "Style Pop avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_pop.jpg",
-      "prompt": "Make with pop outfit clothes and microphone.",
+      "prompt": "While keeping exactly the same facial features, make it with pop outfit clothes and microphone.",
       "variations": 1
     },
 
@@ -1699,7 +1699,7 @@
       "style_key": "music_punk",
       "description": "Style Punk avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_punk.jpg",
-      "prompt": "Make with punk outfit clothes and spiked hair.",
+      "prompt": "While keeping exactly the same facial features, make it with punk outfit clothes and spiked hair.",
       "variations": 1
     },
     {
@@ -1708,7 +1708,7 @@
       "style_key": "music_metal",
       "description": "Style Metal avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_metal.jpg",
-      "prompt": "Make with metal outfit clothes and skull rings.",
+      "prompt": "While keeping exactly the same facial features, make it with metal outfit clothes and skull rings.",
       "variations": 1
     },
     {
@@ -1717,7 +1717,7 @@
       "style_key": "music_country",
       "description": "Style Country avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_country.jpg",
-      "prompt": "Make with country outfit clothes and cowboy hat.",
+      "prompt": "While keeping exactly the same facial features, make it with country outfit clothes and cowboy hat.",
       "variations": 1
     },
     {
@@ -1726,7 +1726,7 @@
       "style_key": "music_techno",
       "description": "Style Techno avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_techno.jpg",
-      "prompt": "Make with techno outfit clothes and neon glasses.",
+      "prompt": "While keeping exactly the same facial features, make it with techno outfit clothes and neon glasses.",
       "variations": 1
     },
     {
@@ -1735,7 +1735,7 @@
       "style_key": "music_blues",
       "description": "Style Blues avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_blues.jpg",
-      "prompt": "Make with blues outfit clothes and harmonica.",
+      "prompt": "While keeping exactly the same facial features, make it with blues outfit clothes and harmonica.",
       "variations": 1
     },
     {
@@ -1744,7 +1744,7 @@
       "style_key": "music_disco",
       "description": "Style Disco avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_disco.jpg",
-      "prompt": "Make with disco outfit clothes and shiny jacket.",
+      "prompt": "While keeping exactly the same facial features, make it with disco outfit clothes and shiny jacket.",
       "variations": 1
     },
     {
@@ -1753,7 +1753,7 @@
       "style_key": "music_funk",
       "description": "Style Funk avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_funk.jpg",
-      "prompt": "Make with funk outfit clothes and hairstyle.",
+      "prompt": "While keeping exactly the same facial features, make it with funk outfit clothes and hairstyle.",
       "variations": 1
     },
     {
@@ -1762,7 +1762,7 @@
       "style_key": "music_edm",
       "description": "Style EDM avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_edm.jpg",
-      "prompt": "Make with EDM outfit clothes and LED accessories.",
+      "prompt": "While keeping exactly the same facial features, make it with EDM outfit clothes and LED accessories.",
       "variations": 1
     },
     {
@@ -1771,7 +1771,7 @@
       "style_key": "music_rnb",
       "description": "Style R&B avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_rnb.jpg",
-      "prompt": "Make with R&B outfit clothes and sunglasses.",
+      "prompt": "While keeping exactly the same facial features, make it with R&B outfit clothes and sunglasses.",
       "variations": 1
     },
     {
@@ -1780,7 +1780,7 @@
       "style_key": "music_kpop",
       "description": "Style K-pop avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_kpop.jpg",
-      "prompt": "Make with K-pop outfit clothes and stylish earrings.",
+      "prompt": "While keeping exactly the same facial features, make it with K-pop outfit clothes and stylish earrings.",
       "variations": 1
     },
     {
@@ -1789,7 +1789,7 @@
       "style_key": "music_goth",
       "description": "Style Goth avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_goth.jpg",
-      "prompt": "Make with goth outfit clothes and dark makeup.",
+      "prompt": "While keeping exactly the same facial features, make it with goth outfit clothes and dark makeup.",
       "variations": 1
     },
     {
@@ -1798,7 +1798,7 @@
       "style_key": "music_latin",
       "description": "Style Latin avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_latin.jpg",
-      "prompt": "Make with latin outfit clothes .",
+      "prompt": "While keeping exactly the same facial features, make it with latin outfit clothes .",
       "variations": 1
     },
     {
@@ -1807,7 +1807,7 @@
       "style_key": "music_folk",
       "description": "Style Folk avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_folk.jpg",
-      "prompt": "Make with folk outfit clothes and acoustic guitar.",
+      "prompt": "While keeping exactly the same facial features, make it with folk outfit clothes and acoustic guitar.",
       "variations": 1
     },
     {
@@ -1816,7 +1816,7 @@
       "style_key": "music_grunge",
       "description": "Style Grunge avec tenue et accessoires typiques",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_grunge.jpg",
-      "prompt": "Make with grunge outfit clothes and flannel shirt.",
+      "prompt": "While keeping exactly the same facial features, make it with grunge outfit clothes and flannel shirt.",
       "variations": 1
     }
   ]
@@ -1837,7 +1837,7 @@
       "style_key": "makeup_green_tribal",
       "description": "Makeup style featuring green skin and golden tribal face paint",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_green_tribal.jpg",
-      "prompt": "Make with green skin and golden tribal face paint.",
+      "prompt": "While keeping exactly the same facial features, make it with green skin and golden tribal face paint.",
       "variations": 1
     },
     {
@@ -1846,7 +1846,7 @@
       "style_key": "makeup_silver_glow",
       "description": "Makeup style featuring metallic silver skin and glowing eyes",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_silver_glow.jpg",
-      "prompt": "Make with metallic silver skin and glowing eyes.",
+      "prompt": "While keeping exactly the same facial features, make it with metallic silver skin and glowing eyes.",
       "variations": 1
     },
     {
@@ -1855,7 +1855,7 @@
       "style_key": "makeup_blue_galaxy",
       "description": "Makeup style featuring blue skin and galaxy makeup with stars",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_blue_galaxy.jpg",
-      "prompt": "Make with blue skin and galaxy makeup with stars.",
+      "prompt": "While keeping exactly the same facial features, make it with blue skin and galaxy makeup with stars.",
       "variations": 1
     },
     {
@@ -1864,7 +1864,7 @@
       "style_key": "makeup_red_teardrops",
       "description": "Makeup style featuring artistic black eyeliner and red teardrops",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_red_teardrops.jpg",
-      "prompt": "Make with artistic black eyeliner and red teardrops.",
+      "prompt": "While keeping exactly the same facial features, make it with artistic black eyeliner and red teardrops.",
       "variations": 1
     },
     {
@@ -1873,7 +1873,7 @@
       "style_key": "makeup_cracked_porcelain",
       "description": "Makeup style featuring cracked porcelain skin effect",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_cracked_porcelain.jpg",
-      "prompt": "Make with cracked porcelain skin effect.",
+      "prompt": "While keeping exactly the same facial features, make it with cracked porcelain skin effect.",
       "variations": 1
     },
     {
@@ -1882,7 +1882,7 @@
       "style_key": "makeup_neon_uv",
       "description": "Makeup style featuring neon makeup and UV face paint",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_neon_uv.jpg",
-      "prompt": "Make with neon makeup and UV face paint.",
+      "prompt": "While keeping exactly the same facial features, make it with neon makeup and UV face paint.",
       "variations": 1
     },
     {
@@ -1891,7 +1891,7 @@
       "style_key": "makeup_glitter_rainbow",
       "description": "Makeup style featuring glitter cheeks and rainbow eyebrows",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_glitter_rainbow.jpg",
-      "prompt": "Make with glitter cheeks and rainbow eyebrows.",
+      "prompt": "While keeping exactly the same facial features, make it with glitter cheeks and rainbow eyebrows.",
       "variations": 1
     },
     {
@@ -1900,7 +1900,7 @@
       "style_key": "makeup_half_skull",
       "description": "Makeup style featuring half face painted as a skull",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_half_skull.jpg",
-      "prompt": "Make with half face painted as a skull.",
+      "prompt": "While keeping exactly the same facial features, make it with half face painted as a skull.",
       "variations": 1
     },
     {
@@ -1909,7 +1909,7 @@
       "style_key": "makeup_purple_jewels",
       "description": "Makeup style featuring purple skin and jewel accents",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_purple_jewels.jpg",
-      "prompt": "Make with purple skin and jewel accents.",
+      "prompt": "While keeping exactly the same facial features, make it with purple skin and jewel accents.",
       "variations": 1
     },
     {
@@ -1918,7 +1918,7 @@
       "style_key": "makeup_star_freckles",
       "description": "Makeup style featuring freckles made of stars and sparkles",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_star_freckles.jpg",
-      "prompt": "Make with freckles made of stars and sparkles.",
+      "prompt": "While keeping exactly the same facial features, make it with freckles made of stars and sparkles.",
       "variations": 1
     },
     {
@@ -1927,7 +1927,7 @@
       "style_key": "makeup_scarred_stitches",
       "description": "Makeup style featuring scarred skin and stitched effects",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_scarred_stitches.jpg",
-      "prompt": "Make with scarred skin and stitched effects.",
+      "prompt": "While keeping exactly the same facial features, make it with scarred skin and stitched effects.",
       "variations": 1
     },
     {
@@ -1936,7 +1936,7 @@
       "style_key": "makeup_cyber_tattoos",
       "description": "Makeup style featuring glowing cybernetic tattoos on face",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_cyber_tattoos.jpg",
-      "prompt": "Make with glowing cybernetic tattoos on face.",
+      "prompt": "While keeping exactly the same facial features, make it with glowing cybernetic tattoos on face.",
       "variations": 1
     },
     {
@@ -1945,7 +1945,7 @@
       "style_key": "makeup_lava_cracks",
       "description": "Makeup style featuring cracked lava texture and glowing lines",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_lava_cracks.jpg",
-      "prompt": "Make with cracked lava texture and glowing lines.",
+      "prompt": "While keeping exactly the same facial features, make it with cracked lava texture and glowing lines.",
       "variations": 1
     },
     {
@@ -1954,7 +1954,7 @@
       "style_key": "makeup_frostbite_ice",
       "description": "Makeup style featuring frostbite makeup and icy eyebrows",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_frostbite_ice.jpg",
-      "prompt": "Make with frostbite makeup and icy eyebrows.",
+      "prompt": "While keeping exactly the same facial features, make it with frostbite makeup and icy eyebrows.",
       "variations": 1
     },
     {
@@ -1963,7 +1963,7 @@
       "style_key": "makeup_pastel_clown",
       "description": "Makeup style featuring pastel clown makeup and heart-shaped blush",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_clown.jpg",
-      "prompt": "Make with pastel clown makeup and heart-shaped blush.",
+      "prompt": "While keeping exactly the same facial features, make it with pastel clown makeup and heart-shaped blush.",
       "variations": 1
     },
     {
@@ -1972,7 +1972,7 @@
       "style_key": "makeup_vampire_goth",
       "description": "Makeup style featuring vampire-inspired makeup and pale cold skin",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_vampire_goth.jpg",
-      "prompt": "Make with vampire-inspired makeup and pale cold skin.",
+      "prompt": "While keeping exactly the same facial features, make it with vampire-inspired makeup and pale cold skin.",
       "variations": 1
     },
     {
@@ -1981,7 +1981,7 @@
       "style_key": "makeup_tribal_red",
       "description": "Makeup style featuring tribal red markings and white face paint",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_tribal_red.jpg",
-      "prompt": "Make with tribal red markings and white face paint.",
+      "prompt": "While keeping exactly the same facial features, make it with tribal red markings and white face paint.",
       "variations": 1
     },
     {
@@ -1990,7 +1990,7 @@
       "style_key": "makeup_underwater_pearls",
       "description": "Makeup style featuring underwater makeup and pearl accents",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_underwater_pearls.jpg",
-      "prompt": "Make with underwater makeup and pearl accents.",
+      "prompt": "While keeping exactly the same facial features, make it with underwater makeup and pearl accents.",
       "variations": 1
     },
     {
@@ -1999,7 +1999,7 @@
       "style_key": "makeup_half_robot",
       "description": "Makeup style featuring half-robot face and chrome effects",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_half_robot.jpg",
-      "prompt": "Make with half-robot face and chrome effects.",
+      "prompt": "While keeping exactly the same facial features, make it with half-robot face and chrome effects.",
       "variations": 1
     },
     {
@@ -2008,7 +2008,7 @@
       "style_key": "makeup_shadow_moon",
       "description": "Makeup style featuring shadow makeup and crescent moon on forehead",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_shadow_moon.jpg",
-      "prompt": "Make with shadow makeup and crescent moon on forehead.",
+      "prompt": "While keeping exactly the same facial features, make it with shadow makeup and crescent moon on forehead.",
       "variations": 1
     }
   ]
@@ -2593,7 +2593,7 @@
       "style_key": "clothing_victorian",
       "description": "Style vestimentaire victorian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_victorian.jpg",
-      "prompt": "Make with victorian clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with victorian clothes.",
       "variations": 1
     },
     {
@@ -2602,7 +2602,7 @@
       "style_key": "clothing_cyberpunk",
       "description": "Style vestimentaire cyberpunk",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_cyberpunk.jpg",
-      "prompt": "Make with cyberpunk clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with cyberpunk clothes.",
       "variations": 1
     },
     {
@@ -2611,7 +2611,7 @@
       "style_key": "clothing_medieval",
       "description": "Style vestimentaire medieval",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_medieval.jpg",
-      "prompt": "Make with medieval clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with medieval clothes.",
       "variations": 1
     },
     {
@@ -2620,7 +2620,7 @@
       "style_key": "clothing_futuristic_armor",
       "description": "Style vestimentaire futuristic armor",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_futuristic_armor.jpg",
-      "prompt": "Make with futuristic armor clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with futuristic armor clothes.",
       "variations": 1
     },
     {
@@ -2629,7 +2629,7 @@
       "style_key": "clothing_steampunk",
       "description": "Style vestimentaire steampunk",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_steampunk.jpg",
-      "prompt": "Make with steampunk clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with steampunk clothes.",
       "variations": 1
     },
     {
@@ -2638,7 +2638,7 @@
       "style_key": "clothing_samurai",
       "description": "Style vestimentaire samurai",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_samurai.jpg",
-      "prompt": "Make with samurai clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with samurai clothes.",
       "variations": 1
     },
     {
@@ -2647,7 +2647,7 @@
       "style_key": "clothing_ancient_egyptian",
       "description": "Style vestimentaire ancient egyptian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_ancient_egyptian.jpg",
-      "prompt": "Make with ancient egyptian clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with ancient egyptian clothes.",
       "variations": 1
     },
     {
@@ -2656,7 +2656,7 @@
       "style_key": "clothing_gothic",
       "description": "Style vestimentaire gothic",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_gothic.jpg",
-      "prompt": "Make with gothic clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with gothic clothes.",
       "variations": 1
     },
     {
@@ -2665,7 +2665,7 @@
       "style_key": "clothing_modern_business",
       "description": "Style vestimentaire modern business",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_modern_business.jpg",
-      "prompt": "Make with modern business clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with modern business clothes.",
       "variations": 1
     },
     {
@@ -2674,7 +2674,7 @@
       "style_key": "clothing_renaissance",
       "description": "Style vestimentaire renaissance",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_renaissance.jpg",
-      "prompt": "Make with renaissance clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with renaissance clothes.",
       "variations": 1
     },
     {
@@ -2683,7 +2683,7 @@
       "style_key": "clothing_streetwear",
       "description": "Style vestimentaire casual streetwear",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_streetwear.jpg",
-      "prompt": "Make with casual streetwear clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with casual streetwear clothes.",
       "variations": 1
     },
     {
@@ -2692,7 +2692,7 @@
       "style_key": "clothing_retro_80s",
       "description": "Style vestimentaire 80s retro",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_retro_80s.jpg",
-      "prompt": "Make with 80s retro clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with 80s retro clothes.",
       "variations": 1
     },
     {
@@ -2701,7 +2701,7 @@
       "style_key": "clothing_pirate",
       "description": "Style vestimentaire pirate",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_pirate.jpg",
-      "prompt": "Make with pirate clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with pirate clothes.",
       "variations": 1
     },
     {
@@ -2710,7 +2710,7 @@
       "style_key": "clothing_military_uniform",
       "description": "Style vestimentaire military uniform",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_military_uniform.jpg",
-      "prompt": "Make with military uniform clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with military uniform clothes.",
       "variations": 1
     },
     {
@@ -2719,7 +2719,7 @@
       "style_key": "clothing_traditional_indian",
       "description": "Style vestimentaire traditional indian",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_traditional_indian.jpg",
-      "prompt": "Make with traditional indian clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with traditional indian clothes.",
       "variations": 1
     },
     {
@@ -2728,7 +2728,7 @@
       "style_key": "clothing_cowboy",
       "description": "Style vestimentaire cowboy",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_cowboy.jpg",
-      "prompt": "Make with cowboy clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with cowboy clothes.",
       "variations": 1
     },
     {
@@ -2737,7 +2737,7 @@
       "style_key": "clothing_hanbok",
       "description": "Style vestimentaire korean hanbok",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_hanbok.jpg",
-      "prompt": "Make with korean hanbok clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with korean hanbok clothes.",
       "variations": 1
     },
     {
@@ -2746,7 +2746,7 @@
       "style_key": "clothing_chinese_traditional",
       "description": "Style vestimentaire traditional chinese",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_chinese_traditional.jpg",
-      "prompt": "Make with traditional chinese clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with traditional chinese clothes.",
       "variations": 1
     },
     {
@@ -2755,7 +2755,7 @@
       "style_key": "clothing_high_fashion",
       "description": "Style vestimentaire high fashion runway",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_high_fashion.jpg",
-      "prompt": "Make with high fashion runway clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with high fashion runway clothes.",
       "variations": 1
     },
     {
@@ -2764,7 +2764,7 @@
       "style_key": "clothing_fantasy_mage",
       "description": "Style vestimentaire fantasy mage robe",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clothing_fantasy_mage.jpg",
-      "prompt": "Make with fantasy mage robe clothes.",
+      "prompt": "While keeping exactly the same facial features, make it with fantasy mage robe clothes.",
       "variations": 1
     }
   ]

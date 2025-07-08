@@ -15,7 +15,8 @@ const TextTab = ({
   setColorPickerTarget,
   handleColorSelect,
   presetColors,
-  availableFonts
+  availableFonts,
+  predefinedTexts
 }) => {
   const [textInput, setTextInput] = useState('Nouveau texte');
   
@@ -190,6 +191,34 @@ const TextTab = ({
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Predefined texts section */}
+      {predefinedTexts && predefinedTexts.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-xs font-semibold text-gray-500 mb-2">Textes prédéfinis</h4>
+          <div className="flex flex-wrap gap-2">
+            {predefinedTexts.map((preset, idx) => (
+              <button
+                key={idx}
+                className="px-2 py-1 bg-gray-100 rounded border hover:bg-indigo-50 text-xs"
+                style={{
+                  fontFamily: preset.fontFamily,
+                  fontSize: preset.fontSize,
+                  color: preset.fill,
+                  fontStyle: preset.fontStyle,
+                  textDecoration: preset.textDecoration,
+                  letterSpacing: preset.letterSpacing,
+                  lineHeight: preset.lineHeight
+                }}
+                onClick={() => addElement('text', null, preset.label, preset)}
+                type="button"
+              >
+                {preset.text}
+              </button>
+            ))}
           </div>
         </div>
       )}

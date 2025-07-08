@@ -150,19 +150,15 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         return {
           ...style,
           gender: 'g' // Utiliser 'g' comme valeur par défaut pour tous les styles
-          , selected: !styleExists // Présélectionner seulement les styles qui n'existent pas déjà
+          , selected: false // <-- Par défaut, aucun style n'est sélectionné
           , disabled: styleExists // Désactiver les styles qui existent déjà
           , tags: style.tags || getTagsForStyle(template.id, style.name) // Utiliser la fonction helper pour déterminer les tags
         };
       });
       
       setTemplateStyles(stylesWithGender);
-      // Initialiser les styles sélectionnés avec tous les styles non désactivés
-      setSelectedStyles(
-        stylesWithGender
-          .map((style, index) => style.disabled ? null : index)
-          .filter(index => index !== null)
-      );
+      // Initialiser les styles sélectionnés à vide (aucun sélectionné)
+      setSelectedStyles([]);
       setShowDetailsPopup(true);
     }
   };
@@ -404,48 +400,69 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
           </div>
         ) : (
           compatibleTemplates.map(template => (
-            <div 
+            <div
               key={template.id}
-              className={`border rounded-lg overflow-hidden cursor-pointer transition-all ${
-                selectedTemplate === template.id 
-                  ? 'ring-2 ring-indigo-500 border-indigo-500' 
-                  : 'hover:shadow-md'
-              }`}
+              className={`
+                group relative cursor-pointer rounded-2xl overflow-hidden shadow-xl border-2 border-transparent
+                bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900
+                hover:border-indigo-500 hover:shadow-2xl transition-all duration-300
+                min-h-[370px] flex flex-col
+                ${selectedTemplate === template.id ? 'ring-2 ring-indigo-500 border-indigo-500' : ''}
+              `}
               onClick={() => openDetailsPopup(template.id)}
             >
-              <div className="h-80 relative">
+              {/* Image de couverture avec effet de zoom au hover */}
+              <div className="relative h-48 overflow-hidden">
                 <img
                   src={template.image}
                   alt={template.name}
-                  className="rounded-t-lg w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   onError={(e) => {
                     console.error(`Failed to load image: ${template.image}`);
                     e.target.onerror = null;
                     e.target.src = 'https://leeveostockage.s3.eu-west-3.amazonaws.com/style/placeholder-style.png';
                   }}
                 />
-              </div>
-              <div className="p-4">
-                <h4 className="font-medium text-gray-900">{template.name}</h4>
-                <p className="text-sm text-gray-500 mt-1">{template.description}</p>
-                <p className="text-xs text-gray-400 mt-2">{template.styles.length} styles</p>
-                
-                {/* Affichage des tags du template */}
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {getTagsForTemplate(template.id).map((tag, tagIndex) => (
-                    <span 
-                      key={tagIndex} 
-                      className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
-                        tag === 'homme' ? 'bg-blue-100 text-blue-700 border border-blue-300' :
-                        tag === 'femme' ? 'bg-pink-100 text-pink-700 border border-pink-300' :
-                        'bg-purple-100 text-purple-700 border border-purple-300'
-                      }`}
-                    >
-                      {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                    </span>
-                  ))}
+                {/* Overlay dégradé et titre */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
+                <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-6 z-20">
+                  <h4 className="text-xl font-bold text-white drop-shadow-lg">{template.name}</h4>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {getTagsForTemplate(template.id).map((tag, tagIndex) => (
+                      <span
+                        key={tagIndex}
+                        className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full shadow
+                          ${tag === 'homme' ? 'bg-blue-600/80 text-white border border-blue-300' :
+                            tag === 'femme' ? 'bg-pink-600/80 text-white border border-pink-300' :
+                            'bg-purple-600/80 text-white border border-purple-300'
+                          }`}
+                      >
+                        {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Badge nombre de styles */}
+                <div className="absolute top-3 right-3 z-20">
+                  <span className="inline-block bg-indigo-600/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow border border-indigo-300">
+                    {template.styles.length} styles
+                  </span>
                 </div>
               </div>
+              {/* Description */}
+              <div className="flex-1 flex flex-col justify-between p-4 bg-gradient-to-t from-gray-900/90 to-transparent">
+                <p className="text-sm text-gray-200 line-clamp-3 mb-2">{template.description}</p>
+                <div className="flex justify-end">
+                  <span className="inline-flex items-center text-xs text-indigo-300 font-semibold">
+                    <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Voir la collection
+                  </span>
+                </div>
+              </div>
+              {/* Effet de glow au hover */}
+              <div className="pointer-events-none absolute -inset-2 rounded-2xl bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all z-0"></div>
             </div>
           ))
         )}

@@ -143,7 +143,7 @@ const ProjectInfoForm = ({
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
           <span className="text-white font-semibold">1</span>
         </div>
-        <h3 className="text-xl font-semibold text-gray-900">Informations du projet et personnamisation du photobooth</h3>
+        <h3 className="text-xl font-semibold text-gray-900">Informations du projet et personnalisation du photobooth</h3>
       </div>
       
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -238,9 +238,10 @@ const ProjectInfoForm = ({
         
         {/* Main content section */}
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left column: Description & Home message */}
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Colonne gauche : tous les inputs et preview couleurs */}
+            <div className="space-y-6">
+              {/* Description */}
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                   Description
@@ -265,6 +266,7 @@ const ProjectInfoForm = ({
                 </p>
               </div>
               
+              {/* Message d'accueil */}
               <div>
                 <label htmlFor="homeMessage" className="block text-sm font-medium text-gray-700 mb-1">
                   Message d'accueil
@@ -295,129 +297,193 @@ const ProjectInfoForm = ({
               </div>
               
               {/* Color selection with preview */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Couleurs du thème</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-600 mb-1">
-                      Couleur principale
-                    </label>
-                    <div className="flex items-center space-x-2">
+              <div className="bg-gradient-to-br from-white via-indigo-50 to-purple-50 p-6 rounded-2xl border border-gray-100 shadow-md">
+                <h4 className="text-base font-semibold text-gray-800 mb-6 tracking-tight flex items-center gap-2">
+                  <span className="inline-block w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white shadow">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" /></svg>
+                  </span>
+                  Couleurs du thème
+                </h4>
+                <div className="flex flex-col gap-6">
+                  {/* Primary Color Card */}
+                  <div className="flex items-center gap-4 bg-white/90 rounded-xl p-4 shadow hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="flex-shrink-0 flex flex-col items-center">
+                      <span className="text-xs font-bold text-indigo-600 mb-1">Primaire</span>
                       <div className="relative">
-                        <div 
-                          className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
+                        <button
+                          type="button"
+                          className="w-12 h-12 rounded-full border-2 border-indigo-200 shadow cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
                           style={{ backgroundColor: project.primary_color }}
+                          onClick={() => document.getElementById('primaryColorInput').click()}
+                          aria-label="Choisir couleur principale"
                         >
-                          <input 
-                            type="color" 
-                            id="primaryColor"
-                            value={project.primary_color} 
-                            onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            aria-label="Choisir couleur principale"
-                          />
-                        </div>
+                          {/* Just the color preview */}
+                        </button>
+                        <input
+                          id="primaryColorInput"
+                          type="color"
+                          value={project.primary_color}
+                          onChange={(e) => handleColorChange('primary_color', e.target.value)}
+                          className="absolute top-0 left-0 w-12 h-12 opacity-0 cursor-pointer"
+                          style={{ borderRadius: '9999px' }}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                        />
                       </div>
+                    </div>
+                    <div className="flex-1 ml-4">
+                      <label htmlFor="primaryColorHex" className="block text-xs font-medium text-gray-600 mb-1">
+                        Code HEX
+                      </label>
                       <input
+                        id="primaryColorHex"
                         type="text"
                         value={project.primary_color}
                         onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="w-28 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center text-sm font-mono bg-white"
                         placeholder="#RRGGBB"
+                        maxLength={7}
+                      />
+                    </div>
+                    <div className="flex-shrink-0 ml-4">
+                      <div
+                        className="w-10 h-10 rounded-lg border border-gray-200 shadow-inner"
+                        style={{ backgroundColor: project.primary_color }}
+                        title="Aperçu"
                       />
                     </div>
                   </div>
-                  
-                  <div>
-                    <label htmlFor="secondaryColor" className="block text-sm font-medium text-gray-600 mb-1">
-                      Couleur secondaire
-                    </label>
-                    <div className="flex items-center space-x-2">
+                  {/* Secondary Color Card */}
+                  <div className="flex items-center gap-4 bg-white/90 rounded-xl p-4 shadow hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="flex-shrink-0 flex flex-col items-center">
+                      <span className="text-xs font-bold text-purple-600 mb-1">Secondaire</span>
                       <div className="relative">
-                        <div 
-                          className="w-10 h-10 rounded-md shadow-sm cursor-pointer border border-gray-300 transition-transform hover:scale-105"
+                        <button
+                          type="button"
+                          className="w-12 h-12 rounded-full border-2 border-purple-200 shadow cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
                           style={{ backgroundColor: project.secondary_color }}
+                          onClick={() => document.getElementById('secondaryColorInput').click()}
+                          aria-label="Choisir couleur secondaire"
                         >
-                          <input 
-                            type="color" 
-                            id="secondaryColor"
-                            value={project.secondary_color} 
-                            onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                            aria-label="Choisir couleur secondaire"
-                          />
-                        </div>
+                          {/* Just the color preview */}
+                        </button>
+                        <input
+                          id="secondaryColorInput"
+                          type="color"
+                          value={project.secondary_color}
+                          onChange={(e) => handleColorChange('secondary_color', e.target.value)}
+                          className="absolute top-0 left-0 w-12 h-12 opacity-0 cursor-pointer"
+                          style={{ borderRadius: '9999px' }}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                        />
                       </div>
+                    </div>
+                    <div className="flex-1 ml-4">
+                      <label htmlFor="secondaryColorHex" className="block text-xs font-medium text-gray-600 mb-1">
+                        Code HEX
+                      </label>
                       <input
+                        id="secondaryColorHex"
                         type="text"
                         value={project.secondary_color}
                         onChange={(e) => handleColorChange('secondary_color', e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="w-28 rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-center text-sm font-mono bg-white"
                         placeholder="#RRGGBB"
+                        maxLength={7}
+                      />
+                    </div>
+                    <div className="flex-shrink-0 ml-4">
+                      <div
+                        className="w-10 h-10 rounded-lg border border-gray-200 shadow-inner"
+                        style={{ backgroundColor: project.secondary_color }}
+                        title="Aperçu"
                       />
                     </div>
                   </div>
                 </div>
-                
-                {/* Color preview section */}
-                <div className="mt-3 flex items-center justify-center">
-                  <div className="w-full h-12 rounded-lg overflow-hidden flex shadow-sm border border-gray-200">
-                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color }}>
-                      <span className="font-medium text-white text-shadow text-sm">Primaire</span>
+                {/* Modern Color Preview */}
+                <div className="mt-8 flex items-center justify-center">
+                  <div className="w-full max-w-xs h-14 rounded-xl overflow-hidden flex shadow border border-gray-200 bg-gradient-to-r from-white/60 to-white/90 backdrop-blur">
+                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color, transition: 'background 0.3s' }}>
+                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Primaire</span>
                     </div>
-                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color }}>
-                      <span className="font-medium text-white text-shadow text-sm">Secondaire</span>
+                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color, transition: 'background 0.3s' }}>
+                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Secondaire</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            {/* Right column: URL and QR code */}
-            <div className="md:col-span-1">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">URL du photobooth</h4>
-                
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            {/* Colonne droite : QR code */}
+            <div>
+              {/* Nouveau design QR code */}
+              <div className="relative bg-gradient-to-br from-indigo-100 via-purple-100 to-white p-5 rounded-2xl border-2 border-indigo-300 shadow-xl h-full flex flex-col items-center animate-pulse border-dashed">
+                {/* Bordure animée */}
+                <div className="absolute inset-0 rounded-2xl pointer-events-none border-4 border-transparent border-double"
+                  style={{
+                    background: 'linear-gradient(120deg, #7f5af0 0%, #ff80b5 100%)',
+                    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'exclude',
+                    zIndex: 1,
+                  }}
+                />
+                {/* Icône stylisée */}
+                <div className="flex items-center justify-center mb-2 z-10">
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg">
+                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+                      <rect width="24" height="24" rx="6" fill="#fff" />
+                      <path d="M7 7h2v2H7V7zm8 0h2v2h-2V7zM7 15h2v2H7v-2zm8 0h2v2h-2v-2z" fill="#7f5af0"/>
+                      <rect x="10" y="10" width="4" height="4" rx="1" fill="#7f5af0"/>
                     </svg>
-                  </div>
+                  </span>
+                </div>
+                {/* Titre stylisé */}
+                <h4 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 z-10 tracking-tight uppercase drop-shadow-lg">
+                  Accès Photobooth
+                </h4>
+                {/* URL stylisée */}
+                <div className="relative w-full mb-3 z-10">
                   <input
                     type="text"
                     value={getPhotoboothUrl()}
                     readOnly
-                    className="pl-8 block w-full rounded-md border-gray-300 bg-white py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="pl-8 pr-2 block w-full rounded-md border-2 border-indigo-200 bg-white py-2 text-sm text-indigo-700 font-semibold shadow focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition"
                   />
+                  <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </div>
                 </div>
-                
                 <button
                   onClick={copyProjectUrl}
-                  className="mt-2 inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  className="mb-4 inline-flex justify-center items-center px-4 py-2 border border-indigo-300 shadow text-xs font-bold rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
                   </svg>
                   Copier l'URL
                 </button>
-                
-                <div className="flex-1 mt-4 flex flex-col items-center justify-center bg-white p-4 rounded-lg border border-gray-200">
+                {/* QR code avec effet */}
+                <div className="flex-1 flex flex-col items-center justify-center bg-white/80 p-4 rounded-xl border-2 border-indigo-100 shadow-inner z-10">
                   <div className="text-center mb-2">
-                    <span className="text-xs font-medium text-gray-500">QR Code</span>
+                    <span className="text-xs font-bold text-indigo-500 tracking-widest uppercase">QR Code</span>
                   </div>
                   {project && baseUrl && (
-                    <QRCodeSVG
-                      value={getPhotoboothUrl()}
-                      size={140}
-                      level="M"
-                      bgColor="#FFFFFF"
-                      fgColor="#000000"
-                      className="mb-2"
-                    />
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-200 via-purple-200 to-white shadow-lg border border-indigo-200">
+                      <QRCodeSVG
+                        value={getPhotoboothUrl()}
+                        size={160}
+                        level="M"
+                        bgColor="#FFFFFF"
+                        fgColor="#7f5af0"
+                        className="mb-2"
+                      />
+                    </div>
                   )}
-                  <p className="mt-1 text-xs text-gray-500 text-center">
-                    Scannez ce code pour accéder directement au photobooth
+                  <p className="mt-2 text-xs text-indigo-700 text-center font-semibold">
+                    <span className="inline-block animate-bounce">👇</span> Scannez ce code pour accéder directement au photobooth
                   </p>
                 </div>
               </div>

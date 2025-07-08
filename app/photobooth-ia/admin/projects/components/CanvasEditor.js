@@ -7,6 +7,8 @@ import {
 } from 'react-konva';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import TabComponentWrapper from './TabComponentWrapper';
+import predefinedTexts from './predefinedTexts';
+import LayersTab from './LayersTab';
 
 // Import tab components - handle safely in case they have issues
 let ElementsTab, TextTab, UnsplashTab, LayoutTab, TemplatesTab;
@@ -191,7 +193,7 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [images, setImages] = useState([]);
   const [backgrounds, setBackgrounds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('backgrounds');
+  const [activeTab, setActiveTab] = useState('frames');
   const [savedLayouts, setSavedLayouts] = useState([]);
   // Supprimer l'état layoutName qui n'est plus nécessaire
   // const [layoutName, setLayoutName] = useState('');
@@ -692,23 +694,59 @@ const loadFrameImages = useCallback(async () => {
   
   const handleTransformEnd = (id) => {
     const node = stageRef.current.findOne('#' + id);
-    
+
     if (!node) return;
-    
+
+    // Correction : appliquer le scale sur width/height puis reset scale à 1
+    const type = elements.find(el => el.id === id)?.type;
+
+    let updatedProps = {
+      x: node.x(),
+      y: node.y(),
+      rotation: node.rotation()
+    };
+
+    if (type === 'rect' || type === 'image' || type === 'text') {
+      updatedProps.width = node.width() * node.scaleX();
+      updatedProps.height = node.height() * node.scaleY();
+      // Reset scale to 1
+      node.scaleX(1);
+      node.scaleY(1);
+    } else if (type === 'ellipse') {
+      updatedProps.radiusX = node.radiusX() * node.scaleX();
+      updatedProps.radiusY = node.radiusY() * node.scaleY();
+      node.scaleX(1);
+      node.scaleY(1);
+    } else if (type === 'circle' || type === 'star' || type === 'ring' || type === 'wedge') {
+      updatedProps.radius = node.radius() * node.scaleX();
+      node.scaleX(1);
+      node.scaleY(1);
+    } else if (type === 'arc') {
+      updatedProps.innerRadius = node.innerRadius() * node.scaleX();
+      updatedProps.outerRadius = node.outerRadius() * node.scaleX();
+      node.scaleX(1);
+      node.scaleY(1);
+    } else if (type === 'regularPolygon') {
+      updatedProps.radius = node.radius() * node.scaleX();
+      node.scaleX(1);
+      node.scaleY(1);
+    } else if (type === 'line' || type === 'arrow') {
+      // Optionnel : gérer le scale pour les lignes/flèches si besoin
+      // Pour la plupart des cas, on laisse tel quel
+      node.scaleX(1);
+      node.scaleY(1);
+    }
+
     const updatedElements = elements.map(el => {
       if (el.id === id) {
         return {
           ...el,
-          x: node.x(),
-          y: node.y(),
-          width: node.width() * node.scaleX(),
-          height: node.height() * node.scaleY(),
-          rotation: node.rotation()
+          ...updatedProps
         };
       }
       return el;
     });
-    
+
     setElements(updatedElements);
   };
   
@@ -1362,6 +1400,8 @@ const handleTextPropertyChange = useCallback((property, value) => {
   }));
 }, [selectedId]);
 
+
+  
 // Ajoute cette fonction AVANT le return du composant CanvasEditor
 const handleSelectTemplate = (template) => {
   try {
@@ -1425,8 +1465,10 @@ const handleSelectTemplate = (template) => {
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-4">
                   <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
+               
+               </svg>
                 </div>
+
               )}
               <h3 className="text-lg font-medium text-gray-900">
                 {savePopup.type === 'success' ? 'Sauvegarde réussie' : 'Erreur'}
@@ -1567,7 +1609,7 @@ const handleSelectTemplate = (template) => {
             
             <button
               onClick={saveLayout}
-              className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 flex-1 sm:flex-none"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
             >
               Sauvegarder Le Layout
             </button>
@@ -1676,12 +1718,26 @@ const handleSelectTemplate = (template) => {
             onClick={() => setActiveTab('layouts')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <span className="text-xs font-medium">Layouts</span>
           </button>
           
-         
+          <button
+            className={`flex flex-col items-center justify-center p-3 w-full transition-all duration-300 ${
+              activeTab === 'layers' 
+                ? 'bg-white bg-opacity-20 text-white' 
+                : 'text-white text-opacity-70 hover:text-opacity-100 hover:bg-white hover:bg-opacity-10'
+            }`}
+            onClick={() => setActiveTab('layers')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <rect x="4" y="7" width="16" height="2" rx="1" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <rect x="4" y="11" width="16" height="2" rx="1" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <rect x="4" y="15" width="16" height="2" rx="1" stroke="currentColor" strokeWidth="2" fill="none"/>
+            </svg>
+            <span className="text-xs font-medium">Calques</span>
+          </button>
         </div>
         {/* Column 2: Tab content */}
         <div className="w-full lg:w-68 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
@@ -1689,7 +1745,7 @@ const handleSelectTemplate = (template) => {
             {activeTab === 'templates' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
                 Templates
               </>
@@ -1722,7 +1778,7 @@ const handleSelectTemplate = (template) => {
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+            </svg>
                 Bibliothèque
               </>
             )}
@@ -1774,7 +1830,7 @@ const handleSelectTemplate = (template) => {
                 {!templatesLoading && !templatesError && templates.length === 0 && (
                   <div className="text-center py-8">
                     <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                     <p className="mt-4 text-gray-500">
 Aucun template disponible.
@@ -1812,7 +1868,7 @@ Aucun template disponible.
                             ) : (
                               <div className="text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                                 </svg>
                               </div>
                             )}
@@ -1869,6 +1925,8 @@ Aucun template disponible.
                 handleColorSelect={handleColorSelect}
                 presetColors={presetColors}
                 availableFonts={availableFonts}
+                // 2. Passe la bibliothèque à TextTab
+                predefinedTexts={predefinedTexts}
               />
             )}
             
@@ -2046,6 +2104,24 @@ Aucun template disponible.
                   )}
                 </div>
               </div>
+            )}
+            
+            {/* Layers tab content */}
+            {activeTab === 'layers' && (
+              <LayersTab
+                elements={elements}
+                moveElement={(from, to) => {
+                  // Déplace un élément dans le tableau d'éléments
+                  setElements(prev => {
+                    const arr = [...prev];
+                    const [removed] = arr.splice(from, 1);
+                    arr.splice(to, 0, removed);
+                    return arr;
+                  });
+                }}
+                selectedId={selectedId}
+                setSelectedId={setSelectedId}
+              />
             )}
           </div>
         </div>

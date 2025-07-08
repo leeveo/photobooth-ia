@@ -201,25 +201,7 @@ const StyleManager = ({
         )}
         
         <div className="flex space-x-2">
-          <button
-            onClick={() => setShowStyleTemplates(!showStyleTemplates)}
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            disabled={!typeValidated}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            Ajouter des styles depuis un template
-          </button>
-          
-          <button
-            onClick={() => setAddingStyle(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            disabled={!typeValidated}
-          >
-            <RiAddLine className="mr-2 h-4 w-4" />
-            Ajouter style manuellement
-          </button>
+      
         </div>
       </div>
       
@@ -424,16 +406,10 @@ const StyleManager = ({
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
-              Ajouter des styles depuis un template
+              Ajouter un style depuis une Catégorie
             </button>
             
-            <button
-              onClick={() => setAddingStyle(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            >
-              <RiAddLine className="mr-2 h-4 w-4" />
-              Ajouter manuellement
-            </button>
+           
           </div>
         </div>
       )}
@@ -441,117 +417,133 @@ const StyleManager = ({
       {/* Affichage de la grille des styles existants */}
       {styles.length > 0 && (
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 shadow-lg border border-indigo-100">
-            <h4 className="text-lg font-semibold text-indigo-800 mb-6 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
-              </svg>
-              Galerie des styles séléctionnés ({styles.length})
-            </h4>
-            
+          <div className="bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 rounded-2xl p-8 shadow-2xl border border-indigo-700/30 relative overflow-visible">
+            <div className="flex items-center justify-between mb-8">
+              <h4 className="text-lg font-bold text-white flex items-center drop-shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-purple-300" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+                </svg>
+                Galerie des styles sélectionnés ({styles.length})
+              </h4>
+              <button
+                onClick={() => setShowStyleTemplates(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Ajouter depuis une Catégorie
+              </button>
+            </div>
             {/* Modern 5-column grid with responsive design */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-7">
               {styles.map((style) => (
                 <div 
-                  key={style.id} 
-                  className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 border border-gray-200"
+                  key={style.id}
+                  className="group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105"
+                  style={{ minHeight: 320 }}
                 >
-                  <div className="aspect-square bg-gray-100 relative overflow-hidden">
-                    {style.preview_image ? (
-                      <Image
-                        src={style.preview_image}
-                        alt={style.name}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        className="transition-transform duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                  {/* Glow effect */}
+                  <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-purple-500/30 via-indigo-500/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-0"></div>
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="aspect-square bg-gray-900 relative overflow-hidden rounded-t-2xl border-b border-indigo-700/40">
+                      {style.preview_image ? (
+                        <Image
+                          src={style.preview_image}
+                          alt={style.name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          className="transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-800">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      {/* Gender badge overlay */}
+                      <div className="absolute top-3 right-3 z-20">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold shadow-lg border-2 ${
+                          style.gender === 'm' ? 'bg-blue-600/80 text-white border-blue-300' : 
+                          style.gender === 'f' ? 'bg-pink-600/80 text-white border-pink-300' :
+                          style.gender === 'ag' ? 'bg-green-600/80 text-white border-green-300' :
+                          style.gender === 'af' ? 'bg-purple-600/80 text-white border-purple-300' :
+                          'bg-gray-700/80 text-white border-gray-400'
+                        }`}>
+                          {style.gender === 'm' ? 'Homme' : 
+                          style.gender === 'f' ? 'Femme' : 
+                          style.gender === 'ag' ? 'Ado G' : 
+                          style.gender === 'af' ? 'Ado F' : 'Général'}
+                        </span>
                       </div>
-                    )}
-                    
-                    {/* Gender badge overlay */}
-                    <div className="absolute top-2 right-2">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
-                        style.gender === 'm' ? 'bg-blue-100 text-blue-800' : 
-                        style.gender === 'f' ? 'bg-pink-100 text-pink-800' :
-                        style.gender === 'ag' ? 'bg-green-100 text-green-800' :
-                        style.gender === 'af' ? 'bg-purple-100 text-purple-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {style.gender === 'm' ? 'Homme' : 
-                        style.gender === 'f' ? 'Femme' : 
-                        style.gender === 'ag' ? 'Ado G' : 
-                        style.gender === 'af' ? 'Ado F' : 'Général'}
-                      </span>
                     </div>
-                  </div>
-                  
-                  <div className="p-3">
-                    <h5 className="font-medium text-gray-900 mb-1 truncate">{style.name}</h5>
-                    <div className="flex items-center text-xs text-gray-500 mb-2">
-                      <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md">
-                        {style.style_key}
-                      </span>
-                      {style.variations > 1 && (
-                        <span className="ml-2 bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-md">
-                          {style.variations} var.
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Tags based on gender */}
-                    <div className="flex flex-wrap gap-1 mt-2 mb-3">
-                      {style.gender === 'm' && (
-                        <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          homme
-                        </span>
-                      )}
-                      {style.gender === 'f' && (
-                        <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                          femme
-                        </span>
-                      )}
-                      {style.gender === 'ag' && (
-                        <>
-                          <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
-                            ado
+                    <div className="flex-1 flex flex-col justify-between p-4">
+                      <div>
+                        <h5 className="font-bold text-white mb-1 truncate text-lg">{style.name}</h5>
+                        <div className="flex items-center text-xs text-indigo-200 mb-2 space-x-2">
+                          <span className="bg-indigo-700/80 text-indigo-100 px-2 py-0.5 rounded-md font-mono tracking-wide shadow">
+                            {style.style_key}
                           </span>
-                          <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
-                            garçon
-                          </span>
-                        </>
-                      )}
-                      {style.gender === 'af' && (
-                        <>
-                          <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">
-                            ado
-                          </span>
-                          <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                            fille
-                          </span>
-                        </>
-                      )}
-                      {(!style.gender || style.gender === '') && (
-                        <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                          général
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex space-x-1 mt-2">
-                      <button
-                        onClick={() => handleDeleteStyle(style.id)}
-                        className="w-full inline-flex justify-center items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Supprimer
-                      </button>
+                          {style.variations > 1 && (
+                            <span className="bg-purple-700/80 text-purple-100 px-2 py-0.5 rounded-md shadow">
+                              {style.variations} var.
+                            </span>
+                          )}
+                        </div>
+                        {/* Tags based on gender */}
+                        <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                          {style.gender === 'm' && (
+                            <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/40">
+                              homme
+                            </span>
+                          )}
+                          {style.gender === 'f' && (
+                            <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/40">
+                              femme
+                            </span>
+                          )}
+                          {style.gender === 'ag' && (
+                            <>
+                              <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-yellow-400/20 text-yellow-100 border border-yellow-400/40">
+                                ado
+                              </span>
+                              <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-green-500/20 text-green-200 border border-green-400/40">
+                                garçon
+                              </span>
+                            </>
+                          )}
+                          {style.gender === 'af' && (
+                            <>
+                              <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-yellow-400/20 text-yellow-100 border border-yellow-400/40">
+                                ado
+                              </span>
+                              <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/40">
+                                fille
+                              </span>
+                            </>
+                          )}
+                          {(!style.gender || style.gender === '') && (
+                            <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/40">
+                              général
+                            </span>
+                          )}
+                        </div>
+                        {style.description && (
+                          <div className="text-xs text-gray-300 mt-2 line-clamp-2">{style.description}</div>
+                        )}
+                      </div>
+                      <div className="flex space-x-2 mt-4">
+                        <button
+                          onClick={() => handleDeleteStyle(style.id)}
+                          className="w-full inline-flex justify-center items-center px-3 py-1.5 border border-red-400 text-xs font-bold rounded-lg text-red-200 bg-gradient-to-r from-red-700/80 to-red-600/80 hover:from-red-800 hover:to-red-700 shadow-lg transition-all"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

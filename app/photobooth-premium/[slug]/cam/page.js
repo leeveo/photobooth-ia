@@ -935,9 +935,9 @@ export default function CameraCapture({ params }) {
         throw new Error(data.error || "Erreur lors de la génération de l'image");
       }
       const result = data.output;
-      setLogs(prevLogs => [...prevLogs, "Image générée par Replicate !"]);
+      setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
 
-      const resultImageUrl = typeof result === 'string' ? result : 
+      let resultImageUrl = typeof result === 'string' ? result : 
         Array.isArray(result) ? result[0] : 
         result.url || result.image || result;
 
@@ -945,62 +945,57 @@ export default function CameraCapture({ params }) {
         throw new Error("URL d'image non trouvée dans la réponse");
       }
 
-      setLogs(prevLogs => [...prevLogs, "Récupération du layout du projet..."]);
+      // 2. Ajout du layout (watermark) si disponible
+      setLogs(logs => [...logs, "Récupération du layout du projet..."]);
       const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
 
       let finalImageUrl = resultImageUrl;
       let hasWatermark = false;
 
       if (thumbnailUrl) {
-        setLogs(prevLogs => [...prevLogs, "Fusion de l'image avec le layout..."]);
-        setLogs(prevLogs => [...prevLogs, orientationData 
+        setLogs(logs => [...logs, "Fusion de l'image avec le layout..."]);
+        setLogs(logs => [...logs, orientationData 
           ? "Dimensions d'encart détectées, adaptation de l'image..." 
           : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
-        
-        setLoadingProgress(90);
         try {
           const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
             resultImageUrl, 
             thumbnailUrl, 
             orientationData
           );
-          
           if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
             finalImageUrl = combinedImageDataUrl;
             hasWatermark = true;
-            setLogs(prevLogs => [...prevLogs, "Fusion réussie avec le layout !"]);
+            setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
           } else {
-            setLogs(prevLogs => [...prevLogs, "Fusion échouée, utilisation de l'image originale."]);
+            setLogs(logs => [...logs, "Fusion échouée, utilisation de l'image originale."]);
           }
         } catch (watermarkError) {
-          setLogs(prevLogs => [...prevLogs, "Erreur lors de la fusion du layout."]);
+          setLogs(logs => [...logs, "Erreur lors de la fusion du layout."]);
         }
       } else {
-        setLogs(prevLogs => [...prevLogs, "Aucun layout trouvé pour ce projet."]);
+        setLogs(logs => [...logs, "Aucun layout trouvé pour ce projet."]);
       }
       
-      setLoadingProgress(95);
-
-      // Préparation pour upload S3
+      // 3. Upload S3 si besoin
+      let resultS3Url = null;
       let uploadableImage = finalImageUrl;
       if (finalImageUrl.startsWith('http')) {
-        setLogs(prevLogs => [...prevLogs, "Conversion de l'image pour l'upload S3..."]);
+        setLogs(logs => [...logs, "Conversion de l'image pour l'upload S3..."]);
         try {
           uploadableImage = await toDataURL(finalImageUrl);
         } catch (convError) {
-          setLogs(prevLogs => [...prevLogs, "Erreur conversion base64, upload direct."]);
+          setLogs(logs => [...logs, "Erreur conversion base64, upload direct."]);
         }
       }
 
-      // Upload S3
       if (uploadableImage && uploadableImage.startsWith('data:')) {
-        setLogs(prevLogs => [...prevLogs, "Envoi de l'image fusionnée vers le cloud..."]);
+        setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
         const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
         const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
         const formData = new FormData();
         formData.append('file', uploadFile);
         formData.append('projectId', project?.id || 'unknown');
-        // --- Correction : le backend met déjà dans /layouts/ ---
 
         const uploadResponse = await fetch('/api/upload-to-s3', {
           method: 'POST',
@@ -1008,49 +1003,125 @@ export default function CameraCapture({ params }) {
         });
 
         if (!uploadResponse.ok) {
-          setLogs(prevLogs => [...prevLogs, "Erreur lors de l'upload S3."]);
+          setLogs(logs => [...logs, "Erreur lors de l'upload S3."]);
           throw new Error("Erreur upload S3");
         }
         const uploadData = await uploadResponse.json();
         if (uploadData && uploadData.url) {
-          setLogs(prevLogs => [...prevLogs, "Image stockée dans le cloud !"]);
-          // --- Correction : c'est l'URL S3 qui doit être affichée ---
+          setLogs(logs => [...logs, "Image stockée dans le cloud !"]);
           localStorage.setItem("faceURLResult", uploadData.url);
           localStorage.setItem("faceURLResultS3", uploadData.url);
-          setLogs(prevLogs => [...prevLogs, "Image prête à être affichée !"]);
+          resultS3Url = uploadData.url;
+          setLogs(logs => [...logs, "Image prête à être affichée !"]);
         } else {
           throw new Error("Réponse S3 invalide");
         }
       } else {
-        setLogs(prevLogs => [...prevLogs, "Upload direct de l'image sans conversion."]);
+        setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
         localStorage.setItem("faceURLResult", finalImageUrl);
       }
 
-      setLoadingProgress(100);
+      // 4. Enregistrement dans la table sessions
+      try {
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: finalImageUrl,
+          result_s3_url: resultS3Url,
+          processing_time_ms: Date.now() - start,
+          is_success: true,
+          error_message: null,
+          project_id: project?.id,
+          created_by: null,
+          has_watermark: hasWatermark,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };
 
-      // Arrêter le timer de progression à la toute fin
-      clearInterval(progressTimer);
+        console.log("===> [DEBUG] Tentative d'insertion dans la table sessions avec payload :", sessionPayload);
 
-      // Rediriger vers la page de résultat
+        const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+
+        console.log("===> [DEBUG] Résultat insertion sessions :", {
+          sessionInsertData,
+          sessionInsertError,
+          status,
+          statusText
+        });
+
+        if (sessionInsertError) {
+          setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+          console.error("===> [DEBUG] Erreur lors de l'insertion dans sessions:", sessionInsertError);
+        } else {
+          setLogs(logs => [...logs, "Session enregistrée dans la base."]);
+          console.log("===> [DEBUG] Insertion sessions réussie:", sessionInsertData);
+        }
+      } catch (sessionError) {
+        setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+        console.error("===> [DEBUG] Erreur insertion session (catch):", sessionError);
+      }
+
       setTimeout(() => {
-        setProcessing(false);
         router.push(`/photobooth-premium/${slug}/result`);
       }, 1000);
 
-    } catch (error) {
-      if (progressTimer) clearInterval(progressTimer);
-      setError(error.message || "Une erreur est survenue");
-      setProcessing(false);
-      setLogs(prevLogs => [...prevLogs, "Erreur : " + (error.message || "inconnue")]);
+    } catch (err) {
+      setError(err.message || "Erreur lors de la génération");
+      setLogs([err.message]);
+      // Enregistre l'échec dans sessions pour garder la cohérence du quota
+      try {
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: null,
+          result_s3_url: null,
+          processing_time_ms: Date.now() - start,
+          is_success: false,
+          error_message: err.message,
+          project_id: project?.id,
+          created_by: null,
+          has_watermark: false,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };
+
+        console.log("===> [DEBUG] Tentative d'insertion d'une session en échec avec payload :", sessionPayload);
+
+        const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+
+        console.log("===> [DEBUG] Résultat insertion session (échec) :", {
+          sessionInsertData,
+          sessionInsertError,
+          status,
+          statusText
+        });
+
+        if (sessionInsertError) {
+          console.error("===> [DEBUG] Erreur lors de l'insertion (échec) dans sessions:", sessionInsertError);
+        } else {
+          console.log("===> [DEBUG] Insertion session (échec) réussie:", sessionInsertData);
+        }
+      } catch (e) {
+        console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
+      }
     } finally {
+      setProcessing(false);
       setElapsedTime(Date.now() - start);
-      // Recharge le quota après la génération
-      fetchQuota();
     }
   };
   
 
-// Ajoute cette fonction pour générer l'image via Replicate
+// Remplace la fonction generateImageReplicate par la version suivante avec logs détaillés
 const generateImageReplicate = async () => {
   setProcessing(true);
   setError(null);
@@ -1059,11 +1130,14 @@ const generateImageReplicate = async () => {
 
   const start = Date.now();
   try {
+    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
+
     const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
     const image = imageFile; // base64
 
     setLogs(["Envoi de la requête à Replicate..."]);
 
+    // 1. Génération de l'image via Replicate
     const response = await fetch('/api/replicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1087,7 +1161,7 @@ const generateImageReplicate = async () => {
     const data = await response.json();
     if (!data.success) throw new Error(data.error || "Erreur Replicate");
 
-    const resultUrl = typeof data.output === 'string'
+    let resultUrl = typeof data.output === 'string'
       ? data.output
       : Array.isArray(data.output)
         ? data.output[0]
@@ -1098,25 +1172,126 @@ const generateImageReplicate = async () => {
     setLogs(["Image générée avec succès !"]);
     localStorage.setItem("faceURLResult", resultUrl);
 
-    // --- AJOUT : ENREGISTREMENT DANS LA TABLE SESSIONS ---
+    // 2. Ajout du layout (watermark) si disponible
+    setLogs(logs => [...logs, "Récupération du layout du projet..."]);
+    const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
+
+    let finalImageUrl = resultUrl;
+    let hasWatermark = false;
+
+    if (thumbnailUrl) {
+      setLogs(logs => [...logs, "Fusion de l'image avec le layout..."]);
+      setLogs(logs => [...logs, orientationData 
+        ? "Dimensions d'encart détectées, adaptation de l'image..." 
+        : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
+      try {
+        const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
+          resultUrl, 
+          thumbnailUrl, 
+          orientationData
+        );
+        if (combinedImageDataUrl && combinedImageDataUrl !== resultUrl) {
+          finalImageUrl = combinedImageDataUrl;
+          hasWatermark = true;
+          setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
+        } else {
+          setLogs(logs => [...logs, "Fusion échouée, utilisation de l'image originale."]);
+        }
+      } catch (watermarkError) {
+        setLogs(logs => [...logs, "Erreur lors de la fusion du layout."]);
+      }
+    } else {
+      setLogs(logs => [...logs, "Aucun layout trouvé pour ce projet."]);
+    }
+    
+    // 3. Upload S3 si besoin
+    let resultS3Url = null;
+    let uploadableImage = finalImageUrl;
+    if (finalImageUrl.startsWith('http')) {
+      setLogs(logs => [...logs, "Conversion de l'image pour l'upload S3..."]);
+      try {
+        uploadableImage = await toDataURL(finalImageUrl);
+      } catch (convError) {
+        setLogs(logs => [...logs, "Erreur conversion base64, upload direct."]);
+      }
+    }
+
+    if (uploadableImage && uploadableImage.startsWith('data:')) {
+      setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
+      const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
+      const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+      formData.append('projectId', project?.id || 'unknown');
+
+      const uploadResponse = await fetch('/api/upload-to-s3', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        setLogs(logs => [...logs, "Erreur lors de l'upload S3."]);
+        throw new Error("Erreur upload S3");
+      }
+      const uploadData = await uploadResponse.json();
+      if (uploadData && uploadData.url) {
+        setLogs(logs => [...logs, "Image stockée dans le cloud !"]);
+        localStorage.setItem("faceURLResult", uploadData.url);
+        localStorage.setItem("faceURLResultS3", uploadData.url);
+        resultS3Url = uploadData.url;
+        setLogs(logs => [...logs, "Image prête à être affichée !"]);
+      } else {
+        throw new Error("Réponse S3 invalide");
+      }
+    } else {
+      setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
+      localStorage.setItem("faceURLResult", finalImageUrl);
+    }
+
+    // 4. Enregistrement dans la table sessions
     try {
-      await supabase.from('sessions').insert({
+      const sessionPayload = {
         user_email: null,
         style_id: localStorage.getItem('selectedStyleId'),
         style_key: localStorage.getItem('selectedStyleKey') || null,
         gender: styleGender,
-        result_image_url: resultUrl,
+        result_image_url: finalImageUrl,
+        result_s3_url: resultS3Url,
         processing_time_ms: Date.now() - start,
         is_success: true,
+        error_message: null,
         project_id: project?.id,
+        created_by: null,
+        has_watermark: hasWatermark,
+        moderation: null,
         created_at: new Date().toISOString()
+      };
+
+      console.log("===> [DEBUG] Tentative d'insertion dans la table sessions avec payload :", sessionPayload);
+
+      const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+        .from('sessions')
+        .insert(sessionPayload)
+        .select();
+
+      console.log("===> [DEBUG] Résultat insertion sessions :", {
+        sessionInsertData,
+        sessionInsertError,
+        status,
+        statusText
       });
-      setLogs(logs => [...logs, "Session enregistrée dans la base."]);
+
+      if (sessionInsertError) {
+        setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+        console.error("===> [DEBUG] Erreur lors de l'insertion dans sessions:", sessionInsertError);
+      } else {
+        setLogs(logs => [...logs, "Session enregistrée dans la base."]);
+        console.log("===> [DEBUG] Insertion sessions réussie:", sessionInsertData);
+      }
     } catch (sessionError) {
       setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
-      console.error("Erreur insertion session:", sessionError);
+      console.error("===> [DEBUG] Erreur insertion session (catch):", sessionError);
     }
-    // --- FIN AJOUT ---
 
     setTimeout(() => {
       router.push(`/photobooth-premium/${slug}/result`);
@@ -1127,19 +1302,45 @@ const generateImageReplicate = async () => {
     setLogs([err.message]);
     // Enregistre l'échec dans sessions pour garder la cohérence du quota
     try {
-      await supabase.from('sessions').insert({
+      const sessionPayload = {
         user_email: null,
         style_id: localStorage.getItem('selectedStyleId'),
         style_key: localStorage.getItem('selectedStyleKey') || null,
         gender: styleGender,
         result_image_url: null,
+        result_s3_url: null,
         processing_time_ms: Date.now() - start,
         is_success: false,
         error_message: err.message,
         project_id: project?.id,
+        created_by: null,
+        has_watermark: false,
+        moderation: null,
         created_at: new Date().toISOString()
+      };
+
+      console.log("===> [DEBUG] Tentative d'insertion d'une session en échec avec payload :", sessionPayload);
+
+      const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+        .from('sessions')
+        .insert(sessionPayload)
+        .select();
+
+      console.log("===> [DEBUG] Résultat insertion session (échec) :", {
+        sessionInsertData,
+        sessionInsertError,
+        status,
+        statusText
       });
-    } catch {}
+
+      if (sessionInsertError) {
+        console.error("===> [DEBUG] Erreur lors de l'insertion (échec) dans sessions:", sessionInsertError);
+      } else {
+        console.log("===> [DEBUG] Insertion session (échec) réussie:", sessionInsertData);
+      }
+    } catch (e) {
+      console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
+    }
   } finally {
     setProcessing(false);
     setElapsedTime(Date.now() - start);
@@ -1834,7 +2035,7 @@ const generateImageReplicate = async () => {
             <div className="flex flex-col space-y-4 items-center">
               {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
               <motion.button 
-                onClick={generateImageSwap}
+                onClick={generateImageReplicate}
                 className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
@@ -1919,7 +2120,7 @@ const generateImageReplicate = async () => {
                       duration: 3 + i * 0.5,
                       repeat: Infinity,
                       delay: i * 0.5,
-                      ease: "easeInOut"
+                                           ease: "easeInOut"
                     }}
               />
                 ))}

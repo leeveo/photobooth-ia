@@ -17,10 +17,7 @@ const PhotoboothTypeManager = ({
     switch (type) {
       case 'premium':
         return 'Premium';
-      case 'photobooth2':
-        return 'MiniMax';
-      case 'standard':
-        return 'FaceSwapping';
+     
       default:
         return 'Premium'; // Changed default to Premium
     }
@@ -69,6 +66,41 @@ const PhotoboothTypeManager = ({
     }
   };
 
+  // Fonction pour retourner la description du type de photobooth
+  const getPhotoboothTypeDescription = (type) => {
+    switch (type) {
+      case 'premium':
+      default:
+        return (
+          <>
+            <p className="mb-2">
+              Le <span className="font-semibold text-indigo-700">Photobooth Premium IA</span> offre une expérience enrichie grâce à l'intelligence artificielle&nbsp;:
+            </p>
+            <ul className="list-disc ml-5 text-sm space-y-1">
+              <li>
+                <span className="font-semibold">Génération d'images IA</span> : Créez des photos uniques et créatives à partir de vos prises de vue.
+              </li>
+              <li>
+                <span className="font-semibold">Changement de coupe de cheveux</span> : Essayez virtuellement différentes coiffures en temps réel.
+              </li>
+              <li>
+                <span className="font-semibold">Amélioration de la qualité</span> : L'IA optimise automatiquement la netteté, la luminosité et les couleurs de vos photos.
+              </li>
+              <li>
+                <span className="font-semibold">Effets avancés</span> : Ajoutez des filtres artistiques, des fonds dynamiques ou des éléments fun.
+              </li>
+              <li>
+                <span className="font-semibold">Personnalisation poussée</span> : Intégrez logos, textes ou cadres selon vos besoins événementiels.
+              </li>
+            </ul>
+            <div className="mt-3 text-xs text-indigo-600 italic">
+              Idéal pour des événements innovants, des animations interactives et pour offrir une expérience mémorable à vos utilisateurs.
+            </div>
+          </>
+        );
+    }
+  };
+
   // Set default type to premium if not already set
   if (!project.photobooth_type) {
     updatePhotoboothType('premium');
@@ -96,84 +128,127 @@ const PhotoboothTypeManager = ({
           )}
         </div>
 
-        <div className="mt-3">
-          <div className="grid grid-cols-1 gap-3">
-            {/* Standard type button is commented out
-            <button
-              onClick={() => updatePhotoboothType('standard')}
-              disabled={typeValidated && project.photobooth_type !== 'standard'}
-              className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                project.photobooth_type === 'standard' || !project.photobooth_type 
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                  : typeValidated 
-                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                    : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-              }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 002-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <span className="text-sm font-medium">FaceSwapping</span>
-            </button>
-            */}
-            
-            <button
-              onClick={() => updatePhotoboothType('premium')}
-              disabled={typeValidated && project.photobooth_type !== 'premium'}
-              className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                project.photobooth_type === 'premium' || !project.photobooth_type
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                  : typeValidated 
-                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                    : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-              }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span className="text-sm font-medium">Premium</span>
-            </button>
-            
-            {/* MiniMax type button is commented out
-            <button
-              onClick={() => updatePhotoboothType('photobooth2')}
-              disabled={typeValidated && project.photobooth_type !== 'photobooth2'}
-              className={`flex flex-col items-center p-3 border rounded-lg transition-colors ${
-                project.photobooth_type === 'photobooth2' 
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                  : typeValidated 
-                    ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60' 
-                    : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-              }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 002.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm font-medium">MiniMax</span>
-            </button>
-            */}
-          </div>
-          
-          {/* Add the validation button here, after the grid and centered */}
-          {!typeValidated && project && (
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={handleValidatePhotoboothType}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+        {/* Nouvelle disposition en deux colonnes */}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Colonne gauche : carte design pour le type Premium */}
+          <div>
+            <div className="grid grid-cols-1 gap-3">
+              <div
+                onClick={() => !typeValidated && updatePhotoboothType('premium')}
+                className={`
+                  relative cursor-pointer overflow-hidden
+                  rounded-3xl
+                  shadow-[0_8px_32px_0_rgba(99,102,241,0.18)]
+                  transition-transform duration-200
+                  ${project.photobooth_type === 'premium' || !project.photobooth_type
+                    ? 'scale-105'
+                    : typeValidated
+                      ? 'opacity-60 cursor-not-allowed grayscale'
+                      : 'hover:scale-105'
+                  }
+                  group
+                `}
+                style={{
+                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_clown.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  minHeight: '260px',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.18)',
+                  borderRadius: '1.5rem' // Assure le round sur l'image elle-même
+                }}
+                disabled={typeValidated && project.photobooth_type !== 'premium'}
               >
-                Valider le type de photobooth
-              </button>
+                {/* Glassmorphism + gradient + glow */}
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-3xl"
+                  style={{
+                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(139,92,246,0.10) 100%)',
+                    backdropFilter: 'blur(14px)',
+                    WebkitBackdropFilter: 'blur(14px)',
+                    border: '1.5px solid rgba(255,255,255,0.22)',
+                    boxShadow: '0 0 0 4px rgba(139,92,246,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
+                    zIndex: 1
+                  }}
+                ></div>
+                {/* Glow border effect */}
+                <div
+                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
+                  style={{
+                    boxShadow: '0 0 32px 8px rgba(139,92,246,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
+                    zIndex: 2
+                  }}
+                ></div>
+                {/* Content */}
+                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
+                  <div className="flex items-center justify-center mb-3">
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-400 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-yellow-300 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </span>
+                  </div>
+                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Premium</h4>
+                  <p className="text-sm text-white/90 mb-3">Expérience IA enrichie, effets avancés, personnalisation poussée</p>
+                  {project.photobooth_type === 'premium' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
+                  )}
+                  {typeValidated && project.photobooth_type !== 'premium' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
+                  )}
+                </div>
+                <div className="absolute top-2 right-2">
+                  {/* Optionally, add a badge or icon */}
+                </div>
+              </div>
             </div>
-          )}
-          
-          <p className="mt-2 text-xs text-gray-500">
-            Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
-            {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
-          </p>
+            {/* Bouton de validation */}
+            {!typeValidated && project && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={handleValidatePhotoboothType}
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+                >
+                  Valider le type de photobooth
+                </button>
+              </div>
+            )}
+            <p className="mt-2 text-xs text-gray-500">
+              Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
+              {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
+            </p>
+          </div>
+          {/* Colonne droite : encart explicatif */}
+          <div>
+            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {/* Icône IA/étoile */}
+                  <svg className="h-5 w-5 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h5 className="text-sm font-bold text-indigo-800 mb-1">À propos du Photobooth Premium IA</h5>
+                  <div className="text-sm text-indigo-700">
+                    {getPhotoboothTypeDescription(project.photobooth_type || 'premium')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+
 
 export default PhotoboothTypeManager;

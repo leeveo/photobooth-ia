@@ -557,7 +557,7 @@ export default function PhotoboothStyles({ params }) {
               transition={{ duration: 0.6, delay: 1 }}
               whileHover={{ scale: 1.05 }}
             >
-              ✨ Les styles disponibles ✨
+               Les styles disponibles 
             </motion.h3>
             
             {/* Decorative elements around title */}

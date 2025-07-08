@@ -259,131 +259,89 @@ export default function HowToUse({ params }) {
 
       <div className="relative w-full flex justify-center items-center mt-8 md:mt-[12vh] lg:mt-[10vh] z-10">
         <div className="w-full max-w-5xl px-4 md:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-8 md:mb-10 relative"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            <motion.h2 
-              className="text-4xl md:text-6xl font-bold mb-4 relative z-10"
-              style={{ 
-                color: secondaryColor,
-                textShadow: `0 0 30px ${secondaryColor}50`
-              }}
-              whileHover={{ 
-                scale: 1.02,
-                textShadow: `0 0 40px ${secondaryColor}80`
-              }}
-            >
-              Comment ça marche ?
-            </motion.h2>
-            
-            {/* Animated underline */}
-            <motion.div
-              className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 rounded-full"
-              style={{ backgroundColor: primaryColor }}
-              initial={{ width: 0 }}
-              animate={{ width: "60%" }}
-              transition={{ duration: 1, delay: 1 }}
-            />
-
-            {/* Floating accent dots */}
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={`accent-${i}`}
-                className="absolute w-2 h-2 rounded-full"
+          {/* Centrage vertical et horizontal de la grille */}
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mx-auto">
+              {/* Cadre 1 */}
+              <motion.div 
+                className="relative text-center rounded-3xl p-7 border-2 shadow-2xl bg-white/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_10px_rgba(0,0,0,0.15)]"
                 style={{
-                  backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
-                  left: `${20 + Math.random() * 60}%`,
-                  top: `${-20 + Math.random() * 40}px`,
+                  borderColor: secondaryColor,
+                  boxShadow: `0 8px 40px 0 ${primaryColor}22, 0 1.5px 0 ${secondaryColor}33 inset`
                 }}
-                animate={{
-                  y: [0, -10, 0],
-                  opacity: [0.3, 0.8, 0.3],
-                  scale: [1, 1.3, 1],
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.5 }}
+                whileHover={{ 
+                  y: -12,
+                  boxShadow: `0 16px 60px 0 ${primaryColor}44, 0 0 0 4px ${secondaryColor}55`
                 }}
-                transition={{
-                  duration: 2 + Math.random() * 2,
-                  repeat: Infinity,
-                  delay: i * 0.3,
+              >
+                {/* Décor design */}
+                <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-gradient-to-br from-white/60 to-transparent border-2 border-dashed" style={{borderColor: primaryColor, opacity:0.5}} />
+                <div className="absolute -bottom-4 -right-4 w-10 h-10 rounded-full bg-gradient-to-tl from-white/60 to-transparent border-2 border-dashed" style={{borderColor: secondaryColor, opacity:0.5}} />
+                <motion.div 
+                  className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg border-4"
+                  style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>1</span>
+                </motion.div>
+                <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Choisissez votre style</h3>
+              </motion.div>
+              {/* Cadre 2 */}
+              <motion.div 
+                className="relative text-center rounded-3xl p-7 border-2 shadow-2xl bg-white/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_10px_rgba(0,0,0,0.15)]"
+                style={{
+                  borderColor: secondaryColor,
+                  boxShadow: `0 8px 40px 0 ${primaryColor}22, 0 1.5px 0 ${secondaryColor}33 inset`
                 }}
-              />
-            ))}
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mx-auto">
-            <motion.div 
-              className="text-center backdrop-blur-md bg-white/10 rounded-xl p-5 border border-white/20 shadow-xl"
-              style={{
-                boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`
-              }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5 }}
-              whileHover={{ 
-                y: -8,
-                boxShadow: `0 30px 80px ${primaryColor}30, 0 0 0 2px ${secondaryColor}40`
-              }}
-            >
-              <motion.div 
-                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
-                style={{ backgroundColor: secondaryColor }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.7 }}
+                whileHover={{ 
+                  y: -12,
+                  boxShadow: `0 16px 60px 0 ${primaryColor}44, 0 0 0 4px ${secondaryColor}55`
+                }}
               >
-                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>1</span>
+                <div className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-gradient-to-bl from-white/60 to-transparent border-2 border-dashed" style={{borderColor: secondaryColor, opacity:0.5}} />
+                <div className="absolute -bottom-4 -left-4 w-10 h-10 rounded-full bg-gradient-to-tr from-white/60 to-transparent border-2 border-dashed" style={{borderColor: primaryColor, opacity:0.5}} />
+                <motion.div 
+                  className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg border-4"
+                  style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                >
+                  <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>2</span>
+                </motion.div>
+                <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Prenez une photo</h3>
               </motion.div>
-              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Choisissez votre style</h3>
-              
-            </motion.div>
-            
-            <motion.div 
-              className="text-center backdrop-blur-md bg-white/10 rounded-xl p-5 border border-white/20 shadow-xl"
-              style={{
-                boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`
-              }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.7 }}
-              whileHover={{ 
-                y: -8,
-                boxShadow: `0 30px 80px ${primaryColor}30, 0 0 0 2px ${secondaryColor}40`
-              }}
-            >
+              {/* Cadre 3 */}
               <motion.div 
-                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
-                style={{ backgroundColor: secondaryColor }}
-                whileHover={{ scale: 1.1, rotate: -5 }}
+                className="relative text-center rounded-3xl p-7 border-2 shadow-2xl bg-white/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_10px_rgba(0,0,0,0.15)] sm:col-span-2 md:col-span-1 sm:max-w-xs sm:mx-auto md:mx-0 md:max-w-none"
+                style={{
+                  borderColor: secondaryColor,
+                  boxShadow: `0 8px 40px 0 ${primaryColor}22, 0 1.5px 0 ${secondaryColor}33 inset`
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.9 }}
+                whileHover={{ 
+                  y: -12,
+                  boxShadow: `0 16px 60px 0 ${primaryColor}44, 0 0 0 4px ${secondaryColor}55`
+                }}
               >
-                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>2</span>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-b from-white/60 to-transparent border-2 border-dashed" style={{borderColor: primaryColor, opacity:0.5}} />
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-t from-white/60 to-transparent border-2 border-dashed" style={{borderColor: secondaryColor, opacity:0.5}} />
+                <motion.div 
+                  className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg border-4"
+                  style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                >
+                  <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>3</span>
+                </motion.div>
+                <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Récupérez votre création</h3>
               </motion.div>
-              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Prenez une photo</h3>
-             
-            </motion.div>
-            
-            <motion.div 
-              className="text-center backdrop-blur-md bg-white/10 rounded-xl p-5 border border-white/20 shadow-xl sm:col-span-2 md:col-span-1 sm:max-w-xs sm:mx-auto md:mx-0 md:max-w-none"
-              style={{
-                boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`
-              }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.9 }}
-              whileHover={{ 
-                y: -8,
-                boxShadow: `0 30px 80px ${primaryColor}30, 0 0 0 2px ${secondaryColor}40`
-              }}
-            >
-              <motion.div 
-                className="rounded-full h-20 w-20 md:h-24 md:w-24 flex items-center justify-center mx-auto mb-4 shadow-lg"
-                style={{ backgroundColor: secondaryColor }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-              >
-                <span className="text-2xl md:text-3xl font-bold" style={{ color: primaryColor }}>3</span>
-              </motion.div>
-              <h3 className="font-bold text-lg md:text-xl mb-2" style={{ color: secondaryColor }}>Récupérez votre création</h3>
-              
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
