@@ -138,15 +138,26 @@ const ProjectInfoForm = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-6">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-          <span className="text-white font-semibold">1</span>
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+            <span className="text-white font-semibold">1</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+              
+              Informations du projet et configuration du photobooth
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Configurer les détails de votre projet et personnaliser le photobooth.
+            </p>
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-gray-900">Informations du projet et personnalisation du photobooth</h3>
       </div>
       
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      <div className="bg-white  shadow-md border border-gray-200 overflow-hidden">
         {/* Header section with essential info */}
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

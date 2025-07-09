@@ -1530,37 +1530,35 @@ const handleSelectTemplate = (template) => {
       )}
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
-        <h3 className="text-lg font-medium text-gray-900">Éditeur de Canvas</h3>
+        {/* Bloc Orientation déplacé à gauche */}
+        <div className="w-full sm:w-auto md:mr-4">
+          <label htmlFor="orientation-select" className="block text-2xl font-bold text-gray-900 mb-1">
+            Orientation
+          </label>
+          <select
+            id="orientation-select"
+            value={selectedOrientationId || ''}
+            onChange={handleOrientationChange}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            {orientations.map(o => (
+              <option key={o.id_orientation} value={o.id_orientation}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Actions à droite */}
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
-          {/* --- NOUVEAU : Sélection d'orientation dynamique --- */}
-          <div className="w-full sm:w-auto">
-            <label htmlFor="orientation-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Orientation
-            </label>
-            <select
-              id="orientation-select"
-              value={selectedOrientationId || ''}
-              onChange={handleOrientationChange}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            >
-              {orientations.map(o => (
-                <option key={o.id_orientation} value={o.id_orientation}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex space-x-2 w-full sm:w-auto">
-            {thumbnailUrl && (
-              <div className="hidden md:block">
-                <img 
-                  src={thumbnailUrl} 
-                  alt="Aperçu" 
-                  className="h-8 w-12 object-cover border border-gray-200 rounded"
-                  style={{ background: 'repeating-centric-circles pink yellow 5px' }} // Ajouter un fond de motif pour mieux voir la transparence
-                />
-                <button 
+          {thumbnailUrl && (
+            <div className="hidden md:block">
+              <img 
+                src={thumbnailUrl} 
+                alt="Aperçu" 
+                className="h-8 w-12 object-cover border border-gray-200 rounded"
+                style={{ background: 'repeating-centric-circles pink yellow 5px' }} // Ajouter un fond de motif pour mieux voir la transparence
+              />
+              <button 
       onClick={() => {
         const img = new Image();
         img.onload = () => {
@@ -1589,31 +1587,30 @@ const handleSelectTemplate = (template) => {
     >
       Vérifier
     </button>
-              </div>
-            )}
-            <button
-              onClick={(e) => {
+            </div>
+          )}
+          <button
+            onClick={(e) => {
     e.preventDefault(); // Prevent any event bubbling
     e.stopPropagation(); // Stop propagation
     removeSelected();
   }}
-              disabled={!selectedId}
-              className={`px-3 py-1.5 text-sm rounded-md flex-1 sm:flex-none ${
-                selectedId 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Supprimer la sélection
-            </button>
-            
-            <button
-              onClick={saveLayout}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
-            >
-              Sauvegarder Le Layout
-            </button>
-          </div>
+            disabled={!selectedId}
+            className={`px-3 py-1.5 text-sm rounded-md flex-1 sm:flex-none ${
+              selectedId 
+                ? 'bg-red-600 text-white hover:bg-red-700' 
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Supprimer la sélection
+          </button>
+          
+          <button
+            onClick={saveLayout}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
+          >
+            Sauvegarder Le Layout
+          </button>
         </div>
       </div>
       
@@ -1796,15 +1793,6 @@ const handleSelectTemplate = (template) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Images Unsplash
-              </>
-            )}
-            {activeTab === 'frames' && (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  <rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
-                </svg>
-                Images d'encadrement
               </>
             )}
           </h4>

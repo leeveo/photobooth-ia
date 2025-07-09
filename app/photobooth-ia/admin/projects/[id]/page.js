@@ -934,12 +934,22 @@ export default function ProjectDetails({ params }) {
                   
                   {/* Canvas Editor Section */}
                   <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                    <div className="flex items-center mb-6">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-                        <span className="text-white font-semibold">5</span>
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900">Editeur de cadres photos</h3>
-                    </div>
+                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+            <span className="text-white font-semibold">5</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+              
+              Editeur de Canvas
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Personnnalisez l'encadrement de votre photo avec l'éditeur de canvas.
+            </p>
+          </div>
+        </div>
+      </div>
                     
                     {!typeValidated && (
                       <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">

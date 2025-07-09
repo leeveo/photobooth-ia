@@ -102,36 +102,58 @@ const StyleManager = ({
 
   // Function to handle style deletion
   async function handleDeleteStyle(styleId) {
+    // Log all style ids for debug
+    console.log('All style ids:', styles.map(s => s.id));
+    console.log('Trying to delete style with id:', styleId);
     // Find the style to delete for showing in the confirmation popup
     const style = styles.find(s => s.id === styleId);
     if (style) {
       setStyleToDelete(style);
       setDeleteStyleConfirm(true);
+    } else {
+      console.warn('Style not found for deletion:', styleId);
     }
   }
 
   // Function to confirm style deletion - updated with better styling
   async function confirmDeleteStyle() {
     if (!styleToDelete) return;
-    
+
     setDeleteStyleLoading(true);
-    
+
     try {
+      // Log the id to be deleted
+      console.log('Deleting style with id:', styleToDelete.id);
+
       // Delete the style from the database
       const { error } = await supabase
         .from('styles')
         .delete()
         .eq('id', styleToDelete.id);
-        
+
       if (error) throw error;
-      
-      // Update the local state to remove the style
-      const updatedStyles = styles.filter(s => s.id !== styleToDelete.id);
-      setStyles(updatedStyles);
-      
+
+      // Refresh styles data from Supabase to ensure UI is up-to-date
+      const { data: freshStyles, error: fetchError } = await supabase
+        .from('styles')
+        .select('*')
+        .eq('project_id', projectId);
+
+      // Log the ids after refresh
+      if (freshStyles) {
+        console.log('Styles after deletion:', freshStyles.map(s => s.id));
+      }
+
+      if (fetchError) {
+        console.error('Error refreshing styles:', fetchError);
+        setError('Erreur lors de la mise à jour des styles');
+      } else {
+        setStyles(freshStyles || []);
+      }
+
       // Show success message
       setSuccess(`Style "${styleToDelete.name}" supprimé avec succès`);
-      
+
     } catch (error) {
       console.error('Error deleting style:', error);
       setError(`Erreur lors de la suppression du style: ${error.message}`);
@@ -182,26 +204,20 @@ const StyleManager = ({
 
   return (
     <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-      <div className="flex justify-between items-center mb-4 relative">
-        <div className="flex items-center mb-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
             <span className="text-white font-semibold">4</span>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900">Choix du modèle</h3>
-        </div>
-        {!typeValidated && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-70 rounded-lg z-10">
-            <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-orange-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <p className="text-gray-700 font-medium">Veuillez valider le type de photobooth (Étape 2) avant de continuer</p>
-            </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+              
+              Choix du modèle
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Choisissez le type de photobooth pour votre projet. Ce choix est définitif et ne peut plus être modifié une fois validé.
+            </p>
           </div>
-        )}
-        
-        <div className="flex space-x-2">
-      
         </div>
       </div>
       
