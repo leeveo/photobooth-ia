@@ -22,6 +22,7 @@ export default function ProjectsPage() {
   const [deletingProject, setDeletingProject] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [toggleLoadingId, setToggleLoadingId] = useState(null);
 
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -231,6 +232,30 @@ export default function ProjectsPage() {
     }
   }
 
+  // Fonction pour activer/désactiver un projet
+  async function handleToggleActive(projectId, currentActive) {
+    setToggleLoadingId(projectId);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ is_active: !currentActive })
+        .eq('id', projectId)
+        .select()
+        .single();
+      if (error) throw error;
+      // Mettre à jour l'état local
+      setProjects((prev) =>
+        prev.map((proj) =>
+          proj.id === projectId ? { ...proj, is_active: !currentActive } : proj
+        )
+      );
+    } catch (err) {
+      setError("Erreur lors du changement d'état du projet");
+    } finally {
+      setToggleLoadingId(null);
+    }
+  }
+
   // Add CSS animations for the archive popup
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -423,12 +448,48 @@ export default function ProjectsPage() {
                         <p className="text-sm text-gray-500 mt-1">/{project.slug}</p>
                       </div>
                     </div>
-                    <div className="ml-2 flex-shrink-0 flex">
+                    <div className="ml-2 flex-shrink-0 flex items-center gap-2">
+                      {/* Slider toggle for is_active */}
+                      <div className="flex items-center">
+                        <span className={`mr-2 text-xs font-medium ${project.is_active ? 'text-green-600' : 'text-gray-400'}`}>
+                          {project.is_active ? 'Activé' : 'Désactivé'}
+                        </span>
+                        <button
+                          type="button"
+                          className={`relative inline-flex h-6 w-12 rounded-full transition-colors focus:outline-none ${project.is_active ? 'bg-green-500' : 'bg-gray-300'}`}
+                          onClick={() => handleToggleActive(project.id, project.is_active)}
+                          disabled={toggleLoadingId === project.id}
+                          aria-label="Activer/Désactiver le projet"
+                        >
+                          <span
+                            className={`absolute left-0 top-0 h-6 w-6 bg-white rounded-full shadow transform transition-transform duration-300
+                              ${project.is_active ? 'translate-x-6' : 'translate-x-0'}`}
+                            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                          >
+                            {toggleLoadingId === project.id && (
+                              <svg className="animate-spin mx-auto mt-1 h-4 w-4 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            )}
+                          </span>
+                        </button>
+                      </div>
                       <Link
                         href={`/photobooth-ia/admin/projects/${project.id}`}
                         className="mr-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700"
                       >
                         Configurer
+                      </Link>
+                      <Link
+                        href={`/photobooth/${project.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`mr-2 inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-white hover:bg-indigo-50 ${!project.is_active ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                        aria-disabled={!project.is_active}
+                        tabIndex={project.is_active ? 0 : -1}
+                      >
+                        Accéder au photobooth
                       </Link>
                       <button
                         onClick={() => setDeleteConfirm(project)}

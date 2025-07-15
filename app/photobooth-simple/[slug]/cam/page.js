@@ -833,123 +833,22 @@ export default function CameraCapture({ params }) {
   // Initialize state for image processing
   const [imageProcessing, setImageProcessing] = useState(false);
   
-  const generateImageSwap = async () => {
-    setNumProses(2);
-    reset2();
+  // Nouvelle fonction pour valider la photo localement
+  const validerPhoto = async () => {
     setProcessing(true);
-    setProcessingStep(1);
     setError(null);
     setLogs([]);
     setElapsedTime(0);
 
     const start = Date.now();
-    let progressTimer;
     try {
-      // Récupérer le prompt depuis localStorage au lieu d'une image cible
-      const stylePrompt = localStorage.getItem('stylePrompt');
-      if (!stylePrompt) {
-        setError("Prompt de style manquant. Veuillez choisir un style.");
-        setProcessing(false);
-        return;
-      }
-      
-      // Log pour débogage des variables d'entrée
-      console.log('Flux transformation input:', {
-          prompt: stylePrompt,
-          input_image: imageFile ? 'base64_image present' : 'image missing',
-          output_format: 'jpg'
-      });
-      
-      // Ajouter à la liste des logs
-      setLogs(prevLogs => [...prevLogs, "Préparation de l'image..."]);
-      
-      // Vérifier que l'image base64 est correctement formée
-      if (!imageFile || !imageFile.startsWith('data:image')) {
-          throw new Error("L'image capturée n'est pas valide. Veuillez réessayer.");
-      }
-      
-      // Ajouter un log pour suivre la progression
-      setLogs(prevLogs => [...prevLogs, "Initialisation de la requête API..."]);
-      
-      // Timer pour simuler la progression (NE PAS STOPPER AVANT LA FIN)
-      progressTimer = setInterval(() => {
-          setElapsedTime(Date.now() - start);
-          
-          // Ajouter des messages de progression pour garder l'utilisateur informé
-          const elapsedSeconds = Math.floor((Date.now() - start) / 1000);
-          if (elapsedSeconds === 5) {
-              setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
-              setLoadingProgress(25);
-          } else if (elapsedSeconds === 10) {
-              setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
-              setLoadingProgress(50);
-          } else if (elapsedSeconds === 15) {
-              setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
-              setLoadingProgress(75);
-          } else {
-              // Update loading progress based on elapsed time
-              const maxTime = (settings?.max_processing_time || 60) * 1000;
-              const timeBasedProgress = Math.min(95, (Date.now() - start) / maxTime * 100);
-              setLoadingProgress(timeBasedProgress);
-          }
-      }, 1000);
-      
-      // Utiliser l'API proxy Next.js au lieu d'appeler Replicate directement
-      setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur..."]);
-      
-      // Ensure the model parameter is correct and data is well-formatted
-      const requestBody = {
-        model: "black-forest-labs/flux-kontext-pro",
-        input: {
-          prompt: stylePrompt,
-          input_image: imageFile,
-          output_format: "jpg",
-          // Add width and height parameters to ensure the generated image has the correct dimensions
-          width: 970,
-          height: 651
-        }
-      };
-      
-      console.log('Sending request to Replicate with model:', requestBody.model);
-      console.log('Requesting specific output dimensions: 970x651');
-      
-      const response = await fetch('/api/replicate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-      
-      // Check if the request was successful
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Replicate API responded with error:', response.status, errorText);
-        throw new Error(`Erreur du serveur Replicate: ${response.status} ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Replicate API response:', data);
-      
-      if (!data.success) {
-        throw new Error(data.error || "Erreur lors de la génération de l'image");
-      }
-      const result = data.output;
-      setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
+      setLogs(["Traitement de la photo..."]);
 
-      let resultImageUrl = typeof result === 'string' ? result : 
-        Array.isArray(result) ? result[0] : 
-        result.url || result.image || result;
-
-      if (!resultImageUrl) {
-        throw new Error("URL d'image non trouvée dans la réponse");
-      }
-
-      // 2. Ajout du layout (watermark) si disponible
+      // 1. Ajout du layout (watermark) si disponible
       setLogs(logs => [...logs, "Récupération du layout du projet..."]);
       const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
 
-      let finalImageUrl = resultImageUrl;
+      let finalImageUrl = imageFile;
       let hasWatermark = false;
 
       if (thumbnailUrl) {
@@ -959,11 +858,11 @@ export default function CameraCapture({ params }) {
           : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
         try {
           const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
-            resultImageUrl, 
+            imageFile, 
             thumbnailUrl, 
             orientationData
           );
-          if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
+          if (combinedImageDataUrl && combinedImageDataUrl !== imageFile) {
             finalImageUrl = combinedImageDataUrl;
             hasWatermark = true;
             setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
@@ -976,19 +875,10 @@ export default function CameraCapture({ params }) {
       } else {
         setLogs(logs => [...logs, "Aucun layout trouvé pour ce projet."]);
       }
-      
-      // 3. Upload S3 si besoin
+
+      // 2. Upload S3 si besoin
       let resultS3Url = null;
       let uploadableImage = finalImageUrl;
-      if (finalImageUrl.startsWith('http')) {
-        setLogs(logs => [...logs, "Conversion de l'image pour l'upload S3..."]);
-        try {
-          uploadableImage = await toDataURL(finalImageUrl);
-        } catch (convError) {
-          setLogs(logs => [...logs, "Erreur conversion base64, upload direct."]);
-        }
-      }
-
       if (uploadableImage && uploadableImage.startsWith('data:')) {
         setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
         const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
@@ -1020,50 +910,51 @@ export default function CameraCapture({ params }) {
         setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
         localStorage.setItem("faceURLResult", finalImageUrl);
       }
-    } catch (err) {
-      setError(err.message || "Erreur lors de la génération");
-      setLogs([err.message]);
-      // Enregistre l'échec dans sessions pour garder la cohérence du quota
+
+      // 3. Enregistrement dans la table sessions
       try {
+        // Création d'un objet sessionPayload avec toutes les informations à sauvegarder
         const sessionPayload = {
           user_email: null,
-          style_id: localStorage.getItem('selectedStyleId'),
+          style_id: localStorage.getItem('selectedStyleId') || null,
           style_key: localStorage.getItem('selectedStyleKey') || null,
           gender: styleGender,
-          result_image_url: null,
-          result_s3_url: null,
-          processing_time_ms: Date.now() - start,
-          is_success: false,
-          error_message: err.message,
-          project_id: project?.id,
+          result_image_url: finalImageUrl,        // URL de l'image finale (avec overlay)
+          result_s3_url: resultS3Url,             // URL S3 si disponible
+          processing_time_ms: Date.now() - start, // Temps de traitement
+          is_success: true,                       // Statut de succès
+          error_message: null,
+          project_id: project?.id,                // ID du projet
           created_by: null,
-          has_watermark: false,
+          has_watermark: hasWatermark,            // Si un overlay a été appliqué
           moderation: null,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString()    // Timestamp
         };
 
-        console.log("===> [DEBUG] Tentative d'insertion d'une session en échec avec payload :", sessionPayload);
-
-        const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+        // Insertion dans la table 'sessions' de Supabase
+        const { data: sessionInsertData, error: sessionInsertError } = await supabase
           .from('sessions')
           .insert(sessionPayload)
           .select();
 
-        console.log("===> [DEBUG] Résultat insertion session (échec) :", {
-          sessionInsertData,
-          sessionInsertError,
-          status,
-          statusText
-        });
-
+        // Gestion des erreurs et logs
         if (sessionInsertError) {
-          console.error("===> [DEBUG] Erreur lors de l'insertion (échec) dans sessions:", sessionInsertError);
+          setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
         } else {
-          console.log("===> [DEBUG] Insertion session (échec) réussie:", sessionInsertData);
+          setLogs(logs => [...logs, "Session enregistrée dans la base."]);
         }
-      } catch (e) {
-        console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
+      } catch (sessionError) {
+        // Gestion des exceptions
+        setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
       }
+
+      setTimeout(() => {
+        router.push(`/photobooth-simple/${slug}/result`);
+      }, 1000);
+
+    } catch (err) {
+      setError(err.message || "Erreur lors de la validation");
+      setLogs([err.message]);
     } finally {
       setProcessing(false);
       setElapsedTime(Date.now() - start);
@@ -1080,7 +971,7 @@ const generateImageReplicate = async () => {
 
   const start = Date.now();
   try {
-    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
+    console.log("===> [DEBUG] Bouton 'VALIDER MON IMAGE' cliqué, lancement de generateImageReplicate");
 
     const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
     const image = imageFile; // base64
@@ -1200,21 +1091,22 @@ const generateImageReplicate = async () => {
 
     // Enregistrement dans la table sessions (identique pour les deux cas)
     try {
+      // Création d'un objet sessionPayload avec toutes les informations à sauvegarder
       const sessionPayload = {
         user_email: null,
-        style_id: localStorage.getItem('selectedStyleId'),
+        style_id: localStorage.getItem('selectedStyleId') || null,
         style_key: localStorage.getItem('selectedStyleKey') || null,
         gender: styleGender,
-        result_image_url: finalImageUrl,
-        result_s3_url: resultS3Url,
-        processing_time_ms: Date.now() - start,
-        is_success: true,
+        result_image_url: finalImageUrl,        // URL de l'image finale (avec overlay)
+        result_s3_url: resultS3Url,             // URL S3 si disponible
+        processing_time_ms: Date.now() - start, // Temps de traitement
+        is_success: true,                       // Statut de succès
         error_message: null,
-        project_id: project?.id,
+        project_id: project?.id,                // ID du projet
         created_by: null,
-        has_watermark: hasWatermark,
+        has_watermark: hasWatermark,            // Si un overlay a été appliqué
         moderation: null,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString()    // Timestamp
       };
 
       console.log("===> [DEBUG] Tentative d'insertion dans la table sessions avec payload :", sessionPayload);
@@ -1244,7 +1136,7 @@ const generateImageReplicate = async () => {
     }
 
     setTimeout(() => {
-      router.push(`/photobooth-premium/${slug}/result`);
+      router.push(`/photobooth-simple/${slug}/result`);
     }, 1000);
 
   } catch (err) {
@@ -1254,7 +1146,7 @@ const generateImageReplicate = async () => {
     try {
       const sessionPayload = {
         user_email: null,
-        style_id: localStorage.getItem('selectedStyleId'),
+        style_id: localStorage.getItem('selectedStyleId') || null,
         style_key: localStorage.getItem('selectedStyleKey') || null,
         gender: styleGender,
         result_image_url: null,
@@ -1296,6 +1188,7 @@ const generateImageReplicate = async () => {
     setElapsedTime(Date.now() - start);
   }
 };
+
 
 // Fonction pour charger le quota (une seule version)
   const fetchQuota = useCallback(async () => {
@@ -1495,7 +1388,7 @@ const generateImageReplicate = async () => {
       </div>
 
       {/* Processing Overlay */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {processing && (
           <motion.div 
             className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
@@ -1577,7 +1470,7 @@ const generateImageReplicate = async () => {
                 <motion.button
                   onClick={() => {
                     setProcessing(false);
-                    router.push(`/photobooth-premium/${slug}`);
+                    router.push(`/photobooth-simple/${slug}`);
                   }}
                   className="px-6 py-2.5 rounded-lg text-sm font-medium"
                   style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
@@ -1590,7 +1483,7 @@ const generateImageReplicate = async () => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
 
       <motion.div 
         className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
@@ -1983,9 +1876,9 @@ const generateImageReplicate = async () => {
           {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée */}
           {enabled && (
             <div className="flex flex-col space-y-4 items-center">
-              {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
+              {/* Bouton Valider ma photo */}
               <motion.button 
-                onClick={generateImageReplicate}
+                onClick={validerPhoto}
                 className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
@@ -2092,6 +1985,7 @@ const generateImageReplicate = async () => {
                     }}
                     transition={{
                       duration: 1.5,
+
                       repeat: Infinity,
                       delay: i * 0.6,
                       ease: "easeOut"
@@ -2172,7 +2066,7 @@ const generateImageReplicate = async () => {
                 {/* Button text with icon */}
                 <span className="relative z-10 flex items-center gap-3">
                   ✨
-                  {processing ? "GÉNÉRATION..." : "GÉNÉRER MON IMAGE"}
+                  {processing ? "VALIDATION..." : "VALIDER MON IMAGE"}
                   ⚡
                 </span>
 
@@ -2188,7 +2082,7 @@ const generateImageReplicate = async () => {
                 ></motion.span>
               </motion.button>
 
-              {/* Smaller REPRENDRE button */}
+              {/* Bouton REPRENDRE inchangé */}
               <motion.button 
                 onClick={retake}
                 className="px-6 py-3 rounded-lg font-medium text-base backdrop-blur-md border border-white/30"

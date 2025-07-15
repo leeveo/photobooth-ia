@@ -20,7 +20,7 @@ export default function CreateProject() {
     slug: '',
     description: '',
     is_active: true,
-    photobooth_type: 'standard'
+    photobooth_type: 'premium' // valeur par défaut, non affichée
   });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -333,22 +333,6 @@ export default function CreateProject() {
                   onChange={handleChange}
                   className="mt-2 block w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white text-gray-700 sm:text-sm"
                 />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Type de Photobooth
-                </label>
-                <select
-                  name="photobooth_type"
-                  value={formData.photobooth_type}
-                  onChange={handleChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                 
-                  <option value="premium">Premium</option>
-                 
-                </select>
               </div>
               
               <div>

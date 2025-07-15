@@ -19,36 +19,32 @@ export default function Photobooth({ params }) {
     async function fetchProject() {
       try {
         console.log('Fetching project data for slug:', slug);
-        
+
         // Fetch project data by slug
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .select('*')
           .eq('slug', slug)
-          .eq('is_active', true)
           .single();
-          
+
         if (projectError || !projectData) {
-          console.error('Project not found or inactive:', projectError);
-          setError('Projet non trouvé ou inactif');
+          console.error('Project not found:', projectError);
+          setError('Projet non trouvé');
           return;
         }
-        
-        console.log('Project data fetched successfully:', projectData.id);
-        
+
         // Ensure we have a valid project ID before proceeding
         if (!projectData.id) {
           console.error('Project ID is missing');
           setError('ID du projet manquant');
           return;
         }
-        
-        // Save project to state and localStorage
+
         setProject(projectData);
         localStorage.setItem('projectData', JSON.stringify(projectData));
         localStorage.setItem('currentProjectId', projectData.id);
         localStorage.setItem('currentProjectSlug', slug);
-        
+
       } catch (error) {
         console.error('Error loading project data:', error);
         setError('Impossible de charger les données du projet');
@@ -56,18 +52,20 @@ export default function Photobooth({ params }) {
         setLoading(false);
       }
     }
-    
+
     fetchProject();
   }, [slug, supabase]);
   
   const handleStartClick = () => {
     // Rediriger vers le bon type de photobooth
-    if (project.photobooth_type === 'standard' || !project.photobooth_type) {
-      router.push(`/photobooth/${slug}/style`);
+    if (project.photobooth_type === 'simple' || !project.photobooth_type) {
+      router.push(`/photobooth-simple/${slug}/how`);
     } else if (project.photobooth_type === 'premium') {
       router.push(`/photobooth-premium/${slug}/how`);
     } else if (project.photobooth_type === 'photobooth2') {
       router.push(`/photobooth2/${slug}/how`);
+    } else if (project.photobooth_type === 'gif') {
+      router.push(`/photobooth-gif/${slug}/how`);
     } else {
       // Fallback pour tout autre type
       router.push(`/photobooth/${slug}/style`);
@@ -101,6 +99,44 @@ export default function Photobooth({ params }) {
           color="purple" 
         />
       </div>
+    );
+  }
+
+  // Ajout : page design si projet désactivé
+  if (!project.is_active) {
+    const primaryColor = project.primary_color || '#811A53';
+    const secondaryColor = project.secondary_color || '#E5E40A';
+    return (
+      <main
+        className="min-h-screen flex flex-col items-center justify-center px-4"
+        style={{ backgroundColor: primaryColor }}
+      >
+        <div className="max-w-lg w-full text-center py-12 px-6 rounded-2xl shadow-2xl"
+          style={{ background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`, opacity: 0.95 }}>
+          {project.logo_url && (
+            <div className="mb-8 flex justify-center">
+              <div className="w-[180px] h-[120px] relative">
+                <Image
+                  src={project.logo_url}
+                  alt={project.name}
+                  fill
+                  style={{ objectFit: "contain" }}
+                  priority
+                  className="drop-shadow-2xl"
+                />
+              </div>
+            </div>
+          )}
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-lg">
+            Photobooth désactivé
+          </h1>
+          <p className="text-lg text-white/90 mb-8">
+            Ce photobooth est actuellement désactivé.<br />
+            <span className="font-semibold" style={{ color: secondaryColor }}>À bientôt !</span>
+          </p>
+          
+        </div>
+      </main>
     );
   }
 
@@ -180,7 +216,7 @@ export default function Photobooth({ params }) {
                 color: primaryColor 
               }}
             >
-              COMMENCER L&apos;EXPÉRIENCE
+              COMMENCER L&apos;EXPÉRIENCE_test
             </button>
           </div>
         </motion.div>

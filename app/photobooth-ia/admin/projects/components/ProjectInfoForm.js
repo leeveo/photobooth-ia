@@ -319,7 +319,7 @@ const ProjectInfoForm = ({
                   {/* Primary Color Card */}
                   <div className="flex items-center gap-4 bg-white/90 rounded-xl p-4 shadow hover:shadow-lg transition-shadow border border-gray-100">
                     <div className="flex-shrink-0 flex flex-col items-center">
-                      <span className="text-xs font-bold text-indigo-600 mb-1">Primaire</span>
+                      <span className="text-xs font-bold text-indigo-600 mb-1">Couleur du texte</span>
                       <div className="relative">
                         <button
                           type="button"
@@ -367,7 +367,7 @@ const ProjectInfoForm = ({
                   {/* Secondary Color Card */}
                   <div className="flex items-center gap-4 bg-white/90 rounded-xl p-4 shadow hover:shadow-lg transition-shadow border border-gray-100">
                     <div className="flex-shrink-0 flex flex-col items-center">
-                      <span className="text-xs font-bold text-purple-600 mb-1">Secondaire</span>
+                      <span className="text-xs font-bold text-purple-600 mb-1">Couleur du fond</span>
                       <div className="relative">
                         <button
                           type="button"
@@ -417,10 +417,10 @@ const ProjectInfoForm = ({
                 <div className="mt-8 flex items-center justify-center">
                   <div className="w-full max-w-xs h-14 rounded-xl overflow-hidden flex shadow border border-gray-200 bg-gradient-to-r from-white/60 to-white/90 backdrop-blur">
                     <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color, transition: 'background 0.3s' }}>
-                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Primaire</span>
+                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Couleur du texte</span>
                     </div>
                     <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color, transition: 'background 0.3s' }}>
-                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Secondaire</span>
+                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Couleur du fond</span>
                     </div>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ const ProjectInfoForm = ({
                   />
                   <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                   </div>
                 </div>
@@ -476,6 +476,18 @@ const ProjectInfoForm = ({
                   </svg>
                   Copier l'URL
                 </button>
+                {/* Bouton pour ouvrir le photobooth dans un nouvel onglet */}
+                {getPhotoboothUrl() && (
+                  <button
+                    onClick={() => window.open(getPhotoboothUrl(), '_blank', 'noopener,noreferrer')}
+                    className="mb-4 inline-flex justify-center items-center px-4 py-2 border border-indigo-300 shadow text-xs font-bold rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition"
+                  >
+                    <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 3h7v7m0 0L10 21l-7-7 11-11z"/>
+                    </svg>
+                    Ouvrir le photobooth
+                  </button>
+                )}
                 {/* QR code avec effet */}
                 <div className="flex-1 flex flex-col items-center justify-center bg-white/80 p-4 rounded-xl border-2 border-indigo-100 shadow-inner z-10">
                   <div className="text-center mb-2">
@@ -485,7 +497,7 @@ const ProjectInfoForm = ({
                     <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-200 via-purple-200 to-white shadow-lg border border-indigo-200">
                       <QRCodeSVG
                         value={getPhotoboothUrl()}
-                        size={160}
+                        size={240} // taille augmentée
                         level="M"
                         bgColor="#FFFFFF"
                         fgColor="#7f5af0"
@@ -529,3 +541,5 @@ const ProjectInfoForm = ({
 };
 
 export default ProjectInfoForm;
+
+

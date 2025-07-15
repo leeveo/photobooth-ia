@@ -286,7 +286,7 @@ export default function ProjectDetails({ params }) {
       case 'photobooth2':
         return 'MiniMax';
       case 'standard':
-        return 'FaceSwapping';
+        return 'Standard';
       default:
         return 'FaceSwapping';
     }
@@ -764,7 +764,11 @@ export default function ProjectDetails({ params }) {
           
           <div className="flex space-x-3">
             <Link
-              href={`/photobooth/${project.slug}`}
+              href={
+                project.photobooth_type === 'gif'
+                  ? `/photobooth-gif/${project.slug}`
+                  : `/photobooth/${project.slug}`
+              }
               target="_blank"
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
             >
@@ -934,7 +938,7 @@ export default function ProjectDetails({ params }) {
                   
                   {/* Canvas Editor Section */}
                   <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                     <div className="bg-gradient-to-r rounded-lg from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
         <div className="flex items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
             <span className="text-white font-semibold">5</span>

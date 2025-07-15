@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiUserLine, RiMailLine, RiPhoneLine, RiCheckboxCircleLine, RiInformationLine, RiShieldLine } from 'react-icons/ri';
 
@@ -15,7 +15,59 @@ export default function DataCaptureManager({
   const [rgpdText, setRgpdText] = useState(project?.rgpd_text || '');
   const [savingRgpd, setSavingRgpd] = useState(false);
   const [useDefaultRgpd, setUseDefaultRgpd] = useState(false);
+  const [showRgpdConfirm, setShowRgpdConfirm] = useState(false);
   const supabase = createClientComponentClient();
+
+  // Deux textes RGPD prédéfinis
+  const rgpdOptions = [
+    {
+      key: 'default',
+      label: "RGPD standard (pas de transmission à des tiers)",
+      text: `En utilisant ce photobooth, j'accepte que mes données personnelles (nom, email, téléphone) soient collectées et traitées dans le cadre de cet événement. Ces données seront utilisées uniquement pour l'envoi de ma photo et ne seront pas transmises à des tiers. Conformément au RGPD, je dispose d'un droit d'accès, de rectification et de suppression de mes données en contactant l'organisateur.`
+    },
+    {
+      key: 'partner',
+      label: "RGPD avec transmission à un partenaire commercial",
+      text: `En utilisant ce photobooth, j’accepte que mes données personnelles (nom, email, téléphone) soient collectées et traitées dans le cadre de cet événement. Ces données seront utilisées pour l’envoi de ma photo et pourront également être transmises à un partenaire commercial de l’événement à des fins de prospection ou d’information.
+Conformément au RGPD, je dispose d’un droit d’accès, de rectification et de suppression de mes données en contactant l’organisateur.`
+    },
+    {
+      key: 'custom',
+      label: "Texte personnalisé",
+      text: ''
+    }
+  ];
+
+  // État pour la sélection RGPD
+  const [rgpdChoice, setRgpdChoice] = useState('custom');
+
+  // Synchroniser le choix RGPD selon le texte du projet
+  useEffect(() => {
+    if (project?.rgpd_text !== undefined) {
+      // Vérifier si le texte correspond à l'un des textes prédéfinis
+      if (project.rgpd_text === rgpdOptions[0].text) {
+        setRgpdChoice('default');
+        setRgpdText(rgpdOptions[0].text);
+      } else if (project.rgpd_text === rgpdOptions[1].text) {
+        setRgpdChoice('partner');
+        setRgpdText(rgpdOptions[1].text);
+      } else {
+        setRgpdChoice('custom');
+        setRgpdText(project.rgpd_text || '');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.rgpd_text]);
+
+  // Quand l'utilisateur change de choix RGPD
+  const handleRgpdChoiceChange = (key) => {
+    setRgpdChoice(key);
+    if (key === 'default' || key === 'partner') {
+      const selected = rgpdOptions.find(opt => opt.key === key);
+      setRgpdText(selected.text);
+    }
+    // Si custom, garder le texte actuel (déjà dans rgpdText)
+  };
 
   // Synchroniser l'état local quand le projet change
   useEffect(() => {
@@ -92,6 +144,54 @@ export default function DataCaptureManager({
     }
   };
 
+  // Popup de confirmation RGPD
+  const rgpdPopupAnimations = `
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes checkmark {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-success-popup {
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.animate-success-icon {
+  animation: checkmark 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.animate-success-text {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+  animation-delay: 0.3s;
+}
+  `;
+  const styleInjected = useRef(false);
+  useEffect(() => {
+    if (!styleInjected.current && typeof document !== 'undefined') {
+      const style = document.createElement('style');
+      style.innerHTML = rgpdPopupAnimations;
+      document.head.appendChild(style);
+      styleInjected.current = true;
+    }
+  }, []);
+
+  // Handler pour le bouton d'enregistrement RGPD (ouvre le popup)
+  const handleRgpdTextSaveClick = () => {
+    setShowRgpdConfirm(true);
+  };
+
+  // Handler pour la confirmation dans le popup
+  const handleRgpdTextSaveConfirmed = async () => {
+    setShowRgpdConfirm(false);
+    await handleRgpdTextSave();
+  };
+
   const defaultRgpdText = `En utilisant ce photobooth, j'accepte que mes données personnelles (nom, email, téléphone) soient collectées et traitées dans le cadre de cet événement. Ces données seront utilisées uniquement pour l'envoi de ma photo et ne seront pas transmises à des tiers. Conformément au RGPD, je dispose d'un droit d'accès, de rectification et de suppression de mes données en contactant l'organisateur.`;
 
   return (
@@ -153,18 +253,32 @@ export default function DataCaptureManager({
                     Texte de consentement RGPD
                   </h4>
                 </div>
-                {/* Checkbox pour utiliser le texte RGPD par défaut */}
-                <div className="flex items-center mb-4">
-                  <input
-                    id="useDefaultRgpd"
-                    type="checkbox"
-                    checked={useDefaultRgpd}
-                    onChange={(e) => setUseDefaultRgpd(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="useDefaultRgpd" className="ml-2 block text-sm text-gray-700 cursor-pointer">
-                    Utiliser le texte RGPD par défaut
-                  </label>
+                {/* Liste à puce pour choisir le texte RGPD */}
+                <div className="mb-4">
+                  <span className="block text-sm font-medium text-gray-700 mb-2">
+                    Choisissez un texte RGPD :
+                  </span>
+                  <ul className="space-y-2">
+                    {rgpdOptions.map(option => (
+                      <li key={option.key} className="flex items-start">
+                        <input
+                          type="radio"
+                          id={`rgpd_${option.key}`}
+                          name="rgpd_choice"
+                          value={option.key}
+                          checked={rgpdChoice === option.key}
+                          onChange={() => handleRgpdChoiceChange(option.key)}
+                          className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mt-1"
+                        />
+                        <label htmlFor={`rgpd_${option.key}`} className="ml-2 block text-sm text-gray-700 cursor-pointer">
+                          {option.label}
+                          {option.text && (
+                            <div className="text-xs text-gray-500 mt-1 italic">{option.text}</div>
+                          )}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="rgpd_text" className="block text-sm font-medium text-gray-700 mb-2">
@@ -175,9 +289,9 @@ export default function DataCaptureManager({
                     rows={6}
                     value={rgpdText}
                     onChange={(e) => setRgpdText(e.target.value)}
-                    placeholder={defaultRgpdText}
+                    placeholder={rgpdOptions[0].text}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
-                    disabled={useDefaultRgpd}
+                    disabled={rgpdChoice !== 'custom'}
                   />
                   <p className="mt-2 text-xs text-gray-500">
                     Ce texte sera affiché aux utilisateurs qui devront l'accepter pour continuer.
@@ -187,7 +301,7 @@ export default function DataCaptureManager({
                 <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
                   <button
                     type="button"
-                    onClick={handleRgpdTextSave}
+                    onClick={handleRgpdTextSaveClick}
                     disabled={savingRgpd}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
                   >
@@ -203,6 +317,66 @@ export default function DataCaptureManager({
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Popup de confirmation RGPD */}
+            {showRgpdConfirm && (
+              <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+                  onClick={e => e.stopPropagation()}>
+                  {/* Header avec effet de gradient */}
+                  <div className="h-28 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  {/* Content */}
+                  <div className="p-6 text-center">
+                    <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmer l'enregistrement</h3>
+                    <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                      Voulez-vous enregistrer ce texte RGPD pour votre projet ?
+                    </p>
+                    <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                      Ce texte sera affiché aux utilisateurs avant la prise de photo.
+                    </div>
+                  </div>
+                  {/* Footer */}
+                  <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowRgpdConfirm(false)}
+                      className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                      disabled={savingRgpd}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRgpdTextSaveConfirmed}
+                      className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
+                      disabled={savingRgpd}
+                    >
+                      {savingRgpd ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Enregistrement...
+                        </>
+                      ) : (
+                        <>
+                          <RiShieldLine className="mr-2 h-4 w-4" />
+                          Confirmer
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

@@ -12,14 +12,17 @@ const PhotoboothTypeManager = ({
 }) => {
   const supabase = createClientComponentClient();
 
-  // Function to get photobooth type label
+  // Ajout du type GIF dans le label
   const getPhotoboothTypeLabel = (type) => {
     switch (type) {
       case 'premium':
         return 'Premium';
-     
+      case 'simple':
+        return 'Simple';
+      case 'gif':
+        return 'Gif';
       default:
-        return 'Premium'; // Changed default to Premium
+        return 'Premium';
     }
   };
 
@@ -66,11 +69,10 @@ const PhotoboothTypeManager = ({
     }
   };
 
-  // Fonction pour retourner la description du type de photobooth
+  // Ajout de la description pour GIF
   const getPhotoboothTypeDescription = (type) => {
     switch (type) {
       case 'premium':
-      default:
         return (
           <>
             <p className="mb-2">
@@ -98,6 +100,55 @@ const PhotoboothTypeManager = ({
             </div>
           </>
         );
+      case 'simple':
+        return (
+          <>
+            <p className="mb-2">
+              Le <span className="font-semibold text-indigo-700">Photobooth Simple</span> propose une expérience classique&nbsp;:
+            </p>
+            <ul className="list-disc ml-5 text-sm space-y-1">
+              <li>
+                <span className="font-semibold">Prise de photo instantanée</span> : Capturez des souvenirs en toute simplicité.
+              </li>
+              <li>
+                <span className="font-semibold">Interface intuitive</span> : Facile à utiliser pour tous les publics.
+              </li>
+              <li>
+                <span className="font-semibold">Sans intelligence artificielle</span> : Aucune modification ou effet IA, photo brute.
+              </li>
+            </ul>
+            <div className="mt-3 text-xs text-indigo-600 italic">
+              Idéal pour des événements traditionnels, des animations rapides et une expérience directe.
+            </div>
+          </>
+        );
+      case 'gif':
+        return (
+          <>
+            <p className="mb-2">
+              Le <span className="font-semibold text-indigo-700">Photobooth Gif</span> propose une expérience animée&nbsp;:
+            </p>
+            <ul className="list-disc ml-5 text-sm space-y-1">
+              <li>
+                <span className="font-semibold">Prise de 5 photos en rafale</span> : Capturez une séquence animée.
+              </li>
+              <li>
+                <span className="font-semibold">Génération automatique d'un GIF</span> : Les photos sont assemblées en une animation.
+              </li>
+              <li>
+                <span className="font-semibold">Partage facile</span> : Téléchargez ou partagez votre GIF instantanément.
+              </li>
+              <li>
+                <span className="font-semibold">Sans IA ni effets avancés</span> : Animation brute, sans style IA.
+              </li>
+            </ul>
+            <div className="mt-3 text-xs text-indigo-600 italic">
+              Idéal pour des animations fun, des souvenirs dynamiques et des événements interactifs.
+            </div>
+          </>
+        );
+      default:
+        return null;
     }
   };
 
@@ -109,7 +160,7 @@ const PhotoboothTypeManager = ({
   return (
    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 rounded-xl border-b border-gray-200">
         <div className="flex items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
             <span className="text-white font-semibold">3</span>
@@ -139,11 +190,92 @@ const PhotoboothTypeManager = ({
           )}
         </div>
 
-        {/* Nouvelle disposition en deux colonnes */}
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Colonne gauche : carte design pour le type Premium */}
+        {/* Nouvelle disposition en trois colonnes */}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Colonne gauche : carte SIMPLE */}
           <div>
             <div className="grid grid-cols-1 gap-3">
+              {/* Carte SIMPLE */}
+              <div
+                onClick={() => !typeValidated && updatePhotoboothType('simple')}
+                className={`
+                  relative cursor-pointer overflow-hidden
+                  rounded-3xl
+                  shadow-[0_8px_32px_0_rgba(99,102,241,0.10)]
+                  transition-transform duration-200
+                  ${project.photobooth_type === 'simple'
+                    ? 'scale-105'
+                    : typeValidated
+                      ? 'opacity-60 cursor-not-allowed grayscale'
+                      : 'hover:scale-105'
+                  }
+                  group
+                `}
+                style={{
+                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_ice_mask.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  minHeight: '260px',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.10)',
+                  borderRadius: '1.5rem'
+                }}
+                disabled={typeValidated && project.photobooth_type !== 'simple'}
+              >
+                {/* Glassmorphism + gradient + glow */}
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-3xl"
+                  style={{
+                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(99,102,241,0.10) 100%)',
+                    backdropFilter: 'blur(14px)',
+                    WebkitBackdropFilter: 'blur(14px)',
+                    border: '1.5px solid rgba(255,255,255,0.22)',
+                    boxShadow: '0 0 0 4px rgba(99,102,241,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
+                    zIndex: 1
+                  }}
+                ></div>
+                {/* Glow border effect */}
+                <div
+                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
+                  style={{
+                    boxShadow: '0 0 32px 8px rgba(99,102,241,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
+                    zIndex: 2
+                  }}
+                ></div>
+                {/* Content */}
+                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
+                  <div className="flex items-center justify-center mb-3">
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-gray-400 to-gray-200 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-400 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z" />
+                      </svg>
+                    </span>
+                  </div>
+                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Simple</h4>
+                  <p className="text-sm text-white/90 mb-3">Prise de photo classique, sans IA ni effets avancés</p>
+                  {project.photobooth_type === 'simple' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
+                  )}
+                  {typeValidated && project.photobooth_type !== 'simple' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
+                  )}
+                </div>
+                <div className="absolute top-2 right-2">
+                  {/* Optionally, add a badge or icon */}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Colonne centrale : carte PREMIUM */}
+          <div>
+            <div className="grid grid-cols-1 gap-3">
+              {/* Carte PREMIUM */}
               <div
                 onClick={() => !typeValidated && updatePhotoboothType('premium')}
                 className={`
@@ -172,7 +304,7 @@ const PhotoboothTypeManager = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 8px 32px 0 rgba(99,102,241,0.18)',
-                  borderRadius: '1.5rem' // Assure le round sur l'image elle-même
+                  borderRadius: '1.5rem'
                 }}
                 disabled={typeValidated && project.photobooth_type !== 'premium'}
               >
@@ -219,25 +351,93 @@ const PhotoboothTypeManager = ({
                 </div>
               </div>
             </div>
-            {/* Bouton de validation */}
-            {!typeValidated && project && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  onClick={handleValidatePhotoboothType}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
-                >
-                  Valider le type de photobooth
-                </button>
-              </div>
-            )}
-            <p className="mt-2 text-xs text-gray-500">
-              Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
-              {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
-            </p>
           </div>
-          {/* Colonne droite : encart explicatif */}
+          {/* Colonne droite : carte GIF */}
           <div>
-            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4">
+            <div className="grid grid-cols-1 gap-3">
+              {/* Carte GIF */}
+              <div
+                onClick={() => !typeValidated && updatePhotoboothType('gif')}
+                className={`
+                  relative cursor-pointer overflow-hidden
+                  rounded-3xl
+                  shadow-[0_8px_32px_0_rgba(99,102,241,0.18)]
+                  transition-transform duration-200
+                  ${project.photobooth_type === 'gif'
+                    ? 'scale-105'
+                    : typeValidated
+                      ? 'opacity-60 cursor-not-allowed grayscale'
+                      : 'hover:scale-105'
+                  }
+                  group
+                `}
+                style={{
+                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/gif_sample.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  minHeight: '260px',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.18)',
+                  borderRadius: '1.5rem'
+                }}
+                disabled={typeValidated && project.photobooth_type !== 'gif'}
+              >
+                {/* Glassmorphism + gradient + glow */}
+                <div
+                  className="absolute inset-0 pointer-events-none rounded-3xl"
+                  style={{
+                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(139,92,246,0.10) 100%)',
+                    backdropFilter: 'blur(14px)',
+                    WebkitBackdropFilter: 'blur(14px)',
+                    border: '1.5px solid rgba(255,255,255,0.22)',
+                    boxShadow: '0 0 0 4px rgba(139,92,246,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
+                    zIndex: 1
+                  }}
+                ></div>
+                {/* Glow border effect */}
+                <div
+                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
+                  style={{
+                    boxShadow: '0 0 32px 8px rgba(139,92,246,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
+                    zIndex: 2
+                  }}
+                ></div>
+                {/* Content */}
+                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
+                  <div className="flex items-center justify-center mb-3">
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-400 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-yellow-300 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z" />
+                        <circle cx="12" cy="12" r="4" fill="currentColor" />
+                      </svg>
+                    </span>
+                  </div>
+                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Gif</h4>
+                  <p className="text-sm text-white/90 mb-3">Prise de 5 photos animées, création d'un GIF</p>
+                  {project.photobooth_type === 'gif' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
+                  )}
+                  {typeValidated && project.photobooth_type !== 'gif' && (
+                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
+                  )}
+                </div>
+                <div className="absolute top-2 right-2">
+                  {/* Optionally, add a badge or icon */}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Colonne explicative pour chaque type */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div>
+            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   {/* Icône IA/étoile */}
@@ -248,13 +448,65 @@ const PhotoboothTypeManager = ({
                 <div className="ml-3">
                   <h5 className="text-sm font-bold text-indigo-800 mb-1">À propos du Photobooth Premium IA</h5>
                   <div className="text-sm text-indigo-700">
-                    {getPhotoboothTypeDescription(project.photobooth_type || 'premium')}
+                    {getPhotoboothTypeDescription('premium')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {/* Icône simple */}
+                  <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h5 className="text-sm font-bold text-blue-800 mb-1">À propos du Photobooth Simple</h5>
+                  <div className="text-sm text-blue-700">
+                    {getPhotoboothTypeDescription('simple')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="bg-pink-50 border-l-4 border-pink-400 p-4 mb-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {/* Icône GIF */}
+                  <svg className="h-5 w-5 text-pink-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                    <circle cx="12" cy="12" r="4" fill="currentColor" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h5 className="text-sm font-bold text-pink-800 mb-1">À propos du Photobooth Gif</h5>
+                  <div className="text-sm text-pink-700">
+                    {getPhotoboothTypeDescription('gif')}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        {/* Bouton de validation */}
+        {!typeValidated && project && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={handleValidatePhotoboothType}
+              className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+            >
+              Valider le type de photobooth
+            </button>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-gray-500">
+          Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
+          {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
+        </p>
       </div>
     </div>
   );

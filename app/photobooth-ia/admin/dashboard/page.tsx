@@ -227,7 +227,7 @@ export default function Dashboard() {
       case 'photobooth2':
         return 'MiniMax';
       default:
-        return 'FaceSwapping';
+        return 'Standard';
     }
   };
 
@@ -424,8 +424,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Refresh & Create Project Buttons */}
+      <div className="flex justify-end items-center gap-3">
+        {/* Nouveau bouton à gauche */}
+        <Link 
+          href="/photobooth-ia/admin/projects/create" 
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          Créer un nouveau projet
+        </Link>
         <button
           onClick={() => fetchDashboardData()}
           className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all font-medium"
@@ -526,6 +536,7 @@ export default function Dashboard() {
                         Photos ({projectsWithPhotoCount[project.id] || 0})
                       </Link>
                       
+                      {/* MODIFICATION: Utilise la même URL que dans /projects/[id]/page.js */}
                       <Link
                         href={`/photobooth/${project.slug}`}
                         target="_blank"
