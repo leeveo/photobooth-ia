@@ -88,7 +88,8 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         canvas: false,
-        'canvas-prebuilt': false
+        'canvas-prebuilt': false,
+        gifencoder: false
       };
     }
     

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
-    // Check if we're in production environment
+    // Check if we're in production environment (Vercel)
     if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
       // Return a friendly error for Vercel production environment
       return NextResponse.json(
@@ -17,21 +17,22 @@ export async function POST(request) {
     }
     
     // Try to import GIF dependencies dynamically
-    let GIFEncoder;
+    let GIFEncoder, Canvas;
     try {
       GIFEncoder = (await import('gifencoder')).default;
+      Canvas = (await import('canvas'));
     } catch (err) {
-      console.error("Failed to load GIF encoder:", err);
+      console.error("Failed to load GIF encoder or Canvas:", err);
       return NextResponse.json(
         { error: true, message: "Module de génération GIF non disponible" }, 
         { status: 500 }
       );
     }
     
-    // Continue with the original implementation if imports succeed
+    // Original implementation would go here
     // ...
 
-    return NextResponse.json({ success: true, gifUrl: "url-to-gif" });
+    return NextResponse.json({ success: true, message: "GIF generation is not available in production" });
   } catch (error) {
     console.error("GIF generation error:", error);
     return NextResponse.json(

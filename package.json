@@ -27,7 +27,6 @@
     "@types/js-cookie": "^3.0.6",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.2",
-    "canvas": "^3.1.2",
     "cookies-next": "^4.1.1",
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.3",
