@@ -88,6 +88,7 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         canvas: false,
+        'canvas-prebuilt': false
       };
     }
     
