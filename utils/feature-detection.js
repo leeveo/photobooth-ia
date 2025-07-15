@@ -5,7 +5,7 @@
 export const isGifGenerationSupported = () => {
   // In browser environment
   if (typeof window !== 'undefined') {
-    return true; // Client can always try to call the API
+    return process.env.NEXT_PUBLIC_GIF_GENERATION_ENABLED === 'true';
   }
   
   // In server environment
@@ -13,11 +13,15 @@ export const isGifGenerationSupported = () => {
     return false; // Known limitation in Vercel
   }
   
-  // Try to dynamically import the modules
+  // Try to dynamically import the modules in non-production
   try {
-    require('canvas');
-    require('gifencoder');
-    return true;
+    // Only attempt this in development
+    if (process.env.NODE_ENV !== 'production') {
+      require('canvas');
+      require('gifencoder');
+      return true;
+    }
+    return false;
   } catch (err) {
     console.warn('GIF generation not supported in this environment:', err.message);
     return false;
@@ -28,8 +32,8 @@ export const isGifGenerationSupported = () => {
  * Returns the appropriate photobooth URL based on environment and type
  */
 export const getPhotoboothUrl = (slug, type) => {
-  if (type === 'gif' && process.env.NODE_ENV === 'production') {
-    // Use standard photobooth in production for GIF type
+  if (type === 'gif' && !isGifGenerationSupported()) {
+    // Use standard photobooth when GIF is not supported
     return `/photobooth/${slug}`;
   }
   

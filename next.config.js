@@ -104,6 +104,10 @@ const nextConfig = {
       },
     ]
   },
+  // Handle environment variables
+  env: {
+    NEXT_PUBLIC_GIF_GENERATION_ENABLED: process.env.NODE_ENV !== 'production'
+  }
 };
 
 module.exports = nextConfig;
