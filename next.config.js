@@ -83,6 +83,14 @@ const nextConfig = {
       asyncWebAssembly: true,
     };
     
+    // Handle native modules that cause issues in Vercel
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false,
+      };
+    }
+    
     return config;
   },
   async redirects() {
