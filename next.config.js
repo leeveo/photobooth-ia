@@ -93,6 +93,35 @@ const nextConfig = {
       };
     }
     
+    // Skip certain modules in server-side builds in production
+    if (isServer && process.env.NODE_ENV === 'production') {
+      // Exclude canvas and gifencoder from server bundle
+      const originalEntry = config.entry;
+      config.entry = async () => {
+        const entries = await originalEntry();
+        
+        // These modules should be treated as empty modules on Vercel
+        if (entries['pages/api/gif-generator'] || entries['app/api/gif-generator']) {
+          const moduleMap = {
+            canvas: false,
+            gifencoder: false
+          };
+          
+          Object.keys(moduleMap).forEach(mod => {
+            config.externals.push((context, request, callback) => {
+              if (request === mod) {
+                // Skip this module in production
+                return callback(null, 'commonjs ' + request);
+              }
+              callback();
+            });
+          });
+        }
+        
+        return entries;
+      };
+    }
+    
     return config;
   },
   async redirects() {
