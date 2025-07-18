@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { RiSaveLine } from 'react-icons/ri';
+import { RiSaveLine, RiShieldLine } from 'react-icons/ri';
 import { QRCodeSVG } from 'qrcode.react';
 import Loader from './Loader';
 
@@ -17,6 +17,8 @@ const ProjectInfoForm = ({
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [savingProject, setSavingProject] = useState(false);
 
   // Function to get the base URL dynamically
   useEffect(() => {
@@ -101,11 +103,10 @@ const ProjectInfoForm = ({
     });
   };
 
-  // A unified save function for all project fields
-  const saveProjectInfo = async () => {
+  // Nouvelle fonction pour confirmer l'enregistrement
+  const handleSaveConfirmed = async () => {
+    setSavingProject(true);
     try {
-      setIsSubmitting(true);
-      
       const { error } = await supabase
         .from('projects')
         .update({
@@ -117,23 +118,21 @@ const ProjectInfoForm = ({
           event_date: project.event_date
         })
         .eq('id', project.id);
-        
+
       if (error) throw error;
-      
-      // Instead of setting success message, show the popup
-      setSuccessMessage("Informations du projet mises à jour avec succès");
+
       setShowSuccessPopup(true);
-      
-      // Auto-hide the popup after 3 seconds
+      setShowSaveConfirm(false);
+
       setTimeout(() => {
         setShowSuccessPopup(false);
       }, 3000);
-      
     } catch (error) {
       console.error('Error updating project info:', error);
       setError("Erreur lors de la mise à jour des informations du projet");
+      setShowSaveConfirm(false);
     } finally {
-      setIsSubmitting(false);
+      setSavingProject(false);
     }
   };
 
@@ -520,7 +519,7 @@ const ProjectInfoForm = ({
         <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end">
           <button
             type="button"
-            onClick={saveProjectInfo}
+            onClick={() => setShowSaveConfirm(true)}
             disabled={isSubmitting}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
           >
@@ -537,6 +536,64 @@ const ProjectInfoForm = ({
             )}
           </button>
         </div>
+
+        {/* Popup de confirmation d'enregistrement */}
+        {showSaveConfirm && (
+          <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+              onClick={e => e.stopPropagation()}>
+              {/* Header avec effet de gradient */}
+              <div className="h-28 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                  <RiSaveLine className="h-12 w-12 text-white" />
+                </div>
+              </div>
+              {/* Content */}
+              <div className="p-6 text-center">
+                <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmer l'enregistrement</h3>
+                <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                  Voulez-vous enregistrer les modifications apportées à ce projet ?
+                </p>
+                <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                  Ces informations seront appliquées immédiatement.
+                </div>
+              </div>
+              {/* Footer */}
+              <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveConfirm(false)}
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  disabled={savingProject}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveConfirmed}
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
+                  disabled={savingProject}
+                >
+                  {savingProject ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <RiSaveLine className="mr-2 h-4 w-4" />
+                      Confirmer
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

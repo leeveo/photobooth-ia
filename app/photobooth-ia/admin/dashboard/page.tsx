@@ -429,7 +429,7 @@ export default function Dashboard() {
         {/* Nouveau bouton à gauche */}
         <Link 
           href="/photobooth-ia/admin/projects/create" 
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+          className="inline-flex items-center px-4 py-2 h-12 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -438,7 +438,7 @@ export default function Dashboard() {
         </Link>
         <button
           onClick={() => fetchDashboardData()}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all font-medium"
+          className="flex items-center gap-2 px-5 py-2.5 h-12 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all font-medium"
         >
           <RiRefreshLine className="w-5 h-5" />
           Actualiser les données

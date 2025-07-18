@@ -1218,31 +1218,7 @@ export default function ProjectDetails({ params }) {
       )}
 
       {/* Success Popup with higher z-index */}
-      {showSuccessPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-[99999] pointer-events-auto">
-          <div className="animate-fadeIn bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full mx-4 border-l-4 border-green-500">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-100 rounded-full p-2">
-                <svg className="h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-900">Succès!</p>
-                <p className="mt-1 text-sm text-gray-500">{successMessage}</p>
-              </div>
-              <button 
-                onClick={() => setShowSuccessPopup(false)}
-                className="ml-4 text-gray-400 hover:text-gray-500 focus:outline-none"
-              >
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Add popup animations styles */}
       {typeof document !== 'undefined' && (

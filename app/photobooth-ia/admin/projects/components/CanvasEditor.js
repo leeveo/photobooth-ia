@@ -9,6 +9,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import TabComponentWrapper from './TabComponentWrapper';
 import predefinedTexts from './predefinedTexts';
 import LayersTab from './LayersTab';
+import { RiShieldLine } from 'react-icons/ri';
 
 // Import tab components - handle safely in case they have issues
 let ElementsTab, TextTab, UnsplashTab, LayoutTab, TemplatesTab;
@@ -154,11 +155,11 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
     if (!orientations.length || !selectedOrientationId) return;
     const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
     if (orientation) {
-      setStageSize({
+      setStageSize(prevSize => ({
         width: orientation.width,
         height: orientation.height,
-        scale: 1
-      });
+        scale: prevSize.scale // preserve current scale
+      }));
       // Ajout : met à jour l'encart photo si les champs sont présents
       if (
         orientation.position_x !== undefined &&
@@ -675,38 +676,60 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }
   };
   
-  // Fonction checkSize corrigée
-  const checkSize = useCallback(() => {
-    if (containerRef.current && orientations.length && selectedOrientationId) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const containerHeight = window.innerHeight * 0.6; // Use 60% of viewport height as max height
-      const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
-      if (!orientation) return;
-      // Calculate the scale that fits both width and height constraints while maintaining aspect ratio
-      const scaleByWidth = containerWidth / orientation.width;
-      const scaleByHeight = containerHeight / orientation.height;
-      const scale = Math.min(1, scaleByWidth, scaleByHeight); // Never scale up beyond 1
-      
-      setStageSize(prevSize => {
-        // If the size hasn't changed, don't trigger a re-render
-        if (
-          prevSize.width === orientation.width &&
-          prevSize.height === orientation.height &&
-          prevSize.scale === scale
-        ) {
-          return prevSize;
-        }
-        
-        return {
-          width: orientation.width,
-          height: orientation.height,
-          scale: scale
-        };
+  // Correction: Ne jamais modifier width/height dans checkSize, seulement le scale.
+// Le width/height DOIVENT toujours venir de l'orientation sélectionnée.
+// 1. Orientation effect: force width/height à chaque changement d'orientation.
+useEffect(() => {
+  if (!orientations.length || !selectedOrientationId) return;
+  const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
+  if (orientation) {
+    setStageSize(prevSize => ({
+      width: orientation.width,
+      height: orientation.height,
+      scale: prevSize.scale // ne jamais toucher au scale ici
+    }));
+    // Ajout : met à jour l'encart photo si les champs sont présents
+    if (
+      orientation.position_x !== undefined &&
+      orientation.position_y !== undefined &&
+      orientation.width_encart_photo !== undefined &&
+      orientation.height_encart_photo !== undefined &&
+      orientation.width_encart_photo !== null &&
+      orientation.height_encart_photo !== null
+    ) {
+      setPhotoFrame({
+        x: orientation.position_x,
+        y: orientation.position_y,
+        width: orientation.width_encart_photo,
+        height: orientation.height_encart_photo
       });
+    } else {
+      setPhotoFrame(null);
     }
-  }, [orientations, selectedOrientationId]);
-  
-  // Resize handler for responsive canvas
+  }
+}, [orientations, selectedOrientationId]);
+
+// 2. checkSize: NE MODIFIE QUE LE SCALE, JAMAIS width/height
+const checkSize = useCallback(() => {
+  if (containerRef.current && orientations.length && selectedOrientationId) {
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = window.innerHeight * 0.6;
+    const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
+    if (!orientation) return;
+    const scaleByWidth = containerWidth / orientation.width;
+    const scaleByHeight = containerHeight / orientation.height;
+    const scale = Math.min(1, scaleByWidth, scaleByHeight);
+
+    setStageSize(prevSize => ({
+      width: prevSize.width, // NE JAMAIS CHANGER width ici
+      height: prevSize.height, // NE JAMAIS CHANGER height ici
+      scale // update scale only
+    }));
+  }
+}, [orientations, selectedOrientationId, containerRef]);
+
+// 3. Supprimer tout effet qui modifie width/height après la sauvegarde ou le chargement du layout.
+// Resize handler for responsive canvas
   useEffect(() => {
     // Appliquer checkSize uniquement si le conteneur est monté
     if (containerRef.current) {
@@ -1075,6 +1098,10 @@ const checkBucketExists = useCallback(async (bucketName) => {
     type: 'success' // or 'error'
   });
   
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [savingLayout, setSavingLayout] = useState(false);
+  
+
   // Fonction pour afficher une notification
   const showNotification = (message, type = 'success') => {
     setNotification({
@@ -1096,22 +1123,23 @@ const checkBucketExists = useCallback(async (bucketName) => {
     try {
       // Sauvegarder l'échelle actuelle
       const originalScale = stageSize.scale;
-      
+
       // Mettre l'échelle à 1 pour l'export
       stageRef.current.scale({ x: 1, y: 1 });
       stageRef.current.batchDraw();
 
-      // Exporter le PNG avec transparence (pas de fond noir !)
+      // Exporter le PNG avec transparence
       const dataURL = stageRef.current.toDataURL({
         pixelRatio: 1,
         mimeType: 'image/png',
         quality: 1
       });
 
-      // Restaurer l'échelle d'origine
+      // Restaurer l'échelle d'origine IMMÉDIATEMENT
       stageRef.current.scale({ x: originalScale, y: originalScale });
       stageRef.current.batchDraw();
 
+      // Ne pas modifier stageSize ici !
       setThumbnailUrl(dataURL);
       return Promise.resolve(dataURL);
     } catch (error) {
@@ -1170,9 +1198,10 @@ const checkBucketExists = useCallback(async (bucketName) => {
         project_id: projectId,
         name: layoutName,
         elements: JSON.stringify(elements),
+        // IMPORTANT: always save the stageSize with the current scale
         stage_size: JSON.stringify(stageSize),
         thumbnail_url: thumbnailUrl,
-        orientation_id: selectedOrientationId, // Ajout de l'ID d'orientation sélectionné
+        orientation_id: selectedOrientationId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -1238,6 +1267,7 @@ const checkBucketExists = useCallback(async (bucketName) => {
       const newLayout = result[0];
       setSavedLayouts([newLayout]); // Set to an array with only this layout
       
+      // DO NOT update stageSize here, keep the current scale!
       // 9. Show success message with custom popup instead of alert
       setSavePopup({
         visible: true,
@@ -1297,7 +1327,11 @@ const checkBucketExists = useCallback(async (bucketName) => {
           
           // Appliquer les éléments et la taille du stage
           setElements(parsedElements);
-          setStageSize(parsedStageSize);
+          // Preserve the current scale when loading a layout
+          setStageSize(prevSize => ({
+            ...parsedStageSize,
+            scale: prevSize.scale // always keep the current scale
+          }));
           // Désélectionner tout élément
           setSelectedId(null);
           
@@ -1314,8 +1348,10 @@ const checkBucketExists = useCallback(async (bucketName) => {
         
         // Si une taille de stage personnalisée est fournie, l'appliquer aussi
         if (customStageSize) {
-          console.log('📐 Application de la taille personnalisée:', customStageSize);
-          setStageSize(customStageSize);
+          setStageSize(prevSize => ({
+            ...customStageSize,
+            scale: prevSize.scale // always keep the current scale
+          }));
         }
         
         // Désélectionner tout élément
@@ -1486,56 +1522,73 @@ const handleSelectTemplate = (template) => {
   }
 };
 
+const handleSaveLayoutConfirmed = async () => {
+  setSavingLayout(true);
+  await saveLayout();
+  setSavingLayout(false);
+  setShowSaveConfirm(false);
+};
+
   // Attention: ne pas appeler des fonctions qui modifient l'état directement dans le rendu
   // Assurez-vous que toutes les fonctions appelées dans le JSX sont des gestionnaires d'événements
   
   // Modifier le bouton de test URL directe pour utiliser la fonction définie
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
-      {/* Custom Save Popup */}
-      {savePopup.visible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop with blur effect */}
-          <div 
-            className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-            onClick={() => setSavePopup(prev => ({ ...prev, visible: false }))}
-          ></div>
-          
-          {/* Popup content */}
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 relative z-10 transform transition-all">
-            <div className="flex items-center mb-4">
-              {savePopup.type === 'success' ? (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-               
-               </svg>
-                </div>
-
-              )}
-              <h3 className="text-lg font-medium text-gray-900">
-                {savePopup.type === 'success' ? 'Sauvegarde réussie' : 'Erreur'}
-              </h3>
+      {/* Popup de confirmation de sauvegarde du layout */}
+      {showSaveConfirm && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+            onClick={e => e.stopPropagation()}>
+            {/* Header avec effet de gradient */}
+            <div className="h-28 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+              <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
             </div>
-            
-            <p className="text-gray-700 mb-5">{savePopup.message}</p>
-            
-            <div className="flex justify-end">
+            {/* Content */}
+            <div className="p-6 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmer la sauvegarde</h3>
+              <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                Voulez-vous sauvegarder ce layout pour votre projet ?
+              </p>
+              <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.2s" }}>
+                Ce layout sera enregistré et disponible dans la liste des layouts du projet.
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
               <button
-                onClick={() => setSavePopup(prev => ({ ...prev, visible: false }))}
-                className={`px-4 py-2 rounded-md text-white font-medium ${
-                  savePopup.type === 'success' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
+                type="button"
+                onClick={() => setShowSaveConfirm(false)}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                disabled={savingLayout}
               >
-                Fermer
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveLayoutConfirmed}
+                className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
+                disabled={savingLayout}
+              >
+                {savingLayout ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Sauvegarde...
+                </>
+              ) : (
+                <>
+                  <RiShieldLine className="mr-2 h-4 w-4" />
+                  Confirmer
+                </>
+              )}
               </button>
             </div>
           </div>
@@ -1655,7 +1708,7 @@ const handleSelectTemplate = (template) => {
           </button>
           
           <button
-            onClick={saveLayout}
+            onClick={() => setShowSaveConfirm(true)}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
           >
             Sauvegarder Le Layout
@@ -1750,7 +1803,7 @@ const handleSelectTemplate = (template) => {
             onClick={() => setActiveTab('unsplash')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2  0 0 002 2z" />
             </svg>
             <span className="text-xs font-medium">Images</span>
           </button>
@@ -1764,7 +1817,7 @@ const handleSelectTemplate = (template) => {
             onClick={() => setActiveTab('layouts')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v2M7 7h10" />
             </svg>
             <span className="text-xs font-medium">Layouts</span>
           </button>
@@ -1824,14 +1877,14 @@ const handleSelectTemplate = (template) => {
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+                </svg>
                 Bibliothèque
               </>
             )}
             {activeTab === 'layouts' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v2M7 7h10" />
             </svg>
                 Layouts
               </>
@@ -1857,7 +1910,6 @@ const handleSelectTemplate = (template) => {
                   </div>
                 )}
                 
-               
                 {templatesError && (
                   <div className="p-4 text-sm text-red-700 bg-red-100 rounded-md">
                     {templatesError}
@@ -1867,7 +1919,7 @@ const handleSelectTemplate = (template) => {
                 {!templatesLoading && !templatesError && templates.length === 0 && (
                   <div className="text-center py-8">
                     <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v2M7 7h10" />
                     </svg>
                     <p className="mt-4 text-gray-500">
 Aucun template disponible.
