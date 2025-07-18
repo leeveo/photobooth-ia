@@ -103,7 +103,7 @@ export default function PhotoboothEmailTemplateEditor({
 
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-6xl max-h-[90vh] flex flex-col">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 md:p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-700 p-4 md:p-6 text-white">
         <h2 className="text-xl font-bold">Personnaliser le modèle d&apos;email</h2>
         <p className="mt-1 text-sm text-blue-100">
           Personnalisez le modèle d&apos;email qui sera envoyé aux participants

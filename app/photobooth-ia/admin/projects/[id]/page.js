@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
+import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line, RiAlertLine, RiShieldLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
 import dynamic from 'next/dynamic';
@@ -874,11 +874,12 @@ export default function ProjectDetails({ params }) {
                         <button
                           type="button"
                           onClick={() => setShowEmailEditor(true)}
-                          className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-md shadow-sm text-sm font-medium
+                          className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
                             ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-blue-700 hover:to-indigo-800'}
                           `}
                           disabled={!emailEnabled}
                         >
+                          <RiShieldLine className="mr-2 h-4 w-4" />
                           Éditer l'email
                         </button>
                       </div>

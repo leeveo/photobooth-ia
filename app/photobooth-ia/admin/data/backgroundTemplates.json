@@ -10,7 +10,7 @@
       "id": "blue-gradient",
       "name": "Dégradé Bleu",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/002.png",
-      "category": "Abstrait"
+      "category": "Nature"
     },
     {
       "id": "green-nature",
@@ -24,30 +24,10 @@
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/004.png",
       "category": "Urbain"
     },
-    {
-      "id": "beach",
-      "name": "Plage Tropicale",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/005.png",
-      "category": "Vacances"
-    },
-    {
-      "id": "mountains",
-      "name": "Montagnes",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/006.png",
-      "category": "Nature"
-    },
-    {
-      "id": "purple-abstract",
-      "name": "Abstrait Violet",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/007.png",
-      "category": "Abstrait"
-    },
-    {
-      "id": "wood-texture",
-      "name": "Texture Bois",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/008.png",
-      "category": "Texture"
-    },
+   
+
+  
+
     {
       "id": "abstract-new-1",
       "name": "Abstrait 1",
@@ -61,12 +41,7 @@
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(2).jpg",
       "category": "Abstrait"
     },
-    {
-      "id": "abstract-new-3",
-      "name": "Abstrait 3",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(3).jpg",
-      "category": "Abstrait"
-    },
+
     {
       "id": "abstract-new-4",
       "name": "Abstrait 4",
