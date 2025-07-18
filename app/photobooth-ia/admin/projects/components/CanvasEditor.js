@@ -200,10 +200,12 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
   const [projectName, setProjectName] = useState(''); // Ajouter un état pour le nom du projet
   // Nouvelles variables d'état pour les fonctionnalités ajoutées
   const [libraryImages, setLibraryImages] = useState([]);
-    const [frameImages, setFrameImages] = useState([]);
+  const [frameImages, setFrameImages] = useState([]);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  // Ajout d'un état pour le débogage
+  const [debugInfo, setDebugInfo] = useState({ frames: [], orientationId: null, error: null });
   // Nouveaux états pour la gestion des couleurs et des polices
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#000000');
@@ -456,33 +458,110 @@ const checkBucketExists = useCallback(async (bucketName) => {
     }
   }, [isTemplateMode, projectId]);
 
-
-const loadFrameImages = useCallback(async () => {
-  try {
-    const s3BaseUrl = "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_encadrement/";
-    const framesCount = 100; // Adapte à ton nombre réel d'encadrements
-
-    const frameFiles = Array.from({ length: framesCount }, (_, i) => {
-      const num = String(i + 1).padStart(3, '0');
-      return `frame${num}.png`; // adapte au nom réel des fichiers
-    });
-
-    const frames = frameFiles.map((filename, index) => ({
-      id: `frame${index}`,
-      
-      src: `${s3BaseUrl}${filename}`,
-      src_nocache: `${s3BaseUrl}${filename}?t=${Date.now()}`
-    }));
-
-    setFrameImages(frames);
-  } catch (error) {
-    console.error("Erreur chargement encadrements:", error);
+  // Remove the fallback function entirely since we don't want to use it anymore
+  // We'll keep a simple version that just shows an empty array
+  const fallbackLoadFrameImages = useCallback(() => {
+    console.log("Pas de fallback: utilisation uniquement des encadrements de la base de données.");
     setFrameImages([]);
-  }
-}, []);
+  }, []);
 
-
-
+  const loadFrameImages = useCallback(async () => {
+    try {
+      console.log("Chargement des encadrements depuis la base de données...");
+      
+      // Vérifier la configuration Supabase
+      console.log("URL Supabase:", supabase.supabaseUrl);
+      
+      // Lister les tables disponibles pour vérifier si la table existe
+      try {
+        const { data: tableList, error: tableError } = await supabase
+          .from('_tables')
+          .select('*');
+        
+        if (!tableError) {
+          console.log("Tables disponibles:", tableList);
+        } else {
+          console.warn("Impossible de lister les tables:", tableError);
+        }
+      } catch (e) {
+        console.log("Info: La liste des tables n'est accessible qu'en mode développement");
+      }
+      
+      // Requête sans filtre ni tri pour voir si on obtient des résultats
+      console.log("Tentative de requête sans filtre...");
+      const { data: simpleData, error: simpleError } = await supabase
+        .from('photobooth_encadrement')
+        .select('*')
+        .limit(5);
+      
+      if (simpleError) {
+        console.error("Erreur requête simple:", simpleError);
+      } else {
+        console.log(`Requête simple: ${simpleData?.length || 0} résultats:`, simpleData);
+      }
+      
+      // Requête originale
+      console.log("Exécution de la requête originale...");
+      const { data, error } = await supabase
+        .from('photobooth_encadrement')
+        .select('*')
+        .order('ordre', { ascending: true });
+    
+      if (error) {
+        console.error("Erreur Supabase:", error);
+        setDebugInfo(prev => ({ ...prev, error: `Erreur Supabase: ${error.message}` }));
+        setFrameImages([]);
+        return;
+      }
+    
+      console.log(`${data?.length || 0} encadrements trouvés dans la base de données:`, data);
+    
+      // Stocker les données brutes pour le débogage
+      setDebugInfo(prev => ({ ...prev, frames: data || [] }));
+    
+      if (!data || data.length === 0) {
+        console.warn("Aucun encadrement trouvé dans la base de données");
+        setFrameImages([]);
+        return;
+      }
+    
+      // Examiner la structure d'un encadrement pour le débogage
+      if (data.length > 0) {
+        console.log("Structure d'un encadrement:", Object.keys(data[0]));
+        console.log("Premier encadrement:", data[0]);
+      }
+    
+      // Transformer les données pour qu'elles correspondent au format attendu
+      const formattedFrames = data.map(frame => {
+        // Détecter les noms de champs corrects
+        const hasUrlS3 = 'url_s3' in frame;
+        const hasIdOrientation = 'id_orientation' in frame;
+        const hasIdEncadrement = 'id_encadrement' in frame;
+        const hasNom = 'nom' in frame;
+        
+        console.log(`Encadrement ${frame.id || frame.id_encadrement}: URL=${hasUrlS3 ? frame.url_s3 : 'manquant'}, Orientation=${hasIdOrientation ? frame.id_orientation : 'manquant'}`);
+        
+        return {
+          id: hasIdEncadrement ? frame.id_encadrement : frame.id,
+          name: hasNom ? frame.nom : `Encadrement ${frame.id || frame.id_encadrement}`,
+          src: hasUrlS3 ? frame.url_s3 : frame.url || frame.src,
+          src_nocache: hasUrlS3 ? `${frame.url_s3}?t=${Date.now()}` : `${frame.url || frame.src}?t=${Date.now()}`,
+          orientation_id: hasIdOrientation ? Number(frame.id_orientation) : null,
+          rawData: frame
+        };
+      });
+    
+      console.log("Encadrements formatés:", formattedFrames);
+      setFrameImages(formattedFrames);
+    
+      // Mettre à jour l'état de débogage avec l'orientation actuelle
+      setDebugInfo(prev => ({ ...prev, orientationId: selectedOrientationId }));
+    } catch (error) {
+      console.error("Erreur chargement encadrements:", error);
+      setDebugInfo(prev => ({ ...prev, error: error.message }));
+      setFrameImages([]);
+    }
+  }, [supabase, selectedOrientationId]); // Remove fallbackLoadFrameImages from dependencies
 
 
   // Fonction pour charger les images téléchargées par l'utilisateur
@@ -1010,13 +1089,14 @@ const loadFrameImages = useCallback(async () => {
     }, 3000);
   };
   
-  // Remplacer la fonction generateTransparentThumbnail par une version qui conserve la transparence
+  // Fix the generateTransparentThumbnail function to remove duplicate dataURL definition
   const generateTransparentThumbnail = useCallback(() => {
     if (!stageRef.current) return null;
 
     try {
       // Sauvegarder l'échelle actuelle
       const originalScale = stageSize.scale;
+      
       // Mettre l'échelle à 1 pour l'export
       stageRef.current.scale({ x: 1, y: 1 });
       stageRef.current.batchDraw();
@@ -1036,33 +1116,6 @@ const loadFrameImages = useCallback(async () => {
       return Promise.resolve(dataURL);
     } catch (error) {
       console.error('Erreur lors de la génération de la miniature:', error);
-      return null;
-    }
-  }, [stageSize]);
-  
-  // Fonction de secours : ne pas remplir de fond noir, garder la transparence
-  const generateFallbackTransparentThumbnail = useCallback(() => {
-    if (!stageRef.current) return null;
-
-    try {
-      // Même logique que la principale, mais sans fond noir
-      const originalScale = stageSize.scale;
-      stageRef.current.scale({ x: 1, y: 1 });
-      stageRef.current.batchDraw();
-
-      const dataURL = stageRef.current.toDataURL({
-        pixelRatio: 1,
-        mimeType: 'image/png',
-        quality: 1
-      });
-
-      stageRef.current.scale({ x: originalScale, y: originalScale });
-      stageRef.current.batchDraw();
-
-      setThumbnailUrl(dataURL);
-      return Promise.resolve(dataURL);
-    } catch (error) {
-      console.error('Erreur lors de la génération de la miniature de secours:', error);
       return null;
     }
   }, [stageSize]);
@@ -1105,10 +1158,6 @@ const loadFrameImages = useCallback(async () => {
         method: 'POST',
         body: formData
       });
-      
-      if (!uploadResponse.ok) {
-        throw new Error(`S3 upload failed: ${uploadResponse.statusText}`);
-      }
       
       const uploadResult = await uploadResponse.json();
       const thumbnailUrl = uploadResult.url;
@@ -1644,7 +1693,7 @@ const handleSelectTemplate = (template) => {
             onClick={() => setActiveTab('elements')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <span className="text-xs font-medium">Éléments</span>
           </button>
@@ -1736,7 +1785,7 @@ const handleSelectTemplate = (template) => {
             <span className="text-xs font-medium">Calques</span>
           </button>
         </div>
-        {/* Column 2: Tab content */}
+        {/* Column  2: Tab content */}
         <div className="w-full lg:w-68 border border-gray-300 rounded-lg p-4 bg-gray-50 flex flex-col">
           <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
             {activeTab === 'templates' && (
@@ -1750,7 +1799,7 @@ const handleSelectTemplate = (template) => {
             {activeTab === 'elements' && (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 Éléments
               </>
@@ -2065,32 +2114,70 @@ Aucun template disponible.
             {/* Encadrement tab content */}
             {activeTab === 'frames' && (
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Images d'encadrement</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {frameImages.map(image => (
-                    <div
-                      key={image.id}
-                      className="border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition-all"
-                      onClick={() => addElement('image', image.src, image.name)}
-                    >
-                      <div className="h-20 bg-gray-100 flex items-center justify-center">
-                        <img
-                          src={image.src}
-                          alt={image.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      </div>
-                      <div className="p-2">
-                        <p className="text-xs text-gray-700 truncate">{image.name}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {frameImages.length === 0 && (
-                    <div className="col-span-2 text-center py-4 text-sm text-gray-500">
-                      <p>Aucune image d'encadrement trouvée</p>
-                    </div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Images d'encadrement 
+                  {orientations.find(o => o.id_orientation === selectedOrientationId) && (
+                    <span className="ml-1 text-xs text-indigo-600">
+                      pour {orientations.find(o => o.id_orientation === selectedOrientationId).label}
+                    </span>
                   )}
+                </h4>
+                
+                {/* Filtrer les images d'encadrement uniquement par orientation_id */}
+                {(() => {
+      // Filtrer uniquement par orientation_id - Pas de fallback par type
+      const filteredFrames = frameImages.filter(image => 
+        image.orientation_id === selectedOrientationId
+      );
+      
+      console.log(`Frames après filtrage: ${filteredFrames.length}/${frameImages.length}`, 
+                  {orientation: selectedOrientationId});
+      
+      return (
+        <>
+          <p className="text-xs text-gray-500 mb-2">
+            {filteredFrames.length} encadrements disponibles pour cette orientation
+          </p>
+          
+          {filteredFrames.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {filteredFrames.map(image => (
+                <div
+                  key={image.id}
+                  className="border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition-all"
+                  onClick={() => addElement('image', image.src, image.name)}
+                >
+                  <div className="h-20 bg-gray-100 flex items-center justify-center">
+                    <img
+                      src={image.src}
+                      alt={image.name}
+                      className="max-h-full max-w-full object-contain"
+                      onError={(e) => {
+                        console.warn("Erreur chargement image:", image.src);
+                        e.target.src = "https://via.placeholder.com/200x150?text=Image+non+disponible";
+                      }}
+                    />
+                  </div>
+                  <div className="p-2">
+                    <p className="text-xs text-gray-700 truncate">{image.name}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-sm text-gray-500">
+              <p>Aucun encadrement disponible pour ce format dans la base de données</p>
+              <button 
+                className="mt-2 text-indigo-600 hover:text-indigo-800 text-xs"
+                onClick={loadFrameImages}
+              >
+                Actualiser
+              </button>
+            </div>
+          )}
+        </>
+      );
+    })()}
               </div>
             )}
             
@@ -2489,3 +2576,83 @@ const decodeBase64Session = (encodedToken) => {
     return encodedToken; // retourner tel quel en cas d'erreur
   }
 };
+
+// Fonction utilitaire pour déterminer le type d'encadrement selon l'orientation
+function getFrameTypeForOrientation(orientation) {
+  console.log("Détermination du type d'encadrement pour:", orientation);
+
+  // Si c'est un objet d'orientation (le cas le plus courant)
+  if (orientation && typeof orientation === 'object') {
+    // Détecter le type en fonction du label
+    if (orientation.label) {
+      const label = orientation.label.toLowerCase();
+      console.log("Label d'orientation:", label);
+      
+      if (label.includes('vertical')) {
+        console.log("Détecté: vertical");
+        return 'vertical';
+      }
+      if (label.includes('carré') || label.includes('carre')) {
+        console.log("Détecté: carre");
+        return 'carre';
+      }
+      if (label.includes('panorama') || label.includes('panoramique')) {
+        console.log("Détecté: panorama");
+        return 'panorama';
+      }
+      if (label.includes('horizontal') || label.includes('paysage')) {
+        console.log("Détecté: frame (horizontal)");
+        return 'frame';
+      }
+    }
+    
+    // Si pas de décision par le label, utiliser les dimensions
+    if (orientation.width && orientation.height) {
+      const ratio = orientation.width / orientation.height;
+      console.log("Ratio dimensions:", ratio);
+      
+      if (Math.abs(ratio - 1) < 0.1) {
+        console.log("Détecté par ratio: carre");
+        return 'carre';
+      }
+      else if (ratio < 0.9) {
+        console.log("Détecté par ratio: vertical");
+        return 'vertical';
+      }
+      else if (ratio > 2) {
+        console.log("Détecté par ratio: panorama");
+        return 'panorama';
+      }
+      else {
+        console.log("Détecté par ratio: frame (horizontal)");
+        return 'frame';
+      }
+    }
+  }
+  
+  // Si c'est juste un ID numérique
+  if (typeof orientation === 'number') {
+    console.log("Orientation par ID:", orientation);
+    switch(orientation) {
+      case 1: 
+        console.log("ID 1 -> vertical");
+        return 'vertical';
+      case 2: 
+        console.log("ID 2 -> frame");
+        return 'frame';
+      case 3: 
+        console.log("ID 3 -> carre");
+        return 'carre';
+      case 4: 
+        console.log("ID 4 -> panorama");
+        return 'panorama';
+      default:
+        console.log("ID inconnu -> frame (par défaut)");
+        return 'frame';
+    }
+  }
+  
+  // Valeur par défaut
+  console.log("Aucun critère de décision trouvé -> frame (par défaut)");
+  return 'frame';
+}

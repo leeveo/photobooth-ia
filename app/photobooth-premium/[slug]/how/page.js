@@ -88,133 +88,14 @@ export default function HowToUse({ params }) {
   return (
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 relative"
+     
     >
-      {/* Animated gradient background */}
-      <motion.div
-        className="fixed inset-0 z-0"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
-        }}
-        animate={{
-          background: [
-            `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
-            `linear-gradient(225deg, ${secondaryColor}20, ${primaryColor}10, ${secondaryColor}15, ${primaryColor}25)`,
-            `linear-gradient(315deg, ${primaryColor}20, ${secondaryColor}15, ${primaryColor}10, ${secondaryColor}20)`,
-            `linear-gradient(45deg, ${secondaryColor}15, ${primaryColor}20, ${secondaryColor}10, ${primaryColor}15)`,
-          ]
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-
-      {/* Floating background elements */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        {/* Large floating orbs */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={`orb-${i}`}
-            className="absolute rounded-full opacity-20 backdrop-blur-sm"
-            style={{
-              backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
-              width: `${100 + Math.random() * 200}px`,
-              height: `${100 + Math.random() * 200}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 10 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Small sparkle particles */}
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={`sparkle-${i}`}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              backgroundColor: i % 3 === 0 ? primaryColor : secondaryColor,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: 2 + Math.random() * 3,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Geometric shapes */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={`shape-${i}`}
-            className="absolute opacity-10"
-            style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: i % 2 === 0 ? '50%' : '0%',
-              backgroundColor: 'transparent',
-              border: `2px solid ${i % 2 === 0 ? primaryColor : secondaryColor}`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              rotate: [0, 360],
-              scale: [1, 1.5, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 15 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: Math.random() * 3,
-            }}
-          />
-        ))}
-      </div>
-
       <motion.div 
         className="fixed top-0 left-0 right-0 flex justify-center mt-4 z-20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        {/* Animated halo behind logo */}
-        <motion.div
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-64 rounded-full opacity-20"
-          style={{
-            background: `radial-gradient(circle, ${secondaryColor}40, transparent 70%)`
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.4, 0.2],
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-
         {project.logo_url ? (
           <motion.div
             className="w-[250px] h-[100px] relative z-10"
@@ -227,20 +108,6 @@ export default function HowToUse({ params }) {
               alt={project.name} 
               className="object-contain drop-shadow-2xl" 
               priority 
-            />
-            {/* Glow effect behind logo */}
-            <motion.div
-              className="absolute inset-0 blur-xl opacity-50 -z-10"
-              style={{ backgroundColor: secondaryColor }}
-              animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
             />
           </motion.div>
         ) : (
@@ -356,7 +223,7 @@ export default function HowToUse({ params }) {
           {project.is_active ? (
             <motion.button 
               onClick={goToStyles} 
-              className="w-full py-3 sm:py-4 md:py-6 font-bold text-lg sm:text-xl md:text-3xl rounded-lg shadow-xl border-2 relative overflow-hidden group"
+              className="w-full py-3 sm:py-4 md:py-6 font-bold text-lg sm:text-xl md:text-3xl rounded-lg shadow-xl border-2"
               style={{ 
                 backgroundColor: secondaryColor, 
                 color: primaryColor,
@@ -369,177 +236,7 @@ export default function HowToUse({ params }) {
               }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Animated floating bubbles */}
-              {[...Array(8)].map((_, i) => (
-                <motion.div
-                  key={`bubble-${i}`}
-                  className="absolute rounded-full opacity-30"
-                  style={{
-                    backgroundColor: primaryColor,
-                    width: `${8 + Math.random() * 16}px`,
-                    height: `${8 + Math.random() * 16}px`,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                  }}
-                  animate={{
-                    y: [0, -20, 0],
-                    x: [0, Math.random() * 20 - 10, 0],
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 0.7, 0.3],
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 2,
-                    repeat: Infinity,
-                    delay: Math.random() * 2,
-                    ease: "easeInOut"
-                  }}
-                />
-              ))}
-
-              {/* Animated wave pattern */}
-              <motion.div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  background: `repeating-linear-gradient(
-                    45deg,
-                    transparent,
-                    transparent 10px,
-                    ${primaryColor}40 10px,
-                    ${primaryColor}40 20px
-                  )`
-                }}
-                animate={{
-                  backgroundPosition: ["0px 0px", "40px 40px"],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-
-              {/* Pulsing rings */}
-              {[...Array(3)].map((_, i) => (
-                <motion.div
-                  key={`ring-${i}`}
-                  className="absolute rounded-full border-2 opacity-40"
-                  style={{
-                    borderColor: primaryColor,
-                    width: `${40 + i * 20}px`,
-                    height: `${40 + i * 20}px`,
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)'
-                  }}
-                  animate={{
-                    scale: [0.8, 1.2, 0.8],
-                    opacity: [0.4, 0.1, 0.4],
-                    rotate: [0, 360]
-                  }}
-                  transition={{
-                    duration: 3 + i * 0.5,
-                    repeat: Infinity,
-                    delay: i * 0.5,
-                    ease: "easeInOut"
-                  }}
-                />
-              ))}
-
-              {/* Shooting stars */}
-              {[...Array(4)].map((_, i) => (
-                <motion.div
-                  key={`star-${i}`}
-                  className="absolute"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                  }}
-                  animate={{
-                    x: [0, 60],
-                    y: [0, -30],
-                    opacity: [0, 1, 0],
-                    scale: [0, 1, 0]
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    delay: i * 0.8,
-                    ease: "easeOut"
-                  }}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: primaryColor }}
-                  />
-                  <motion.div
-                    className="absolute top-0 left-0 w-8 h-0.5 origin-left"
-                    style={{ backgroundColor: primaryColor }}
-                    animate={{ scaleX: [0, 1, 0] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      delay: i * 0.8,
-                    }}
-                  />
-                </motion.div>
-              ))}
-
-              {/* Animated background shine */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3
-                }}
-              />
-
-              {/* Sparkle explosion on hover */}
-              <motion.div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              >
-                {[...Array(12)].map((_, i) => (
-                  <motion.div
-                    key={`sparkle-${i}`}
-                    className="absolute w-1 h-1 rounded-full"
-                    style={{
-                      backgroundColor: primaryColor,
-                      left: '50%',
-                      top: '50%',
-                    }}
-                    animate={{
-                      x: [0, (Math.cos(i * 30 * Math.PI / 180) * 40)],
-                      y: [0, (Math.sin(i * 30 * Math.PI / 180) * 40)],
-                      opacity: [1, 0],
-                      scale: [0, 1.5, 0],
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      delay: i * 0.1,
-                      ease: "easeOut"
-                    }}
-                  />
-                ))}
-              </motion.div>
-
-              {/* Rotating gradient overlay */}
-              <motion.div
-                className="absolute inset-0 opacity-30 rounded-lg"
-                style={{
-                  background: `conic-gradient(from 0deg, transparent, ${primaryColor}40, transparent, ${primaryColor}60, transparent)`
-                }}
-                animate={{ rotate: [0, 360] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-              
-              <span className="relative z-10">CONTINUER</span>
+              CONTINUER
             </motion.button>
           ) : (
             <div className="w-full py-6 text-center rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-xl shadow-xl">

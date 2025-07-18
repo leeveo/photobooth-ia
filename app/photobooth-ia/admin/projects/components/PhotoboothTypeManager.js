@@ -12,15 +12,15 @@ const PhotoboothTypeManager = ({
 }) => {
   const supabase = createClientComponentClient();
 
-  // Ajout du type GIF dans le label
+  // Ajout du type boomerang dans le label
   const getPhotoboothTypeLabel = (type) => {
     switch (type) {
       case 'premium':
         return 'Premium';
       case 'simple':
         return 'Simple';
-      case 'gif':
-        return 'Gif';
+      case 'bommerang':
+        return 'Boomerang';
       default:
         return 'Premium';
     }
@@ -40,7 +40,7 @@ const PhotoboothTypeManager = ({
       // Mettre à jour l'état local
       setProject({...project, type_validated: true});
       setTypeValidated(true);
-      setSuccess('Type de photobooth validé avec succès. Le type ne peut plus être modifié.');
+      setSuccess('validé avec succès. Le type ne peut plus être modifié.');
     } catch (error) {
       console.error('Erreur lors de la validation du type:', error);
       setError('Erreur lors de la validation du type de photobooth');
@@ -69,7 +69,7 @@ const PhotoboothTypeManager = ({
     }
   };
 
-  // Ajout de la description pour GIF
+  // Ajout de la description pour boomerang
   const getPhotoboothTypeDescription = (type) => {
     switch (type) {
       case 'premium':
@@ -122,28 +122,28 @@ const PhotoboothTypeManager = ({
             </div>
           </>
         );
-      case 'gif':
+     case 'boomerang':
         return (
           <>
             <p className="mb-2">
-              Le <span className="font-semibold text-indigo-700">Photobooth Gif</span> propose une expérience animée&nbsp;:
+              Le <span className="font-semibold text-indigo-700">Photobooth Boomerang</span> propose une expérience animée dynamique&nbsp;:
             </p>
             <ul className="list-disc ml-5 text-sm space-y-1">
               <li>
-                <span className="font-semibold">Prise de 5 photos en rafale</span> : Capturez une séquence animée.
+                <span className="font-semibold">Courte vidéo aller-retour</span> : Captez un mouvement qui s'anime en boucle.
               </li>
               <li>
-                <span className="font-semibold">Génération automatique d'un GIF</span> : Les photos sont assemblées en une animation.
+                <span className="font-semibold">Effet d'animation inversée</span> : La séquence joue en avant puis en arrière automatiquement.
               </li>
               <li>
-                <span className="font-semibold">Partage facile</span> : Téléchargez ou partagez votre GIF instantanément.
+                <span className="font-semibold">Durée optimale</span> : Animation fluide de quelques secondes, idéale pour les réseaux sociaux.
               </li>
               <li>
-                <span className="font-semibold">Sans IA ni effets avancés</span> : Animation brute, sans style IA.
+                <span className="font-semibold">Sans IA ni effets avancés</span> : Animation naturelle, sans modification algorithmique.
               </li>
             </ul>
             <div className="mt-3 text-xs text-indigo-600 italic">
-              Idéal pour des animations fun, des souvenirs dynamiques et des événements interactifs.
+              Idéal pour capturer des moments expressifs, des gestes amusants et créer des souvenirs hypnotiques.
             </div>
           </>
         );
@@ -158,7 +158,7 @@ const PhotoboothTypeManager = ({
   }
 
   return (
-   <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 rounded-xl border-b border-gray-200">
         <div className="flex items-center">
@@ -190,327 +190,340 @@ const PhotoboothTypeManager = ({
           )}
         </div>
 
-        {/* Nouvelle disposition en trois colonnes */}
+        {/* Nouvelle disposition en trois colonnes - avec style mis à jour */}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Colonne gauche : carte SIMPLE */}
-          <div>
-            <div className="grid grid-cols-1 gap-3">
-              {/* Carte SIMPLE */}
-              <div
-                onClick={() => !typeValidated && updatePhotoboothType('simple')}
-                className={`
-                  relative cursor-pointer overflow-hidden
-                  rounded-3xl
-                  shadow-[0_8px_32px_0_rgba(99,102,241,0.10)]
-                  transition-transform duration-200
-                  ${project.photobooth_type === 'simple'
-                    ? 'scale-105'
-                    : typeValidated
-                      ? 'opacity-60 cursor-not-allowed grayscale'
-                      : 'hover:scale-105'
-                  }
-                  group
-                `}
-                style={{
-                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_ice_mask.jpg')",
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  minHeight: '260px',
-                  maxWidth: '380px',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.10)',
-                  borderRadius: '1.5rem'
-                }}
-                disabled={typeValidated && project.photobooth_type !== 'simple'}
-              >
-                {/* Glassmorphism + gradient + glow */}
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-3xl"
-                  style={{
-                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(99,102,241,0.10) 100%)',
-                    backdropFilter: 'blur(14px)',
-                    WebkitBackdropFilter: 'blur(14px)',
-                    border: '1.5px solid rgba(255,255,255,0.22)',
-                    boxShadow: '0 0 0 4px rgba(99,102,241,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
-                    zIndex: 1
-                  }}
-                ></div>
-                {/* Glow border effect */}
-                <div
-                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
-                  style={{
-                    boxShadow: '0 0 32px 8px rgba(99,102,241,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
-                    zIndex: 2
-                  }}
-                ></div>
-                {/* Content */}
-                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
-                  <div className="flex items-center justify-center mb-3">
-                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-gray-400 to-gray-200 shadow-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-blue-400 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z" />
-                      </svg>
-                    </span>
-                  </div>
-                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Simple</h4>
-                  <p className="text-sm text-white/90 mb-3">Prise de photo classique, sans IA ni effets avancés</p>
-                  {project.photobooth_type === 'simple' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
-                  )}
-                  {typeValidated && project.photobooth_type !== 'simple' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
-                  )}
-                </div>
-                <div className="absolute top-2 right-2">
-                  {/* Optionally, add a badge or icon */}
-                </div>
+          {/* CARTE SIMPLE */}
+          <div className={`
+            group relative bg-gray-900 rounded-2xl overflow-hidden shadow-xl transform transition-all duration-300
+            ${project.photobooth_type === 'simple' ? 'ring-4 ring-blue-400/70 scale-[1.02]' : ''}
+            ${typeValidated && project.photobooth_type !== 'simple' ? 'opacity-60 grayscale' : 'hover:scale-[1.03]'}
+          `}>
+            {/* Background image with overlay */}
+            <div className="absolute inset-0 w-full h-full">
+              <div 
+                className="absolute inset-0 bg-cover bg-center" 
+                style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/carnival_ice_mask.jpg')"}}
+              ></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
+            </div>
+            
+            {/* Glow effect on hover */}
+            <div className={`
+              absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/30 via-blue-500/20 to-transparent 
+              blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+              ${project.photobooth_type === 'simple' ? 'opacity-100' : ''}
+            `}></div>
+            
+            {/* Content container */}
+            <div 
+              onClick={() => !typeValidated && updatePhotoboothType('simple')}
+              className={`
+                relative z-10 p-6 h-full flex flex-col items-center justify-center text-center
+                ${!typeValidated ? 'cursor-pointer' : project.photobooth_type !== 'simple' ? 'cursor-not-allowed' : ''}
+              `}
+              style={{minHeight: "340px"}}
+            >
+              {/* Icon */}
+              <div className={`
+                inline-flex items-center justify-center w-16 h-16 rounded-full 
+                bg-gradient-to-tr from-blue-500 to-blue-400 shadow-lg mb-4
+                transform transition-transform duration-300 group-hover:scale-110
+                ${project.photobooth_type === 'simple' ? 'scale-110' : ''}
+              `}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
               </div>
+              
+              {/* Title */}
+              <h3 className={`
+                text-2xl font-extrabold text-white mb-3 tracking-tight
+                transform transition-all duration-300 group-hover:scale-110 group-hover:text-blue-300
+                ${project.photobooth_type === 'simple' ? 'text-blue-300 scale-110' : ''}
+              `}>Simple</h3>
+              
+              {/* Description */}
+              <p className="text-gray-300 mb-6 text-sm max-w-xs">
+                Prise de photo classique, sans IA ni effets avancés. 
+                <span className="hidden sm:inline">Interface intuitive, facile à utiliser pour tous les publics.</span>
+              </p>
+              
+              {/* Status indicator */}
+              {project.photobooth_type === 'simple' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Sélectionné
+                </span>
+              )}
+              
+              {typeValidated && project.photobooth_type !== 'simple' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-300">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Verrouillé
+                </span>
+              )}
+              
+              {/* Bottom highlight for selected */}
+              {project.photobooth_type === 'simple' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400"></div>
+              )}
             </div>
           </div>
-          {/* Colonne centrale : carte PREMIUM */}
-          <div>
-            <div className="grid grid-cols-1 gap-3">
-              {/* Carte PREMIUM */}
-              <div
-                onClick={() => !typeValidated && updatePhotoboothType('premium')}
-                className={`
-                  relative cursor-pointer overflow-hidden
-                  rounded-3xl
-                  shadow-[0_8px_32px_0_rgba(99,102,241,0.18)]
-                  transition-transform duration-200
-                  ${project.photobooth_type === 'premium' || !project.photobooth_type
-                    ? 'scale-105'
-                    : typeValidated
-                      ? 'opacity-60 cursor-not-allowed grayscale'
-                      : 'hover:scale-105'
-                  }
-                  group
-                `}
-                style={{
-                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_clown.jpg')",
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  minHeight: '260px',
-                  maxWidth: '380px',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.18)',
-                  borderRadius: '1.5rem'
-                }}
-                disabled={typeValidated && project.photobooth_type !== 'premium'}
-              >
-                {/* Glassmorphism + gradient + glow */}
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-3xl"
-                  style={{
-                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(139,92,246,0.10) 100%)',
-                    backdropFilter: 'blur(14px)',
-                    WebkitBackdropFilter: 'blur(14px)',
-                    border: '1.5px solid rgba(255,255,255,0.22)',
-                    boxShadow: '0 0 0 4px rgba(139,92,246,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
-                    zIndex: 1
-                  }}
-                ></div>
-                {/* Glow border effect */}
-                <div
-                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
-                  style={{
-                    boxShadow: '0 0 32px 8px rgba(139,92,246,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
-                    zIndex: 2
-                  }}
-                ></div>
-                {/* Content */}
-                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
-                  <div className="flex items-center justify-center mb-3">
-                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-400 shadow-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-yellow-300 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </span>
-                  </div>
-                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Premium</h4>
-                  <p className="text-sm text-white/90 mb-3">Expérience IA enrichie, effets avancés, personnalisation poussée</p>
-                  {project.photobooth_type === 'premium' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
-                  )}
-                  {typeValidated && project.photobooth_type !== 'premium' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
-                  )}
-                </div>
-                <div className="absolute top-2 right-2">
-                  {/* Optionally, add a badge or icon */}
+          
+          {/* CARTE PREMIUM */}
+          <div className={`
+            group relative bg-gray-900 rounded-2xl overflow-hidden shadow-xl transform transition-all duration-300
+            ${project.photobooth_type === 'premium' ? 'ring-4 ring-indigo-500/70 scale-[1.02]' : ''}
+            ${typeValidated && project.photobooth_type !== 'premium' ? 'opacity-60 grayscale' : 'hover:scale-[1.03]'}
+          `}>
+            {/* Background image with overlay */}
+            <div className="absolute inset-0 w-full h-full">
+              <div 
+                className="absolute inset-0 bg-cover bg-center" 
+                style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/makeup_pastel_clown.jpg')"}}
+              ></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
+            </div>
+            
+            {/* Glow effect on hover */}
+            <div className={`
+              absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-transparent 
+              blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+              ${project.photobooth_type === 'premium' ? 'opacity-100' : ''}
+            `}></div>
+            
+            {/* Content container */}
+            <div 
+              onClick={() => !typeValidated && updatePhotoboothType('premium')}
+              className={`
+                relative z-10 p-6 h-full flex flex-col items-center justify-center text-center
+                ${!typeValidated ? 'cursor-pointer' : project.photobooth_type !== 'premium' ? 'cursor-not-allowed' : ''}
+              `}
+              style={{minHeight: "340px"}}
+            >
+              {/* Shiny Badge for Premium */}
+              <div className="absolute top-4 right-4">
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full blur-sm opacity-70 animate-pulse"></div>
+                  <span className="relative flex items-center justify-center px-3 py-1 text-xs font-bold text-gray-900 bg-gradient-to-r from-yellow-300 to-yellow-200 rounded-full border border-yellow-400/50">
+                    PREMIUM
+                  </span>
                 </div>
               </div>
+              
+              {/* Icon */}
+              <div className={`
+                inline-flex items-center justify-center w-16 h-16 rounded-full 
+                bg-gradient-to-tr from-indigo-600 to-purple-500 shadow-lg mb-4
+                transform transition-transform duration-300 group-hover:scale-110
+                ${project.photobooth_type === 'premium' ? 'scale-110' : ''}
+              `}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              
+              {/* Title */}
+              <h3 className={`
+                text-2xl font-extrabold text-white mb-3 tracking-tight
+                transform transition-all duration-300 group-hover:scale-110 group-hover:text-indigo-300
+                ${project.photobooth_type === 'premium' ? 'text-indigo-300 scale-110' : ''}
+              `}>Premium</h3>
+              
+              {/* Description */}
+              <p className="text-gray-300 mb-6 text-sm max-w-xs">
+                Expérience IA enrichie, effets avancés, personnalisation poussée. 
+                <span className="hidden sm:inline">Idéal pour des événements innovants et interactifs.</span>
+              </p>
+              
+              {/* Status indicator */}
+              {project.photobooth_type === 'premium' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-lg">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Sélectionné
+                </span>
+              )}
+              
+              {typeValidated && project.photobooth_type !== 'premium' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-300">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Verrouillé
+                </span>
+              )}
+              
+              {/* Bottom highlight for selected */}
+              {project.photobooth_type === 'premium' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-purple-500"></div>
+              )}
             </div>
           </div>
-          {/* Colonne droite : carte GIF */}
-          <div>
-            <div className="grid grid-cols-1 gap-3">
-              {/* Carte GIF */}
-              <div
-                onClick={() => !typeValidated && updatePhotoboothType('gif')}
-                className={`
-                  relative cursor-pointer overflow-hidden
-                  rounded-3xl
-                  shadow-[0_8px_32px_0_rgba(99,102,241,0.18)]
-                  transition-transform duration-200
-                  ${project.photobooth_type === 'gif'
-                    ? 'scale-105'
-                    : typeValidated
-                      ? 'opacity-60 cursor-not-allowed grayscale'
-                      : 'hover:scale-105'
-                  }
-                  group
-                `}
-                style={{
-                  backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/gif_sample.jpg')",
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  minHeight: '260px',
-                  maxWidth: '380px',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 8px 32px 0 rgba(99,102,241,0.18)',
-                  borderRadius: '1.5rem'
-                }}
-                disabled={typeValidated && project.photobooth_type !== 'gif'}
-              >
-                {/* Glassmorphism + gradient + glow */}
-                <div
-                  className="absolute inset-0 pointer-events-none rounded-3xl"
-                  style={{
-                    background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 60%, rgba(139,92,246,0.10) 100%)',
-                    backdropFilter: 'blur(14px)',
-                    WebkitBackdropFilter: 'blur(14px)',
-                    border: '1.5px solid rgba(255,255,255,0.22)',
-                    boxShadow: '0 0 0 4px rgba(139,92,246,0.08), 0 8px 32px 0 rgba(99,102,241,0.10)',
-                    zIndex: 1
-                  }}
-                ></div>
-                {/* Glow border effect */}
-                <div
-                  className="absolute inset-0 rounded-3xl border border-white/30 shadow-lg pointer-events-none"
-                  style={{
-                    boxShadow: '0 0 32px 8px rgba(139,92,246,0.12), 0 2px 16px 0 rgba(99,102,241,0.10) inset',
-                    zIndex: 2
-                  }}
-                ></div>
-                {/* Content */}
-                <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center px-6 py-8 rounded-3xl shadow-lg border border-white/30">
-                  <div className="flex items-center justify-center mb-3">
-                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-400 shadow-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-yellow-300 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z" />
-                        <circle cx="12" cy="12" r="4" fill="currentColor" />
-                      </svg>
-                    </span>
-                  </div>
-                  <h4 className="text-2xl font-extrabold text-white drop-shadow mb-2 tracking-tight">Gif</h4>
-                  <p className="text-sm text-white/90 mb-3">Prise de 5 photos animées, création d'un GIF</p>
-                  {project.photobooth_type === 'gif' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-green-500/90 text-white text-xs font-semibold rounded-full shadow">Sélectionné</span>
-                  )}
-                  {typeValidated && project.photobooth_type !== 'gif' && (
-                    <span className="inline-block mt-2 px-4 py-1 bg-gray-400/80 text-white text-xs font-semibold rounded-full shadow">Verrouillé</span>
-                  )}
-                </div>
-                <div className="absolute top-2 right-2">
-                  {/* Optionally, add a badge or icon */}
-                </div>
+          
+          {/* CARTE BOOMERANG */}
+          <div className={`
+            group relative bg-gray-900 rounded-2xl overflow-hidden shadow-xl transform transition-all duration-300
+            ${project.photobooth_type === 'boomerang' ? 'ring-4 ring-pink-500/70 scale-[1.02]' : ''}
+            ${typeValidated && project.photobooth_type !== 'boomerang' ? 'opacity-60 grayscale' : 'hover:scale-[1.03]'}
+          `}>
+            {/* Background image with overlay */}
+            <div className="absolute inset-0 w-full h-full">
+              <div 
+                className="absolute inset-0 bg-cover bg-center" 
+                style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/gif_sample.jpg')"}}
+              ></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
+            </div>
+            
+            {/* Glow effect on hover */}
+            <div className={`
+              absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500/30 via-pink-500/20 to-transparent 
+              blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+              ${project.photobooth_type === 'boomerang' ? 'opacity-100' : ''}
+            `}></div>
+            
+            {/* Content container */}
+            <div 
+              onClick={() => !typeValidated && updatePhotoboothType('boomerang')}
+              className={`
+                relative z-10 p-6 h-full flex flex-col items-center justify-center text-center
+                ${!typeValidated ? 'cursor-pointer' : project.photobooth_type !== 'boomerang' ? 'cursor-not-allowed' : ''}
+              `}
+              style={{minHeight: "340px"}}
+            >
+              {/* Icon */}
+              <div className={`
+                inline-flex items-center justify-center w-16 h-16 rounded-full 
+                bg-gradient-to-tr from-pink-600 to-orange-400 shadow-lg mb-4
+                transform transition-transform duration-300 group-hover:scale-110
+                ${project.photobooth_type === 'boomerang' ? 'scale-110' : ''}
+              `}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
               </div>
+              
+              {/* Title */}
+              <h3 className={`
+                text-2xl font-extrabold text-white mb-3 tracking-tight
+                transform transition-all duration-300 group-hover:scale-110 group-hover:text-pink-300
+                ${project.photobooth_type === 'boomerang' ? 'text-pink-300 scale-110' : ''}
+              `}>Boomerang</h3>
+              
+              {/* Description */}
+              <p className="text-gray-300 mb-6 text-sm max-w-xs">
+                Effet vidéo aller-retour en boucle. 
+                <span className="hidden sm:inline">Idéal pour capturer des moments expressifs et créer des souvenirs animés.</span>
+              </p>
+              
+              {/* Status indicator */}
+              {project.photobooth_type === 'boomerang' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-pink-600 to-orange-400 text-white shadow-lg">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Sélectionné
+                </span>
+              )}
+              
+              {typeValidated && project.photobooth_type !== 'boomerang' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-700 text-gray-300">
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                  </svg>
+                  Verrouillé
+                </span>
+              )}
+              
+              {/* Bottom highlight for selected */}
+              {project.photobooth_type === 'boomerang' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-600 to-orange-400"></div>
+              )}
             </div>
           </div>
         </div>
-        {/* Colonne explicative pour chaque type */}
+
+        {/* Description panels */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div>
-            <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  {/* Icône IA/étoile */}
-                  <svg className="h-5 w-5 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h5 className="text-sm font-bold text-indigo-800 mb-1">À propos du Photobooth Premium IA</h5>
-                  <div className="text-sm text-indigo-700">
-                    {getPhotoboothTypeDescription('premium')}
-                  </div>
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h5 className="text-sm font-bold text-blue-800 mb-1">À propos du Photobooth Simple</h5>
+                <div className="text-sm text-blue-700">
+                  {getPhotoboothTypeDescription('simple')}
                 </div>
               </div>
             </div>
           </div>
-          <div>
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  {/* Icône simple */}
-                  <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h5 className="text-sm font-bold text-blue-800 mb-1">À propos du Photobooth Simple</h5>
-                  <div className="text-sm text-blue-700">
-                    {getPhotoboothTypeDescription('simple')}
-                  </div>
+          
+          <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded-r-lg shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h5 className="text-sm font-bold text-indigo-800 mb-1">À propos du Photobooth Premium IA</h5>
+                <div className="text-sm text-indigo-700">
+                  {getPhotoboothTypeDescription('premium')}
                 </div>
               </div>
             </div>
           </div>
-          <div>
-            <div className="bg-pink-50 border-l-4 border-pink-400 p-4 mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  {/* Icône GIF */}
-                  <svg className="h-5 w-5 text-pink-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                    <circle cx="12" cy="12" r="4" fill="currentColor" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h5 className="text-sm font-bold text-pink-800 mb-1">À propos du Photobooth Gif</h5>
-                  <div className="text-sm text-pink-700">
-                    {getPhotoboothTypeDescription('gif')}
-                  </div>
+          
+          <div className="bg-pink-50 border-l-4 border-pink-400 p-4 rounded-r-lg shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-pink-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h5 className="text-sm font-bold text-pink-800 mb-1">À propos du Photobooth Boomerang</h5>
+                <div className="text-sm text-pink-700">
+                  {getPhotoboothTypeDescription('boomerang')}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        {/* Bouton de validation */}
+
+        {/* Validation button */}
         {!typeValidated && project && (
-          <div className="mt-6 flex justify-center">
+          <div className="mt-8 flex justify-center">
             <button
               onClick={handleValidatePhotoboothType}
-              className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-sm"
+              className="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-lg flex items-center"
             >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
               Valider le type de photobooth
             </button>
           </div>
         )}
-        <p className="mt-2 text-xs text-gray-500">
-          Type de photobooth: {getPhotoboothTypeLabel(project.photobooth_type || 'premium')}
+        
+        <p className="mt-4 text-sm text-gray-500 text-center">
+          Type sélectionné: <span className="font-medium text-indigo-600">{getPhotoboothTypeLabel(project.photobooth_type || 'premium')}</span>
           {typeValidated && <span className="text-orange-500 ml-2 font-medium">Ce choix est définitif et ne peut plus être modifié.</span>}
         </p>
       </div>
     </div>
   );
 };
+
 
 
 

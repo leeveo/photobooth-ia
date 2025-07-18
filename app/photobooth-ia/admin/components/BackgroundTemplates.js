@@ -222,22 +222,24 @@ const BackgroundTemplates = ({
         </label>
       </div>
 
-      {/* Categories */}
-      <div className="mb-3 overflow-x-auto">
-        <div className="flex space-x-2 pb-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap ${
-                activeCategory === category
-                  ? 'bg-indigo-100 text-indigo-800'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+      {/* Categories - Fixed position */}
+      <div className="mb-4 flex-shrink-0">
+        <div className="overflow-x-auto">
+          <div className="flex space-x-2 pb-2 min-w-max">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap ${
+                  activeCategory === category
+                    ? 'bg-indigo-100 text-indigo-800'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

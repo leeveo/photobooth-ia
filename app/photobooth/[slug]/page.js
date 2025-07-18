@@ -64,8 +64,8 @@ export default function Photobooth({ params }) {
       router.push(`/photobooth-premium/${slug}/how`);
     } else if (project.photobooth_type === 'photobooth2') {
       router.push(`/photobooth2/${slug}/how`);
-    } else if (project.photobooth_type === 'gif') {
-      router.push(`/photobooth-gif/${slug}/how`);
+    } else if (project.photobooth_type === 'boomerang') {
+      router.push(`/photobooth-boomerang/${slug}/how`);
     } else {
       // Fallback pour tout autre type
       router.push(`/photobooth/${slug}/style`);

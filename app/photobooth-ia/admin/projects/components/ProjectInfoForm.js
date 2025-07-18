@@ -415,13 +415,15 @@ const ProjectInfoForm = ({
                 </div>
                 {/* Modern Color Preview */}
                 <div className="mt-8 flex items-center justify-center">
-                  <div className="w-full max-w-xs h-14 rounded-xl overflow-hidden flex shadow border border-gray-200 bg-gradient-to-r from-white/60 to-white/90 backdrop-blur">
-                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.primary_color, transition: 'background 0.3s' }}>
-                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Couleur du texte</span>
-                    </div>
-                    <div className="w-1/2 flex items-center justify-center" style={{ backgroundColor: project.secondary_color, transition: 'background 0.3s' }}>
-                      <span className="font-semibold text-white text-shadow text-xs drop-shadow-lg">Couleur du fond</span>
-                    </div>
+                  <div 
+                    className="w-full max-w-xs py-4 px-6 rounded-xl shadow border border-gray-200 text-center font-medium"
+                    style={{ 
+                      backgroundColor: project.secondary_color,
+                      color: project.primary_color,
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    Aperçu des couleurs du thème
                   </div>
                 </div>
               </div>

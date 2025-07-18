@@ -1547,7 +1547,7 @@ export default function CameraCapture({ params }) {
       setLogs(logs => [...logs, "Redirection vers la page de résultat..."]);
       
       setTimeout(() => {
-        router.push(`/photobooth-gif/${slug}/result`);
+        router.push(`/photobooth-boomerang/${slug}/result`);
       }, 1000);
       
     } catch (error) {

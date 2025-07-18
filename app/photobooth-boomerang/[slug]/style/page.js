@@ -252,7 +252,7 @@ export default function PhotoboothStyles({ params }) {
     }
     
     // Navigate to camera page
-    router.push(`/photobooth-gif/${slug}/cam`);
+    router.push(`/photobooth-boomerang/${slug}/cam`);
   };
   
   // Function to close the modal

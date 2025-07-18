@@ -130,13 +130,13 @@ export default function PhotoboothProject({ params }) {
   }, [settings]);
 
   const goToInstructions = () => {
-    router.push(`/photobooth-gif/${slug}/how`);
+    router.push(`/photobooth-boomerang/${slug}/how`);
   };
 
   // Remplace la logique du bouton commencer
   const handleStartExperience = () => {
-    if (project?.photobooth_type === 'gif') {
-      router.push(`/photobooth-gif/${slug}/cam`);
+    if (project?.photobooth_type === 'boomerang') {
+      router.push(`/photobooth-boomerang/${slug}/cam`);
     } else if (project?.photobooth_type === 'premium') {
       router.push(`/photobooth-premium/${slug}/style`);
     } else {

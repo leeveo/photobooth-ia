@@ -339,7 +339,7 @@ export default function Result({ params }) {
       projectName = projectName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
       
       // Structure du nom de fichier 
-      const fileName = `photobooth-gif-${fullProjectId}-${projectName}-${projectOwner}-${Date.now()}.jpg`;
+      const fileName = `photobooth-boomerang-${fullProjectId}-${projectName}-${projectOwner}-${Date.now()}.jpg`;
       logWithTimestamp('Uploading via server-side API...');
 
       // Always convert to File (handles both dataURL and HTTP URL)
@@ -831,7 +831,7 @@ export default function Result({ params }) {
             whileTap={{ scale: 0.97 }}
           >
             <Link 
-              href={`/photobooth-gif/${slug}/how`}
+              href={`/photobooth-boomerang/${slug}/how`}
               onClick={handleStartOver}
               className="py-3 px-8 rounded-xl font-medium text-center bg-white bg-opacity-20 hover:bg-opacity-30 text-white transition-all flex items-center justify-center gap-2 w-full backdrop-blur-sm"
             >

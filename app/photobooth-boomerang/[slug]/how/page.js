@@ -61,7 +61,7 @@ export default function HowToUse({ params }) {
   }, [fetchProjectData]);
   
   const goToStyles = () => {
-    router.push(`/photobooth-gif/${slug}/cam`);
+    router.push(`/photobooth-boomerang/${slug}/cam`);
   };
   
   if (loading) {

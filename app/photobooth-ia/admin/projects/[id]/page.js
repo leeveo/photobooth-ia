@@ -765,10 +765,10 @@ export default function ProjectDetails({ params }) {
           <div className="flex space-x-3">
             <Link
               href={
-                project.photobooth_type === 'gif'
+                project.photobooth_type === 'boomerang'
                   ? process.env.NODE_ENV === 'production' 
-                    ? `/photobooth/${project.slug}` // Fallback to standard photobooth in production for GIF type
-                    : `/photobooth-gif/${project.slug}`
+                    ? `/photobooth/${project.slug}` // Fallback to standard photobooth in production for boomerang type
+                    : `/photobooth-boomerang/${project.slug}`
                   : `/photobooth/${project.slug}`
               }
               target="_blank"
@@ -776,8 +776,8 @@ export default function ProjectDetails({ params }) {
             >
               <RiExternalLinkLine className="mr-2 h-4 w-4" />
               Voir le projet
-              {project.photobooth_type === 'gif' && process.env.NODE_ENV === 'production' && (
-                <span className="ml-1 text-xs text-amber-600">(Mode Standard)</span>
+              {project.photobooth_type === 'boomerang' && process.env.NODE_ENV === 'production' && (
+                <span className="ml-1 text-xs text-amber-600">(Mode Boomerang)</span>
               )}
             </Link>
             <Link
