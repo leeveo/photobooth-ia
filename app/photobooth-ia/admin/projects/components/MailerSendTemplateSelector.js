@@ -16,42 +16,42 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
         id: 'template1',
         name: 'Template Simple',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/4f46e5/ffffff?text=Template+Simple',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_001.png',
         created_at: new Date().toISOString()
       },
       {
         id: 'template2',
         name: 'Template Professionnel',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/2563eb/ffffff?text=Template+Pro',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_002.png',
         created_at: new Date().toISOString()
       },
       {
         id: 'template3',
         name: 'Template Minimaliste',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/0ea5e9/ffffff?text=Template+Minimal',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_003.png',
         created_at: new Date().toISOString()
       },
       {
         id: 'template4',
         name: 'Template Coloré',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/ec4899/ffffff?text=Template+Coloré',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_004.png',
         created_at: new Date().toISOString()
       },
       {
         id: 'template5',
         name: 'Template Marketing',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/8b5cf6/ffffff?text=Template+Marketing',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_005.png',
         created_at: new Date().toISOString()
       },
       {
         id: 'template6',
         name: 'Template Événement',
         type: 'html',
-        image_path: 'https://via.placeholder.com/300x200/f59e0b/ffffff?text=Template+Événement',
+        image_path: 'https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth_emailtemplate/email_006.png',
         created_at: new Date().toISOString()
       }
     ];
