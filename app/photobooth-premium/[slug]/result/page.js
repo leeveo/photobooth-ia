@@ -213,18 +213,11 @@ export default function Result({ params }) {
     try {
       // Upload to S3
       const s3Url = await uploadToS3(imageResultAI);
-      
+
       if (s3Url) {
-        // Update session record with S3 URL
-        try {
-          await supabase.from('sessions')
-            .update({ result_s3_url: s3Url })
-            .eq('result_image_url', imageResultAI);
-        } catch (dbError) {
-          console.error("Error updating session:", dbError);
-        }
-        
-        setLinkQR(s3Url);
+        // Générer le lien vers la page personnalisée
+        const customPageUrl = `/photobooth-premium/${slug}/image?img=${encodeURIComponent(s3Url)}`;
+        setLinkQR(customPageUrl);
         setGenerateQR(true);
       } else {
         throw new Error("Échec de l'upload de l'image");
@@ -284,7 +277,7 @@ export default function Result({ params }) {
             console.error("Error updating session:", dbError);
           }
           
-          setLinkQR(s3Url);
+          setLinkQR(`/photobooth-premium/${slug}/image?img=${encodeURIComponent(s3Url)}`);
           setGenerateQR(true);
 
           // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
@@ -423,26 +416,6 @@ export default function Result({ params }) {
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
     >
-      <div className="fixed top-0 right-0 w-[30%] mt-4 mr-4">
-        {project.logo_url ? (
-          <Image 
-            src={project.logo_url} 
-            width={200} 
-            height={100} 
-            alt={project.name} 
-            className='w-full max-w-[150px] h-auto ml-auto' 
-            priority 
-          />
-        ) : (
-          <h1 
-            className="text-lg font-bold text-right" 
-            style={{ color: secondaryColor }}
-          >
-            {project.name}
-          </h1>
-        )}
-      </div>
-
       {/* Formulaire de capture de données */}
       {showDataCapture && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
@@ -657,6 +630,16 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
+              {/* Ajout du lien cliquable sous le QR code */}
+              <a
+                href={linkQR}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-4 text-indigo-600 underline break-all text-center font-semibold"
+                style={{ wordBreak: 'break-all' }}
+              >
+                {linkQR}
+              </a>
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo
               </p>
@@ -760,10 +743,11 @@ export default function Result({ params }) {
             <motion.button 
               onClick={handleShare}
               disabled={loadingUpload}
-              className={`py-3 px-8 rounded-xl font-bold text-center flex items-center justify-center gap-2 max-w-[240px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
+              className={`py-5 px-10 rounded-2xl font-extrabold text-2xl text-center flex items-center justify-center gap-3 max-w-[340px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
               style={{ 
                 backgroundColor: secondaryColor, 
                 color: primaryColor,
+                letterSpacing: '0.05em',
                 boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
               }}
               whileHover={{ scale: 1.05, y: -2 }}
@@ -772,7 +756,7 @@ export default function Result({ params }) {
             >
               {loadingUpload ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -780,14 +764,14 @@ export default function Result({ params }) {
                 </>
               ) : project?.datacapture ? (
                 <>
-                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <span>ENVOYER MA PHOTO</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                   <span>PARTAGER MA PHOTO</span>
@@ -797,16 +781,19 @@ export default function Result({ params }) {
           )}
           
           <motion.div
-            className="w-full max-w-[240px]"
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
+            className="w-full max-w-[340px]" // largeur augmentée
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Link 
               href={`/photobooth-premium/${slug}`}
               onClick={handleStartOver}
-              className="py-3 px-8 rounded-xl font-medium text-center bg-white bg-opacity-20 hover:bg-opacity-30 text-white transition-all flex items-center justify-center gap-2 w-full backdrop-blur-sm"
+              className="py-5 px-10 rounded-2xl font-extrabold text-2xl text-center bg-white bg-opacity-30 hover:bg-opacity-40 text-white transition-all flex items-center justify-center gap-3 w-full backdrop-blur-sm shadow-lg"
+              style={{
+                letterSpacing: '0.05em'
+              }}
             >
-              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               <span>RECOMMENCER</span>

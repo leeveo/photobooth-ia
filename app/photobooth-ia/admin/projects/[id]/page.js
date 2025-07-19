@@ -18,6 +18,7 @@ import StyleManager from '../components/StyleManager';
 import BackgroundManager from '../components/BackgroundManager';
 import DataCaptureManager from '../components/DataCaptureManager';
 import PhotoboothEmailTemplateEditor from '../components/PhotoboothEmailTemplateEditor';
+import PhotoboothImagePageContentEditor from '../components/PhotoboothImagePageContentEditor';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -920,6 +921,9 @@ export default function ProjectDetails({ params }) {
                       </div>
                     </div>
                   )}
+
+                  {/* Bloc de personnalisation de la page /image */}
+                  <PhotoboothImagePageContentEditor projectId={projectId} />
 
                   {/* Photobooth Type Manager Section */}
                   <PhotoboothTypeManager
