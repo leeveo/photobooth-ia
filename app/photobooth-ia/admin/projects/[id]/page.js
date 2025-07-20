@@ -5,7 +5,16 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line, RiAlertLine, RiShieldLine } from 'react-icons/ri';
+import { RiExternalLinkLine, RiArrowLeftLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
+import { 
+  RiInformationLine, 
+  RiImageEditLine, 
+  RiUser3Line, 
+  RiMailSendLine, 
+  RiShieldLine, 
+  RiPaletteLine, 
+  RiLayout5Line 
+} from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
 import BackgroundTemplates from '../../components/BackgroundTemplates';
 import dynamic from 'next/dynamic';
@@ -724,6 +733,17 @@ export default function ProjectDetails({ params }) {
     );
   }
   
+  // Define the steps for the horizontal stepper, with icons
+  const steps = [
+    { key: 'info', label: 'Informations', number: 1, icon: <RiInformationLine className="w-7 h-7" /> },
+    { key: 'backgrounds', label: 'Arrière-plans', number: 2, icon: <RiImageEditLine className="w-7 h-7" /> },
+    { key: 'data', label: 'Données participant', number: 3, icon: <RiUser3Line className="w-7 h-7" /> },
+    { key: 'email', label: 'Email & Partage', number: 4, icon: <RiMailSendLine className="w-7 h-7" /> },
+    { key: 'type', label: 'Type Photobooth', number: 5, icon: <RiShieldLine className="w-7 h-7" /> },
+    { key: 'styles', label: 'Styles', number: 6, icon: <RiPaletteLine className="w-7 h-7" /> },
+    { key: 'canvas', label: 'Canvas', number: 7, icon: <RiLayout5Line className="w-7 h-7" /> },
+  ];
+
   return (
     <>
       {/* Composant qui initialise les variables globales */}
@@ -810,298 +830,215 @@ export default function ProjectDetails({ params }) {
           </div>
         )}
 
-        {/* Tabs for different sections */}
-        <div className="bg-white shadow-sm rounded-xl overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex px-6 -mb-px space-x-8">
+        {/* Horizontal Stepper Navigation */}
+        <div className="bg-white shadow-sm rounded-xl overflow-hidden mb-6">
+          <nav className="flex justify-between px-6 py-4 border-b border-gray-200">
+            {steps.map((step, idx) => (
               <button
-                onClick={() => setActiveTab('info')}
-                className={`border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'info' ? 'border-indigo-500 text-indigo-600' : ''
-                }`}
+                key={step.key}
+                onClick={() => setActiveTab(step.key)}
+                className={`flex flex-col items-center px-2 group focus:outline-none transition-all
+                  ${activeTab === step.key
+                    ? 'text-indigo-700 font-bold'
+                    : 'text-gray-500 hover:text-indigo-500'}
+                `}
+                style={{ minWidth: 90 }}
               >
-                Informations
+                <span className={`flex items-center justify-center w-14 h-14 rounded-full mb-1 text-white text-lg font-bold
+                  ${activeTab === step.key
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg'
+                    : 'bg-gray-200 text-gray-500 group-hover:bg-indigo-100'}
+                `}>
+                  {/* Icon */}
+                  {step.icon}
+                </span>
+                <span className="text-xs mt-1">{step.label}</span>
+                {activeTab === step.key && (
+                  <span className="block w-2 h-2 mt-2 rounded-full bg-indigo-500"></span>
+                )}
               </button>
-            
-            </nav>
-          </div>
+            ))}
+          </nav>
+        </div>
 
-          {/* Tab content */}
-          <div className="p-6">
-            {/* Info Tab */}
-            {activeTab === 'info' && (
-              <>
-                <div className="space-y-6">
-                  {/* Project Info Section */}
-                  <ProjectInfoForm 
-                    project={project} 
-                    setProject={setProject} 
-                    setError={setError} 
-                    setSuccess={setSuccess}
-                    setShowSuccessPopup={setShowSuccessPopup}
-                    setSuccessMessage={setSuccessMessage}
-                  />
-                  
-                  {/* Background Manager Section */}
-                  <BackgroundManager
-                    projectId={projectId}
-                    backgrounds={backgrounds}
-                    setBackgrounds={setBackgrounds}
-                    setError={setError}
-                    setSuccess={setSuccess}
-                  />
+        {/* Tab content */}
+        <div className="p-6 bg-white rounded-xl shadow-sm">
+          {/* Informations */}
+          {activeTab === 'info' && (
+            <ProjectInfoForm 
+              project={project} 
+              setProject={setProject} 
+              setError={setError} 
+              setSuccess={setSuccess}
+              setShowSuccessPopup={setShowSuccessPopup}
+              setSuccessMessage={setSuccessMessage}
+            />
+          )}
 
-                  {/* Data Capture Manager Section */}
-                  <DataCaptureManager
-                    projectId={projectId}
-                    project={project}
-                    setProject={setProject}
-                    setError={setError}
-                    setSuccess={setSuccess}
-                  />
+          {/* Arrière-plans */}
+          {activeTab === 'backgrounds' && (
+            <BackgroundManager
+              projectId={projectId}
+              backgrounds={backgrounds}
+              setBackgrounds={setBackgrounds}
+              setError={setError}
+              setSuccess={setSuccess}
+            />
+          )}
 
-                  {/* Encart Email Template Editor avec switch et bouton édition */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="w-full">
-                      <h3 className="text-lg font-semibold mb-1">Personnalisation de l'email de partage d'image</h3>
-                      <p className="text-gray-500 text-sm mb-2">
-                        Gérez l'envoi automatique d'email aux participants et personnalisez le contenu.
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <EmailSwitch checked={emailEnabled} onChange={handleEmailEnabledChange} />
-                        <span className="text-sm text-gray-700">
-                          {emailEnabled ? "Envoi d'email activé" : "Envoi d'email désactivé"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowEmailEditor(true)}
-                          className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
-                            ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-blue-700 hover:to-indigo-800'}
-                          `}
-                          disabled={!emailEnabled}
-                        >
-                          <RiShieldLine className="mr-2 h-4 w-4" />
-                          Éditer l'email
-                        </button>
-                      </div>
-                      {/* Aperçu de l'email sous le switch */}
-                      {emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
-                        <div className="mt-6 border rounded-md bg-white shadow p-4">
-                          <div className="mb-2 text-xs text-gray-400">Aperçu de l'email personnalisé :</div>
-                          <div className="mb-2 text-sm font-semibold text-gray-700">Sujet : {emailTemplate.subject}</div>
-                          <div className="border rounded bg-gray-50 p-3 overflow-auto" style={{ minHeight: 120 }}>
-                            <div dangerouslySetInnerHTML={{ __html: emailTemplate.html_content }} />
-                          </div>
-                        </div>
-                      )}
-                    </div>
+          {/* Données participant */}
+          {activeTab === 'data' && (
+            <DataCaptureManager
+              projectId={projectId}
+              project={project}
+              setProject={setProject}
+              setError={setError}
+              setSuccess={setSuccess}
+            />
+          )}
+
+          {/* Email & Partage */}
+          {activeTab === 'email' && (
+            <div>
+              {/* Encart Email Template Editor avec switch et bouton édition */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold mb-1">Personnalisation de l'email de partage d'image</h3>
+                  <p className="text-gray-500 text-sm mb-2">
+                    Gérez l'envoi automatique d'email aux participants et personnalisez le contenu.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <EmailSwitch checked={emailEnabled} onChange={handleEmailEnabledChange} />
+                    <span className="text-sm text-gray-700">
+                      {emailEnabled ? "Envoi d'email activé" : "Envoi d'email désactivé"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailEditor(true)}
+                      className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
+                        ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-blue-700 hover:to-indigo-800'}
+                      `}
+                      disabled={!emailEnabled}
+                    >
+                      <RiShieldLine className="mr-2 h-4 w-4" />
+                      Éditer l'email
+                    </button>
                   </div>
-                  {/* Popup éditeur d'email */}
-                  {showEmailEditor && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                      <div className="w-full max-w-5xl">
-                        <PhotoboothEmailTemplateEditor
-                          projectId={projectId}
-                          onTemplateChange={() => {}} // inutile ici
-                          initialSubject={emailTemplate.subject}
-                          initialHtmlContent={emailTemplate.html_content}
-                          onSave={handleSaveEmailTemplateFromEditor}
-                          onCancel={() => setShowEmailEditor(false)}
-                          isSaving={emailTemplateLoading}
-                        />
-                        <div className="flex justify-end mt-4">
-                          <button
-                            type="button"
-                            onClick={() => setShowEmailEditor(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                          >
-                            Fermer
-                          </button>
-                        </div>
+                  {/* Aperçu de l'email sous le switch */}
+                  {emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
+                    <div className="mt-6 border rounded-md bg-white shadow p-4">
+                      <div className="mb-2 text-xs text-gray-400">Aperçu de l'email personnalisé :</div>
+                      <div className="mb-2 text-sm font-semibold text-gray-700">Sujet : {emailTemplate.subject}</div>
+                      <div className="border rounded bg-gray-50 p-3 overflow-auto" style={{ minHeight: 120 }}>
+                        <div dangerouslySetInnerHTML={{ __html: emailTemplate.html_content }} />
                       </div>
                     </div>
                   )}
-
-                  {/* Bloc de personnalisation de la page /image */}
-                  <PhotoboothImagePageContentEditor projectId={projectId} />
-
-                  {/* Photobooth Type Manager Section */}
-                  <PhotoboothTypeManager
-                    project={project}
-                    setProject={setProject}
-                    typeValidated={typeValidated}
-                    setTypeValidated={setTypeValidated}
-                    setError={setError}
-                    setSuccess={setSuccess}
-                  />
-
-                  {/* Style Manager Section */}
-                  <StyleManager
-                    projectId={projectId}
-                    styles={styles}
-                    setStyles={setStyles}
-                    setError={setError}
-                    setSuccess={setSuccess}
-                    typeValidated={typeValidated}
-                    photoboothType={project.photobooth_type}
-                  />
-                  
-                  {/* Canvas Editor Section */}
-                  <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
-                     <div className="bg-gradient-to-r rounded-lg from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-            <span className="text-white font-semibold">5</span>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-              
-              Editeur de Canvas
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Personnnalisez l'encadrement de votre photo avec l'éditeur de canvas.
-            </p>
-          </div>
-        </div>
-      </div>
-                    
-                    {!typeValidated && (
-                      <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-orange-700">
-                              Vous devez d'abord valider le type de photobooth à l'étape 2 avant de pouvoir utiliser l'éditeur de canvas.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                      <CanvasEditor 
-                        projectId={projectId} 
-                        onSave={(layoutData) => {
-                          setCanvasLayout(layoutData);
-                          setSuccess("Layout de canvas enregistré avec succès!");
-                        }}
-                        initialData={canvasLayout}
-                      />
+                </div>
+              </div>
+              {/* Popup éditeur d'email */}
+              {showEmailEditor && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                  <div className="w-full max-w-5xl">
+                    <PhotoboothEmailTemplateEditor
+                      projectId={projectId}
+                      onTemplateChange={() => {}} // inutile ici
+                      initialSubject={emailTemplate.subject}
+                      initialHtmlContent={emailTemplate.html_content}
+                      onSave={handleSaveEmailTemplateFromEditor}
+                      onCancel={() => setShowEmailEditor(false)}
+                      isSaving={emailTemplateLoading}
+                    />
+                    <div className="flex justify-end mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailEditor(false)}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        Fermer
+                      </button>
                     </div>
                   </div>
                 </div>
-              </>
-            )}
+              )}
+              {/* Bloc de personnalisation de la page /image */}
+              <PhotoboothImagePageContentEditor projectId={projectId} />
+            </div>
+          )}
 
-            {/* Settings Tab */}
-            {activeTab === 'settings' && (
-              <form onSubmit={saveSettings} className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Paramètres du projet</h3>
-                
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="default_gender" className="block text-sm font-medium text-gray-700">
-                      Genre par défaut
-                    </label>
-                    <select
-                      id="default_gender"
-                      name="default_gender"
-                      value={settings.default_gender}
-                      onChange={handleSettingChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="m">Homme</option>
-                      <option value="f">Femme</option>
-                      <option value="ag">Ado Garçon</option>
-                      <option value="af">Ado Fille</option>
-                    </select>
+          {/* Type Photobooth */}
+          {activeTab === 'type' && (
+            <PhotoboothTypeManager
+              project={project}
+              setProject={setProject}
+              typeValidated={typeValidated}
+              setTypeValidated={setTypeValidated}
+              setError={setError}
+              setSuccess={setSuccess}
+            />
+          )}
+
+          {/* Styles */}
+          {activeTab === 'styles' && (
+            <StyleManager
+              projectId={projectId}
+              styles={styles}
+              setStyles={setStyles}
+              setError={setError}
+              setSuccess={setSuccess}
+              typeValidated={typeValidated}
+              photoboothType={project.photobooth_type}
+            />
+          )}
+
+          {/* Canvas */}
+          {activeTab === 'canvas' && (
+            <div className={`mt-8 ${!typeValidated ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}>
+              <div className="bg-gradient-to-r rounded-lg from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                    <span className="text-white font-semibold">7</span>
                   </div>
-                  
-                  <div>
-                    <label htmlFor="enable_qr_codes" className="flex items-center">
-                      <input
-                        id="enable_qr_codes"
-                        name="enable_qr_codes"
-                        type="checkbox"
-                        checked={settings.enable_qr_codes}
-                        onChange={handleSettingChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">
-                        Activer les codes QR
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="enable_fullscreen" className="flex items-center">
-                      <input
-                        id="enable_fullscreen"
-                        name="enable_fullscreen"
-                        type="checkbox"
-                        checked={settings.enable_fullscreen}
-                        onChange={handleSettingChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">
-                        Activer le mode plein écran
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="show_countdown" className="flex items-center">
-                      <input
-                        id="show_countdown"
-                        name="show_countdown"
-                        type="checkbox"
-                        checked={settings.show_countdown}
-                        onChange={handleSettingChange}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">
-                        Afficher le compte à rebours
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="max_processing_time" className="block text-sm font-medium text-gray-700">
-                      Temps de traitement max (en secondes)
-                    </label>
-                    <input
-                      type="number"
-                      id="max_processing_time"
-                      name="max_processing_time"
-                      value={settings.max_processing_time}
-                      onChange={handleSettingChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                      Editeur de Canvas
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Personnnalisez l'encadrement de votre photo avec l'éditeur de canvas.
+                    </p>
                   </div>
                 </div>
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('info')}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md shadow-sm hover:from-indigo-700 hover:to-purple-700"
-                  >
-                    Enregistrer les paramètres
-                  </button>
+              </div>
+              
+              {!typeValidated && (
+                <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-orange-700">
+                        Vous devez d'abord valider le type de photobooth à l'étape 5 avant de pouvoir utiliser l'éditeur de canvas.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </form>
-            )}
-          </div>
+              )}
+              
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <CanvasEditor 
+                  projectId={projectId} 
+                  onSave={(layoutData) => {
+                    setCanvasLayout(layoutData);
+                    setSuccess("Layout de canvas enregistré avec succès!");
+                  }}
+                  initialData={canvasLayout}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

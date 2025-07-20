@@ -294,20 +294,20 @@ const BackgroundManager = ({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 justify-center place-items-center">
+            <div className="grid grid-cols-1 gap-10 justify-center place-items-center">
               {backgrounds.map((background) => (
                 <div
                   key={background.id}
-                  className="w-full max-w-md border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg flex flex-col mx-auto"
+                  className="w-full max-w-6xl border border-gray-200 rounded-3xl overflow-hidden bg-white shadow-xl flex flex-col mx-auto"
                 >
-                  <div className="h-64 bg-gray-100 relative">
+                  <div className="relative" style={{ width: '100%', height: '700px' }}>
                     {background.image_url ? (
                       <>
                         <Image
                           src={getFullImageUrl(background.image_url)}
                           alt={background.name}
                           fill
-                          style={{ objectFit: "cover" }}
+                          style={{ objectFit: "contain" }}
                           unoptimized={true}
                           onError={(e) => {
                             console.error('Image failed to load:', background.image_url);
@@ -320,7 +320,7 @@ const BackgroundManager = ({
                         </div>
                       </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center" style={{ height: '700px' }}>
                         <span className="text-gray-400">Aucune image</span>
                       </div>
                     )}

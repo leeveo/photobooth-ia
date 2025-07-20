@@ -208,6 +208,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
  
     { name: 'Galerie', path: '/photobooth-ia/admin/project-gallery', icon: <FiImage className="w-5 h-5" /> },
     { name: 'Statistiques', path: '/photobooth-ia/admin/stats', icon: <FiBarChart2 className="w-5 h-5" /> },
+    { name: 'Données', path: '/photobooth-ia/admin/donnees', icon: <FiGrid className="w-5 h-5" /> },
     { name: 'Historique de commande', path: '/photobooth-ia/admin/parametre', icon: <FiShoppingCart className="w-5 h-5" /> },
   ];
 

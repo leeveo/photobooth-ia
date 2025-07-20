@@ -1634,6 +1634,10 @@ const handleSaveLayoutConfirmed = async () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
         {/* Bloc Orientation déplacé à gauche */}
         <div className="w-full sm:w-auto md:mr-4">
+          {/* Ajout de l'instruction étape 1 */}
+          <div className="mb-2 text-purple-700 font-semibold text-base">
+            1 - Je choisis l'orientation et le format de ma photo
+          </div>
           <label htmlFor="orientation-select" className="block text-2xl font-bold text-gray-900 mb-1">
             Orientation
           </label>
@@ -1649,7 +1653,11 @@ const handleSaveLayoutConfirmed = async () => {
               </option>
             ))}
           </select>
+           <div className="mb-2 text-purple-700 font-semibold text-base">
+            2 - Je personnalise mon encadrement ( Layout )
+          </div>
         </div>
+   
         {/* Actions à droite */}
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
           {thumbnailUrl && (
@@ -1803,7 +1811,7 @@ const handleSaveLayoutConfirmed = async () => {
             onClick={() => setActiveTab('unsplash')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2  0 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span className="text-xs font-medium">Images</span>
           </button>
@@ -2255,6 +2263,8 @@ Aucun template disponible.
         
         {/* Column 3: Canvas */}
         <div className="w-full lg:flex-grow">
+          {/* Ajout de l'instruction étape 2 */}
+        
           <div className="mb-2 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-1 sm:space-y-0">
             <span>
               Orientation: {orientations.find(o => o.id_orientation === selectedOrientationId)?.label || ''}
@@ -2263,7 +2273,6 @@ Aucun template disponible.
               Dimensions: {stageSize.width}×{stageSize.height} pixels ({Math.round(stageSize.scale * 100)}%)
             </span>
           </div>
-          
           <div 
             ref={containerRef} 
             className="border border-gray-300 rounded-lg bg-gray-100 overflow-hidden flex justify-center items-center p-2 md:p-4"
