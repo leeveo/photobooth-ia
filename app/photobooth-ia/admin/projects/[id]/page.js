@@ -877,13 +877,30 @@ export default function ProjectDetails({ params }) {
 
           {/* Arrière-plans */}
           {activeTab === 'backgrounds' && (
-            <BackgroundManager
-              projectId={projectId}
-              backgrounds={backgrounds}
-              setBackgrounds={setBackgrounds}
-              setError={setError}
-              setSuccess={setSuccess}
-            />
+            <div>
+              <div className="bg-gradient-to-r rounded-lg from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200 mb-6">
+                <div className="flex items-center">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                    <span className="text-white font-semibold">2</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                      Arrière-plans du photobooth
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Gérez et personnalisez les arrière-plans utilisés dans votre photobooth.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <BackgroundManager
+                projectId={projectId}
+                backgrounds={backgrounds}
+                setBackgrounds={setBackgrounds}
+                setError={setError}
+                setSuccess={setSuccess}
+              />
+            </div>
           )}
 
           {/* Données participant */}
@@ -900,6 +917,46 @@ export default function ProjectDetails({ params }) {
           {/* Email & Partage */}
           {activeTab === 'email' && (
             <div>
+              <div className="bg-gradient-to-r rounded-lg from-indigo-50 to-purple-50 px-6 py-4 border-b border-gray-200 mb-6">
+                <div className="flex items-center">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
+                    <span className="text-white font-semibold">4</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                      Email & Partage
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Gérez l'envoi automatique d'email aux participants et personnalisez le contenu.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Popup éditeur d'email */}
+              {showEmailEditor && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                  <div className="w-full max-w-5xl">
+                    <PhotoboothEmailTemplateEditor
+                      projectId={projectId}
+                      onTemplateChange={() => {}} // inutile ici
+                      initialSubject={emailTemplate.subject}
+                      initialHtmlContent={emailTemplate.html_content}
+                      onSave={handleSaveEmailTemplateFromEditor}
+                      onCancel={() => setShowEmailEditor(false)}
+                      isSaving={emailTemplateLoading}
+                    />
+                    <div className="flex justify-end mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailEditor(false)}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        Fermer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Encart Email Template Editor avec switch et bouton édition */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="w-full">
@@ -936,31 +993,6 @@ export default function ProjectDetails({ params }) {
                   )}
                 </div>
               </div>
-              {/* Popup éditeur d'email */}
-              {showEmailEditor && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                  <div className="w-full max-w-5xl">
-                    <PhotoboothEmailTemplateEditor
-                      projectId={projectId}
-                      onTemplateChange={() => {}} // inutile ici
-                      initialSubject={emailTemplate.subject}
-                      initialHtmlContent={emailTemplate.html_content}
-                      onSave={handleSaveEmailTemplateFromEditor}
-                      onCancel={() => setShowEmailEditor(false)}
-                      isSaving={emailTemplateLoading}
-                    />
-                    <div className="flex justify-end mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowEmailEditor(false)}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                      >
-                        Fermer
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
               {/* Bloc de personnalisation de la page /image */}
               <PhotoboothImagePageContentEditor projectId={projectId} />
             </div>

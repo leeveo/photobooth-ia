@@ -200,7 +200,7 @@ Conformément au RGPD, je dispose d’un droit d’accès, de rectification et d
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
         <div className="flex items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md mr-3">
-            <span className="text-white font-semibold">2</span>
+            <span className="text-white font-semibold">3</span>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900 flex items-center">
