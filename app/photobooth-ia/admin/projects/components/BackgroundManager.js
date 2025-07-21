@@ -560,7 +560,108 @@ const BackgroundManager = ({
                 >
                   {/* Background preview section (image or video) */}
                   <div className="relative" style={{ width: '100%', height: '700px' }}>
-                    {background.image_url ? (
+                    {background.video_url && background.show_animated ? (
+                      <div className="flex items-center justify-center w-full h-full bg-black relative">
+                        {/* Indicateur de chargement vidéo */}
+                        <div className="absolute inset-0 flex items-center justify-center text-white z-10" id={`video-loading-${background.id}`}>
+                          <div className="flex flex-col items-center">
+                            <svg className="animate-spin h-10 w-10 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Chargement de la vidéo...</span>
+                          </div>
+                        </div>
+                        
+                        <video
+                          key={`video-${background.id}-${Date.now()}`} /* Clé unique pour forcer le remontage */
+                          src={background.video_url}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          controls={true} /* Ajout des contrôles pour tester manuellement */
+                          className="bg-black z-20"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '700px',
+                            width: '100%',
+                            height: 'auto',
+                            objectFit: 'contain'
+                          }}
+                          onLoadedData={(e) => {
+                            // Masquer l'indicateur de chargement
+                            const loadingIndicator = document.getElementById(`video-loading-${background.id}`);
+                            if (loadingIndicator) loadingIndicator.style.display = 'none';
+                            
+                            console.log(`Vidéo chargée pour background ${background.id}:`, background.video_url);
+                            const video = e.target;
+                            
+                            // Force la lecture immédiatement
+                            video.play()
+                              .then(() => console.log(`Lecture vidéo démarrée pour ${background.id}`))
+                              .catch(err => {
+                                console.error(`Erreur de lecture vidéo pour ${background.id}:`, err);
+                                // Nouvelle tentative immédiate
+                                setTimeout(() => {
+                                  video.play().catch(e => console.error("Échec lecture après délai:", e));
+                                }, 500);
+                              });
+                          }}
+                          onError={(e) => {
+                            console.error(`Erreur de chargement vidéo pour ${background.id}:`, e.target.error);
+                            // Afficher un message d'erreur à la place de l'indicateur de chargement
+                            const loadingIndicator = document.getElementById(`video-loading-${background.id}`);
+                            if (loadingIndicator) {
+                              loadingIndicator.innerHTML = `
+                                <div class="text-center">
+                                  <svg class="mx-auto h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  <p>Impossible de charger la vidéo</p>
+                                  <p class="text-xs mt-2">${background.video_url}</p>
+                                  <button class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md text-sm retry-video-btn">
+                                    Réessayer
+                                  </button>
+                                </div>
+                              `;
+                              
+                              // Ajouter un gestionnaire pour le bouton de réessai
+                              setTimeout(() => {
+                                const retryBtn = loadingIndicator.querySelector('.retry-video-btn');
+                                if (retryBtn) {
+                                  retryBtn.addEventListener('click', (evt) => {
+                                    evt.preventDefault();
+                                    evt.stopPropagation();
+                                    const videoElement = e.target;
+                                    videoElement.load(); // Recharger la vidéo
+                                    videoElement.play().catch(e => console.error("Échec nouvelle tentative:", e));
+                                  });
+                                }
+                              }, 100);
+                            }
+                          }}
+                        />
+                        
+                        {/* Bouton de secours pour lancer la vidéo manuellement */}
+                        <button 
+                          className="absolute bottom-4 right-4 bg-indigo-600 text-white px-3 py-1 rounded-md text-sm z-30"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Trouver la vidéo parente et la lire
+                            const video = e.target.closest('div').querySelector('video');
+                            if (video) {
+                              video.play()
+                                .then(() => console.log("Lecture vidéo démarrée manuellement"))
+                                .catch(err => console.error("Échec lecture manuelle:", err));
+                            }
+                          }}
+                        >
+                          Forcer lecture
+                        </button>
+                      </div>
+                    ) : background.image_url ? (
                       <>
                         <Image
                           src={getFullImageUrl(background.image_url)}
@@ -578,26 +679,6 @@ const BackgroundManager = ({
                           ID: {background.id?.substring(0, 4)}...
                         </div>
                       </>
-                    ) : background.video_url ? (
-                      <div className="flex items-center justify-center w-full h-full bg-white">
-                        <video
-                          src={background.video_url}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          controls={false}
-                          className="bg-black"
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '700px',
-                            width: 'auto',
-                            height: 'auto',
-                            objectFit: 'contain',
-                            background: '#000'
-                          }}
-                        />
-                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center" style={{ height: '700px' }}>
                         <span className="text-gray-400">Aucune image ou vidéo</span>
@@ -891,6 +972,18 @@ const BackgroundManager = ({
                 playsInline
                 className="w-full max-w-xl rounded-lg"
                 style={{ outline: 'none' }}
+                onLoadedData={(e) => {
+                  // Force la lecture quand la vidéo est chargée
+                  const video = e.target;
+                  video.play().catch(err => {
+                    console.error("Erreur de lecture de la vidéo principale:", err);
+                    setTimeout(() => video.play(), 1000);
+                  });
+                }}
+                ref={(el) => {
+                  // Essaie de lancer la vidéo quand l'élément est monté
+                  if (el) el.play().catch(err => console.error("Erreur de lecture vidéo principale:", err));
+                }}
               />
               <div className="mt-4 w-full max-w-xl">
                 <label className="block text-sm font-medium text-gray-700 mb-1">

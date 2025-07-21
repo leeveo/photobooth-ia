@@ -1053,15 +1053,12 @@ export default function PhotoboothStyles({ params }) {
                     )}
                   </motion.div>
 
-                  <motion.div
+                  <div
                     className="mb-6 lg:mb-8 p-4 lg:p-6 rounded-2xl border shadow-inner"
                     style={{ 
                       backgroundColor: `${primaryColor}08`,
                       borderColor: `${primaryColor}20`
                     }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.1, duration: 0.6 }}
                   >
                     <motion.div
                       className="flex items-center gap-3 mb-3"
@@ -1092,7 +1089,7 @@ export default function PhotoboothStyles({ params }) {
                       </span>
                       . Êtes-vous prêt à vivre une expérience photo exceptionnelle ?
                     </motion.p>
-                  </motion.div>
+                  </div>
                   
                   {/* Action buttons */}
                   <div className="flex flex-col items-center gap-4 lg:gap-5">
@@ -1148,27 +1145,7 @@ export default function PhotoboothStyles({ params }) {
                       ))}
 
                       {/* Animated wave pattern */}
-                      <motion.div
-                        className="absolute inset-0 opacity-15"
-                        style={{
-                          background: `repeating-linear-gradient(
-                            45deg,
-                            transparent,
-                            transparent 8px,
-                            ${primaryColor}30 8px,
-                            ${primaryColor}30 16px
-                          )`
-                        }}
-                        animate={{
-                          backgroundPosition: ["0px 0px", "32px 32px"],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "linear"
-                        }}
-                      />
-
+                     
                       {/* Pulsing rings */}
                       {[...Array(2)].map((_, i) => (
                         <motion.div
@@ -1197,60 +1174,12 @@ export default function PhotoboothStyles({ params }) {
                       ))}
 
                       {/* Rotating gradient overlay */}
-                      <motion.div
-                        className="absolute inset-0 opacity-20 rounded-xl lg:rounded-2xl"
-                        style={{
-                          background: `conic-gradient(from 0deg, transparent, ${primaryColor}30, transparent, ${primaryColor}40, transparent)`
-                        }}
-                        animate={{ rotate: [0, 360] }}
-                        transition={{
-                          duration: 4,
-                          repeat: Infinity,
-                          ease: "linear"
-                        }}
-                      />
+                     
 
-                      {/* Sparkle explosion on hover */}
-                      <motion.div 
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      >
-                        {[...Array(8)].map((_, i) => (
-                          <motion.div
-                            key={`modal-sparkle-${i}`}
-                            className="absolute w-1 h-1 rounded-full"
-                            style={{
-                              backgroundColor: primaryColor,
-                              left: '50%',
-                              top: '50%',
-                            }}
-                            animate={{
-                              x: [0, (Math.cos(i * 45 * Math.PI / 180) * 30)],
-                              y: [0, (Math.sin(i * 45 * Math.PI / 180) * 30)],
-                              opacity: [1, 0],
-                              scale: [0, 1.2, 0],
-                            }}
-                            transition={{
-                              duration: 0.8,
-                              repeat: Infinity,
-                              delay: i * 0.1,
-                              ease: "easeOut"
-                            }}
-                          />
-                        ))}
-                      </motion.div>
+                    
 
                       {/* Original shine effect */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        initial={{ x: "-100%" }}
-                        animate={{ x: "100%" }}
-                        transition={{ 
-                          duration: 2,
-                          repeat: Infinity,
-                          delay: 2,
-                          repeatDelay: 3
-                        }}
-                      />
+                 
                       
                       <motion.span
                         className="relative z-10"
@@ -1300,33 +1229,8 @@ export default function PhotoboothStyles({ params }) {
                 </div>
                 
                 {/* Floating decorative elements */}
-                <motion.div
-                  className="absolute -top-4 -right-4 w-8 h-8 rounded-full opacity-60"
-                  style={{ backgroundColor: secondaryColor }}
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 180, 360],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-                <motion.div
-                  className="absolute -bottom-6 -left-6 w-12 h-12 rounded-full opacity-40"
-                  style={{ backgroundColor: primaryColor }}
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    rotate: [0, -180, -360],
-                  }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1
-                  }}
-                />
+                
+               
               </motion.div>
             </motion.div>
           )}
