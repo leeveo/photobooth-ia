@@ -38,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminEmail, setAdminEmail] = useState<string>('');
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [isPublicRoute, setIsPublicRoute] = useState(false);
+  const [isSidebarRetracted, setIsSidebarRetracted] = useState(false);
 
   const supabase = createClientComponentClient();
 
@@ -237,56 +238,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen bg-gray-100">
       {/* SIDEBAR */}
-      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out`}>
-        <div className="p-6 border-b border-gray-100">
+      <div className={`
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30
+        ${isSidebarRetracted ? 'w-20' : 'w-64'} bg-white shadow-lg transform transition-all duration-300 ease-in-out
+      `}>
+        {/* Sidebar content */}
+        <div className={`p-6 border-b border-gray-100 flex items-center justify-between ${isSidebarRetracted ? 'px-2 py-4' : ''}`}>
           <Image 
             src="/images/logo.png" 
             alt="WaiBooth.app" 
-            width={180} 
+            width={isSidebarRetracted ? 40 : 180} 
             height={50} 
-            className="mx-auto"
+            className={`mx-auto ${isSidebarRetracted ? 'hidden' : ''}`}
           />
-          <p className="text-sm text-purple-600 font-bold italic text-center">"Automatisez la magie.<br/> Laissez Waibooth gérer le show."</p>
         </div>
-        <nav className="mt-6 flex flex-col gap-2 text-sm">
+        {!isSidebarRetracted && (
+          <p className="text-sm text-purple-600 font-bold italic text-center">"Automatisez la magie.<br/> Laissez Waibooth gérer le show."</p>
+        )}
+        <nav className={`mt-6 flex flex-col gap-2 text-sm ${isSidebarRetracted ? 'items-center' : ''}`}>
           <div className="px-6 py-2 lg:hidden">
             <button onClick={() => setIsSidebarOpen(false)} className="text-gray-500 hover:text-gray-700 focus:outline-none">
               <span className="text-sm">Fermer le menu</span>
             </button>
           </div>
 
-          <div className="mx-4 my-2 rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-inner p-2">
+          <div className={`mx-4 my-2 rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-inner p-2 ${isSidebarRetracted ? 'mx-2 p-1' : ''}`}>
             <button
               type="button"
-              className="w-full px-4 py-2 font-bold text-gray-700 flex items-center gap-2 focus:outline-none"
+              className={`w-full px-4 py-2 font-bold text-gray-700 flex items-center gap-2 focus:outline-none ${isSidebarRetracted ? 'justify-center px-0' : ''}`}
               onClick={() => setPhotoboothOpen(!photoboothOpen)}
             >
-              <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${photoboothOpen ? 'rotate-0' : '-rotate-90'}`} />
-              Photobooth
+              <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${photoboothOpen ? 'rotate-0' : '-rotate-90'} ${isSidebarRetracted ? 'hidden' : ''}`} />
+              {!isSidebarRetracted && <span>Photobooth</span>}
             </button>
             <div className={`flex flex-col transition-all duration-200 overflow-hidden ${photoboothOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               {photoboothLinks.map((item) => (
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`flex items-center gap-3 px-8 py-2 mx-2 my-1 rounded-lg transition-all duration-150
+                  className={`
+                    flex items-center gap-3 px-8 py-2 mx-2 my-1 rounded-lg transition-all duration-150
                     ${isActive(item.path)
-                    ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 font-semibold shadow'
-                    : 'text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow'
-                  }`}
+                      ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 font-semibold shadow'
+                      : 'text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow'
+                    }
+                    ${isSidebarRetracted ? 'justify-center px-0 mx-0' : ''}
+                  `}
                 >
                   {item.icon}
-                  <span>{item.name}</span>
+                  {!isSidebarRetracted && <span>{item.name}</span>}
                 </Link>
               ))}
             </div>
           </div>
 
-          <div className="px-6 py-2 mt-6 font-bold text-gray-700 flex items-center gap-2">
+          <div className={`px-6 py-2 mt-6 font-bold text-gray-700 flex items-center gap-2 ${isSidebarRetracted ? 'justify-center px-0' : ''}`}>
             <FiExternalLink className="w-4 h-4" />
-            Applications externes
+            {!isSidebarRetracted && <span>Applications externes</span>}
           </div>
-          <div className="flex flex-col gap-3 px-4">
+          <div className={`flex flex-col gap-3 px-4 ${isSidebarRetracted ? 'px-0 items-center' : ''}`}>
             {externalApps.map(app =>
               app.url ? (
                 <a
@@ -294,17 +304,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   href={app.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${app.color} shadow-sm hover:scale-[1.03] transition-transform`}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg border ${app.color} shadow-sm hover:scale-[1.03] transition-transform
+                    ${isSidebarRetracted ? 'justify-center px-0' : ''}
+                  `}
                 >
                   {app.icon}
-                  <span className="font-medium">{app.label}</span>
+                  {!isSidebarRetracted && <span className="font-medium">{app.label}</span>}
                 </a>
               ) : null
             )}
           </div>
 
-          <hr className="my-6 border-gray-200 mx-4" />
+          <hr className={`my-6 border-gray-200 mx-4 ${isSidebarRetracted ? 'mx-2' : ''}`} />
         </nav>
+        {/* Toggle button as a vertical tab */}
+        <button
+          className={`
+            absolute top-1/2 left-full -translate-y-1/2
+            rounded-r-full bg-indigo-500 text-white shadow-lg border border-indigo-300
+            w-7 h-14 flex items-center justify-center
+            hover:bg-indigo-600 transition
+            z-40
+          `}
+          style={{ marginLeft: '-1px' }}
+          title={isSidebarRetracted ? 'Déployer le menu' : 'Rétracter le menu'}
+          onClick={() => setIsSidebarRetracted(!isSidebarRetracted)}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {isSidebarRetracted ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            )}
+          </svg>
+        </button>
       </div>
 
       {/* BACKDROP */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -12,13 +12,43 @@ export default function PhotoboothProject({ params }) {
   const slug = params.slug;
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const fullscreenButtonRef = useRef(null);
   
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
   const [settings, setSettings] = useState(null);
   const [error, setError] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
+  // Check if we're in fullscreen mode on mount and when it changes
+  useEffect(() => {
+    const checkFullscreen = () => {
+      const isInFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsFullscreen(isInFullscreen);
+    };
+    
+    // Initial check
+    checkFullscreen();
+    
+    // Set up listeners for fullscreen changes
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    document.addEventListener('webkitfullscreenchange', checkFullscreen);
+    document.addEventListener('mozfullscreenchange', checkFullscreen);
+    document.addEventListener('MSFullscreenChange', checkFullscreen);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreen);
+      document.removeEventListener('webkitfullscreenchange', checkFullscreen);
+      document.removeEventListener('mozfullscreenchange', checkFullscreen);
+      document.removeEventListener('MSFullscreenChange', checkFullscreen);
+    };
+  }, []);
+  
+  // Fetch project data
   useEffect(() => {
     async function fetchProjectData() {
       setLoading(true);
@@ -104,36 +134,27 @@ export default function PhotoboothProject({ params }) {
     fetchProjectData();
   }, [slug, supabase]);
   
-  const requestFullscreen = async () => {
+  // Request fullscreen on user interaction (button click)
+  const enterFullscreen = () => {
+    // Use a dedicated function that's called directly by a button click
     try {
       const element = document.documentElement;
+      
+      // Different browsers support different methods
       if (element.requestFullscreen) {
-        await element.requestFullscreen();
-      } else if (element.mozRequestFullScreen) { // Firefox
-        await element.mozRequestFullScreen();
-      } else if (element.webkitRequestFullscreen) { // Chrome, Safari and Opera
-        await element.webkitRequestFullscreen();
-      } else if (element.msRequestFullscreen) { // IE/Edge
-        await element.msRequestFullscreen();
+        element.requestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen();
       }
-      console.log("Fullscreen mode requested");
     } catch (error) {
-      console.error("Fullscreen request failed:", error);
+      console.error("Fullscreen error:", error);
     }
   };
 
-  // Request fullscreen automatically if enabled in settings
-  useEffect(() => {
-    if (settings?.enable_fullscreen && fullscreenButtonRef.current) {
-      fullscreenButtonRef.current.click();
-    }
-  }, [settings]);
-
-  const goToInstructions = () => {
-    router.push(`/photobooth-premium/${slug}/how`);
-  };
-
-  // Remplace la logique du bouton commencer
   const handleStartExperience = () => {
     if (project?.photobooth_type === 'standard') {
       router.push(`/photobooth-premium/${slug}/cam`);
@@ -144,7 +165,7 @@ export default function PhotoboothProject({ params }) {
     }
   };
 
-  // Afficher un message d'erreur si nécessaire
+  // Show error state
   if (error) {
     return (
       <div className="flex h-screen w-full items-center justify-center flex-col text-center px-4">
@@ -162,6 +183,7 @@ export default function PhotoboothProject({ params }) {
     );
   }
 
+  // Show loading state
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -174,6 +196,7 @@ export default function PhotoboothProject({ params }) {
     );
   }
 
+  // Handle missing project
   if (!project) {
     return notFound();
   }
@@ -185,14 +208,18 @@ export default function PhotoboothProject({ params }) {
 
   return (
     <div className="relative z-10 w-full h-full">
-      {/* Hidden fullscreen button */}
-      <button 
-        ref={fullscreenButtonRef} 
-        onClick={requestFullscreen} 
-        className="hidden"
-      >
-        Fullscreen
-      </button>
+      {/* Fullscreen button - ONLY show if not already in fullscreen */}
+      {settings?.enable_fullscreen && !isFullscreen && (
+        <button 
+          onClick={enterFullscreen}
+          className="fixed top-4 right-4 z-50 px-3 py-2 bg-black/50 text-white rounded-lg flex items-center hover:bg-black/70 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 011.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 011.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+          Plein écran
+        </button>
+      )}
 
       <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative z-10">
         {/* Header with logo */}

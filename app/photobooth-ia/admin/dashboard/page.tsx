@@ -615,7 +615,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <RiPaletteLine className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-medium text-gray-900">Bibliothèque de Styles</h3>
+              <h3 className="text-lg font-medium text-gray-900">Bibliothèque de Styles IA</h3>
             </div>
             <div className="flex items-center">
               <span className="bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
