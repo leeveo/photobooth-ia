@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { v4 as uuidv4 } from 'uuid';
 
 // IMPORTANT: Mise à jour du format de configuration
 // Supprimez cette ancienne configuration:
@@ -11,6 +12,15 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 // Et utilisez à la place:
 export const dynamic = 'force-dynamic';
+
+// Configurez votre client S3
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+});
 
 export async function POST(request) {
   console.log('API S3: Début de la requête upload');
@@ -36,27 +46,11 @@ export async function POST(request) {
       }, { status: 500 });
     }
     
-    // Initialiser le client S3 avec gestion d'erreur
-    let s3Client;
-    try {
-      s3Client = new S3Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-      });
-      console.log('API S3: Client S3 initialisé');
-    } catch (s3InitError) {
-      console.error('API S3: Erreur d\'initialisation du client S3:', s3InitError);
-      return NextResponse.json({ 
-        error: `Erreur d'initialisation S3: ${s3InitError.message}` 
-      }, { status: 500 });
-    }
-    
     // Récupérer le fichier de la requête
     const formData = await request.formData();
     const file = formData.get('file');
+    const projectId = formData.get('projectId') || 'unknown';
+    const path = formData.get('path');
     
     if (!file) {
       console.error('API S3: Aucun fichier reçu');
@@ -65,14 +59,18 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const fileName = `layouts/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    // Lire le fichier comme un ArrayBuffer
+    const fileArrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(fileArrayBuffer);
+    
+    // Générer un nom de fichier unique si non fourni
+    const fileName = path || `photobooth-logo/${projectId}/${uuidv4()}_${file.name.replace(/\s+/g, '_')}`;
     
     // Paramètres de la commande PutObject
     const params = {
       Bucket: process.env.AWS_S3_BUCKET,
       Key: fileName,
-      Body: buffer,
+      Body: fileBuffer,
       ContentType: file.type,
       ACL: 'public-read'
     };
@@ -84,12 +82,13 @@ export async function POST(request) {
       await s3Client.send(command);
       
       // Construire l'URL du fichier uploadé
-      const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+      const fileUrl = `https://${params.Bucket}.s3.${process.env.AWS_REGION || 'eu-west-3'}.amazonaws.com/${fileName}`;
       console.log('API S3: Upload réussi, URL:', fileUrl);
       
       return NextResponse.json({ 
         success: true, 
-        url: fileUrl 
+        url: fileUrl,
+        key: fileName,
       });
     } catch (uploadError) {
       console.error('API S3: Erreur lors de l\'upload:', uploadError);

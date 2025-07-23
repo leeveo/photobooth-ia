@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Casquette ",
+    "description": "Ajoute une casquette sur la tête.",
+    "image1": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/homme.jpg",
+    "image2": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/casquette.png",
+    "result": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/result_casquette.png",
+    "prompt": "place cette personne avec la casquette sur la tête, ajuste la casquette à la taille de sa tête ."
+  },
+  {
+    "title": "Pull Noel",
+    "description": "Ajoute un pull de Noel et change le décor.",
+    "image1": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/femme.jpg",
+    "image2": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/pull-noel.jpeg",
+    "result": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/result_pull_noel.png",
+    "prompt": "place cette personne avec exactement le même pull de noel et les memes couleurs, dans un salon assise sur un fauteuil devant une cheminé en train de boire un chocolat chaud ."
+  },
+    {
+    "title": "Lunette de soleil",
+    "description": "Ajoute une paire de lunette de soleil et change le décor.",
+    "image1": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/homme.jpg",
+    "image2": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/lunette.jpg",
+    "result": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/result_lunette.png",
+    "prompt": "place cette personne avec exactement les mêmes lunette , ajuste la taille des lunettes à son visage, le fond est dans une station de ski avec des montagnes en arrière plan, la personne est vetue d'une doudoune bleue et est à coté d'une paire de ski ."
+  }
+]

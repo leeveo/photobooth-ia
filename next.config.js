@@ -31,7 +31,9 @@ const nextConfig = {
       'leeveostockage.s3.amazonaws.com',
       's3.eu-west-3.amazonaws.com',
       'placeholder.com',
-      'localhost'
+      'localhost',
+      'replicate.delivery',
+      'replicate.com'
     ],
     unoptimized: process.env.NODE_ENV === 'development' // Optimize in production, skip in development
   },
@@ -44,6 +46,7 @@ const nextConfig = {
     },
     externalDir: true, // Ajouter cette option pour les images externes
     serverComponentsExternalPackages: [],
+    serverActions: true,
   },
   typescript: {
     ignoreBuildErrors: true, // Ignorer les erreurs TS pendant le build
@@ -135,7 +138,8 @@ const nextConfig = {
   },
   // Handle environment variables
   env: {
-    NEXT_PUBLIC_GIF_GENERATION_ENABLED: process.env.NODE_ENV !== 'production'
+    NEXT_PUBLIC_GIF_GENERATION_ENABLED: process.env.NODE_ENV !== 'production',
+    REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
   }
 };
 

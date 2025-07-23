@@ -21,6 +21,8 @@ const PhotoboothTypeManager = ({
         return 'Simple';
       case 'bommerang':
         return 'Boomerang';
+      case 'logo':
+        return 'Logo Fusion';
       default:
         return 'Premium';
     }
@@ -144,6 +146,28 @@ const PhotoboothTypeManager = ({
             </ul>
             <div className="mt-3 text-xs text-indigo-600 italic">
               Idéal pour capturer des moments expressifs, des gestes amusants et créer des souvenirs hypnotiques.
+            </div>
+          </>
+        );
+      case 'logo':
+        return (
+          <>
+            <p className="mb-2">
+              Le <span className="font-semibold text-indigo-700">Photobooth Logo Fusion</span> permet d'intégrer votre logo de manière créative&nbsp;:
+            </p>
+            <ul className="list-disc ml-5 text-sm space-y-1">
+              <li>
+                <span className="font-semibold">Intégration de logo</span> : Fusionnez votre logo avec des images pour un branding unique.
+              </li>
+              <li>
+                <span className="font-semibold">Personnalisation avancée</span> : Ajustez la taille, la position et les effets de votre logo.
+              </li>
+              <li>
+                <span className="font-semibold">Aperçu en temps réel</span> : Visualisez instantanément le rendu de votre logo sur les photos.
+              </li>
+            </ul>
+            <div className="mt-3 text-xs text-indigo-600 italic">
+              Idéal pour les marques, les entreprises et les événements souhaitant une forte identité visuelle.
             </div>
           </>
         );
@@ -501,7 +525,8 @@ const PhotoboothTypeManager = ({
                       <ul className="list-disc ml-4 space-y-1">
                         <li><span className="font-medium">Courte vidéo aller-retour</span> : Captez un mouvement qui s'anime en boucle.</li>
                         <li><span className="font-medium">Effet d'animation inversée</span> : La séquence joue en avant puis en arrière automatiquement.</li>
-                        <li><span className="font-medium">Durée optimale</span> : Animation fluide de quelques secondes, idéale pour les réseaux sociaux.</li>
+                        <li><span className="font-medium">Durée optimale</span> : Animation fluide de quelques secondes, idéale pour les réseaux sociaux.
+                        </li>
                         <li><span className="font-medium">Sans IA ni effets avancés</span> : Animation naturelle, sans modification algorithmique.</li>
                       </ul>
                       <div className="text-[10px] text-pink-300 italic mt-2 border-l-2 border-pink-400 pl-2">
@@ -544,6 +569,105 @@ const PhotoboothTypeManager = ({
                 {/* Bottom highlight for selected */}
                 {project.photobooth_type === 'boomerang' && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-600 to-orange-400"></div>
+                )}
+              </div>
+            </div>
+
+            {/* CARTE LOGO FUSION */}
+            <div className={`
+              group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent transition-all duration-300 transform hover:-translate-y-2 hover:scale-105
+              ${project.photobooth_type === 'logo' ? 'border-red-500 -translate-y-2 scale-105' : 'hover:border-red-500'}
+              ${typeValidated && project.photobooth_type !== 'logo' ? 'opacity-60 grayscale cursor-not-allowed' : !typeValidated ? 'cursor-pointer' : ''}
+            `}>
+              {/* Glow effect */}
+              <div className={`
+                absolute -inset-1 rounded-2xl bg-gradient-to-br from-red-500/30 via-red-500/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-0
+                ${project.photobooth_type === 'logo' ? 'opacity-100' : ''}
+              `}></div>
+              
+              <div 
+                onClick={() => !typeValidated && updatePhotoboothType('logo')}
+                className="relative z-10 flex flex-col h-full"
+                style={{minHeight: "500px"}}
+              >
+                <div className="aspect-[4/3] bg-gray-900 relative overflow-hidden rounded-t-2xl border-b border-indigo-700/40">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
+                    style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/logo_fusion_sample.jpg')"}}
+                  ></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
+                  
+                  {/* Icon overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className={`
+                      inline-flex items-center justify-center w-16 h-16 rounded-full 
+                      bg-gradient-to-tr from-red-600 to-orange-400 shadow-lg
+                      transform transition-transform duration-300 group-hover:scale-110
+                      ${project.photobooth_type === 'logo' ? 'scale-110' : ''}
+                    `}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h18v18H3V3z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex-1 flex flex-col justify-between p-4">
+                  <div>
+                    <h5 className={`
+                      font-bold text-white mb-2 text-lg
+                      transform transition-all duration-300 group-hover:text-red-300
+                      ${project.photobooth_type === 'logo' ? 'text-red-300' : ''}
+                    `}>Logo Fusion</h5>
+                    
+                    {/* Description détaillée */}
+                    <div className="text-gray-300 text-xs mb-4 space-y-2">
+                      <p className="font-medium text-red-200">Le Photobooth Logo Fusion permet d'intégrer votre logo de manière créative :</p>
+                      <ul className="list-disc ml-4 space-y-1">
+                        <li><span className="font-medium">Intégration de logo</span> : Fusionnez votre logo avec des images pour un branding unique.</li>
+                        <li><span className="font-medium">Personnalisation avancée</span> : Ajustez la taille, la position et les effets de votre logo.</li>
+                        <li><span className="font-medium">Aperçu en temps réel</span> : Visualisez instantanément le rendu de votre logo sur les photos.</li>
+                      </ul>
+                      <div className="text-[10px] text-red-300 italic mt-2 border-l-2 border-red-400 pl-2">
+                        Idéal pour les marques, les entreprises et les événements souhaitant une forte identité visuelle.
+                      </div>
+                    </div>
+                    
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/20 text-red-200 border border-red-400/40">
+                        logo
+                      </span>
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-orange-500/20 text-orange-200 border border-orange-400/40">
+                        branding
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2 mt-4">
+                    {project.photobooth_type === 'logo' && (
+                      <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-red-200 bg-gradient-to-r from-red-600/80 to-orange-400/80 shadow-lg">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        Sélectionné
+                      </span>
+                    )}
+                    
+                    {typeValidated && project.photobooth_type !== 'logo' && (
+                      <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-gray-300 bg-gray-700/80 shadow-lg">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                        </svg>
+                        Verrouillé
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Bottom highlight for selected */}
+                {project.photobooth_type === 'logo' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-orange-400"></div>
                 )}
               </div>
             </div>

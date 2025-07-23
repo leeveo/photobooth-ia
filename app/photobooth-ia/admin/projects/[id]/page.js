@@ -28,6 +28,7 @@ import BackgroundManager from '../components/BackgroundManager';
 import DataCaptureManager from '../components/DataCaptureManager';
 import PhotoboothEmailTemplateEditor from '../components/PhotoboothEmailTemplateEditor';
 import PhotoboothImagePageContentEditor from '../components/PhotoboothImagePageContentEditor';
+import LogoManager from '../components/LogoManager';
 
 // Import CanvasEditorWrapper with dynamic import to prevent SSR
 const CanvasEditor = dynamic(
@@ -297,6 +298,10 @@ export default function ProjectDetails({ params }) {
         return 'MiniMax';
       case 'standard':
         return 'Standard';
+      case 'boomerang':
+        return 'Boomerang';
+      case 'logo':
+        return 'Logo Fusion'; // Ajoutez votre nouveau type ici
       default:
         return 'FaceSwapping';
     }
@@ -788,17 +793,22 @@ export default function ProjectDetails({ params }) {
               href={
                 project.photobooth_type === 'boomerang'
                   ? process.env.NODE_ENV === 'production' 
-                    ? `/photobooth/${project.slug}` // Fallback to standard photobooth in production for boomerang type
+                    ? `/photobooth/${project.slug}` 
                     : `/photobooth-boomerang/${project.slug}`
-                  : `/photobooth/${project.slug}`
+                  : project.photobooth_type === 'logo'
+                    ? `/photobooth-logo/${project.slug}` // Ajoutez votre nouveau type ici
+                    : `/photobooth/${project.slug}`
               }
               target="_blank"
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
             >
               <RiExternalLinkLine className="mr-2 h-4 w-4" />
               Voir le projet
-              {project.photobooth_type === 'boomerang' && process.env.NODE_ENV === 'production' && (
+              {(project.photobooth_type === 'boomerang' && process.env.NODE_ENV === 'production') && (
                 <span className="ml-1 text-xs text-amber-600">(Mode Boomerang)</span>
+              )}
+              {project.photobooth_type === 'logo' && (
+                <span className="ml-1 text-xs text-blue-600">(Logo Fusion)</span>
               )}
             </Link>
             <Link
@@ -1012,15 +1022,25 @@ export default function ProjectDetails({ params }) {
 
           {/* Styles */}
           {activeTab === 'styles' && (
-            <StyleManager
-              projectId={projectId}
-              styles={styles}
-              setStyles={setStyles}
-              setError={setError}
-              setSuccess={setSuccess}
-              typeValidated={typeValidated}
-              photoboothType={project.photobooth_type}
-            />
+            <>
+              {project.photobooth_type === 'logo' ? (
+                <LogoManager 
+                  projectId={projectId}
+                  setError={setError}
+                  setSuccess={setSuccess}
+                />
+              ) : (
+                <StyleManager
+                  projectId={projectId}
+                  styles={styles}
+                  setStyles={setStyles}
+                  setError={setError}
+                  setSuccess={setSuccess}
+                  typeValidated={typeValidated}
+                  photoboothType={project.photobooth_type}
+                />
+              )}
+            </>
           )}
 
           {/* Canvas */}
@@ -1240,8 +1260,7 @@ const globalStyles = `
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
-}
-`;
+}`;
 
 // Add the global styles to the document
 if (typeof document !== 'undefined') {

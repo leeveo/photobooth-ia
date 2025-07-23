@@ -5,8 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
-import Loader from '../../../components/ui/Loader';
+import Loader from '../../../../components/ui/Loader';
 import { 
   RiFilterLine, 
   RiDownloadLine, 
@@ -259,10 +258,20 @@ export default function ProjectGallery() {
         const { data: allSessions, error: allSessionsError } = await supabase
           .from('sessions')
           .select('*');
+        if (allSessionsError) {
+          console.error("Erreur lors de la récupération de toutes les sessions:", allSessionsError);
+        }
         console.log("Toutes les sessions en base:", allSessions);
 
         // DEBUG : Affiche la valeur et le type de selectedProject
         console.log("selectedProject value:", selectedProject, "type:", typeof selectedProject);
+
+        // Ne pas lancer la requête si selectedProject est vide
+        if (!selectedProject) {
+          setProjectImages([]);
+          setLoading(false);
+          return;
+        }
 
         // DEBUG : Affiche toutes les sessions pour ce project_id (en forçant le string et trim)
         const projectIdToQuery = String(selectedProject).trim();
@@ -284,7 +293,7 @@ export default function ProjectGallery() {
               fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
               size: null
             },
-            isModerated: session.moderation === 'M' // Vérifier si l'image est modérée
+            isModerated: session.moderation === 'M'
           }));
           setProjectImages(images);
         }
@@ -697,7 +706,7 @@ export default function ProjectGallery() {
     <div className="space-y-6">
       {/* Loader global - affiche tant que loading est true */}
       {loading ? (
-        <Loader size="large" message="Chargement complet des données..." variant="premium" />
+        <Loader text="Chargement complet des données..." size="large" color="indigo" />
       ) : (
         <>
           <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
@@ -809,7 +818,7 @@ export default function ProjectGallery() {
             
             {loading && selectedProject ? (
               <div className="p-12 flex flex-col items-center justify-center">
-                <LoadingSpinner text="Chargement des images en cours" size="medium" color="indigo" />
+                <Loader text="Chargement des images en cours" size="medium" color="indigo" />
               </div>
             ) : null}
             

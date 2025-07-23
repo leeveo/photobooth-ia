@@ -239,6 +239,19 @@ const StyleManager = ({
   const isDisabled = !typeValidated || 
     (photoboothType && ['simple', 'boomerang'].includes(photoboothType.toLowerCase().trim()));
 
+  // Modifiez la logique qui filtre les styles disponibles selon le type
+  const getCompatibleStyles = (photoboothType) => {
+    switch (photoboothType) {
+      case 'premium':
+        return ['style1', 'style2', /* etc */];
+      case 'logo':
+        // Ajoutez les styles compatibles avec votre nouveau type
+        return ['style_logo', 'logo_fusion', /* etc */];
+      default:
+        return [];
+    }
+  };
+
   return (
     <div 
       className={`mt-8 ${isDisabled ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}`}

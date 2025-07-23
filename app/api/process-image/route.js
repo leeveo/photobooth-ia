@@ -50,23 +50,12 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    // Check that input_image_1 is provided and is base64
-    const input1 = input.input_image_1;
-    if (!input1 || !input1.startsWith('data:image')) {
-      console.error("Missing or invalid input_image_1");
+    // Check that input_image is provided
+    if (!input.input_image || !input.input_image.startsWith('data:image')) {
+      console.error("Missing or invalid input_image");
       return NextResponse.json({
         success: false,
-        error: "Une image d'entrée valide est requise pour input_image_1 (format base64)"
-      }, { status: 400 });
-    }
-    
-    // Check that input_image_2 is either a public URL or base64
-    const input2 = input.input_image_2;
-    if (input2 && !input2.startsWith('data:image') && !input2.startsWith('http')) {
-      console.error("Invalid input_image_2");
-      return NextResponse.json({
-        success: false,
-        error: "input_image_2 doit être une URL publique ou une image base64"
+        error: "Une image d'entrée valide est requise (format base64)"
       }, { status: 400 });
     }
     
@@ -93,8 +82,7 @@ export async function POST(request) {
     console.log(`Calling Replicate with model: ${model}`);
     console.log("Input parameters:", JSON.stringify({
       ...input,
-      input_image_1: input.input_image_1 ? "base64_data_present" : "missing",
-      input_image_2: input.input_image_2 ? "url_or_base64_present" : "missing"
+      input_image: input.input_image ? "base64_data_present" : "missing"
     }));
     
     // Make the Replicate API call
