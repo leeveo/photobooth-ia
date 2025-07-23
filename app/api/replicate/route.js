@@ -49,25 +49,43 @@ export async function POST(request) {
         error: "Un prompt textuel est requis pour le modèle flux-kontext-pro"
       }, { status: 400 });
     }
-    
-    // Check that input_image_1 is provided and is base64
-    const input1 = input.input_image_1;
-    if (!input1 || !input1.startsWith('data:image')) {
-      console.error("Missing or invalid input_image_1");
-      return NextResponse.json({
-        success: false,
-        error: "Une image d'entrée valide est requise pour input_image_1 (format base64)"
-      }, { status: 400 });
+
+    // Ajout de logs pour les images
+    console.log("input_image_1:", input.input_image_1 ? input.input_image_1.substring(0, 30) + "..." : "absent");
+    console.log("input_image_2:", input.input_image_2 ? input.input_image_2.substring(0, 30) + "..." : "absent");
+
+    // Pour le modèle black-forest-labs/flux-kontext-pro, ne pas valider input_image_1 ou input_image_2
+    if (model === "black-forest-labs/flux-kontext-pro") {
+      console.log("input_image_1 et input_image_2 ne sont pas requis pour ce modèle.");
+    } else if (model.includes("flux-kontext-pro")) {
+      // Pour les autres variantes de flux-kontext-pro, input_image_1 est requis
+      if (!input.input_image_1 || !input.input_image_1.startsWith('data:image')) {
+        console.error("Missing or invalid input_image_1 for flux-kontext-pro");
+        return NextResponse.json({
+          success: false,
+          error: "Une image d'entrée valide est requise pour input_image_1 (format base64) pour flux-kontext-pro"
+        }, { status: 400 });
+      }
+    } else {
+      // Pour les autres modèles, log mais ne bloque pas
+      if (!input.input_image_1) {
+        console.warn("input_image_1 is absent for model:", model);
+      } else if (!input.input_image_1.startsWith('data:image')) {
+        console.warn("input_image_1 is not base64 for model:", model);
+      }
     }
-    
-    // Check that input_image_2 is either a public URL or base64
-    const input2 = input.input_image_2;
-    if (input2 && !input2.startsWith('data:image') && !input2.startsWith('http')) {
-      console.error("Invalid input_image_2");
-      return NextResponse.json({
-        success: false,
-        error: "input_image_2 doit être une URL publique ou une image base64"
-      }, { status: 400 });
+
+    // input_image_2: log et validation si présent
+    if (input.input_image_2) {
+      if (!input.input_image_2.startsWith('data:image') && !input.input_image_2.startsWith('http')) {
+        console.error("Invalid input_image_2");
+        return NextResponse.json({
+          success: false,
+          error: "input_image_2 doit être une URL publique ou une image base64"
+        }, { status: 400 });
+      }
+    } else {
+      console.warn("input_image_2 is absent");
     }
     
     // Vérifier le token Replicate

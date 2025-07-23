@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiAddLine, RiDeleteBin6Line, RiAlertLine } from 'react-icons/ri';
 import StyleTemplates from '../../components/StyleTemplates';
+import styleTemplateDataCoifure from '../../components/styleTemplateDataCoifure.json';
 
 const StyleManager = ({ 
   projectId, 
@@ -94,11 +95,11 @@ const StyleManager = ({
         .from('styles')
         .insert({
           project_id: projectId,
-          name: newStyle.name,
-          gender: newStyle.gender,
+          name: newStyle.name,         // <-- valeur saisie dans le champ "Nom du style"
+          gender: newStyle.gender,     // <-- valeur choisie dans le select "Catégorie"
           style_key: newStyle.style_key,
           variations: newStyle.variations,
-          description: newStyle.description,
+          description: newStyle.description, // <-- valeur saisie dans le champ "Description"
           preview_image: styleImageData.Key
         });
 
@@ -333,7 +334,13 @@ const StyleManager = ({
         <div className="mb-8 border-b border-gray-200 pb-6">
           <StyleTemplates 
             projectId={projectId}
-            photoboothType={photoboothType} // <-- doit être bien défini
+            photoboothType={photoboothType}
+            styleTemplatesData={
+              photoboothType &&
+              ['photobooth-coiffure', 'coiffure'].includes(photoboothType.toLowerCase().trim())
+                ? styleTemplateDataCoifure
+                : undefined
+            }
             onStylesAdded={handleStyleTemplatesAdded}
             onStyleDeleted={(deletedStyleId) => {
               setStyles(styles.filter(s => s.id !== deletedStyleId));
@@ -799,3 +806,4 @@ if (typeof document !== 'undefined') {
 }
 
 export default StyleManager;
+

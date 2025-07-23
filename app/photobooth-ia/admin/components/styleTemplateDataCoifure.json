@@ -1,0 +1,416 @@
+[
+  {
+    "id": "womens_hairstyles",
+    "name": "Coupes de Cheveux Féminines",
+    "description": "20 coupes de cheveux tendance pour femmes",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_hairstyles.jpg",
+    "compatibleWith": [
+      "photobooth-coiffure",
+      "coiffure"
+    ],
+    "styles": [
+      {
+        "name": "Long straight",
+        "gender": "femme",
+        "style_key": "womens_long_straight",
+        "description": "Cheveux longs et lisses",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_long_straight.jpg",
+        "prompt": "Make the hair in a long and straight hair style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Short bob",
+        "gender": "femme",
+        "style_key": "womens_short_bob",
+        "description": "Carré à hauteur du menton",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_short_bob.jpg",
+        "prompt": "Make the hair in a chin-length bob cut style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Wavy layers",
+        "gender": "femme",
+        "style_key": "womens_wavy_layers",
+        "description": "Cheveux ondulés en dégradé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_wavy_layers.jpg",
+        "prompt": "Make the hair in a layered wavy hair style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Curly hair",
+        "gender": "femme",
+        "style_key": "womens_curly_hair",
+        "description": "Boucles naturelles bien définies",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_curly_hair.jpg",
+        "prompt": "Make the hair in a defined natural curls style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Pixie cut",
+        "gender": "femme",
+        "style_key": "womens_pixie_cut",
+        "description": "Coupe pixie courte",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_pixie_cut.jpg",
+        "prompt": "Make the hair in a short pixie haircut style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Side shave",
+        "gender": "femme",
+        "style_key": "womens_side_shave",
+        "description": "Cheveux longs avec un côté rasé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_side_shave.jpg",
+        "prompt": "Make the hair in a long hair with one side shaved style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "French braid",
+        "gender": "femme",
+        "style_key": "womens_french_braid",
+        "description": "Tresse française unique",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_french_braid.jpg",
+        "prompt": "Make the hair in a single french braid style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Double buns",
+        "gender": "femme",
+        "style_key": "womens_double_buns",
+        "description": "Cheveux en deux chignons symétriques",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_double_buns.jpg",
+        "prompt": "Make the hair in a hair in two symmetrical buns style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Messy bun",
+        "gender": "femme",
+        "style_key": "womens_messy_bun",
+        "description": "Chignon flou décontracté",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_messy_bun.jpg",
+        "prompt": "Make the hair in a casual messy bun style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Sleek ponytail",
+        "gender": "femme",
+        "style_key": "womens_sleek_ponytail",
+        "description": "Queue de cheval haute et serrée",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_sleek_ponytail.jpg",
+        "prompt": "Make the hair in a tight high ponytail style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Low bun",
+        "gender": "femme",
+        "style_key": "womens_low_bun",
+        "description": "Chignon bas élégant",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_low_bun.jpg",
+        "prompt": "Make the hair in a elegant low bun style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Half-up style",
+        "gender": "femme",
+        "style_key": "womens_half_up",
+        "description": "Coiffure semi-attachée",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_half_up.jpg",
+        "prompt": "Make the hair in a half-up, half-down style style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Braided crown",
+        "gender": "femme",
+        "style_key": "womens_braided_crown",
+        "description": "Couronne tressée autour de la tête",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_braided_crown.jpg",
+        "prompt": "Make the hair in a braided crown around the head style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Vintage waves",
+        "gender": "femme",
+        "style_key": "womens_vintage_waves",
+        "description": "Ondulations rétro style Hollywood",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_vintage_waves.jpg",
+        "prompt": "Make the hair in a retro hollywood waves style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Top knot",
+        "gender": "femme",
+        "style_key": "womens_top_knot",
+        "description": "Chignon haut noué",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_top_knot.jpg",
+        "prompt": "Make the hair in a high top knot bun style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Shag cut",
+        "gender": "femme",
+        "style_key": "womens_shag_cut",
+        "description": "Coupe shag texturée",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_shag_cut.jpg",
+        "prompt": "Make the hair in a textured shag haircut style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Straight with bangs",
+        "gender": "femme",
+        "style_key": "womens_straight_bangs",
+        "description": "Cheveux lisses avec une frange pleine",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_straight_bangs.jpg",
+        "prompt": "Make the hair in a straight hair with full bangs style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "High pigtails",
+        "gender": "femme",
+        "style_key": "womens_high_pigtails",
+        "description": "Couettes hautes et ludiques",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_high_pigtails.jpg",
+        "prompt": "Make the hair in a playful high pigtails style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Layered lob",
+        "gender": "femme",
+        "style_key": "womens_layered_lob",
+        "description": "Long carré dégradé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_layered_lob.jpg",
+        "prompt": "Make the hair in a long bob with layers style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      }
+    ]
+  },
+  {
+    "id": "mens_hairstyles",
+    "name": "Coupes de Cheveux Masculines",
+    "description": "20 coupes de cheveux tendance pour hommes",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_hairstyles.jpg",
+    "compatibleWith": [
+      "photobooth-coiffure",
+      "coiffure"
+    ],
+    "styles": [
+      {
+        "name": "Buzz cut",
+        "gender": "homme",
+        "style_key": "mens_buzz_cut",
+        "description": "Coupe très courte à la tondeuse",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_buzz_cut.jpg",
+        "prompt": "Make the hair in a ultra short buzz cut style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Crew cut",
+        "gender": "homme",
+        "style_key": "mens_crew_cut",
+        "description": "Coupe classique avec côtés courts",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_crew_cut.jpg",
+        "prompt": "Make the hair in a classic crew cut with short sides style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Fade cut",
+        "gender": "homme",
+        "style_key": "mens_fade_cut",
+        "description": "Fondu moderne avec contours nets",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_fade_cut.jpg",
+        "prompt": "Make the hair in a modern fade with sharp edges style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Pompadour",
+        "gender": "homme",
+        "style_key": "mens_pompadour",
+        "description": "Pompadour volumineux",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_pompadour.jpg",
+        "prompt": "Make the hair in a voluminous pompadour style style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Undercut",
+        "gender": "homme",
+        "style_key": "mens_undercut",
+        "description": "Undercut avec dessus long et côtés rasés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_undercut.jpg",
+        "prompt": "Make the hair in a undercut with long top and shaved sides style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Quiff",
+        "gender": "homme",
+        "style_key": "mens_quiff",
+        "description": "Banane stylisée avec du volume",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_quiff.jpg",
+        "prompt": "Make the hair in a styled quiff with volume style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Slick back",
+        "gender": "homme",
+        "style_key": "mens_slick_back",
+        "description": "Cheveux plaqués en arrière avec du gel",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_slick_back.jpg",
+        "prompt": "Make the hair in a hair slicked back with gel style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Side part",
+        "gender": "homme",
+        "style_key": "mens_side_part",
+        "description": "Style classique avec raie sur le côté",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_side_part.jpg",
+        "prompt": "Make the hair in a side-parted classic style style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Curly top",
+        "gender": "homme",
+        "style_key": "mens_curly_top",
+        "description": "Côtés courts avec boucles naturelles sur le dessus",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_curly_top.jpg",
+        "prompt": "Make the hair in a short sides with natural curls on top style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Messy textured",
+        "gender": "homme",
+        "style_key": "mens_messy_textured",
+        "description": "Look décoiffé texturé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_messy_textured.jpg",
+        "prompt": "Make the hair in a textured messy look style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Mullet",
+        "gender": "homme",
+        "style_key": "mens_mullet",
+        "description": "Mulet rétro avec devant court et arrière long",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
+        "prompt": "Make the hair in a retro mullet with short front, long back style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Man bun",
+        "gender": "homme",
+        "style_key": "mens_man_bun",
+        "description": "Chignon masculin attaché",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_man_bun.jpg",
+        "prompt": "Make the hair in a tied back man bun style style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Top knot",
+        "gender": "homme",
+        "style_key": "mens_top_knot",
+        "description": "Chignon haut avec côtés rasés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
+        "prompt": "Make the hair in a top knot with undercut style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "French crop",
+        "gender": "homme",
+        "style_key": "mens_french_crop",
+        "description": "Coupe courte avec frange",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_french_crop.jpg",
+        "prompt": "Make the hair in a short fringe crop style style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Long layered",
+        "gender": "homme",
+        "style_key": "mens_long_layered",
+        "description": "Cheveux mi-longs en dégradé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_long_layered.jpg",
+        "prompt": "Make the hair in a shoulder-length layered hair style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Afro",
+        "gender": "homme",
+        "style_key": "mens_afro",
+        "description": "Afro complet et arrondi",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_afro.jpg",
+        "prompt": "Make the hair in a full rounded afro style style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Cornrows",
+        "gender": "homme",
+        "style_key": "mens_cornrows",
+        "description": "Tresses collées au cuir chevelu",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_cornrows.jpg",
+        "prompt": "Make the hair in a braided cornrows close to scalp style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Dreadlocks",
+        "gender": "homme",
+        "style_key": "mens_dreadlocks",
+        "description": "Dreadlocks longues et épaisses",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_dreadlocks.jpg",
+        "prompt": "Make the hair in a thick long dreadlocks style.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Spiky hair",
+        "gender": "homme",
+        "style_key": "mens_spiky",
+        "description": "Cheveux courts coiffés en pics avec du gel",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_spiky.jpg",
+        "prompt": "Make the hair in a short and spiked with gel style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Ivy League",
+        "gender": "homme",
+        "style_key": "mens_ivy_league",
+        "description": "Coiffure chic style Ivy League",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ivy_league.jpg",
+        "prompt": "Make the hair in a preppy ivy league hairstyle style.",
+        "variations": 1,
+        "type": "cheveux courts"
+      }
+    ]
+  }
+]

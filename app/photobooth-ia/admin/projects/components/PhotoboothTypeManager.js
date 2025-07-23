@@ -23,6 +23,8 @@ const PhotoboothTypeManager = ({
         return 'Boomerang';
       case 'logo':
         return 'Logo Fusion';
+      case 'photobooth-coiffure':
+        return 'Coiffure';
       default:
         return 'Premium';
     }
@@ -171,6 +173,25 @@ const PhotoboothTypeManager = ({
             </div>
           </>
         );
+      case 'photobooth-coiffure':
+        return (
+          <>
+            <p className="mb-2">
+              Le <span className="font-semibold text-indigo-700">Photobooth Coiffure</span> permet de changer virtuellement de coupe et de couleur de cheveux&nbsp;:
+            </p>
+            <ul className="list-disc ml-5 text-sm space-y-1">
+              <li>
+                <span className="font-semibold">Changement de coupe de cheveux</span> : Essayez différentes coiffures en temps réel.
+              </li>
+              <li>
+                <span className="font-semibold">Changement de teinte</span> : Modifiez la couleur de vos cheveux virtuellement.
+              </li>
+            </ul>
+            <div className="mt-3 text-xs text-indigo-600 italic">
+              Idéal pour des animations beauté, des essais de style et des expériences personnalisées.
+            </div>
+          </>
+        );
       default:
         return null;
     }
@@ -258,7 +279,7 @@ const PhotoboothTypeManager = ({
           </div>
 
           {/* Grid des types de photobooth */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-7">
             {/* CARTE SIMPLE */}
             <div className={`
               group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent transition-all duration-300 transform hover:-translate-y-2 hover:scale-105
@@ -671,6 +692,101 @@ const PhotoboothTypeManager = ({
                 )}
               </div>
             </div>
+
+            {/* CARTE COIFFURE */}
+            <div className={`
+              group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent transition-all duration-300 transform hover:-translate-y-2 hover:scale-105
+              ${project.photobooth_type === 'photobooth-coiffure' ? 'border-pink-400 -translate-y-2 scale-105' : 'hover:border-pink-400'}
+              ${typeValidated && project.photobooth_type !== 'photobooth-coiffure' ? 'opacity-60 grayscale cursor-not-allowed' : !typeValidated ? 'cursor-pointer' : ''}
+            `}>
+              <div className={`
+                absolute -inset-1 rounded-2xl bg-gradient-to-br from-pink-400/30 via-pink-400/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-0
+                ${project.photobooth_type === 'photobooth-coiffure' ? 'opacity-100' : ''}
+              `}></div>
+              
+              <div 
+                onClick={() => !typeValidated && updatePhotoboothType('photobooth-coiffure')}
+                className="relative z-10 flex flex-col h-full"
+                style={{minHeight: "500px"}}
+              >
+                <div className="aspect-[4/3] bg-gray-900 relative overflow-hidden rounded-t-2xl border-b border-indigo-700/40">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
+                    style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/hairstyle_collection.jpg')"}}
+                  ></div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className={`
+                      inline-flex items-center justify-center w-16 h-16 rounded-full 
+                      bg-gradient-to-tr from-pink-400 to-indigo-400 shadow-lg
+                      transform transition-transform duration-300 group-hover:scale-110
+                      ${project.photobooth_type === 'photobooth-coiffure' ? 'scale-110' : ''}
+                    `}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex-1 flex flex-col justify-between p-4">
+                  <div>
+                    <h5 className={`
+                      font-bold text-white mb-2 text-lg
+                      transform transition-all duration-300 group-hover:text-pink-300
+                      ${project.photobooth_type === 'photobooth-coiffure' ? 'text-pink-300' : ''}
+                    `}>Coiffure</h5>
+                    
+                    {/* Description détaillée */}
+                    <div className="text-gray-300 text-xs mb-4 space-y-2">
+                      <p className="font-medium text-pink-200">Changement de coupe et de couleur de cheveux :</p>
+                      <ul className="list-disc ml-4 space-y-1">
+                        <li><span className="font-medium">Changement de coupe de cheveux</span> : Essayez différentes coiffures en temps réel.</li>
+                        <li><span className="font-medium">Changement de teinte</span> : Modifiez la couleur de vos cheveux virtuellement.</li>
+                      </ul>
+                      <div className="text-[10px] text-pink-300 italic mt-2 border-l-2 border-pink-400 pl-2">
+                        Idéal pour des animations beauté, des essais de style et des expériences personnalisées.
+                      </div>
+                    </div>
+                    
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/40">
+                        coiffure
+                      </span>
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-400/40">
+                        couleur
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2 mt-4">
+                    {project.photobooth_type === 'photobooth-coiffure' && (
+                      <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-pink-200 bg-gradient-to-r from-pink-600/80 to-indigo-400/80 shadow-lg">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        Sélectionné
+                      </span>
+                    )}
+                    
+                    {typeValidated && project.photobooth_type !== 'photobooth-coiffure' && (
+                      <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-gray-300 bg-gray-700/80 shadow-lg">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                        </svg>
+                        Verrouillé
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Bottom highlight for selected */}
+                {project.photobooth_type === 'photobooth-coiffure' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-400 to-indigo-400"></div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -684,7 +800,7 @@ const PhotoboothTypeManager = ({
               className="px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-lg flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"></path>
               </svg>
               Valider le type de photobooth
             </button>

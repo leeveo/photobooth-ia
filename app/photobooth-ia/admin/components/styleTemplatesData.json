@@ -714,7 +714,7 @@
       "variations": 1
     },
     {
-      "name": "Wavy layers",
+      "name": "test Wavy layers",
       "gender": "g",
       "style_key": "womens_wavy_layers",
       "description": "Layered wavy hair",
@@ -787,7 +787,7 @@
       "variations": 1
     },
     {
-      "name": "Low bun",
+      "name": "test bun",
       "gender": "g",
       "style_key": "womens_low_bun",
       "description": "Elegant low bun",
@@ -805,7 +805,7 @@
       "variations": 1
     },
     {
-      "name": "Braided crown",
+      "name": "test  crown",
       "gender": "g",
       "style_key": "womens_braided_crown",
       "description": "Braided crown around the head",

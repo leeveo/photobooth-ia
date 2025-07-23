@@ -9,7 +9,7 @@ import styleTemplatesData from './styleTemplatesData.json';
 /**
  * Composant de sélection de templates de styles prédéfinis
  */
-export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError, existingStyles = [], onClose }) {
+export default function StyleTemplates({ projectId, photoboothType, onStylesAdded, onError, existingStyles = [], onClose, styleTemplatesData: customTemplatesData }) {
   // Vérification des props requises pour éviter les erreurs de rendu
   if (!projectId || !photoboothType) {
     console.error("StyleTemplates: Missing required props (projectId or photoboothType)");
@@ -69,13 +69,24 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
     );
   }
 
+  // Utilise le JSON coiffure si fourni, sinon le général
+  const templatesData = customTemplatesData || styleTemplatesData;
+
+  // Normaliser le type et créer des alias pour la compatibilité
+  const normalizedType = photoboothType?.toLowerCase().trim();
+  const typeAliases = [normalizedType];
+  if (normalizedType === 'photobooth-coiffure') typeAliases.push('coiffure');
+  if (normalizedType === 'coiffure') typeAliases.push('photobooth-coiffure');
+
   // Filtrer les templates compatibles
-  let compatibleTemplates = styleTemplatesData.filter(
-    tpl => Array.isArray(tpl.compatibleWith) && tpl.compatibleWith.includes(photoboothType)
+  let compatibleTemplates = templatesData.filter(
+    tpl =>
+      Array.isArray(tpl.compatibleWith) &&
+      tpl.compatibleWith.some(type => typeAliases.includes(type?.toLowerCase().trim()))
   );
   if (compatibleTemplates.length === 0 && photoboothType === 'standard') {
     // fallback : afficher les templates "premium" si aucun pour "standard"
-    compatibleTemplates = styleTemplatesData.filter(
+    compatibleTemplates = templatesData.filter(
       tpl => Array.isArray(tpl.compatibleWith) && tpl.compatibleWith.includes('premium')
     );
   }
@@ -137,27 +148,25 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
 
   // Fonction pour ouvrir le popup de détails avec les styles du template
   const openDetailsPopup = (templateId) => {
-    const template = styleTemplatesData.find(t => t.id === templateId);
+    const template = templatesData.find(t => t.id === templateId);
     if (template) {
       setSelectedTemplate(template);
-      
-      // Initialiser les styles avec le genre par défaut 'g' (général/neutre) pour le nouveau processus
-      const stylesWithGender = template.styles.map(style => {
+
+      // Initialiser les styles avec le genre et le type du JSON (pas de valeur par défaut "g")
+      const stylesWithMeta = template.styles.map(style => {
         // Vérifier si ce style existe déjà dans le projet
-        // Utiliser notre Set à jour qui inclut les styles récemment ajoutés
-        const styleExists = existingStyleKeys.has(`${style.style_key}_g`);
-        
+        const styleExists = existingStyleKeys.has(`${style.style_key}_${style.gender || 'g'}`);
         return {
           ...style,
-          gender: 'g' // Utiliser 'g' comme valeur par défaut pour tous les styles
-          , selected: false // <-- Par défaut, aucun style n'est sélectionné
-          , disabled: styleExists // Désactiver les styles qui existent déjà
-          , tags: style.tags || getTagsForStyle(template.id, style.name) // Utiliser la fonction helper pour déterminer les tags
+          gender: style.gender, // <-- valeur du JSON
+          type: style.type,     // <-- valeur du JSON
+          selected: false,
+          disabled: styleExists,
+          tags: style.tags || getTagsForStyle(template.id, style.name)
         };
       });
-      
-      setTemplateStyles(stylesWithGender);
-      // Initialiser les styles sélectionnés à vide (aucun sélectionné)
+
+      setTemplateStyles(stylesWithMeta);
       setSelectedStyles([]);
       setShowDetailsPopup(true);
     }
@@ -254,15 +263,13 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       const stylesToAdd = templateStyles
         .filter(style => style.selected && !style.disabled)
         .map(style => {
-          // Générer une clé de style unique en ajoutant un suffixe au style_key
-          // Cela garantit qu'il n'y aura pas de conflit même si la clé et le genre sont identiques
           const uniqueStyleKey = `${style.style_key}_${Math.floor(Math.random() * 1000)}`;
-          
           return {
             project_id: projectId,
             name: style.name,
-            gender: style.gender || 'g',
-            style_key: uniqueStyleKey, // Utiliser la clé unique
+            gender: sanitizeGender(style.gender), // <-- correction ici
+            type: style.type, // <-- la colonne existe, on peut l'enregistrer
+            style_key: uniqueStyleKey,
             preview_image: style.preview_image,
             description: style.description || '',
             prompt: style.prompt || '',
@@ -760,48 +767,4 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
       )}
     </div>
   );
-}
-
-// Ajouter les animations CSS améliorées pour le popup
-const successAnimations = `
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes checkmark {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.animate-success-popup {
-  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.animate-success-icon {
-  animation: checkmark 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-}
-
-.animate-success-text {
-  opacity: 0;
-  animation: fadeInUp 0.5s ease forwards;
-  animation-delay: 0.3s;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
-}
-`;
-
-// Injecter les styles d'animation dans le document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.innerHTML = successAnimations;
-  document.head.appendChild(style);
 }
