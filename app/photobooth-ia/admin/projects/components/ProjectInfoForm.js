@@ -23,19 +23,20 @@ const ProjectInfoForm = ({
   // Function to get the base URL dynamically
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Use window.location in the browser
+      // Récupère le protocole et le host depuis la fenêtre du navigateur
       const url = new URL(window.location.href);
       setBaseUrl(`${url.protocol}//${url.host}`);
     } else {
-      // Fallback to env variable if not in browser
+      // Fallback côté serveur ou si window n'est pas dispo
       setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
     }
   }, []);
 
-  // Get the current base URL for the photobooth
+  // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
   const getPhotoboothUrl = () => {
-    if (!project?.slug) return '';
-    return `${baseUrl}/photobooth/${project.slug}`;
+    if (!project?.slug || !project?.photobooth_type) return '';
+    // Exemple : https://monsite.com/type-du-photobooth/slug-du-projet
+    return `${baseUrl}/${project.photobooth_type}/${project.slug}`;
   };
 
   // Function to handle project field changes
@@ -456,6 +457,7 @@ const ProjectInfoForm = ({
                 </h4>
                 {/* URL stylisée */}
                 <div className="relative w-full mb-3 z-10">
+                  {/* L'URL affichée ici est générée par getPhotoboothUrl() */}
                   <input
                     type="text"
                     value={getPhotoboothUrl()}
@@ -491,14 +493,12 @@ const ProjectInfoForm = ({
                 )}
                 {/* QR code avec effet */}
                 <div className="flex-1 flex flex-col items-center justify-center bg-white/80 p-4 rounded-xl border-2 border-indigo-100 shadow-inner z-10">
-                  <div className="text-center mb-2">
-                    <span className="text-xs font-bold text-indigo-500 tracking-widest uppercase">QR Code</span>
-                  </div>
+                  {/* Le QR code encode l'URL générée par getPhotoboothUrl() */}
                   {project && baseUrl && (
                     <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-200 via-purple-200 to-white shadow-lg border border-indigo-200">
                       <QRCodeSVG
                         value={getPhotoboothUrl()}
-                        size={240} // taille augmentée
+                        size={240}
                         level="M"
                         bgColor="#FFFFFF"
                         fgColor="#7f5af0"
