@@ -219,6 +219,14 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
     }
   };
 
+  // Ajout d'une fonction utilitaire pour nettoyer la valeur du genre
+  function sanitizeGender(gender) {
+    // Si la valeur est déjà correcte, on la garde
+    if (gender === 'homme' || gender === 'femme' || gender === 'g') return gender;
+    // Si la valeur est vide, null, undefined, ou autre, on met 'g'
+    return 'g';
+  }
+
   // Fonction modifiée pour appliquer le template avec les prompts
   const applyTemplate = async () => {
     if (!selectedTemplate) return;
@@ -264,11 +272,19 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
         .filter(style => style.selected && !style.disabled)
         .map(style => {
           const uniqueStyleKey = `${style.style_key}_${Math.floor(Math.random() * 1000)}`;
+          const sanitizedGender = sanitizeGender(style.gender);
+          // Ajout d'un log pour debug
+          console.log('Style à ajouter:', {
+            name: style.name,
+            gender: sanitizedGender,
+            type: style.type ?? '', // <-- vérification ici
+            style_key: uniqueStyleKey
+          });
           return {
             project_id: projectId,
             name: style.name,
-            gender: sanitizeGender(style.gender), // <-- correction ici
-            type: style.type, // <-- la colonne existe, on peut l'enregistrer
+            gender: sanitizedGender,
+            type: style.type ?? '', // <-- assure que type est toujours présent
             style_key: uniqueStyleKey,
             preview_image: style.preview_image,
             description: style.description || '',
@@ -447,6 +463,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                         {tag.charAt(0).toUpperCase() + tag.slice(1)}
                       </span>
                     ))}
+
                   </div>
                 </div>
                 {/* Badge nombre de styles */}
@@ -599,6 +616,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                               {tag}
                             </span>
                           ))}
+
                         </div>
                         
                         {/* Genre selection if needed - disabled for already added styles */}
@@ -617,6 +635,7 @@ export default function StyleTemplates({ projectId, photoboothType, onStylesAdde
                       </div>
                     </div>
                   ))}
+
                 </div>
               </div>
               
