@@ -521,7 +521,7 @@ export default function LogoManager({ projectId, setError, setSuccess }) {
                         className="transition group-hover:scale-105"
                       />
                     </div>
-                    <div className="text-xs text-center mt-2 text-gray-600">Après</div>
+                    <div className="text-xs text-center mt-2 text-gray-600">Objet à ajouter</div>
                   </div>
                   {/* Signe = */}
                   <div className="flex flex-col items-center justify-center">

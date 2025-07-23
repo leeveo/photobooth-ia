@@ -35,8 +35,8 @@ const ProjectInfoForm = ({
   // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
   const getPhotoboothUrl = () => {
     if (!project?.slug || !project?.photobooth_type) return '';
-    // Exemple : https://monsite.com/type-du-photobooth/slug-du-projet
-    return `${baseUrl}/${project.photobooth_type}/${project.slug}`;
+    // Exemple : https://monsite.com/photobooth-type/slug-du-projet
+    return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
   };
 
   // Function to handle project field changes

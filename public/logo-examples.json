@@ -15,6 +15,14 @@
     "result": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/result_pull_noel.png",
     "prompt": "place cette personne avec exactement le même pull de noel et les memes couleurs, dans un salon assise sur un fauteuil devant une cheminé en train de boire un chocolat chaud ."
   },
+   {
+    "title": "Chemise",
+    "description": "Ajoute une chemise et change le décor.",
+    "image1": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/homme.jpg",
+    "image2": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/chemise.jpg",
+    "result": "https://leeveostockage.s3.eu-west-3.amazonaws.com/photobooth-logo/element/result_chemise.png",
+    "prompt": "habille la personne en conservant son expression faciale et les traits exacts de son visage , la chemise . place cette personne dans un bureau en train de presenter son travail sur un tableau blanc , il y a en arrière plan des building , un ciel bleu et un avion qui passe ."
+  },
     {
     "title": "Lunette de soleil",
     "description": "Ajoute une paire de lunette de soleil et change le décor.",
