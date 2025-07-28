@@ -157,11 +157,11 @@ export default function PhotoboothProject({ params }) {
 
   const handleStartExperience = () => {
     if (project?.photobooth_type === 'standard') {
-      router.push(`/photobooth-premium/${slug}/cam`);
-    } else if (project?.photobooth_type === 'premium') {
-      router.push(`/photobooth-premium/${slug}/style`);
+      router.push(`/photobooth-coiffure/${slug}/cam`);
+    } else if (project?.photobooth_type === 'coiffure') {
+      router.push(`/photobooth-coiffure/${slug}/style`);
     } else {
-      router.push(`/photobooth-premium/${slug}/how`);
+      router.push(`/photobooth-coiffure/${slug}/how`);
     }
   };
 
@@ -188,7 +188,7 @@ export default function PhotoboothProject({ params }) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <LoadingSpinner 
-          text="Préparation de votre expérience premium..." 
+          text="Préparation de votre expérience coiffure..." 
           size="large" 
           color="purple" 
         />

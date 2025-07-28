@@ -266,7 +266,7 @@ const StyleManager = ({
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900 flex items-center">
               
-              Choix du modèle
+              Choix du Style 
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               Choisissez le type de photobooth pour votre projet. Ce choix est définitif et ne peut plus être modifié une fois validé.

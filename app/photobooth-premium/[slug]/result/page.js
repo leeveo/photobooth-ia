@@ -786,7 +786,7 @@ export default function Result({ params }) {
             whileTap={{ scale: 0.98 }}
           >
             <Link 
-              href={`/photobooth-premium/${slug}`}
+              href={`/photobooth-premium/${slug}/how`}
               onClick={handleStartOver}
               className="py-5 px-10 rounded-2xl font-extrabold text-2xl text-center bg-white bg-opacity-30 hover:bg-opacity-40 text-white transition-all flex items-center justify-center gap-3 w-full backdrop-blur-sm shadow-lg"
               style={{

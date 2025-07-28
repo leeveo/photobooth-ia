@@ -23,7 +23,7 @@ const PhotoboothTypeManager = ({
         return 'Boomerang';
       case 'logo':
         return 'Logo Fusion';
-      case 'photobooth-coiffure':
+      case 'coiffure': // <-- changé ici
         return 'Coiffure';
       default:
         return 'Premium';
@@ -56,6 +56,8 @@ const PhotoboothTypeManager = ({
     if (typeValidated) return; // Don't update if type is already validated
     
     try {
+      // Ici, la mise à jour du type se fait dans la table 'projects' :
+      // On met à jour la colonne 'photobooth_type' pour le projet courant
       const { error } = await supabase
         .from('projects')
         .update({ photobooth_type: type })
@@ -173,7 +175,7 @@ const PhotoboothTypeManager = ({
             </div>
           </>
         );
-      case 'photobooth-coiffure':
+      case 'coiffure': // <-- changé ici
         return (
           <>
             <p className="mb-2">
@@ -199,6 +201,7 @@ const PhotoboothTypeManager = ({
 
   // Set default type to premium if not already set
   if (!project.photobooth_type) {
+    // Si le type n'est pas défini, on l'enregistre dans la base via updatePhotoboothType('premium')
     updatePhotoboothType('premium');
   }
 
@@ -696,16 +699,16 @@ const PhotoboothTypeManager = ({
             {/* CARTE COIFFURE */}
             <div className={`
               group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent transition-all duration-300 transform hover:-translate-y-2 hover:scale-105
-              ${project.photobooth_type === 'photobooth-coiffure' ? 'border-pink-400 -translate-y-2 scale-105' : 'hover:border-pink-400'}
-              ${typeValidated && project.photobooth_type !== 'photobooth-coiffure' ? 'opacity-60 grayscale cursor-not-allowed' : !typeValidated ? 'cursor-pointer' : ''}
+              ${project.photobooth_type === 'coiffure' ? 'border-pink-400 -translate-y-2 scale-105' : 'hover:border-pink-400'}
+              ${typeValidated && project.photobooth_type !== 'coiffure' ? 'opacity-60 grayscale cursor-not-allowed' : !typeValidated ? 'cursor-pointer' : ''}
             `}>
               <div className={`
                 absolute -inset-1 rounded-2xl bg-gradient-to-br from-pink-400/30 via-pink-400/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-0
-                ${project.photobooth_type === 'photobooth-coiffure' ? 'opacity-100' : ''}
+                ${project.photobooth_type === 'coiffure' ? 'opacity-100' : ''}
               `}></div>
               
               <div 
-                onClick={() => !typeValidated && updatePhotoboothType('photobooth-coiffure')}
+                onClick={() => !typeValidated && updatePhotoboothType('coiffure')}
                 className="relative z-10 flex flex-col h-full"
                 style={{minHeight: "500px"}}
               >
@@ -720,7 +723,7 @@ const PhotoboothTypeManager = ({
                       inline-flex items-center justify-center w-16 h-16 rounded-full 
                       bg-gradient-to-tr from-pink-400 to-indigo-400 shadow-lg
                       transform transition-transform duration-300 group-hover:scale-110
-                      ${project.photobooth_type === 'photobooth-coiffure' ? 'scale-110' : ''}
+                      ${project.photobooth_type === 'coiffure' ? 'scale-110' : ''}
                     `}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -734,7 +737,7 @@ const PhotoboothTypeManager = ({
                     <h5 className={`
                       font-bold text-white mb-2 text-lg
                       transform transition-all duration-300 group-hover:text-pink-300
-                      ${project.photobooth_type === 'photobooth-coiffure' ? 'text-pink-300' : ''}
+                      ${project.photobooth_type === 'coiffure' ? 'text-pink-300' : ''}
                     `}>Coiffure</h5>
                     
                     {/* Description détaillée */}
@@ -761,7 +764,7 @@ const PhotoboothTypeManager = ({
                   </div>
                   
                   <div className="flex space-x-2 mt-4">
-                    {project.photobooth_type === 'photobooth-coiffure' && (
+                    {project.photobooth_type === 'coiffure' && (
                       <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-pink-200 bg-gradient-to-r from-pink-600/80 to-indigo-400/80 shadow-lg">
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
@@ -770,7 +773,7 @@ const PhotoboothTypeManager = ({
                       </span>
                     )}
                     
-                    {typeValidated && project.photobooth_type !== 'photobooth-coiffure' && (
+                    {typeValidated && project.photobooth_type !== 'coiffure' && (
                       <span className="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-bold rounded-lg text-gray-300 bg-gray-700/80 shadow-lg">
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
@@ -782,7 +785,7 @@ const PhotoboothTypeManager = ({
                 </div>
                 
                 {/* Bottom highlight for selected */}
-                {project.photobooth_type === 'photobooth-coiffure' && (
+                {project.photobooth_type === 'coiffure' && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-400 to-indigo-400"></div>
                 )}
               </div>

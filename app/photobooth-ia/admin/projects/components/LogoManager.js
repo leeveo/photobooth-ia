@@ -424,7 +424,7 @@ export default function LogoManager({ projectId, setError, setSuccess }) {
             <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m9-6a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Prompt IA Fusion
+            Prompt IA Logo Fusion
           </div>
           <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border-2 border-indigo-300 rounded-xl shadow-lg p-5 pt-8">
             <label htmlFor="prompt" className="block text-sm font-bold text-indigo-700 mb-2">

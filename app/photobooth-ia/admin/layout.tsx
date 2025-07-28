@@ -213,27 +213,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Historique de commande', path: '/photobooth-ia/admin/parametre', icon: <FiShoppingCart className="w-5 h-5" /> },
   ];
 
-  const externalApps = [
-    {
-      label: 'Photo mosaique',
-      url: process.env.NEXT_PUBLIC_PHOTO_MOSAIQUE_URL,
-      icon: <FiGrid className="w-5 h-5" />,
-      color: 'bg-indigo-100 text-indigo-700 border-indigo-300',
-    },
-    {
-      label: 'Karaoke',
-      url: process.env.NEXT_PUBLIC_KARAOKE_URL,
-      icon: <FiMusic className="w-5 h-5" />,
-      color: 'bg-pink-100 text-pink-700 border-pink-300',
-    },
-    {
-      label: 'Quizz',
-      url: process.env.NEXT_PUBLIC_QUIZZ_URL,
-      icon: <FiHelpCircle className="w-5 h-5" />,
-      color: 'bg-green-100 text-green-700 border-green-300',
-    },
-  
-  ];
+  // const externalApps = [
+  //   {
+  //     label: 'Photo mosaique',
+  //     url: process.env.NEXT_PUBLIC_PHOTO_MOSAIQUE_URL,
+  //     icon: <FiGrid className="w-5 h-5" />,
+  //     color: 'bg-indigo-100 text-indigo-700 border-indigo-300',
+  //   },
+  //   {
+  //     label: 'Karaoke',
+  //     url: process.env.NEXT_PUBLIC_KARAOKE_URL,
+  //     icon: <FiMusic className="w-5 h-5" />,
+  //     color: 'bg-pink-100 text-pink-700 border-pink-300',
+  //   },
+  //   {
+  //     label: 'Quizz',
+  //     url: process.env.NEXT_PUBLIC_QUIZZ_URL,
+  //     icon: <FiHelpCircle className="w-5 h-5" />,
+  //     color: 'bg-green-100 text-green-700 border-green-300',
+  //   },
+  // ];
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -297,7 +296,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {!isSidebarRetracted && <span>Applications externes</span>}
           </div>
           <div className={`flex flex-col gap-3 px-4 ${isSidebarRetracted ? 'px-0 items-center' : ''}`}>
-            {externalApps.map(app =>
+            {/* 
+            externalApps.map(app =>
               app.url ? (
                 <a
                   key={app.label}
@@ -313,7 +313,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {!isSidebarRetracted && <span className="font-medium">{app.label}</span>}
                 </a>
               ) : null
-            )}
+            )
+            */}
           </div>
 
           <hr className={`my-6 border-gray-200 mx-4 ${isSidebarRetracted ? 'mx-2' : ''}`} />

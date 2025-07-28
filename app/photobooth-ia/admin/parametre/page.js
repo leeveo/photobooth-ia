@@ -11,6 +11,7 @@ export default function ParametrePage() {
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
 
   // Récupère l'utilisateur connecté
   useEffect(() => {
@@ -136,11 +137,16 @@ export default function ParametrePage() {
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Images incluses</th>
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Facture</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.map(payment => (
-                    <tr key={payment.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <tr
+                      key={payment.id}
+                      className={`border-b last:border-0 hover:bg-gray-50 cursor-pointer ${selectedPaymentId === payment.id ? 'bg-indigo-50' : ''}`}
+                      onClick={() => setSelectedPaymentId(payment.id)}
+                    >
                       <td className="px-4 py-2">{new Date(payment.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-2">{(payment.amount / 100).toFixed(2)} €</td>
                       <td className="px-4 py-2">{payment.plan || payment.plan_name || '-'}</td>
@@ -157,30 +163,101 @@ export default function ParametrePage() {
                         )}
                       </td>
                       <td className="px-4 py-2">{payment.stripe_payment_id || '-'}</td>
+                      <td className="px-4 py-2">
+                        {payment.invoice_url ? (
+                          <a
+                            href={payment.invoice_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            Voir la facture
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                        {payment.invoice_pdf && (
+                          <>
+                            <span className="mx-1 text-gray-400">|</span>
+                            <a
+                              href={payment.invoice_pdf}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 underline hover:text-green-800"
+                            >
+                              PDF
+                            </a>
+                          </>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Détails de chaque commande Stripe */}
-            <div className="divide-y divide-gray-100 mt-8">
-              {payments.map(payment => (
-                <div key={payment.id} className="p-4">
-                  <h4 className="font-semibold text-indigo-700 mb-2">Détails de la commande Stripe du {new Date(payment.created_at).toLocaleString()}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                    <div><strong>Montant :</strong> {(payment.amount / 100).toFixed(2)} €</div>
-                    <div><strong>Statut :</strong> {payment.status}</div>
-                    <div><strong>Plan :</strong> {payment.plan || payment.plan_name || '-'}</div>
-                    <div><strong>Images incluses :</strong> {payment.images_included || '-'}</div>
-                    <div><strong>Stripe customer ID :</strong> {payment.stripe_customer_id}</div>
-                    <div><strong>Stripe subscription ID :</strong> {payment.stripe_subscription_id}</div>
-                    <div><strong>Stripe payment ID :</strong> {payment.stripe_payment_id}</div>
-                    <div><strong>Quota photos :</strong> {payment.photo_quota || '-'}</div>
-                    <div><strong>Prochain reset quota :</strong> {payment.photo_quota_reset_at ? new Date(payment.photo_quota_reset_at).toLocaleString() : '-'}</div>
-                  </div>
-                </div>
-              ))}
+            {/* Détails de la commande sélectionnée */}
+            <div className="mt-8">
+              {selectedPaymentId && (
+                <>
+                  <button
+                    className="mb-4 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+                    onClick={() => setSelectedPaymentId(null)}
+                  >
+                    ← Retour à la liste
+                  </button>
+                  {(() => {
+                    const payment = payments.find(p => p.id === selectedPaymentId);
+                    if (!payment) return null;
+                    return (
+                      <div className="p-4 border rounded-xl bg-gray-50">
+                        <h4 className="font-semibold text-indigo-700 mb-2">
+                          Détails de la commande Stripe du {new Date(payment.created_at).toLocaleString()}
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <div><strong>Montant :</strong> {(payment.amount / 100).toFixed(2)} €</div>
+                          <div><strong>Statut :</strong> {payment.status}</div>
+                          <div><strong>Plan :</strong> {payment.plan || payment.plan_name || '-'}</div>
+                          <div><strong>Images incluses :</strong> {payment.images_included || '-'}</div>
+                          <div><strong>Stripe customer ID :</strong> {payment.stripe_customer_id}</div>
+                          <div><strong>Stripe subscription ID :</strong> {payment.stripe_subscription_id}</div>
+                          <div><strong>Stripe payment ID :</strong> {payment.stripe_payment_id}</div>
+                          <div><strong>Quota photos :</strong> {payment.photo_quota || '-'}</div>
+                          <div><strong>Prochain reset quota :</strong> {payment.photo_quota_reset_at ? new Date(payment.photo_quota_reset_at).toLocaleString() : '-'}</div>
+                          <div>
+                            <strong>Facture :</strong>{" "}
+                            {payment.invoice_url ? (
+                              <a
+                                href={payment.invoice_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline hover:text-blue-800"
+                              >
+                                Voir la facture
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                            {payment.invoice_pdf && (
+                              <>
+                                <span className="mx-1 text-gray-400">|</span>
+                                <a
+                                  href={payment.invoice_pdf}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-green-600 underline hover:text-green-800"
+                                >
+                                  PDF
+                                </a>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
             </div>
           </>
         )}

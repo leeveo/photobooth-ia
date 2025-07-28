@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notFound } from 'next/navigation';
 import Image from "next/image";
 import Link from 'next/link';
@@ -9,12 +9,15 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import './style.css'; // Import CSS for masonry grid
 
+// Ajout des imports react-slick
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 export default function PhotoboothStyles({ params }) {
   const { slug } = params;
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const scrollRef = useRef(null);
   
   const [project, setProject] = useState(null);
   const [styles, setStyles] = useState([]);
@@ -24,41 +27,9 @@ export default function PhotoboothStyles({ params }) {
   const [error, setError] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
-  // Simplified state for infinite scroll
-  const [visibleCount, setVisibleCount] = useState(50);
-  const [isScrollEnd, setIsScrollEnd] = useState(false);
-  
   // Ajoute ces hooks d'état en haut du composant, avant tout usage :
   const [genderFilter, setGenderFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
-
-  // Effect for infinite scroll - Updated to track scroll position
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-        
-        // Check if near bottom for infinite scroll
-        if (scrollTop + clientHeight >= scrollHeight - 100) {
-          setVisibleCount(prev => Math.min(prev + 10, styles.length));
-          setIsScrollEnd(true);
-        } else {
-          setIsScrollEnd(false);
-        }
-      }
-    };
-
-    const scrollContainer = scrollRef.current;
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-    }
-
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, [styles.length]);
 
   // Define fetchStyles first - without dependencies on fetchProjectData
   const fetchStyles = useCallback(async (projectId) => {
@@ -220,6 +191,19 @@ export default function PhotoboothStyles({ params }) {
     setShowConfirmModal(false);
   };
   
+  useEffect(() => {
+    // Masque les flèches slick par défaut (petits boutons transparents)
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .slick-arrow.slick-hidden { display: none !important; }
+      .slick-arrow:not(button) { display: none !important; }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -258,134 +242,124 @@ export default function PhotoboothStyles({ params }) {
     return genderMatch && typeMatch;
   });
 
+  // Flèches personnalisées pour react-slick (centrées, sans doublon visuel)
+  function ArrowLeft(props) {
+    const { className, style, onClick } = props;
+    return (
+      <button
+        type="button"
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          left: "-40px",
+          zIndex: 2,
+          width: 56,
+          height: 56,
+          background: "rgba(255,255,255,1)",
+          borderRadius: "50%",
+          border: "2px solid #fff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          padding: 0
+        }}
+        onClick={onClick}
+        aria-label="Précédent"
+      >
+        <svg width="32" height="32" viewBox="8 0 24 24" fill="none" style={{display: "block"}}>
+          <path d="M15.5 19L9.5 12L15.5 5" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    );
+  }
+
+  function ArrowRight(props) {
+    const { className, style, onClick } = props;
+    return (
+      <button
+        type="button"
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          right: "-40px",
+          zIndex: 2,
+          width: 56,
+          height: 56,
+          background: "rgba(255,255,255,1)",
+          borderRadius: "50%",
+          border: "2px solid #fff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          padding: 0
+        }}
+        onClick={onClick}
+        aria-label="Suivant"
+      >
+        <svg width="32" height="32" viewBox="6 0 24 24" fill="none" style={{display: "block"}}>
+          <path d="M8.5 5L14.5 12L8.5 19" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    );
+  }
+
+  // Configuration du carrousel react-slick
+  const sliderSettings = {
+    dots: false,
+    infinite: filteredStyles.length > 4,
+    speed: 500,
+    slidesToShow: Math.min(filteredStyles.length, 4),
+    slidesToScroll: 1,
+    swipeToSlide: true,
+    nextArrow: <ArrowRight />,
+    prevArrow: <ArrowLeft />,
+    appendArrows: (container) => (
+      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, width: "100%", zIndex: 2, pointerEvents: "none" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", pointerEvents: "auto" }}>
+          {container.props.children}
+        </div>
+      </div>
+    ),
+    responsive: [
+      {
+        breakpoint: 1280,
+        settings: {
+          slidesToShow: Math.min(filteredStyles.length, 3),
+        }
+      },
+      {
+        breakpoint: 900,
+        settings: {
+          slidesToShow: Math.min(filteredStyles.length, 2),
+        }
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 1,
+        }
+      }
+    ]
+  };
+
   return (
     <main 
       className="min-h-screen flex flex-col relative overflow-hidden"
     >
-      {/* Animated gradient background */}
-      <motion.div
+      {/* Static gradient background instead of animated motion.div */}
+      <div
         className="fixed inset-0 z-0"
         style={{
           background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
         }}
-        animate={{
-          background: [
-            `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
-            `linear-gradient(225deg, ${secondaryColor}20, ${primaryColor}10, ${secondaryColor}15, ${primaryColor}25)`,
-            `linear-gradient(315deg, ${primaryColor}20, ${secondaryColor}15, ${primaryColor}10, ${secondaryColor}20)`,
-            `linear-gradient(45deg, ${secondaryColor}15, ${primaryColor}20, ${secondaryColor}10, ${primaryColor}15)`,
-          ]
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
       />
-
-      {/* Floating background elements */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        {/* Large floating orbs */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={`orb-${i}`}
-            className="absolute rounded-full opacity-20 backdrop-blur-sm"
-            style={{
-              backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
-              width: `${100 + Math.random() * 200}px`,
-              height: `${100 + Math.random() * 200}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 10 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Small sparkle particles */}
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={`sparkle-${i}`}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              backgroundColor: i % 3 === 0 ? primaryColor : secondaryColor,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: 2 + Math.random() * 3,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Geometric shapes */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={`shape-${i}`}
-            className="absolute opacity-10"
-            style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: i % 2 === 0 ? '50%' : '0%',
-              backgroundColor: 'transparent',
-              border: `2px solid ${i % 2 === 0 ? primaryColor : secondaryColor}`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              rotate: [0, 360],
-              scale: [1, 1.5, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 15 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: Math.random() * 3,
-            }}
-          />
-        ))}
-      </div>
 
       {/* Main content with enhanced backdrop */}
       <div className="relative z-10 w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 lg:py-12 flex flex-col flex-grow">
         {/* Enhanced logo and welcome message */}
         <div className="flex flex-col items-center mb-10 relative">
-          {/* Animated halo behind logo */}
-          <motion.div
-            className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-64 rounded-full opacity-20"
-            style={{
-              background: `radial-gradient(circle, ${secondaryColor}40, transparent 70%)`
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.4, 0.2],
-              rotate: [0, 360],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-
           <motion.div
             initial={{ opacity: 0, y: -30, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -398,25 +372,11 @@ export default function PhotoboothStyles({ params }) {
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 transition={{ type: "spring", damping: 15 }}
               >
-              
-                {/* Glow effect behind logo */}
-                <motion.div
-                  className="absolute inset-0 blur-xl opacity-50 -z-10"
-                  style={{ backgroundColor: secondaryColor }}
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.3, 0.6, 0.3],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
+                {/* Remove glow effect behind logo */}
               </motion.div>
             ) : (
               <motion.h1 
-                className="text-3xl font-bold text-white drop-shadow-lg"
+                className="text-3xl font-bold text-white drop-shadow-lg text-center w-full flex justify-center"
                 style={{ textShadow: `0 0 20px ${primaryColor}50` }}
                 whileHover={{ scale: 1.05 }}
               >
@@ -602,22 +562,6 @@ export default function PhotoboothStyles({ params }) {
             >
                Les styles disponibles 
             </motion.h3>
-            
-            {/* Decorative elements around title */}
-            <motion.div
-              className="absolute -left-16 top-1/2 transform -translate-y-1/2 w-8 h-0.5"
-              style={{ backgroundColor: primaryColor }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
-            />
-            <motion.div
-              className="absolute -right-16 top-1/2 transform -translate-y-1/2 w-8 h-0.5"
-              style={{ backgroundColor: primaryColor }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
-            />
           </motion.div>
           
           {stylesLoading ? (
@@ -669,50 +613,30 @@ export default function PhotoboothStyles({ params }) {
               </p>
             </motion.div>
           ) : (
-            <div className="w-full mx-auto relative">
-              {/* Enhanced scrollable container with better styling */}
+            // Bloc modifié : encart plus haut
+            <div className="w-full mx-auto relative" style={{ minHeight: 400 }}>
               <div 
-                className={`styles-scrollable-container ${isScrollEnd ? 'scroll-end' : ''} relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-4`} 
-                ref={scrollRef}
+                className="relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-4"
                 style={{
-                  boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`
+                  boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`,
+                  minHeight: 600 // hauteur augmentée pour l'encart du carrousel
                 }}
               >
-                {/* Enhanced scroll indicator */}
-                <motion.div 
-                  className="scroll-indicator"
-                  style={{ color: secondaryColor }}
-                  animate={{
-                    y: [0, 5, 0],
-                    opacity: isScrollEnd ? [0.3, 0.1, 0.3] : [0.6, 1, 0.6],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </motion.div>
-                
-                {/* Enhanced masonry grid container */}
-                <div className="masonry-grid-container">
-                  <div 
-                    className={`masonry-grid ${
-                      filteredStyles.length <= 10 ? 'few-items' : ''
-                    } ${
-                      filteredStyles.length <= 3 ? 'force-2-cols' : 
-                      filteredStyles.length <= 6 ? 'force-3-cols' : 
-                      filteredStyles.length <= 12 ? 'force-4-cols' : 
-                      filteredStyles.length <= 20 ? 'force-5-cols' : ''
-                    }`}
-                  >
-                    {filteredStyles.slice(0, visibleCount).map((style, index) => (
+                <Slider {...sliderSettings}>
+                  {filteredStyles.map((style, index) => (
+                    <div key={style.id} className="px-2">
                       <motion.div 
-                        key={style.id}
-                        className="masonry-item"
+                        className={`cursor-pointer overflow-hidden rounded-3xl backdrop-blur-md bg-white/10 shadow-xl hover:shadow-2xl transition-all transform duration-500 border-2 style-card group ${
+                          selectedStyle?.id === style.id 
+                            ? 'border-white scale-105 shadow-2xl' 
+                            : 'border-white/20 hover:scale-[1.02] hover:border-white/40'
+                        }`}
+                        onClick={() => handleStyleSelect(style)}
+                        style={{
+                          boxShadow: selectedStyle?.id === style.id 
+                            ? `0 25px 60px ${secondaryColor}40, 0 0 0 3px ${secondaryColor}30`
+                            : `0 15px 40px ${primaryColor}20`
+                        }}
                         initial={{ opacity: 0, y: 30, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ 
@@ -726,178 +650,124 @@ export default function PhotoboothStyles({ params }) {
                           transition: { duration: 0.2 }
                         }}
                       >
-                        <motion.div 
-                          className={`cursor-pointer overflow-hidden rounded-3xl backdrop-blur-md bg-white/10 shadow-xl hover:shadow-2xl transition-all transform duration-500 border-2 style-card group ${
-                            selectedStyle?.id === style.id 
-                              ? 'border-white scale-105 shadow-2xl' 
-                              : 'border-white/20 hover:scale-[1.02] hover:border-white/40'
-                          }`}
-                          onClick={() => handleStyleSelect(style)}
-                          style={{
-                            boxShadow: selectedStyle?.id === style.id 
-                              ? `0 25px 60px ${secondaryColor}40, 0 0 0 3px ${secondaryColor}30`
-                              : `0 15px 40px ${primaryColor}20`
-                          }}
-                          whileHover={{
-                            boxShadow: `0 30px 80px ${primaryColor}30, 0 0 0 2px ${secondaryColor}40`
+                        {/* Image agrandie et non croppée */}
+                        <div 
+                          className="relative overflow-hidden"
+                          style={{ 
+                            height: 400, // hauteur fixe plus grande pour l'image
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "#222"
                           }}
                         >
-                          {/* Enhanced image container */}
-                          <div 
-                            className="relative overflow-hidden"
-                            style={{ 
-                              height: `${Math.floor(Math.random() * 50) + 180}px` 
-                            }}
-                          >
-                            {style.preview_image ? (
-                              <>
-                                <motion.img 
-                                  src={style.preview_image}
-                                  alt={style.name}
-                                  className="object-cover w-full h-full transition-all duration-700 group-hover:scale-110"
-                                  onError={(e) => {
-                                    console.error(`Failed to load image for style ${style.name}`);
-                                    e.target.style.display = 'none';
+                          {style.preview_image ? (
+                            <>
+                              <motion.img 
+                                src={style.preview_image}
+                                alt={style.name}
+                                className="object-contain w-full h-full transition-all duration-700 group-hover:scale-105"
+                                style={{ maxHeight: "100%", maxWidth: "100%" }}
+                                onError={(e) => {
+                                  console.error(`Failed to load image for style ${style.name}`);
+                                  e.target.style.display = 'none';
+                                }}
+                                whileHover={{ scale: 1.08 }}
+                              />
+                              <motion.div 
+                                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                                style={{
+                                  background: `linear-gradient(to top, ${primaryColor}60, transparent 50%, ${secondaryColor}10)`
+                                }}
+                              />
+                              <motion.div 
+                                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                initial={{ scale: 0.8 }}
+                                whileHover={{ scale: 1 }}
+                              >
+                                <motion.button 
+                                  className="px-4 py-2 text-base md:px-8 md:py-3 md:text-lg rounded-full font-bold shadow-2xl transform transition-all backdrop-blur-md border border-white/30"
+                                  style={{ 
+                                    backgroundColor: `${secondaryColor}90`, 
+                                    color: primaryColor 
                                   }}
-                                  whileHover={{ scale: 1.05 }}
-                                />
-                                <motion.div 
-                                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                                  style={{
-                                    background: `linear-gradient(to top, ${primaryColor}60, transparent 50%, ${secondaryColor}10)`
+                                  whileHover={{ 
+                                    scale: 1.05,
+                                    boxShadow: `0 15px 30px ${secondaryColor}40`
                                   }}
-                                />
-                                <motion.div 
-                                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                  initial={{ scale: 0.8 }}
-                                  whileHover={{ scale: 1 }}
+                                  whileTap={{ scale: 0.95 }}
                                 >
-                                  <motion.button 
-                                    className="px-8 py-3 rounded-full font-bold shadow-2xl transform transition-all text-lg backdrop-blur-md border border-white/30"
-                                    style={{ 
-                                      backgroundColor: `${secondaryColor}90`, 
-                                      color: primaryColor 
-                                    }}
-                                    whileHover={{ 
-                                      scale: 1.05,
-                                      boxShadow: `0 15px 30px ${secondaryColor}40`
-                                    }}
-                                    whileTap={{ scale: 0.95 }}
-                                  >
-                                    ✨ Choisir ce style
-                                  </motion.button>
-                                </motion.div>
-                              </>
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-                                <span className="text-gray-500 text-lg">Aucune image</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Enhanced style information */}
-                          <motion.div 
-                            className="p-6 relative"
+                                  ✨ Choisir ce style
+                                </motion.button>
+                              </motion.div>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                              <span className="text-gray-500 text-lg">Aucune image</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Enhanced style information */}
+                        <motion.div 
+                          className="p-6 relative"
+                          style={{
+                            background: selectedStyle?.id === style.id 
+                              ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)`
+                              : 'transparent'
+                          }}
+                        >
+                          <motion.h4 
+                            className="font-bold text-white text-xl tracking-tight mb-2"
                             style={{
-                              background: selectedStyle?.id === style.id 
-                                ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)`
-                                : 'transparent'
+                              textShadow: `0 2px 10px ${primaryColor}40`
                             }}
                           >
-                            <motion.h4 
-                              className="font-bold text-white text-xl tracking-tight mb-2"
-                              style={{
-                                textShadow: `0 2px 10px ${primaryColor}40`
-                              }}
-                            >
-                              {style.name}
-                            </motion.h4>
-                            {style.description && (
-                              <motion.p className="text-white/80 text-base line-clamp-2">
-                                {style.description}
-                              </motion.p>
-                            )}
-                            
-                            {/* Style card accent */}
-                            <motion.div
-                              className="absolute bottom-0 left-0 right-0 h-1 rounded-b-3xl"
-                              style={{
-                                background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`
-                              }}
-                              initial={{ scaleX: 0 }}
-                              animate={{ scaleX: selectedStyle?.id === style.id ? 1 : 0 }}
-                              transition={{ duration: 0.3 }}
-                            />
-                          </motion.div>
-                          
-                          {/* Enhanced selection badge */}
-                          {selectedStyle?.id === style.id && (
-                            <motion.div 
-                              className="absolute top-4 right-4 backdrop-blur-md text-sm font-bold px-4 py-2 rounded-full border border-white/30"
-                              style={{ 
-                                backgroundColor: `${secondaryColor}90`, 
-                                color: primaryColor,
-                                boxShadow: `0 8px 25px ${secondaryColor}40`
-                              }}
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              transition={{ 
-                                type: "spring",
-                                damping: 15,
-                                stiffness: 300
-                              }}
-                            >
-                              ✨ Sélectionné
-                            </motion.div>
+                            {style.name}
+                          </motion.h4>
+                          {style.description && (
+                            <motion.p className="text-white/80 text-base line-clamp-2">
+                              {style.description}
+                            </motion.p>
                           )}
+                          <motion.div
+                            className="absolute bottom-0 left-0 right-0 h-1 rounded-b-3xl"
+                            style={{
+                              background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`
+                            }}
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: selectedStyle?.id === style.id ? 1 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          />
                         </motion.div>
+                        {/* Enhanced selection badge */}
+                        {selectedStyle?.id === style.id && (
+                          <motion.div 
+                            className="absolute top-4 right-4 backdrop-blur-md text-sm font-bold px-4 py-2 rounded-full border border-white/30"
+                            style={{ 
+                              backgroundColor: `${secondaryColor}90`, 
+                              color: primaryColor,
+                              boxShadow: `0 8px 25px ${secondaryColor}40`
+                            }}
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ 
+                              type: "spring",
+                              damping: 15,
+                              stiffness: 300
+                            }}
+                          >
+                            ✨ Sélectionné
+                          </motion.div>
+                        )}
                       </motion.div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  ))}
+                </Slider>
               </div>
             </div>
           )}
         </motion.div>
-        
-        {/* Enhanced "Load more" button */}
-        {visibleCount < styles.length && (
-          <div className="mt-8 flex justify-center">
-            <motion.button
-              onClick={() => setVisibleCount(prev => Math.min(prev + 10, styles.length))}
-              className="px-10 py-5 backdrop-blur-md hover:backdrop-blur-lg text-white rounded-2xl font-bold transition-all text-lg border border-white/20 relative overflow-hidden group"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor}20, ${secondaryColor}15)`,
-                boxShadow: `0 15px 35px ${primaryColor}25`
-              }}
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: `0 20px 50px ${primaryColor}35`
-              }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-            >
-              {/* Animated background shine */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  delay: 2,
-                  repeatDelay: 3
-                }}
-              />
-              
-              <span className="relative z-10">
-                🎨 Afficher plus de styles ({styles.length - visibleCount} restants)
-              </span>
-            </motion.button>
-          </div>
-        )}
         
         {/* Confirmation modal - Responsive version */}
         <AnimatePresence>
@@ -909,37 +779,13 @@ export default function PhotoboothStyles({ params }) {
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
-              {/* Enhanced blurred background with animated particles */}
-              <motion.div 
-                className="absolute inset-0 backdrop-blur-xl bg-black/60"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {/* Animated background particles */}
-                {[...Array(20)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full opacity-30"
-                    style={{ 
-                      backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                    }}
-                    animate={{
-                      y: [0, -20, 0],
-                      x: [0, Math.random() * 20 - 10, 0],
-                      opacity: [0.3, 0.7, 0.3],
-                      scale: [1, 1.5, 1],
-                    }}
-                    transition={{
-                      duration: 3 + Math.random() * 2,
-                      repeat: Infinity,
-                      delay: Math.random() * 2,
-                    }}
-                  />
-                ))}
-              </motion.div>
+              {/* Ajout effet blur et transparence sur le fond du popup */}
+              <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-md"
+                style={{
+                  zIndex: 0
+                }}
+              />
               
               {/* Enhanced popup content - Responsive layout */}
               <motion.div 
@@ -1268,10 +1114,6 @@ export default function PhotoboothStyles({ params }) {
                     </motion.button>
                   </div>
                 </div>
-                
-                {/* Floating decorative elements */}
-                
-               
               </motion.div>
             </motion.div>
           )}

@@ -199,7 +199,7 @@ export default function ProjectGallery() {
         // 1. Récupérer les projets créés par l'admin connecté
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
-          .select('id, name, slug')
+          .select('id, name, slug, primary_color, secondary_color, logo_url')
           .eq('created_by', currentAdminId);
 
         if (projectsError) {
@@ -727,92 +727,150 @@ export default function ProjectGallery() {
           
           <div className="bg-white shadow-sm rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-100">
-              <label htmlFor="projectSelect" className="block text-sm font-medium text-gray-700 mb-2">
-                Sélectionnez un projet
-              </label>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="w-full">
-                  <select
-                    id="projectSelect"
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg bg-gray-50"
-                    onChange={(e) => setSelectedProject(e.target.value)}
-                    value={selectedProject || ''}
-                  >
-                    <option value="">-- Choisissez un projet --</option>
-                    {projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name} ({project.id})
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {/* Indicateur de nombre de photos par projet */}
-                  {selectedProject && (
-                    <div className="mt-2 text-sm text-indigo-600 flex items-center">
-                      <RiFilterLine className="mr-1 h-4 w-4 text-indigo-400" />
-                      <span className="font-semibold">{projectsWithPhotoCount[selectedProject] || 0}</span> 
-                      <span className="ml-1">photos trouvées pour ce projet</span>
-                    </div>
-                  )}
-                  
-                  {/* Affichage du nombre de photos pour tous les projets */}
-                  {!selectedProject && projects.length > 0 && (
-                    <div className="mt-3 space-y-1">
-                      <p className="text-xs font-medium text-gray-500">Nombre de photos par projet:</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                        {projects.map(project => (
-                          <div 
-                            key={`count-${project.id}`} 
-                            className="bg-gray-50 px-3 py-1.5 rounded-md text-xs flex justify-between items-center hover:bg-indigo-50 cursor-pointer"
-                            onClick={() => setSelectedProject(project.id)}
-                          >
-                            <span className="truncate" title={project.name}>{project.name}</span>
-                            <span className="ml-2 font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+              {/* Tableau des projets avec boutons par ligne */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2 text-indigo-700">Liste des projets</h3>
+                <div className="overflow-x-auto w-full">
+                  <table className="min-w-full divide-y divide-gray-200 border rounded-lg text-xs sm:text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase"></th>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Nom</th>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Couleur principale</th>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Couleur secondaire</th>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Nb photos</th>
+                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {projects.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-3 text-center text-gray-400">Aucun projet trouvé</td>
+                        </tr>
+                      )}
+                      {projects.map((project, idx) => (
+                        <tr
+                          key={project.id}
+                          className={
+                            (idx % 2 === 0 ? "bg-white" : "bg-gray-50") +
+                            (selectedProject === project.id ? " bg-indigo-50" : "")
+                          }
+                        >
+                          {/* Logo du projet */}
+                          <td className="px-2 sm:px-4 py-2">
+                            {project.logo_url ? (
+                              <img
+                                src={project.logo_url}
+                                alt="Logo"
+                                className="w-8 h-8 rounded-full object-cover border"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <RiImageLine className="w-5 h-5 text-gray-400" />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-2 sm:px-4 py-2 font-medium">{project.name}</td>
+                          {/* Primary color pastille */}
+                          <td className="px-2 sm:px-4 py-2">
+                            <span
+                              className="inline-block w-5 h-5 rounded-full border"
+                              style={{
+                                backgroundColor: project.primary_color || "#cccccc",
+                                borderColor: "#bbb"
+                              }}
+                              title={project.primary_color}
+                            ></span>
+                          </td>
+                          {/* Secondary color pastille */}
+                          <td className="px-2 sm:px-4 py-2">
+                            <span
+                              className="inline-block w-5 h-5 rounded-full border"
+                              style={{
+                                backgroundColor: project.secondary_color || "#cccccc",
+                                borderColor: "#bbb"
+                              }}
+                              title={project.secondary_color}
+                            ></span>
+                          </td>
+                          <td className="px-2 sm:px-4 py-2">
+                            <span className="font-semibold text-indigo-600">
                               {projectsWithPhotoCount[project.id] !== undefined ? projectsWithPhotoCount[project.id] : '...'}
                             </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          </td>
+                          <td className="px-2 sm:px-4 py-2 flex flex-col sm:flex-row gap-2">
+                            <Link
+                              href={`/photobooth-ia/admin/project-mosaic?projectId=${project.id}&fullscreen=true`}
+                              className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Voir la mosaïque de photos en plein écran"
+                            >
+                              <RiImageLine className="h-4 w-4 mr-1" />
+                              <span className="hidden xs:inline">Voir mosaïque</span>
+                              <span className="inline xs:hidden">Mosaïque</span>
+                            </Link>
+                            <button
+                              onClick={() => {
+                                if (selectedProject !== project.id) setSelectedProject(project.id);
+                                setTimeout(() => setShowMosaicSettings(true), 0);
+                              }}
+                              className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent"
+                              title="Personnaliser l'apparence de la mosaïque"
+                            >
+                              <RiSettings3Line className="h-4 w-4 mr-1" />
+                              <span className="hidden xs:inline">Personnaliser</span>
+                              <span className="inline xs:hidden">Edit</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              </div>
+              {/* Affiche le nom du projet courant */}
+              {selectedProject && (
+                <div className="mb-2 text-lg font-semibold text-indigo-700">
+                  {projects.find(p => p.id == selectedProject)?.name || 'Projet'}
+                </div>
+              )}
+              {/* Les boutons restent accessibles */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  href={selectedProject ? `/photobooth-ia/admin/project-mosaic?projectId=${selectedProject}&fullscreen=true` : '#'}
+                  className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
+                    selectedProject 
+                      ? 'text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent' 
+                      : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
+                  }`}
+                  onClick={(e) => {
+                    if (!selectedProject) {
+                      e.preventDefault();
+                      return;
+                    }
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Voir la mosaïque de photos en plein écran"
+                >
+                  <RiImageLine className="h-5 w-5 mr-2" />
+                  Voir mosaïque
+                </Link>
                 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Link
-                    href={selectedProject ? `/photobooth-ia/admin/project-mosaic?projectId=${selectedProject}&fullscreen=true` : '#'}
-                    className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
-                      selectedProject 
-                        ? 'text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent' 
-                        : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
-                    }`}
-                    onClick={(e) => {
-                      if (!selectedProject) {
-                        e.preventDefault();
-                        return;
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Voir la mosaïque de photos en plein écran"
-                  >
-                    <RiImageLine className="h-5 w-5 mr-2" />
-                    Voir mosaïque
-                  </Link>
-                  
-                  <button
-                    onClick={() => setShowMosaicSettings(true)}
-                    className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
-                      selectedProject 
-                        ? 'text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent' 
-                        : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
-                    }`}
-                    disabled={!selectedProject}
-                    title="Personnaliser l'apparence de la mosaïque (couleur, titre, arrière-plan)"
-                  >
-                    <RiSettings3Line className="h-5 w-5 mr-2" />
-                    Personnaliser la mosaïque
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowMosaicSettings(true)}
+                  className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
+                    selectedProject 
+                      ? 'text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent' 
+                      : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
+                  }`}
+                  disabled={!selectedProject}
+                  title="Personnaliser l'apparence de la mosaïque (couleur, titre, arrière-plan)"
+                >
+                  <RiSettings3Line className="h-5 w-5 mr-2" />
+                  Personnaliser la mosaïque
+                </button>
               </div>
             </div>
             

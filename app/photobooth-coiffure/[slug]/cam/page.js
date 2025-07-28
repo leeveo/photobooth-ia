@@ -336,96 +336,78 @@ export default function CameraCapture({ params }) {
   const processCapture = () => {
     console.log("processCapture called");
     try {
-      // Ne pas masquer la vidéo immédiatement
-      // setEnabled(true); <- Commentons cette ligne qui masque la vidéo
       setCaptured(false);
-      
+
       const canvas = previewRef.current;
       const video = videoRef.current;
-      
+
       if (!canvas || !video) {
         console.error("Canvas or video element is null");
         setCameraError("Élément vidéo ou canvas non trouvé");
         return;
       }
-      
-      console.log("Video and canvas elements found, processing capture");
-      console.log("Video visibility state:", videoRef.current.style.display);
-      
-      // Get video dimensions
-      const videoWidth = video.videoWidth || 1280;
-      const videoHeight = video.videoHeight || 720;
-      
-      // Set canvas dimensions to match the expected output dimensions (970x651)
-      // These dimensions should match those used in the result page
-      canvas.width = 970;
-      canvas.height = 651;
-      
+
+      // Obtenir la taille réelle affichée du canvas (en pixels CSS)
+      const container = canvas.parentNode;
+      const displayWidth = container.offsetWidth;
+      const displayHeight = container.offsetHeight;
+
+      // Adapter la taille du canvas à la taille affichée
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+
       const context = canvas.getContext('2d');
       if (!context) {
         console.error("Could not get canvas context");
         return;
       }
-      
-      // Clear canvas
+
       context.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Mirror the image horizontally for selfie mode
+
+      // Mirror selfie
+      context.save();
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
-      
-      // Calculate scaling to maintain aspect ratio while filling the canvas
+
+      // Calcul "cover" pour remplir le canvas sans bande noire
+      const videoWidth = video.videoWidth || 1280;
+      const videoHeight = video.videoHeight || 720;
       const videoAspect = videoWidth / videoHeight;
       const canvasAspect = canvas.width / canvas.height;
-      
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-      
+
+      let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
+
       if (videoAspect > canvasAspect) {
-        // Video is wider than canvas (relative to height)
-        drawHeight = canvas.height;
-        drawWidth = drawHeight * videoAspect;
-        offsetX = (canvas.width - drawWidth) / 2;
+        // Crop sur la largeur
+        sWidth = videoHeight * canvasAspect;
+        sx = (videoWidth - sWidth) / 2;
       } else {
-        // Video is taller than canvas (relative to width)
-        drawWidth = canvas.width;
-        drawHeight = drawWidth / videoAspect;
-        offsetY = (canvas.height - drawHeight) / 2;
+        // Crop sur la hauteur
+        sHeight = videoWidth / canvasAspect;
+        sy = (videoHeight - sHeight) / 2;
       }
-      
-      // Draw video to canvas with proper aspect ratio and centering
+
       context.drawImage(
-        video, 
-        0, 0, videoWidth, videoHeight, 
-        offsetX, offsetY, drawWidth, drawHeight
+        video,
+        sx, sy, sWidth, sHeight,
+        0, 0, canvas.width, canvas.height
       );
-      
-      // Reset transform
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      
-      // Get the data URL
+
+      context.restore();
+
       const imageDataURL = canvas.toDataURL('image/jpeg', 0.95);
-      
-      console.log("Image captured successfully, setting state");
-      console.log(`Captured image dimensions: ${canvas.width}x${canvas.height}`);
-      
-      // Set state with the captured image
+
       setImageFile(imageDataURL);
-      
-      // Store in localStorage
       localStorage.setItem("faceImage", imageDataURL);
-      
-      // Seulement maintenant, après la capture, on active l'affichage du canvas
+
       setEnabled(true);
-      // Et on indique explicitement que la vidéo doit être masquée
       setVideoVisible(false);
-      
-      // Recharge le quota après la prise de photo
       fetchQuota();
     } catch (error) {
       console.error("Error in processCapture:", error);
       setCameraError(`Erreur lors de la capture: ${error.message}`);
       setEnabled(false);
-      setVideoVisible(true); // S'assurer que la vidéo reste visible en cas d'erreur
+      setVideoVisible(true);
     }
   };
   
@@ -1416,7 +1398,42 @@ const generateImageReplicate = async () => {
               >
                 Création en cours...
               </h2>
-              
+
+              {/* --- Ajout de l'animation de scan visage --- */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="relative w-20 h-24 flex items-center justify-center">
+                  {/* Icône personne (SVG) */}
+                  <svg width="80" height="96" viewBox="0 0 80 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Tête */}
+                    <circle cx="40" cy="28" r="18" fill="#fff" fillOpacity="0.9" stroke={secondaryColor} strokeWidth="3"/>
+                    {/* Corps */}
+                    <rect x="18" y="50" width="44" height="32" rx="16" fill="#fff" fillOpacity="0.8" stroke={secondaryColor} strokeWidth="3"/>
+                  </svg>
+                  {/* Barre de scan animée */}
+                  <motion.div
+                    className="absolute left-1 right-1"
+                    style={{
+                      top: 0,
+                      height: '18px',
+                      borderRadius: '8px',
+                      background: `linear-gradient(90deg, ${secondaryColor} 60%, ${primaryColor} 100%)`,
+                      opacity: 0.7,
+                      boxShadow: `0 0 12px 2px ${secondaryColor}80`
+                    }}
+                    initial={{ y: 0 }}
+                    animate={{ y: 72 }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      repeatType: "loop",
+                      ease: "linear"
+                    }}
+                  />
+                </div>
+                <div className="text-xs text-white/60 mt-2">Scan du visage en cours...</div>
+              </div>
+              {/* --- Fin animation scan --- */}
+
               <p className="text-white text-center mb-4">
                 Processus: {(elapsedTime / 1000).toFixed(1)} secondes
               </p>
@@ -1518,7 +1535,7 @@ const generateImageReplicate = async () => {
           className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
           style={{ 
             width: '100%',
-            maxWidth: '1400px', // Increased from 1200px
+            maxWidth: '1400px',
             aspectRatio: '970/651',
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
             backgroundColor: 'black'
@@ -1641,7 +1658,7 @@ const generateImageReplicate = async () => {
               display: enabled ? 'block' : 'none',
               minHeight: '400px',
               maxHeight: '80vh',
-              objectFit: 'contain',
+              objectFit: 'cover', // <--- Ajouté
               backgroundColor: '#222'
             }}
           />

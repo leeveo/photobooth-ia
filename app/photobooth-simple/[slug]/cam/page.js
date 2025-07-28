@@ -357,7 +357,7 @@ export default function CameraCapture({ params }) {
       const videoHeight = video.videoHeight || 720;
       
       // Set canvas dimensions to match the expected output dimensions (970x651)
-      // These dimensions should match those used in the result page
+      // Ces dimensions doivent correspondre à la sortie attendue
       canvas.width = 970;
       canvas.height = 651;
       
@@ -371,36 +371,35 @@ export default function CameraCapture({ params }) {
       context.clearRect(0, 0, canvas.width, canvas.height);
       
       // Mirror the image horizontally for selfie mode
+      context.save();
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
-      
-      // Calculate scaling to maintain aspect ratio while filling the canvas
+
+      // Correction du calcul pour éviter la bande noire en haut sur mobile :
+      // On va remplir tout le canvas, quitte à rogner sur les côtés, en centrant verticalement ET horizontalement.
       const videoAspect = videoWidth / videoHeight;
       const canvasAspect = canvas.width / canvas.height;
-      
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-      
+
+      let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
+
       if (videoAspect > canvasAspect) {
-        // Video is wider than canvas (relative to height)
-        drawHeight = canvas.height;
-        drawWidth = drawHeight * videoAspect;
-        offsetX = (canvas.width - drawWidth) / 2;
+        // La vidéo est plus large que le canvas, on rogne sur la largeur
+        sWidth = videoHeight * canvasAspect;
+        sx = (videoWidth - sWidth) / 2;
       } else {
-        // Video is taller than canvas (relative to width)
-        drawWidth = canvas.width;
-        drawHeight = drawWidth / videoAspect;
-        offsetY = (canvas.height - drawHeight) / 2;
+        // La vidéo est plus haute que le canvas, on rogne sur la hauteur
+        sHeight = videoWidth / canvasAspect;
+        sy = (videoHeight - sHeight) / 2;
       }
-      
-      // Draw video to canvas with proper aspect ratio and centering
+
+      // On dessine la partie centrale de la vidéo qui correspond au ratio du canvas
       context.drawImage(
-        video, 
-        0, 0, videoWidth, videoHeight, 
-        offsetX, offsetY, drawWidth, drawHeight
+        video,
+        sx, sy, sWidth, sHeight, // source rectangle (centré)
+        0, 0, canvas.width, canvas.height // destination rectangle (plein canvas)
       );
-      
-      // Reset transform
-      context.setTransform(1, 0, 0, 1, 0, 0);
+
+      context.restore();
       
       // Get the data URL
       const imageDataURL = canvas.toDataURL('image/jpeg', 0.95);
@@ -1387,103 +1386,7 @@ const generateImageReplicate = async () => {
         ))}
       </div>
 
-      {/* Processing Overlay */}
-      {/* <AnimatePresence>
-        {processing && (
-          <motion.div 
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div 
-              className="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-xl shadow-2xl max-w-md w-full"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25 }}
-            >
-              <h2 
-                className="text-2xl font-bold mb-2 text-center"
-                style={{ color: secondaryColor }}
-              >
-                Création en cours...
-              </h2>
-              
-              <p className="text-white text-center mb-4">
-                Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-              </p>
-              
-              <div className="mb-6">
-                <div className="w-full bg-gray-700 rounded-full h-3">
-                  <motion.div 
-                    className="h-3 rounded-full" 
-                    style={{ 
-                      width: `${loadingProgress}%`,
-                      backgroundColor: secondaryColor
-                    }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${loadingProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  ></motion.div>
-                </div>
-                <div className="mt-1 flex justify-between text-xs text-white/70">
-                  <span>Début</span>
-                  <span>Finalisation</span>
-                </div>
-              </div>
-              
-              <motion.div 
-                className="mt-4 h-32 overflow-y-auto text-sm p-3 rounded bg-black bg-opacity-20 text-white/90"
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                {logs.length > 0 ? (
-                  logs.map((log, index) => (
-                    <motion.div 
-                      key={index}
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="mb-1"
-                    >
-                      {log}
-                    </motion.div>
-                  ))
-                ) : (
-                  <div>Initialisation du processus...</div>
-                )}
-              </motion.div>
-              
-              {error && (
-                <motion.div 
-                  className="mt-4 p-3 bg-red-900 bg-opacity-20 border border-red-500 text-red-100 rounded-lg"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  {error}
-                </motion.div>
-              )}
-              
-              <div className="mt-6 flex justify-center">
-                <motion.button
-                  onClick={() => {
-                    setProcessing(false);
-                    router.push(`/photobooth-simple/${slug}`);
-                  }}
-                  className="px-6 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Annuler
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence> */}
+ 
 
       <motion.div 
         className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
@@ -1606,7 +1509,7 @@ const generateImageReplicate = async () => {
               transform: 'scaleX(-1)',
               display: enabled && !videoVisible ? 'none' : 'block',
               visibility: enabled && !videoVisible ? 'hidden' : 'visible',
-              minHeight: '400px', // Minimum height for better visibility
+              minHeight: '250px', // Minimum height for better visibility
               maxHeight: '80vh', // Increased from 75vh
               backgroundColor: '#000'
             }} 

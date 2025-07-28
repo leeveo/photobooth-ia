@@ -88,7 +88,10 @@ export default function HowToUse({ params }) {
   return (
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 relative"
-     
+      // Ajout d'un padding-top responsive pour éviter le chevauchement
+      style={{
+        paddingTop: '120px', // espace pour le titre/logo sur mobile
+      }}
     >
       <motion.div 
         className="fixed top-0 left-0 right-0 flex justify-center mt-4 z-20"
@@ -124,10 +127,16 @@ export default function HowToUse({ params }) {
         )}
       </motion.div>
 
-      <div className="relative w-full flex justify-center items-center mt-8 md:mt-[12vh] lg:mt-[10vh] z-10">
+      <div className="relative w-full flex justify-center items-center z-10">
         <div className="w-full max-w-5xl px-4 md:px-6 lg:px-8">
           {/* Centrage vertical et horizontal de la grille */}
-          <div className="flex items-center justify-center min-h-[60vh]">
+          <div
+            className="flex items-center justify-center min-h-[60vh]"
+            // Ajout d'une marge supérieure responsive pour la grille
+            style={{
+              marginTop: '0.5rem', // petite marge sur mobile
+            }}
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mx-auto">
               {/* Cadre 1 */}
               <motion.div 
