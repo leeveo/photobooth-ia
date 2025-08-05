@@ -50,6 +50,16 @@ export default function Result({ params }) {
   // Combined sharing state
   const [combinedSharingOpen, setCombinedSharingOpen] = useState(false);
   
+  // États pour la capture de données
+  const [showDataCapture, setShowDataCapture] = useState(false);
+  const [dataCapture, setDataCapture] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    rgpdAccepted: false
+  });
+  const [savingDataCapture, setSavingDataCapture] = useState(false);
+  
   // Ajout d'un état pour suivre la méthode de filigrane
   const [useCanvasWatermark, setUseCanvasWatermark] = useState(true);
   
@@ -356,6 +366,105 @@ export default function Result({ params }) {
       setEmailSubmitting(false);
     }
   };
+
+  // Nouvelle fonction pour envoyer l'email via l'API Next.js
+  async function sendPhotoByEmail({ to, project, imageUrl }) {
+    if (!to) throw new Error("Email destinataire requis");
+    
+    const response = await fetch('/api/send-photo-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, project, imageUrl }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erreur lors de l\'envoi de l\'email');
+    }
+    
+    // Log de succès
+    console.log(`[API] Email envoyé avec succès à ${to} pour le projet ${project?.name || project?.id}`);
+  }
+
+  // Fonction pour gérer le partage avec capture de données
+  const handleShareWithDataCapture = async () => {
+    if (!imageResultAI) {
+      setError("Aucune image à partager");
+      return;
+    }
+
+    // Si datacapture est activé, afficher le popup
+    if (project?.datacapture) {
+      setShowDataCapture(true);
+      return;
+    }
+
+    // Sinon, procéder avec le partage normal
+    handleShare();
+  };
+
+  // Fonction pour enregistrer les données de capture
+  const handleSaveDataCapture = async () => {
+    if (!isDataCaptureValid()) {
+      setError("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    setSavingDataCapture(true);
+    setError(null);
+
+    try {
+      // D'abord, traiter l'image
+      await handleShare();
+
+      // Attendre que linkQR soit disponible
+      if (!linkQR) {
+        throw new Error("Erreur lors de la préparation de l'image");
+      }
+
+      // Enregistrer les données de capture
+      const { data, error } = await supabase.from('project_captures').insert([
+        {
+          project_id: project.id,
+          name: dataCapture.name,
+          email: dataCapture.email || null,
+          phone: dataCapture.phone || null,
+          rgpd_text: dataCapture.rgpdAccepted // Enregistrer le statut boolean de l'acceptation RGPD
+        }
+      ]);
+
+      if (error) throw error;
+
+      // Envoyer l'email si une adresse email est fournie
+      if (dataCapture.email) {
+        try {
+          await sendPhotoByEmail({
+            to: dataCapture.email,
+            project: project,
+            imageUrl: linkQR
+          });
+        } catch (emailError) {
+          console.error("Erreur envoi email:", emailError);
+          // Ne pas faire échouer tout le processus pour une erreur d'email
+        }
+      }
+
+      // Fermer le popup et afficher le QR code
+      setShowDataCapture(false);
+      setGenerateQR(true);
+
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement:", error);
+      setError(error.message || "Une erreur est survenue");
+    } finally {
+      setSavingDataCapture(false);
+    }
+  };
+
+  // Vérifier si le formulaire de capture de données est valide
+  const isDataCaptureValid = () => {
+    return dataCapture.name.trim() && dataCapture.rgpdAccepted;
+  };
   
   if (loading) {
     return (
@@ -404,6 +513,176 @@ export default function Result({ params }) {
             </h1>
           )}
         </motion.div>
+
+        {/* Popup de capture de données */}
+        {showDataCapture && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md">
+            <div
+              className={`
+                flex flex-col md:flex-row
+                bg-white rounded-2xl shadow-2xl w-full
+                max-w-2xl md:max-w-6xl xl:max-w-[90vw]
+                overflow-hidden
+                transition-all
+              `}
+              style={{
+                border: `4px solid ${secondaryColor}`,
+                boxShadow: `0 8px 32px 0 ${primaryColor}33`,
+              }}
+            >
+              {/* Colonne gauche (infos et RGPD) */}
+              <div
+                className="basis-full md:basis-1/3 flex flex-col justify-center items-center p-8"
+                style={{
+                  background: `linear-gradient(135deg, ${primaryColor} 60%, ${secondaryColor} 100%)`,
+                }}
+              >
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-2 drop-shadow-lg">
+                  Vos informations
+                </h2>
+                <p className="text-base md:text-lg text-white/90 text-center mb-6">
+                  Remplissez vos coordonnées pour recevoir votre photo
+                </p>
+                {/* Texte RGPD du projet */}
+                {project?.rgpd_text && (
+                  <div className="bg-white/80 p-4 rounded-lg border border-white/60 mt-2 max-h-40 overflow-y-auto w-full">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <h4 className="text-base font-semibold text-blue-900 mb-1">
+                          Protection des données personnelles (RGPD)
+                        </h4>
+                        <div className="text-sm text-blue-800 leading-relaxed">
+                          <p>{project.rgpd_text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Colonne droite (formulaire) */}
+              <div
+                className="basis-full md:basis-2/3 flex flex-col justify-center p-8"
+                style={{
+                  background: `linear-gradient(120deg, #fff 80%, ${secondaryColor}22 100%)`,
+                  backdropFilter: 'blur(2px)',
+                  boxShadow: `0 2px 24px 0 ${secondaryColor}22`,
+                }}
+              >
+                {error && (
+                  <div className="mb-4 p-3 text-base text-red-700 bg-red-100 rounded-lg border border-red-200">
+                    {error}
+                  </div>
+                )}
+                {/* Nom (obligatoire) */}
+                <div className="mb-6">
+                  <label htmlFor="name" className="block text-lg font-semibold text-gray-700 mb-2">
+                    Nom complet <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={dataCapture.name}
+                    onChange={(e) => setDataCapture({...dataCapture, name: e.target.value})}
+                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
+                    placeholder="Votre nom complet"
+                    required
+                    style={{ fontSize: '1.15rem' }}
+                  />
+                </div>
+                {/* Email (optionnel) */}
+                <div className="mb-6">
+                  <label htmlFor="email" className="block text-lg font-semibold text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={dataCapture.email}
+                    onChange={(e) => setDataCapture({...dataCapture, email: e.target.value})}
+                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
+                    placeholder="votre@email.com"
+                    style={{ fontSize: '1.15rem' }}
+                  />
+                </div>
+                {/* Téléphone (optionnel) */}
+                <div className="mb-6">
+                  <label htmlFor="phone" className="block text-lg font-semibold text-gray-700 mb-2">
+                    Téléphone
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={dataCapture.phone}
+                    onChange={(e) => setDataCapture({...dataCapture, phone: e.target.value})}
+                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl shadow focus:ring-2 focus:ring-primary focus:border-primary text-lg"
+                    placeholder="06 12 34 56 78"
+                    style={{ fontSize: '1.15rem' }}
+                  />
+                </div>
+                {/* Checkbox RGPD */}
+                <div className="flex items-start mb-8">
+                  <input
+                    type="checkbox"
+                    id="rgpd"
+                    checked={dataCapture.rgpdAccepted}
+                    onChange={(e) => setDataCapture({...dataCapture, rgpdAccepted: e.target.checked})}
+                    className="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <label htmlFor="rgpd" className="ml-3 text-base text-gray-700 leading-relaxed">
+                    J'accepte les conditions de traitement de mes données personnelles selon les conditions énoncées ci-dessus <span className="text-red-500">*</span>
+                  </label>
+                </div>
+                {/* Boutons */}
+                <div className="flex flex-col md:flex-row gap-4">
+                  <button
+                    onClick={() => setShowDataCapture(false)}
+                    className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-xl text-gray-700 bg-gray-50 hover:bg-gray-100 font-semibold text-lg transition-colors"
+                    disabled={savingDataCapture}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleSaveDataCapture}
+                    disabled={!isDataCaptureValid() || savingDataCapture}
+                    className="flex-1 py-3 px-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg"
+                    style={{
+                      background: isDataCaptureValid() && !savingDataCapture
+                        ? `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
+                        : '#e5e7eb',
+                      color: isDataCaptureValid() && !savingDataCapture
+                        ? '#fff'
+                        : '#888',
+                      cursor: isDataCaptureValid() && !savingDataCapture
+                        ? 'pointer'
+                        : 'not-allowed',
+                      boxShadow: isDataCaptureValid() && !savingDataCapture
+                        ? `0 4px 16px 0 ${secondaryColor}55`
+                        : 'none'
+                    }}
+                  >
+                    {savingDataCapture ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enregistrement...
+                      </>
+                    ) : (
+                      'Enregistrer et envoyer'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Combined Sharing Popup with QR Code and Email Form */}
         {combinedSharingOpen && (
@@ -690,14 +969,14 @@ export default function Result({ params }) {
           >
             {imageResultAI && (
               <motion.button 
-                onClick={handleShare}
+                onClick={handleShareWithDataCapture}
                 disabled={loadingUpload}
                 className={`py-3 rounded-lg font-bold text-center ${loadingUpload ? 'opacity-70' : ''}`}
                 style={{ backgroundColor: secondaryColor, color: primaryColor }}
                 whileHover={loadingUpload ? {} : { scale: 1.03 }}
                 whileTap={loadingUpload ? {} : { scale: 0.97 }}
               >
-                {loadingUpload ? 'PRÉPARATION...' : 'PARTAGER MA PHOTO'}
+                {loadingUpload ? 'PRÉPARATION...' : project?.datacapture ? 'ENVOYER MA PHOTO' : 'PARTAGER MA PHOTO'}
               </motion.button>
             )}
             

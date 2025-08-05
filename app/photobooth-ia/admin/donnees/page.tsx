@@ -5,6 +5,23 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
+
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  datacapture: boolean;
+}
+
+interface CapturedData {
+  id_data: string;
+  id_projects: string;
+  name: string;
+  email: string;
+  phone: string;
+  rgpd_text: boolean;
+  created_at: string;
+}
 import {
   RiFilterLine,
   RiDownloadLine,
@@ -16,22 +33,25 @@ import {
   RiShieldLine,
   RiFileExcelLine,
   RiEyeLine,
-  RiCalendarLine
+  RiCalendarLine,
+  RiDeleteBin6Line,
+  RiFileTextLine
 } from 'react-icons/ri';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function DonneesPage() {
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [capturedData, setCapturedData] = useState([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [capturedData, setCapturedData] = useState<CapturedData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [dataCount, setDataCount] = useState({});
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [dataCount, setDataCount] = useState<{[key: string]: number}>({});
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   // Ajout récupération session admin
-  const [currentAdminId, setCurrentAdminId] = useState(null);
+  const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showUnique, setShowUnique] = useState(false);
 
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -95,14 +115,14 @@ export default function DonneesPage() {
             .in('id_projects', projectIds);
 
           // Compter le nombre de données par projet
-          const counts = {};
+          const counts: {[key: string]: number} = {};
           if (!countError && countData) {
             // On compte manuellement car supabase ne retourne pas group by
-            projectIds.forEach(pid => {
+            projectIds.forEach((pid: string) => {
               counts[pid] = countData.filter(row => row.id_projects === pid).length;
             });
           } else {
-            projectIds.forEach(pid => { counts[pid] = 0; });
+            projectIds.forEach((pid: string) => { counts[pid] = 0; });
           }
           setDataCount(counts);
         }
@@ -144,7 +164,7 @@ export default function DonneesPage() {
   }, [selectedProject, supabase]);
 
   // Fonction de tri
-  const handleSort = (key) => {
+  const handleSort = (key: keyof CapturedData) => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
@@ -154,20 +174,46 @@ export default function DonneesPage() {
 
   // Données triées selon le sortConfig
   const sortedData = [...capturedData].sort((a, b) => {
-    const key = sortConfig.key;
+    const key = sortConfig.key as keyof CapturedData;
     let aValue = a[key];
     let bValue = b[key];
 
     // Pour la date, trier par timestamp
     if (key === 'created_at') {
-      aValue = new Date(aValue).getTime();
-      bValue = new Date(bValue).getTime();
+      aValue = new Date(aValue as string).getTime() as any;
+      bValue = new Date(bValue as string).getTime() as any;
     }
 
     if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
     return 0;
   });
+
+  // Fonction pour obtenir les données uniques par email
+  const getUniqueEmailData = (data: CapturedData[]): CapturedData[] => {
+    const emailMap = new Map<string, CapturedData>();
+    
+    data.forEach(item => {
+      if (item.email && item.email.trim()) {
+        const email = item.email.toLowerCase().trim();
+        if (!emailMap.has(email)) {
+          emailMap.set(email, item);
+        }
+      }
+    });
+    
+    // Ajouter aussi les éléments sans email
+    data.forEach(item => {
+      if (!item.email || !item.email.trim()) {
+        emailMap.set(`no_email_${item.id_data}`, item);
+      }
+    });
+    
+    return Array.from(emailMap.values());
+  };
+
+  // Données à afficher (avec ou sans doublons selon showUnique)
+  const displayData = showUnique ? getUniqueEmailData(sortedData) : sortedData;
 
   // Fonction d'export CSV
   const exportToCSV = () => {
@@ -203,6 +249,41 @@ export default function DonneesPage() {
     setSuccess('Fichier CSV téléchargé avec succès');
   };
 
+  // Fonction d'export CSV sans doublons
+  const exportToCSVUnique = () => {
+    if (capturedData.length === 0) {
+      setError('Aucune donnée à exporter');
+      return;
+    }
+
+    const uniqueData = getUniqueEmailData(capturedData);
+    const headers = ['Nom', 'Email', 'Téléphone', 'RGPD Accepté', 'Date de capture'];
+    const csvContent = [
+      headers.join(','),
+      ...uniqueData.map(row => [
+        `"${row.name || ''}"`,
+        `"${row.email || ''}"`,
+        `"${row.phone || ''}"`,
+        row.rgpd_text ? 'Oui' : 'Non',
+        `"${new Date(row.created_at).toLocaleString('fr-FR')}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+
+    const projectName = projects.find(p => p.id === selectedProject)?.name || 'projet';
+    link.setAttribute('download', `donnees-uniques-${projectName}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setSuccess(`Fichier CSV sans doublons téléchargé avec succès (${uniqueData.length} entrées uniques)`);
+  };
+
   // Liste des dates disponibles pour le projet sélectionné
   const availableDates = selectedProject && capturedData.length > 0
     ? Array.from(
@@ -222,7 +303,7 @@ export default function DonneesPage() {
     if (!selectedProject || capturedData.length === 0) return [];
     if (selectedDate) {
       // Grouper par heure pour la date sélectionnée
-      const hours = {};
+      const hours: {[key: number]: number} = {};
       capturedData.forEach(d => {
         const dt = new Date(d.created_at);
         const dateStr = dt.toLocaleDateString('fr-FR');
@@ -239,7 +320,7 @@ export default function DonneesPage() {
       }));
     } else {
       // Grouper par jour
-      const days = {};
+      const days: {[key: string]: number} = {};
       capturedData.forEach(d => {
         const dt = new Date(d.created_at);
         const label = dt.toLocaleDateString('fr-FR');
@@ -331,10 +412,24 @@ export default function DonneesPage() {
                     : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
                 }`}
                 disabled={!selectedProject || capturedData.length === 0}
-                title="Exporter les données en CSV"
+                title="Exporter toutes les données en CSV"
               >
                 <RiFileExcelLine className="h-5 w-5 mr-2" />
-                Exporter CSV
+                Export CSV
+              </button>
+
+              <button
+                onClick={exportToCSVUnique}
+                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm ${
+                  selectedProject && capturedData.length > 0
+                    ? 'text-white bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-transparent'
+                    : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
+                }`}
+                disabled={!selectedProject || capturedData.length === 0}
+                title="Exporter les données sans doublons d'email en CSV"
+              >
+                <RiFileTextLine className="h-5 w-5 mr-2" />
+                CSV sans doublons
               </button>
             </div>
           </div>
@@ -416,10 +511,30 @@ export default function DonneesPage() {
             <div className="mb-4 text-sm flex items-center justify-between bg-gray-50 p-3 rounded-lg">
               <div className="text-gray-600 flex items-center">
                 <RiFilterLine className="mr-2 h-5 w-5 text-gray-400" />
-                <span className="font-semibold text-gray-700">{capturedData.length}</span> donnée(s) capturée(s)
+                <span className="font-semibold text-gray-700">{displayData.length}</span> 
+                <span className="ml-1">donnée(s) affichée(s)</span>
+                {showUnique && (
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Sans doublons d'email
+                  </span>
+                )}
               </div>
-              <div className="text-sm text-indigo-600 font-medium">
-                {projects.find(p => p.id == selectedProject)?.name || 'Projet'} : {dataCount[selectedProject] || capturedData.length} utilisateurs
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowUnique(!showUnique)}
+                  className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border ${
+                    showUnique
+                      ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                  }`}
+                  title={showUnique ? 'Afficher tous les enregistrements' : 'Masquer les doublons d\'email'}
+                >
+                  <RiDeleteBin6Line className="mr-1 h-3 w-3" />
+                  {showUnique ? 'Afficher tout' : 'Éviter doublons'}
+                </button>
+                <div className="text-sm text-indigo-600 font-medium">
+                  {projects.find(p => p.id == selectedProject)?.name || 'Projet'} : {dataCount[selectedProject] || capturedData.length} utilisateurs
+                </div>
               </div>
             </div>
 
@@ -454,7 +569,7 @@ export default function DonneesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedData.map((row, index) => (
+                  {displayData.map((row, index) => (
                     <tr key={row.id_data} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{row.name}</div>

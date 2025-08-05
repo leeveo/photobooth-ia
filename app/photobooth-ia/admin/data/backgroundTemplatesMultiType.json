@@ -1,6 +1,6 @@
 {
   "horizontal_images": [
-    {
+       {
       "id": "cabane",
       "name": "Cabane",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/001.png",
@@ -1565,6 +1565,120 @@
       "name": "VIP 30",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vip%20(30).jpg",
       "category": "VIP"
+    }
+  ],
+  "vertical_images": [
+    {
+      "id": "cabane-v",
+      "name": "Cabane Verticale",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/portrait/001-portrait.png",
+      "category": "Nature"
+    },
+    {
+      "id": "blue-gradient-v",
+      "name": "Dégradé Bleu Vertical",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/portrait/002-portrait.png",
+      "category": "Nature"
+    },
+    {
+      "id": "green-nature-v",
+      "name": "Nature Verte Verticale",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/portrait/003-portrait.png",
+      "category": "Nature"
+    }
+  ],
+  "horizontal_videos": [
+    {
+      "id": "ocean-waves-h",
+      "name": "Vagues Océan Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/ocean-waves.mp4",
+      "category": "Nature"
+    },
+    {
+      "id": "city-lights-h",
+      "name": "Lumières Ville Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/city-lights.mp4",
+      "category": "Urbain"
+    },
+    {
+      "id": "abstract-motion-h",
+      "name": "Mouvement Abstrait Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/abstract-motion.mp4",
+      "category": "Abstrait"
+    }
+  ],
+  "vertical_videos": [
+    {
+      "id": "ocean-waves-v",
+      "name": "Vagues Océan Vertical",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/ocean-waves-portrait.mp4",
+      "category": "Nature"
+    },
+    {
+      "id": "city-lights-v",
+      "name": "Lumières Ville Vertical",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/city-lights-portrait.mp4",
+      "category": "Urbain"
+    },
+    {
+      "id": "abstract-motion-v",
+      "name": "Mouvement Abstrait Vertical",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/abstract-motion-portrait.mp4",
+      "category": "Abstrait"
+    }
+  ],
+  "packages": [
+    {
+      "id": "nature-complete-1",
+      "name": "Package Nature Complet",
+      "category": "Nature",
+      "description": "Package complet avec images et vidéos nature",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/003.png",
+      "media": {
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/003.png",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/green-nature-portrait.jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/nature-forest.mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/forest-vertical.mp4"
+      }
+    },
+    {
+      "id": "urban-complete-1",
+      "name": "Package Urbain Complet",
+      "category": "Urbain",
+      "description": "Package complet avec images et vidéos urbaines",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/004.png",
+      "media": {
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/004.png",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/cityscape-portrait.jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/city-traffic.mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/city-lights-portrait.mp4"
+      }
+    },
+    {
+      "id": "abstract-complete-1",
+      "name": "Package Abstrait Complet",
+      "category": "Abstrait",
+      "description": "Package complet avec images et vidéos abstraites",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(1).jpg",
+      "media": {
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(1).jpg",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract-portrait.jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/particles-flow.mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/abstract-motion-portrait.mp4"
+      }
+    },
+    {
+      "id": "gradient-complete-1",
+      "name": "Package Dégradé Complet",
+      "category": "Moderne",
+      "description": "Package complet avec dégradés et effets modernes",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/002.png",
+      "media": {
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/002.png",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/blue-gradient-portrait.jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/gradient-flow.mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/gradient-vertical.mp4"
+      }
     }
   ]
 }

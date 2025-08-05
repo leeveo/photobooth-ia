@@ -20,6 +20,7 @@ export default function ProjectMosaic() {
   const [projectImages, setProjectImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date()); // Pour suivre le dernier rafraîchissement
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -33,6 +34,7 @@ export default function ProjectMosaic() {
   
   const supabase = createClientComponentClient();
   const realtimeChannel = useRef(null);
+  const refreshInterval = useRef(null); // Référence pour l'intervalle de rafraîchissement
   
   // Add this to display the mosaic URL
   const mosaicUrl = typeof window !== 'undefined' ? 
@@ -142,61 +144,99 @@ export default function ProjectMosaic() {
     loadMosaicSettingsAndProject();
   }, [projectId, supabase]);
   
-  // Charger les images du projet depuis la table sessions à chaque changement de projectId
+  // Fonction pour charger les images (extraite pour réutilisation)
+  const loadSessionImages = async () => {
+    if (!projectId) return;
+    
+    setLoading(true);
+    try {
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('id, result_s3_url, result_image_url, created_at, moderation')
+        .eq('project_id', projectId)
+        .is('moderation', null)  // Ne sélectionner que les images non modérées
+        .order('created_at', { ascending: false }); // Tri décroissant pour avoir les plus récentes en premier
+
+      if (sessionsError) {
+        console.error('Erreur lors du chargement des images:', sessionsError);
+        setProjectImages([]);
+      } else {
+        const images = (sessionsData || [])
+          .map(session => ({
+            id: session.id,
+            image_url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at,
+            metadata: {
+              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+              size: null
+            }
+          }))
+          .filter(img => img.image_url); // Vérifier que l'image a une URL valide
+      
+        setProjectImages(images);
+        setLastRefresh(new Date());
+        console.log(`Rafraîchissement: ${images.length} images chargées pour la mosaïque`);
+      }
+    } catch (err) {
+      console.error('Erreur de chargement des images:', err);
+      setProjectImages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Charger les images du projet initialement et configurer le rafraîchissement automatique
   useEffect(() => {
     if (!projectId) return;
 
-    async function loadSessionImages() {
-      setLoading(true);
-      try {
-        const { data: sessionsData, error: sessionsError } = await supabase
-          .from('sessions')
-          .select('id, result_s3_url, result_image_url, created_at, moderation')
-          .eq('project_id', projectId)
-          .is('moderation', null)  // Ne sélectionner que les images non modérées
-          .order('created_at', { ascending: false });
-
-        if (sessionsError) {
-          setProjectImages([]);
-        } else {
-          const images = (sessionsData || [])
-            .map(session => ({
-              id: session.id,
-              image_url: session.result_s3_url || session.result_image_url,
-              created_at: session.created_at,
-              metadata: {
-                fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-                size: null
-              }
-            }))
-            .filter(img => img.image_url); // Vérifier que l'image a une URL valide
-        
-          setProjectImages(images);
-          console.log(`Chargement de ${images.length} images non modérées pour la mosaïque`);
-        }
-      } catch (err) {
-        console.error('Erreur de chargement des images:', err);
-        setProjectImages([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
+    // Chargement initial
     loadSessionImages();
+
+    // Configurer le rafraîchissement automatique toutes les 30 secondes
+    refreshInterval.current = setInterval(() => {
+      console.log('Rafraîchissement automatique de la mosaïque...');
+      loadSessionImages();
+    }, 30000); // 30 secondes
+
+    // Nettoyage lors du démontage du composant
+    return () => {
+      if (refreshInterval.current) {
+        clearInterval(refreshInterval.current);
+      }
+    };
   }, [projectId, supabase]);
   
-  // Animation variants
+  // Animation variants avec effet image par image amélioré
   const containerVariants = {
     hidden: { opacity: 0 },
     show: { 
       opacity: 1,
-      transition: { staggerChildren: 0.05 }
+      transition: { 
+        staggerChildren: 0.1, // Délai entre chaque image
+        delayChildren: 0.2    // Délai avant de commencer l'animation
+      }
     }
   };
   
   const itemVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    show: { opacity: 1, scale: 1 }
+    hidden: { 
+      opacity: 0, 
+      scale: 0.8,
+      y: 30,
+      rotateY: -15 
+    },
+    show: { 
+      opacity: 1, 
+      scale: 1,
+      y: 0,
+      rotateY: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        duration: 0.6
+      }
+    }
   };
   
   // Function to determine QR code position in the grid
@@ -363,15 +403,33 @@ export default function ProjectMosaic() {
         </motion.div>
       )}
 
+      {/* Indicateur de dernier rafraîchissement */}
+      {!loading && projectImages.length > 0 && (
+        <motion.div
+          className="fixed bottom-4 left-4 bg-black bg-opacity-50 text-white text-xs px-3 py-1 rounded-full z-30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
+        </motion.div>
+      )}
+
       {/* Affichage du QR code de la mosaïque si activé dans mosaic_settings */}
     
       {/* Title and description */}
       {(mosaicSettings.title || mosaicSettings.description) && (
         <div className="max-w-4xl mx-auto mb-8 text-center">
           {mosaicSettings.title && (
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow">
+            <motion.h1 
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow"
+              key={lastRefresh.getTime()} // Force re-animation lors du rafraîchissement
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               {mosaicSettings.title}
-            </h1>
+            </motion.h1>
           )}
           
           {mosaicSettings.description && (
@@ -398,18 +456,38 @@ export default function ProjectMosaic() {
         </div>
       ) : (
         <div className="mx-auto max-w-8xl">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1">
+          <motion.div 
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            key={lastRefresh.getTime()} // Force re-animation lors du rafraîchissement
+          >
             {createMosaicItems().map((item, index) => (
               <motion.div
                 key={item.id || `mosaic-item-${index}`}
                 className="aspect-square w-full"
                 variants={itemVariants}
-                initial="hidden"
-                animate="show"
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                style={{
+                  perspective: "1000px"
+                }}
               >
                 {item.isQRCode ? (
-                  // Render QR code
-                  <div className="w-full h-full bg-white flex flex-col items-center justify-center p-4">
+                  // Render QR code avec animation d'entrée
+                  <motion.div 
+                    className="w-full h-full bg-white flex flex-col items-center justify-center p-4 rounded-lg shadow-lg"
+                    initial={{ rotateY: 180, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    transition={{ 
+                      delay: index * 0.1,
+                      duration: 0.8,
+                      type: "spring"
+                    }}
+                  >
                     <h3 className="text-lg font-medium text-gray-900 mb-2 text-center">
                       {mosaicSettings.qr_title}
                     </h3>
@@ -434,26 +512,55 @@ export default function ProjectMosaic() {
                     <div className="text-sm text-gray-700 text-center px-2">
                       {mosaicSettings.qr_description}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  // Render image
-                  <div className="relative w-full h-full">
+                  // Render image avec effet de flip et glow
+                  <motion.div 
+                    className="relative w-full h-full rounded-lg overflow-hidden shadow-lg"
+                    initial={{ rotateY: 90, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    transition={{ 
+                      delay: index * 0.1,
+                      duration: 0.6,
+                      type: "spring",
+                      stiffness: 100
+                    }}
+                    whileHover={{
+                      boxShadow: "0 0 25px rgba(255, 255, 255, 0.3)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >
                     <Image
                       src={item.image_url}
                       alt={item.metadata?.fileName || 'Image du projet'}
                       fill
                       sizes="(max-width: 768px) 50vw, 33vw"
-                      className="object-cover"
+                      className="object-cover transition-transform duration-300 hover:scale-110"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = '/placeholder-image.png';
                       }}
                     />
-                  </div>
+                    {/* Overlay avec effet de nouveauté pour les premières images */}
+                    {index < 3 && (
+                      <motion.div
+                        className="absolute top-2 right-2 bg-gradient-to-r from-green-400 to-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg"
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ 
+                          delay: (index * 0.1) + 0.5,
+                          type: "spring",
+                          stiffness: 200
+                        }}
+                      >
+                        Nouveau
+                      </motion.div>
+                    )}
+                  </motion.div>
                 )}
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

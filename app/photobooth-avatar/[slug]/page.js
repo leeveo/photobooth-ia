@@ -135,8 +135,9 @@ export default function PhotoboothAvatar({ params }) {
 
   return (
     <main 
-      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 cursor-pointer"
       style={{ backgroundColor: primaryColor }}
+      onClick={selectedStyle ? handleStartClick : undefined}
     >
       <div className="max-w-6xl mx-auto">
         {/* Logo or title */}
@@ -185,7 +186,10 @@ export default function PhotoboothAvatar({ params }) {
                   className={`cursor-pointer rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
                     selectedStyle?.id === style.id ? 'ring-2 ring-white' : ''
                   }`}
-                  onClick={() => handleStyleSelect(style)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStyleSelect(style);
+                  }}
                 >
                   <div className="aspect-h-4 aspect-w-3 bg-gray-200 relative">
                     {style.preview_image ? (
@@ -215,12 +219,15 @@ export default function PhotoboothAvatar({ params }) {
         {/* Start button */}
         <div className="flex justify-center">
           <button
-            onClick={handleStartClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStartClick();
+            }}
             className="px-8 py-3 text-lg font-bold rounded-lg"
             style={{ backgroundColor: secondaryColor, color: primaryColor }}
             disabled={!selectedStyle}
           >
-            COMMENCER
+            TOUCHER L&apos;ÉCRAN POUR COMMENCER
           </button>
         </div>
       </div>

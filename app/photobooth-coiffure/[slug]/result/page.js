@@ -80,6 +80,15 @@ async function sendPhotoByEmail({ to, project, imageUrl }) {
   console.log(`[API] Email envoyé avec succès à ${to} pour le projet ${project?.name || project?.id}`);
 }
 
+// Helper to ensure absolute URL for QR code
+const makeAbsoluteUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  // Remove any leading slash to avoid double slash
+  const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  return `https://photobooth.waibooth.app${path}`;
+};
+
 export default function Result({ params }) {
   const slug = params.slug;
   const supabase = createClientComponentClient();
@@ -216,8 +225,8 @@ export default function Result({ params }) {
 
       if (s3Url) {
         // Générer le lien vers la page personnalisée
-        const customPageUrl = `/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`;
-        setLinkQR(customPageUrl);
+        const customPagePath = `/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`;
+        setLinkQR(makeAbsoluteUrl(customPagePath)); // Always absolute for QR
         setGenerateQR(true);
       } else {
         throw new Error("Échec de l'upload de l'image");
@@ -277,7 +286,8 @@ export default function Result({ params }) {
             console.error("Error updating session:", dbError);
           }
           
-          setLinkQR(`/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`);
+          const customPagePath = `/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`;
+          setLinkQR(makeAbsoluteUrl(customPagePath)); // Always absolute for QR
           setGenerateQR(true);
 
           // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
@@ -617,7 +627,7 @@ export default function Result({ params }) {
                 }}
               >
                 <Canvas
-                  text={linkQR}
+                  text={makeAbsoluteUrl(linkQR)} // Always absolute for QR code
                   options={{
                     errorCorrectionLevel: 'M',
                     margin: 3,
@@ -630,15 +640,25 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
-              {/* Ajout du lien cliquable sous le QR code */}
+              {/* Remplace le lien par un bouton design */}
               <a
                 href={linkQR}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mb-4 text-indigo-600 underline break-all text-center font-semibold"
-                style={{ wordBreak: 'break-all' }}
+                download
+                className="mb-4 w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
+                style={{
+                  background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                  color: '#fff',
+                  boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                  letterSpacing: '0.05em',
+                  textDecoration: 'none',
+                }}
               >
-                {linkQR}
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Télécharger
               </a>
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo

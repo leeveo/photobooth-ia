@@ -184,11 +184,14 @@ export default function PhotoboothProject({ params }) {
   const homeMessage = project.home_message || "Transformez votre photo avec l'IA !";
 
   return (
-    <div className="relative z-10 w-full h-full">
+    <div className="relative z-10 w-full h-full cursor-pointer" onClick={handleStartExperience}>
       {/* Hidden fullscreen button */}
       <button 
         ref={fullscreenButtonRef} 
-        onClick={requestFullscreen} 
+        onClick={(e) => {
+          e.stopPropagation();
+          requestFullscreen();
+        }} 
         className="hidden"
       >
         Fullscreen
@@ -258,7 +261,10 @@ export default function PhotoboothProject({ params }) {
           >
             <div 
               className="relative group cursor-pointer"
-              onClick={handleStartExperience}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStartExperience();
+              }}
             >
               <div 
                 className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
@@ -273,7 +279,7 @@ export default function PhotoboothProject({ params }) {
                   color: primaryColor 
                 }}
               >
-                COMMENCER L&apos;EXPÉRIENCE
+                TOUCHER L&apos;ÉCRAN POUR COMMENCER
               </button>
             </div>
           </motion.div>

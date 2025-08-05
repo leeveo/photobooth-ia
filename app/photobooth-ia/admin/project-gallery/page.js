@@ -32,6 +32,7 @@ export default function ProjectGallery() {
     bg_image_url: '',
     title: '',
     description: '',
+    is_public: false,
     show_qr_code: false,
     qr_title: 'Scannez-moi',
     qr_description: 'Retrouvez toutes les photos ici',
@@ -41,6 +42,7 @@ export default function ProjectGallery() {
   const [bgImagePreview, setBgImagePreview] = useState(null);
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // Ajout de l'état pour la confirmation de suppression
+  const [failedImages, setFailedImages] = useState(new Set()); // Add this new state
   
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -83,6 +85,7 @@ export default function ProjectGallery() {
               bg_image_url: parsedSettings.bg_image_url || '',
               title: parsedSettings.title || '',
               description: parsedSettings.description || '',
+              is_public: parsedSettings.is_public || false,
               show_qr_code: parsedSettings.show_qr_code || false,
               qr_title: parsedSettings.qr_title || 'Scannez-moi',
               qr_description: parsedSettings.qr_description || 'Retrouvez toutes les photos ici',
@@ -111,6 +114,7 @@ export default function ProjectGallery() {
           bg_image_url: data.bg_image_url || '',
           title: data.title || '',
           description: data.description || '',
+          is_public: data.is_public || false,
           show_qr_code: data.show_qr_code || false,
           qr_title: data.qr_title || 'Scannez-moi',
           qr_description: data.qr_description || 'Retrouvez toutes les photos ici',
@@ -137,6 +141,7 @@ export default function ProjectGallery() {
       bg_image_url: '',
       title: '',
       description: '',
+      is_public: false,
       show_qr_code: false,
       qr_title: 'Scannez-moi',
       qr_description: 'Retrouvez toutes les photos ici',
@@ -285,16 +290,23 @@ export default function ProjectGallery() {
           setProjectImages([]);
         } else {
           console.log("Sessions récupérées pour project_id", projectIdToQuery, ":", sessionsData);
-          const images = (sessionsData || []).map(session => ({
-            id: session.id,
-            image_url: session.result_s3_url || session.result_image_url,
-            created_at: session.created_at,
-            metadata: {
-              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-              size: null
-            },
-            isModerated: session.moderation === 'M'
-          }));
+          const images = (sessionsData || [])
+            .filter(session => {
+              // Filter out sessions without valid image URLs
+              const hasValidUrl = session.result_s3_url || session.result_image_url;
+              const url = session.result_s3_url || session.result_image_url;
+              return hasValidUrl && url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
+            })
+            .map(session => ({
+              id: session.id,
+              image_url: session.result_s3_url || session.result_image_url,
+              created_at: session.created_at,
+              metadata: {
+                fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+                size: null
+              },
+              isModerated: session.moderation === 'M'
+            }));
           setProjectImages(images);
         }
         loadMosaicSettings(selectedProject);
@@ -447,6 +459,7 @@ export default function ProjectGallery() {
         qr_title: mosaicSettings.qr_title || 'Scannez-moi',
         qr_description: mosaicSettings.qr_description?.substring(0, 255) || 'Retrouvez toutes les photos ici',
         qr_position: mosaicSettings.qr_position || 'center',
+        is_public: mosaicSettings.is_public === true,
         updated_at: new Date().toISOString()
       };
       
@@ -702,6 +715,19 @@ export default function ProjectGallery() {
     }
   };
 
+  // Add helper function to handle image errors
+  const handleImageError = useCallback((imageId) => {
+    setFailedImages(prev => new Set([...prev, imageId]));
+  }, []);
+
+  // Add helper function to validate image URL
+  const isValidImageUrl = useCallback((url) => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmedUrl = url.trim();
+    return trimmedUrl !== '' && trimmedUrl !== 'null' && trimmedUrl !== 'undefined' && 
+           (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('/'));
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Loader global - affiche tant que loading est true */}
@@ -908,19 +934,21 @@ export default function ProjectGallery() {
                       }`}
                     >
                       <div className="aspect-w-2 aspect-h-3 bg-gray-100 relative" style={{ height: '200px' }}>
-                        <Image
-                          src={image.image_url}
-                          alt={`Photo ${index}`}
-                          fill
-                          style={{ objectFit: "cover" }}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="rounded-t-md"
-                          onError={(e) => {
-                            console.error('Erreur de chargement image:', image.image_url);
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/300x200?text=Image+non+disponible';
-                          }}
-                        />
+                        {failedImages.has(image.id) || !isValidImageUrl(image.image_url) ? (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                            Image non disponible
+                          </div>
+                        ) : (
+                          <Image
+                            src={image.image_url}
+                            alt={`Photo ${index}`}
+                            fill
+                            style={{ objectFit: "cover" }}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="rounded-t-md"
+                            onError={() => handleImageError(image.id)}
+                          />
+                        )}
                       </div>
                       <div className="p-2 text-xs text-gray-500">
                         <div className="truncate">{image.metadata?.fileName}</div>
@@ -1146,6 +1174,33 @@ export default function ProjectGallery() {
 
                       {/* QR Code Settings */}
                       <div className="space-y-4">
+                        {/* Galerie publique */}
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              id="is_public"
+                              checked={mosaicSettings.is_public || false}
+                              onChange={(e) => setMosaicSettings({...mosaicSettings, is_public: e.target.checked})}
+                              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                            />
+                            <label htmlFor="is_public" className="ml-2 block text-sm font-medium text-gray-700">
+                              🌐 Galerie publique
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-600 ml-6">
+                            Si activé, un lien vers la galerie complète sera affiché sur la page de récupération des photos.
+                            Les utilisateurs pourront voir toutes les photos de l'événement.
+                          </p>
+                          {mosaicSettings.is_public && (
+                            <div className="mt-2 ml-6 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                              ✅ La galerie sera accessible à l'adresse : 
+                              <br />
+                              <code className="bg-white px-1 rounded">/photobooth-coiffure/[slug]/gallery</code>
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="flex items-center">
                           <input
                             type="checkbox"

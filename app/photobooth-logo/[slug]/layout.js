@@ -100,7 +100,24 @@ export default function PremiumPhotoboothLayout({ children, params }) {
   const [debugData, setDebugData] = useState(null);
   const videoRef = useRef(null);
   const slug = params.slug;
+  const pathname = usePathname();
   const supabase = createClientComponentClient();
+
+  // Check if we're on the main page (only show video on main page)
+  // Main page: /photobooth-logo/[slug] 
+  // Sub-pages: /photobooth-logo/[slug]/cam, /photobooth-logo/[slug]/how, etc.
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const isMainPage = pathSegments.length === 2 && pathSegments[0] === 'photobooth-logo' && pathSegments[1] === slug;
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 Page detection:', {
+      pathname,
+      pathSegments,
+      slug,
+      isMainPage
+    });
+  }
 
   // Function to log debug info to console
   const logDebug = (msg, data) => {
@@ -152,21 +169,22 @@ export default function PremiumPhotoboothLayout({ children, params }) {
         let imageUrl = null;
         let videoUrl = null;
         
-        // Prioritize animated backgrounds if available
-        if (animatedBackgrounds.length > 0) {
+        // Only allow video on main page, force image-only on sub-pages
+        if (isMainPage && animatedBackgrounds.length > 0) {
+          // Prioritize animated backgrounds if available and on main page
           const randomIndex = Math.floor(Math.random() * animatedBackgrounds.length);
           selectedBackground = animatedBackgrounds[randomIndex];
           isAnimated = true;
           videoUrl = selectedBackground.video_url;
           imageUrl = selectedBackground.image_url || null;
-          logDebug('Selected animated background', selectedBackground);
+          logDebug('Selected animated background (main page)', selectedBackground);
         } 
-        // Otherwise use a regular background
+        // Otherwise use a regular background (for sub-pages or when no video available)
         else if (backgrounds.length > 0) {
           const randomIndex = Math.floor(Math.random() * backgrounds.length);
           selectedBackground = backgrounds[randomIndex];
           imageUrl = selectedBackground.image_url;
-          logDebug('Selected regular background', selectedBackground);
+          logDebug('Selected regular background (sub-page or no video)', selectedBackground);
         } 
         // Fallback to project background
         else if (project.background_image) {
@@ -217,7 +235,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     }
     
     loadBackground();
-  }, [slug, supabase]);
+  }, [slug, supabase, pathname, isMainPage]);
 
   // Handle video loading errors
   useEffect(() => {
@@ -243,8 +261,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
 
   return (
     <>
-      {/* Debug indicator removed - keeping logging functions for troubleshooting */}
-      
       {/* Background Image Layer */}
       {background.imageUrl && (
         <>

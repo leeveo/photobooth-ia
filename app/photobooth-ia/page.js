@@ -38,7 +38,7 @@ export default function TauTauHome() {
   }, []);
 
   return (
-    <main className="flex fixed h-full w-full bg-tautaufest overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 lg:pt-0 lg:px-20 mt-0">
+    <main className="flex fixed h-full w-full bg-tautaufest overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 lg:pt-0 lg:px-20 mt-0 cursor-pointer">
       <button ref={fullscreenButtonRef} onClick={requestFullscreen} style={{ display: 'none' }}>Go Fullscreen</button>
       <Link href='/photobooth-ia/how' className="fixed w-full h-full top-0 left-0 z-10"></Link>
       <div className="fixed top-0 mx-auto w-[65%] mt-4">

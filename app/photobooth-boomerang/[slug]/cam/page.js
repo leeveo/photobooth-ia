@@ -288,9 +288,38 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       }
       
       try {
+        // Configuration options adaptées selon l'appareil
+        const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
+        
+        let videoConstraints;
+        if (isMobile) {
+          // Mobile: Priorité à la caméra frontale et résolution adaptée
+          videoConstraints = {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            aspectRatio: { ideal: 16/9 }
+          };
+        } else if (isTablet) {
+          // Tablette: Résolution intermédiaire
+          videoConstraints = {
+            width: { ideal: 1600 },
+            height: { ideal: 900 },
+            aspectRatio: { ideal: 16/9 }
+          };
+        } else {
+          // PC: Haute résolution
+          videoConstraints = {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16/9 }
+          };
+        }
+        
         // Demander l'accès à la caméra ET au microphone (important pour l'enregistrement)
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true,
+          video: videoConstraints,
           audio: true // Ajout de l'audio pour garantir un bon enregistrement
         });
         
@@ -365,6 +394,9 @@ export default function CameraCapture({ params }) {
   const [showCountdown, setShowCountdown] = useState(false);
   const [videoVisible, setVideoVisible] = useState(true);
   
+  // Device detection state
+  const [deviceType, setDeviceType] = useState('desktop');
+  
   // Quota states
   const [quota, setQuota] = useState(null);
   const [quotaUsed, setQuotaUsed] = useState(null);
@@ -386,6 +418,24 @@ export default function CameraCapture({ params }) {
 
   // Initialize webcam with error handling
   useWebcam({ videoRef, setCameraError, setCameraLoaded });
+  
+  // Device detection effect
+  useEffect(() => {
+    const detectDevice = () => {
+      const userAgent = navigator.userAgent;
+      if (/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+        setDeviceType('mobile');
+      } else if (/(iPad|Android(?!.*Mobile))/i.test(userAgent)) {
+        setDeviceType('tablet');
+      } else {
+        setDeviceType('desktop');
+      }
+    };
+    
+    detectDevice();
+    window.addEventListener('resize', detectDevice);
+    return () => window.removeEventListener('resize', detectDevice);
+  }, []);
   
   // Function to reset state when retrying
   const reset2 = () => {
@@ -2002,27 +2052,44 @@ export default function CameraCapture({ params }) {
       </div>
 
       <motion.div 
-        className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
+        className={`w-full mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''} ${
+          deviceType === 'mobile' || deviceType === 'tablet' 
+            ? 'flex flex-col items-center justify-center min-h-screen px-4' 
+            : 'max-w-6xl'
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: processing ? 0.2 : 1, y: 0 }}
         transition={{ duration:  0.7 }}
       >
         <motion.h2 
-          className="text-xl font-bold text-center mb-6"
+          className={`text-xl font-bold text-center ${
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-4' : 'mb-6'
+          }`}
           style={{ color: secondaryColor }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           {enabled ? 'Vérifiez votre vidéo boomerang' : 'Enregistrez une vidéo pour l\'effet boomerang'}
-       
-
         </motion.h2>
         
-        {/* Cadre vidéo avec meilleur style - format adaptatif selon l'appareil */}
+        {/* Cadre vidéo avec style responsif adaptatif selon l'appareil */}
         <motion.div 
-          className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
-          style={getContainerStyle()}
+          className={`relative overflow-hidden rounded-lg shadow-2xl ${
+            deviceType === 'mobile' || deviceType === 'tablet' 
+              ? 'mx-auto' 
+              : 'mx-auto'
+          }`}
+          style={{ 
+            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
+            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
+            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '16/9',
+            border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : `1px solid ${secondaryColor}30`,
+            backgroundColor: 'black',
+            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : undefined,
+            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+            margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
+          }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
@@ -2124,13 +2191,14 @@ export default function CameraCapture({ params }) {
             )}
           </AnimatePresence>
           
-          {/* Video elements remain unchanged */}
+          {/* Video elements responsive */}
           <video 
             ref={videoRef} 
             className="w-full h-full object-cover"
             style={{ 
               display: enabled ? 'none' : 'block',
               transform: 'scaleX(-1)',
+              backgroundColor: '#000'
             }} 
             playsInline
             autoPlay
@@ -2265,7 +2333,7 @@ export default function CameraCapture({ params }) {
                 ></motion.span>
               )}
             </motion.button>
-          ) : (
+          ) : enabled && !processing ? (
             <div className="flex flex-wrap gap-4 justify-center">
               {/* Bouton Partager amélioré */}
               <motion.button
@@ -2369,7 +2437,7 @@ export default function CameraCapture({ params }) {
                 🔄 RECOMMENCER
               </motion.button>
             </div>
-          )}
+          ) : null}
           
           {/* Affichage du quota restant ou message quota atteint */}
           <div className="mt-4 text-center">

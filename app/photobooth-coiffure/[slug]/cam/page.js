@@ -87,9 +87,50 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         return;
       }
       
-      // Configuration options from highest to lowest quality
-      const configOptions = [
-        // Option 1: Ideal 16:9 HD
+      // Détecter le type d'appareil
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
+      
+      // Configuration options adaptées selon l'appareil
+      const configOptions = isMobile ? [
+        // Mobile: Priorité à la caméra frontale et résolution adaptée
+        { 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            facingMode: "user",
+            width: { min: 640 },
+            height: { min: 480 }
+          } 
+        },
+        { video: { facingMode: "user" } },
+        { video: true }
+      ] : isTablet ? [
+        // Tablette: Résolution intermédiaire
+        { 
+          video: { 
+            width: { ideal: 1600 },
+            height: { ideal: 900 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 800 },
+            height: { min: 600 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true },
+        { video: { facingMode: "user" } }
+      ] : [
+        // PC: Haute résolution
         { 
           video: { 
             width: { ideal: 1920 },
@@ -97,7 +138,13 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
             aspectRatio: { ideal: 16/9 }
           } 
         },
-        // Option 2: Minimum resolution with 16:9
+        { 
+          video: { 
+            width: { min: 1280 },
+            height: { min: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
         { 
           video: { 
             width: { min: 640 },
@@ -105,10 +152,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
             aspectRatio: { ideal: 16/9 }
           } 
         },
-        // Option 3: Just ask for video with no constraints
-        { video: true },
-        // Option 4: Try a different API approach (for older browsers)
-        { video: { facingMode: "user" } }
+        { video: true }
       ];
       
       let stream = null;
@@ -218,6 +262,28 @@ export default function CameraCapture({ params }) {
   // Restore camera error display for better debugging
   const [cameraError, setCameraError] = useState(null);
   
+  // Détecter le type d'appareil pour l'affichage
+  const [deviceType, setDeviceType] = useState('desktop');
+  
+  useEffect(() => {
+    const detectDevice = () => {
+      const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        setDeviceType('mobile');
+      } else if (isTablet) {
+        setDeviceType('tablet');
+      } else {
+        setDeviceType('desktop');
+      }
+    };
+    
+    detectDevice();
+    window.addEventListener('resize', detectDevice);
+    return () => window.removeEventListener('resize', detectDevice);
+  }, []);
+
   // Add missing cameraLoaded state
   const [cameraLoaded, setCameraLoaded] = useState(false);
   
@@ -241,12 +307,18 @@ export default function CameraCapture({ params }) {
   const [quotaAtteint, setQuotaAtteint] = useState(false);
   const [quotaRestant, setQuotaRestant] = useState(null);
 
+  // Add state for redirection handling
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(0);
+
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
     setLoadingProgress(0);
+    setIsRedirecting(false);
+    setRedirectCountdown(0);
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
@@ -1002,9 +1074,37 @@ export default function CameraCapture({ params }) {
         setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
         localStorage.setItem("faceURLResult", finalImageUrl);
       }
+
+      // Gestion de la redirection après succès
+      setTimeout(() => {
+        setLogs(logs => [...logs, "Préparation de la redirection vers la page résultat..."]);
+        setIsRedirecting(true);
+        setRedirectCountdown(3);
+        
+        // Compteur de redirection
+        let countdown = 3;
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          setRedirectCountdown(countdown);
+          setLogs(logs => [...logs, `Redirection dans ${countdown} seconde${countdown > 1 ? 's' : ''}...`]);
+          
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            setLogs(logs => [...logs, "🚀 Redirection en cours..."]);
+            
+            // Petit délai pour que l'utilisateur voie le message de redirection
+            setTimeout(() => {
+              router.push(`/photobooth-coiffure/${slug}/result`);
+            }, 500);
+          }
+        }, 1000);
+      }, 1000);
+
     } catch (err) {
       setError(err.message || "Erreur lors de la génération");
       setLogs([err.message]);
+      setIsRedirecting(false);
+      setRedirectCountdown(0);
       // Enregistre l'échec dans sessions pour garder la cohérence du quota
       try {
         const sessionPayload = {
@@ -1047,7 +1147,9 @@ export default function CameraCapture({ params }) {
         console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
       }
     } finally {
-      setProcessing(false);
+      if (!isRedirecting) {
+        setProcessing(false);
+      }
       setElapsedTime(Date.now() - start);
     }
   };
@@ -1226,12 +1328,34 @@ const generateImageReplicate = async () => {
     }
 
     setTimeout(() => {
-      router.push(`/photobooth-coiffure/${slug}/result`);
+      setLogs(logs => [...logs, "Préparation de la redirection vers la page résultat..."]);
+      setIsRedirecting(true);
+      setRedirectCountdown(3);
+      
+      // Compteur de redirection
+      let countdown = 3;
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        setRedirectCountdown(countdown);
+        setLogs(logs => [...logs, `Redirection dans ${countdown} seconde${countdown > 1 ? 's' : ''}...`]);
+        
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          setLogs(logs => [...logs, "🚀 Redirection en cours..."]);
+          
+          // Petit délai pour que l'utilisateur voie le message de redirection
+          setTimeout(() => {
+            router.push(`/photobooth-coiffure/${slug}/result`);
+          }, 500);
+        }
+      }, 1000);
     }, 1000);
 
   } catch (err) {
     setError(err.message || "Erreur lors de la génération");
     setLogs([err.message]);
+    setIsRedirecting(false);
+    setRedirectCountdown(0);
     // Enregistre l'échec dans sessions pour garder la cohérence du quota
     try {
       const sessionPayload = {
@@ -1274,7 +1398,10 @@ const generateImageReplicate = async () => {
       console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
     }
   } finally {
-    setProcessing(false);
+    // Ne pas mettre setProcessing(false) ici si on redirige
+    if (!isRedirecting) {
+      setProcessing(false);
+    }
     setElapsedTime(Date.now() - start);
   }
 };
@@ -1480,6 +1607,113 @@ const generateImageReplicate = async () => {
                 )}
               </motion.div>
               
+              {/* Message de redirection si en cours */}
+              {isRedirecting && (
+                <motion.div 
+                  className="mt-4 p-4 bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-400 text-green-100 rounded-lg text-center"
+                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <motion.div 
+                    className="flex items-center justify-center gap-3 mb-3"
+                    initial={{ y: -10 }}
+                    animate={{ y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <motion.div
+                      animate={{ 
+                        rotate: 360,
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                        scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                      }}
+                      className="text-xl"
+                    >
+                      ✨
+                    </motion.div>
+                    <span className="font-bold text-lg text-green-200">Image générée avec succès !</span>
+                    <motion.div
+                      animate={{ 
+                        rotate: -360,
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{ 
+                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                        scale: { duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
+                      }}
+                      className="text-xl"
+                    >
+                      🎉
+                    </motion.div>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="text-sm mb-3 text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="mb-2">
+                      🎯 <strong>Ne fermez pas cette fenêtre !</strong>
+                    </div>
+                    <div>
+                      Redirection automatique vers la page résultat dans{' '}
+                      <motion.span 
+                        className="font-bold text-2xl text-yellow-300 inline-block"
+                        key={redirectCountdown}
+                        initial={{ scale: 1.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {redirectCountdown}
+                      </motion.span>
+                      {' '}seconde{redirectCountdown > 1 ? 's' : ''}...
+                    </div>
+                  </motion.div>
+                  
+                  <div className="relative">
+                    <motion.div
+                      className="h-2 bg-green-600/30 rounded-full overflow-hidden"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                    >
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 3, ease: "linear" }}
+                      />
+                    </motion.div>
+                    
+                    {/* Petites particules flottantes */}
+                    {[...Array(5)].map((_, i) => (
+                      <motion.div
+                        key={`particle-${i}`}
+                        className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                        style={{
+                          left: `${10 + i * 20}%`,
+                          top: '-4px'
+                        }}
+                        animate={{
+                          y: [0, -8, 0],
+                          opacity: [0.7, 1, 0.7],
+                          scale: [0.8, 1.2, 0.8]
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+              
               {error && (
                 <motion.div 
                   className="mt-4 p-3 bg-red-900 bg-opacity-20 border border-red-500 text-red-100 rounded-lg"
@@ -1491,18 +1725,22 @@ const generateImageReplicate = async () => {
               )}
               
               <div className="mt-6 flex justify-center">
-                <motion.button
-                  onClick={() => {
-                    setProcessing(false);
-                    router.push(`/photobooth-coiffure/${slug}`);
-                  }}
-                  className="px-6 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Annuler
-                </motion.button>
+                {!isRedirecting && (
+                  <motion.button
+                    onClick={() => {
+                      setProcessing(false);
+                      setIsRedirecting(false);
+                      setRedirectCountdown(0);
+                      router.push(`/photobooth-coiffure/${slug}`);
+                    }}
+                    className="px-6 py-2.5 rounded-lg text-sm font-medium"
+                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
+                    whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Annuler
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -1510,13 +1748,19 @@ const generateImageReplicate = async () => {
       </AnimatePresence>
 
       <motion.div 
-        className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
+        className={`w-full mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''} ${
+          deviceType === 'mobile' || deviceType === 'tablet' 
+            ? 'flex flex-col items-center justify-center min-h-screen px-4' 
+            : 'max-w-6xl'
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: processing ? 0.2 : 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
         <motion.h2 
-          className="text-xl font-bold text-center mb-6"
+          className={`text-xl font-bold text-center ${
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-4' : 'mb-6'
+          }`}
           style={{ color: secondaryColor }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1530,15 +1774,22 @@ const generateImageReplicate = async () => {
           <button id="retryCamera" onClick={retryCamera}>Retry Camera</button>
         </div>
         
-        {/* Camera viewfinder with larger dimensions */}
+        {/* Camera viewfinder with responsive dimensions and centering */}
         <motion.div 
-          className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
+          className={`relative overflow-hidden rounded-lg shadow-2xl ${
+            deviceType === 'mobile' || deviceType === 'tablet' 
+              ? 'mx-auto' 
+              : 'mx-auto'
+          }`}
           style={{ 
-            width: '100%',
-            maxWidth: '1400px',
-            aspectRatio: '970/651',
+            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
+            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
+            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
-            backgroundColor: 'black'
+            backgroundColor: 'black',
+            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
+            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+            margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
           }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -1622,7 +1873,7 @@ const generateImageReplicate = async () => {
             )}
           </AnimatePresence>
 
-          {/* Video element with improved sizing */}
+          {/* Video element with responsive sizing and centering */}
           <video 
             ref={videoRef} 
             className="w-full h-full object-cover"
@@ -1630,9 +1881,10 @@ const generateImageReplicate = async () => {
               transform: 'scaleX(-1)',
               display: enabled && !videoVisible ? 'none' : 'block',
               visibility: enabled && !videoVisible ? 'hidden' : 'visible',
-              minHeight: '400px', // Minimum height for better visibility
-              maxHeight: '80vh', // Increased from 75vh
-              backgroundColor: '#000'
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+              backgroundColor: '#000',
+              objectPosition: 'center center'
             }} 
             playsInline
             autoPlay
@@ -1640,7 +1892,8 @@ const generateImageReplicate = async () => {
             onLoadedMetadata={() => {
               console.log("Video metadata loaded:", {
                 videoWidth: videoRef.current?.videoWidth,
-                videoHeight: videoRef.current?.videoHeight
+                videoHeight: videoRef.current?.videoHeight,
+                deviceType: deviceType
               });
               setCameraLoaded(true);
             }}
@@ -1650,16 +1903,17 @@ const generateImageReplicate = async () => {
             }}
           />
           
-          {/* Canvas element with improved sizing */}
+          {/* Canvas element with responsive sizing and centering */}
           <canvas 
             ref={previewRef} 
             className="w-full h-full"
             style={{ 
               display: enabled ? 'block' : 'none',
-              minHeight: '400px',
-              maxHeight: '80vh',
-              objectFit: 'cover', // <--- Ajouté
-              backgroundColor: '#222'
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+              objectFit: 'cover',
+              backgroundColor: '#222',
+              objectPosition: 'center center'
             }}
           />
           
@@ -1696,7 +1950,9 @@ const generateImageReplicate = async () => {
 
         {/* Action buttons */}
         <motion.div 
-          className="mt-8 flex flex-col items-center"
+          className={`flex flex-col items-center ${
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mt-4 mb-8' : 'mt-8'
+          }`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
@@ -1726,7 +1982,13 @@ const generateImageReplicate = async () => {
                     processCapture();
                   }, 3000);
                 }}
-                className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
+                className={`relative rounded-2xl font-black overflow-hidden group shadow-2xl ${
+                  deviceType === 'mobile' 
+                    ? 'px-8 py-4 text-lg' 
+                    : deviceType === 'tablet' 
+                      ? 'px-10 py-5 text-xl' 
+                      : 'px-12 py-6 text-2xl'
+                }`}
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor,
@@ -1898,7 +2160,7 @@ const generateImageReplicate = async () => {
           ) : null}
 
           {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée */}
-          {enabled && (
+          {enabled && !processing && (
             <div className="flex flex-col space-y-4 items-center">
               {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
               <motion.button 
@@ -1914,7 +2176,12 @@ const generateImageReplicate = async () => {
                   boxShadow: `0 25px 50px ${secondaryColor}60`
                 }}
                 whileTap={{ scale: 0.95 }}
-                disabled={processing}
+                initial={{ opacity: 1, scale: 1 }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.8,
+                  transition: { duration: 0.3 }
+                }}
               >
                 {/* Animated floating bubbles */}
                 {[...Array(8)].map((_, i) => (
@@ -1940,7 +2207,7 @@ const generateImageReplicate = async () => {
                       delay: Math.random() * 2,
                       ease: "easeInOut"
                     }}
-              />
+                  />
                 ))}
 
                 {/* Animated wave pattern */}
@@ -1987,9 +2254,9 @@ const generateImageReplicate = async () => {
                       duration: 3 + i * 0.5,
                       repeat: Infinity,
                       delay: i * 0.5,
-                                           ease: "easeInOut"
+                      ease: "easeInOut"
                     }}
-              />
+                  />
                 ))}
 
                 {/* Shooting stars */}
@@ -2089,7 +2356,7 @@ const generateImageReplicate = async () => {
                 {/* Button text with icon */}
                 <span className="relative z-10 flex items-center gap-3">
                   ✨
-                  {processing ? "GÉNÉRATION..." : "GÉNÉRER MON IMAGE"}
+                  GÉNÉRER MON IMAGE
                   ⚡
                 </span>
 
@@ -2115,14 +2382,57 @@ const generateImageReplicate = async () => {
                   backgroundColor: 'rgba(255,255,255,0.25)'
                 }}
                 whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 1, scale: 1 }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.8,
+                  transition: { duration: 0.3, delay: 0.1 }
+                }}
               >
                 🔄 REPRENDRE
               </motion.button>
             </div>
           )}
+
+          {/* Message affiché pendant le processing */}
+          {enabled && processing && (
+            <motion.div 
+              className="flex flex-col items-center space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <motion.div 
+                className="text-center p-4 rounded-lg backdrop-blur-md border border-white/20"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+              >
+                <motion.div
+                  className="text-2xl mb-2"
+                  animate={{ 
+                    rotate: [0, 360],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ 
+                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                >
+                  ✨
+                </motion.div>
+                <h3 className="text-white font-bold text-lg mb-2">
+                  Génération en cours...
+                </h3>
+                <p className="text-white/80 text-sm">
+                  Votre image est en cours de traitement par l'Intelligence Artificielle
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
           
           {/* Affichage du quota restant ou message quota atteint */}
-          <div className="mb-4 text-center">
+          <div className={`text-center ${
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-2 mt-4' : 'mb-4'
+          }`}>
             {quotaLoading ? (
               <span className="text-white/70 text-sm">Chargement du quota...</span>
             ) : quotaAtteint ? (

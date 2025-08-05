@@ -7,11 +7,11 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState({
-    title: '',
-    text1: '',
-    text2: '',
-    link_text: '',
-    link_url: '',
+    title: 'Votre photo générée',
+    text1: 'Voici votre photo générée par notre photobooth IA. Vous pouvez la télécharger ou la partager avec vos amis !',
+    text2: 'Cette image est disponible pendant 7 jours. Pensez à la sauvegarder !',
+    link_text: 'Visitez notre site web',
+    link_url: 'https://www.leeve.fr',
     background_color: '#f5f5f5'
   });
   const [success, setSuccess] = useState(null);
@@ -28,11 +28,11 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
         .maybeSingle();
       if (data) {
         setContent({
-          title: data.title || '',
-          text1: data.text1 || '',
-          text2: data.text2 || '',
-          link_text: data.link_text || '',
-          link_url: data.link_url || '',
+          title: data.title || 'Votre photo générée',
+          text1: data.text1 || 'Voici votre photo générée par notre photobooth IA. Vous pouvez la télécharger ou la partager avec vos amis !',
+          text2: data.text2 || 'Cette image est disponible pendant 7 jours. Pensez à la sauvegarder !',
+          link_text: data.link_text || 'Visitez notre site web',
+          link_url: data.link_url || 'https://www.leeve.fr',
           background_color: data.background_color || '#f5f5f5'
         });
       }
@@ -132,10 +132,9 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               name="title"
               value={content.title}
               onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-gray-100 text-gray-500 placeholder-gray-400 font-semibold"
+              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400 font-semibold"
               required
               placeholder="Votre photo générée"
-              style={content.title ? { color: '#222' } : { color: '#888' }}
             />
           </div>
           <div>
@@ -144,11 +143,10 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               name="text1"
               value={content.text1}
               onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-gray-100 text-gray-500 placeholder-gray-400"
+              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400"
               rows={3}
               required
               placeholder="Voici votre photo générée par notre photobooth IA. Vous pouvez la télécharger ou la partager avec vos amis !"
-              style={content.text1 ? { color: '#222' } : { color: '#888' }}
             />
           </div>
           <div>
@@ -157,11 +155,10 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               name="text2"
               value={content.text2}
               onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-gray-100 text-gray-500 placeholder-gray-400"
+              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400"
               rows={2}
               required
               placeholder="Cette image est disponible pendant 7 jours. Pensez à la sauvegarder !"
-              style={content.text2 ? { color: '#222' } : { color: '#888' }}
             />
           </div>
           <div>
@@ -171,10 +168,9 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               name="link_text"
               value={content.link_text}
               onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-gray-100 text-gray-500 placeholder-gray-400"
+              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400"
               required
               placeholder="Visitez notre site web"
-              style={content.link_text ? { color: '#222' } : { color: '#888' }}
             />
           </div>
           <div>
@@ -184,10 +180,9 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               name="link_url"
               value={content.link_url}
               onChange={handleChange}
-              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-gray-100 text-gray-500 placeholder-gray-400"
+              className="block w-full rounded-md border border-gray-300 py-2 px-4 focus:border-indigo-500 focus:ring-indigo-500 focus:shadow-indigo-200 transition-all duration-200 bg-white text-gray-900 placeholder-gray-400"
               required
-              placeholder="https://www.leeve.fr"
-              style={content.link_url ? { color: '#222' } : { color: '#888' }}
+              placeholder="https://www.waibooth.app"
             />
           </div>
           <div>
@@ -257,17 +252,17 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
                 margin: '0 0 8px 0',
                 textAlign: 'center',
                 textShadow: '0 2px 8px #6366f155',
-                color: content.title ? '#4f46e5' : '#888'
+                color: '#4f46e5'
               }}>
-                {content.title || 'Votre photo générée'}
+                {content.title}
               </h1>
               <p style={{
                 fontSize: '1.05rem',
                 margin: '0 0 8px 0',
                 textAlign: 'center',
-                color: content.text1 ? '#444' : '#888'
+                color: '#444'
               }}>
-                {content.text1 || 'Voici votre photo générée par notre photobooth IA. Vous pouvez la télécharger ou la partager avec vos amis !'}
+                {content.text1}
               </p>
               <div style={{
                 width: '100%',
@@ -297,9 +292,9 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
                 fontSize: '1rem',
                 margin: '0 0 8px 0',
                 textAlign: 'center',
-                color: content.text2 ? '#666' : '#888'
+                color: '#666'
               }}>
-                {content.text2 || 'Cette image est disponible pendant 7 jours. Pensez à la sauvegarder !'}
+                {content.text2}
               </p>
               {/* Bouton Télécharger ma photo */}
               <a
@@ -396,20 +391,20 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               }}>
                 <p className="text-sm text-gray-500 text-center" style={{
                   fontSize: '0.95rem',
-                  color: content.link_text ? '#555' : '#888'
+                  color: '#555'
                 }}>
-                  {content.link_text || 'Visitez notre site web'}&nbsp;
+                  {content.link_text}&nbsp;
                   <a
-                    href={content.link_url || '#'}
+                    href={content.link_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: content.link_url ? '#4f46e5' : '#888',
+                      color: '#4f46e5',
                       textDecoration: 'underline',
                       fontWeight: 600
                     }}
                   >
-                    {content.link_url || 'https://www.leeve.fr'}
+                    {content.link_url}
                   </a>
                 </p>
               </div>

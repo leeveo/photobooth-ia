@@ -89,120 +89,145 @@ function BackgroundDebugger({ backgroundUrl, projectData, backgroundsData }) {
 }
 
 export default function PremiumPhotoboothLayout({ children, params }) {
-  const [backgroundInfo, setBackgroundInfo] = useState({
-    url: null,
+  const [background, setBackground] = useState({
+    imageUrl: null,
+    videoUrl: null,
+    isAnimated: false,
     color: '#000000',
     loading: true,
     error: null
   });
-  const [debugData, setDebugData] = useState({
-    projectData: null,
-    backgroundsData: []
-  });
-  const bgContainerRef = useRef(null);
-  const [directImageVisible, setDirectImageVisible] = useState(false);
+  
+  const [debugData, setDebugData] = useState(null);
+  const videoRef = useRef(null);
   const slug = params.slug;
   const pathname = usePathname();
   const supabase = createClientComponentClient();
 
+  // Check if we're on the main page (only show video on main page)
+  // Main page: /photobooth-simple/[slug] 
+  // Sub-pages: /photobooth-simple/[slug]/cam, /photobooth-simple/[slug]/how, etc.
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const isMainPage = pathSegments.length === 2 && pathSegments[0] === 'photobooth-simple' && pathSegments[1] === slug;
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 Page detection:', {
+      pathname,
+      pathSegments,
+      slug,
+      isMainPage
+    });
+  }
+
+  // Function to log debug info to console
+  const logDebug = (msg, data) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 ${msg}:`, data);
+    }
+  };
+
   useEffect(() => {
-    async function fetchBackground() {
-      console.log('🔍 Fetching background for slug:', slug);
-      
+    async function loadBackground() {
       try {
+        logDebug('Fetching background for slug', slug);
+        
         // 1. Get project data
-        const { data: projectData, error: projectError } = await supabase
+        const { data: project, error: projectError } = await supabase
           .from('projects')
           .select('id, background_image, primary_color')
           .eq('slug', slug)
           .single();
           
-        if (projectError) {
-          throw projectError;
-        }
+        if (projectError) throw projectError;
+        logDebug('Project data', project);
         
-        console.log('📋 Project data:', projectData);
-        
-        // 2. Get backgrounds from backgrounds table
-        const { data: backgroundsData, error: backgroundsError } = await supabase
+        // 2. Get backgrounds
+        const { data: backgrounds, error: backgroundsError } = await supabase
           .from('backgrounds')
           .select('*')
-          .eq('project_id', projectData.id)
+          .eq('project_id', project.id)
           .eq('is_active', true);
           
-        if (backgroundsError) {
-          throw backgroundsError;
-        }
+        if (backgroundsError) throw backgroundsError;
+        logDebug('Available backgrounds', backgrounds);
         
-        console.log(`📋 Found ${backgroundsData?.length || 0} backgrounds:`, backgroundsData);
-        
-        // 3. Determine which background to use
-        let backgroundUrl = null;
-        
-        if (backgroundsData && backgroundsData.length > 0) {
-          // Use a random background from the backgrounds table
-          const randomIndex = Math.floor(Math.random() * backgroundsData.length);
-          backgroundUrl = backgroundsData[randomIndex].image_url;
-          
-          // Handle case where the URL might be a relative path
-          if (backgroundUrl && !backgroundUrl.startsWith('http')) {
-            // Try to get the full URL
-            const { data: urlData } = supabase.storage
-              .from('backgrounds')
-              .getPublicUrl(backgroundUrl);
-            
-            backgroundUrl = urlData.publicUrl;
-          }
-          
-          console.log('🎯 Selected background URL:', backgroundUrl);
-        } else if (projectData.background_image) {
-          // Fallback to project's background image
-          backgroundUrl = projectData.background_image;
-          
-          // Handle case where the URL might be a relative path
-          if (backgroundUrl && !backgroundUrl.startsWith('http')) {
-            // Try to get the full URL
-            const { data: urlData } = supabase.storage
-              .from('backgrounds')
-              .getPublicUrl(backgroundUrl);
-            
-            backgroundUrl = urlData.publicUrl;
-          }
-          
-          console.log('🎯 Using project background URL:', backgroundUrl);
-        }
-        
-        // Store debug data
         setDebugData({
-          projectData,
-          backgroundsData
+          project,
+          backgrounds
         });
         
-        // 4. Update background state
-        setBackgroundInfo({
-          url: backgroundUrl,
-          color: projectData.primary_color || '#000000',
+        // 3. Filter animated backgrounds with valid video URLs
+        const animatedBackgrounds = backgrounds.filter(bg => 
+          bg.show_animated === true && bg.video_url && bg.video_url.trim() !== ''
+        );
+        
+        logDebug('Animated backgrounds', animatedBackgrounds);
+        
+        // 4. Select a background
+        let selectedBackground;
+        let isAnimated = false;
+        let imageUrl = null;
+        let videoUrl = null;
+        
+        // Only allow video on main page, force image-only on sub-pages
+        if (isMainPage && animatedBackgrounds.length > 0) {
+          // Prioritize animated backgrounds if available and on main page
+          const randomIndex = Math.floor(Math.random() * animatedBackgrounds.length);
+          selectedBackground = animatedBackgrounds[randomIndex];
+          isAnimated = true;
+          videoUrl = selectedBackground.video_url;
+          imageUrl = selectedBackground.image_url || null;
+          logDebug('Selected animated background (main page)', selectedBackground);
+        } 
+        // Otherwise use a regular background (for sub-pages or when no video available)
+        else if (backgrounds.length > 0) {
+          const randomIndex = Math.floor(Math.random() * backgrounds.length);
+          selectedBackground = backgrounds[randomIndex];
+          imageUrl = selectedBackground.image_url;
+          logDebug('Selected regular background (sub-page or no video)', selectedBackground);
+        } 
+        // Fallback to project background
+        else if (project.background_image) {
+          imageUrl = project.background_image;
+          logDebug('Using project background', imageUrl);
+        }
+        
+        // Process image URL if needed
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          const { data: urlData } = supabase.storage
+            .from('backgrounds')
+            .getPublicUrl(imageUrl);
+          imageUrl = urlData.publicUrl;
+        }
+        
+        // Process video URL if needed
+        if (videoUrl && !videoUrl.startsWith('http')) {
+          const { data: urlData } = supabase.storage
+            .from('backgrounds')
+            .getPublicUrl(videoUrl);
+          videoUrl = urlData.publicUrl;
+        }
+        
+        // 5. Set final background state
+        setBackground({
+          imageUrl,
+          videoUrl,
+          isAnimated,
+          color: project.primary_color || '#000000',
           loading: false,
           error: null
         });
         
-        // 5. Force direct application of background to the DOM
-        setTimeout(() => {
-          if (bgContainerRef.current && backgroundUrl) {
-            console.log('Directly applying background:', backgroundUrl);
-            bgContainerRef.current.style.cssText = `background-image: url('${backgroundUrl}') !important; background-size: cover !important; background-position: center !important;`;
-            
-            // Set a flag to show the direct image fallback
-            setDirectImageVisible(true);
-            
-            // Preload the image
-            const preloadImg = new window.Image();
-            preloadImg.src = backgroundUrl;
-          }
-        }, 500);
+        logDebug('Final background settings', {
+          imageUrl,
+          videoUrl,
+          isAnimated
+        });
+        
       } catch (error) {
-        console.error('❌ Error fetching background:', error);
-        setBackgroundInfo(prev => ({
+        console.error('Error loading background:', error);
+        setBackground(prev => ({
           ...prev,
           loading: false,
           error: error.message
@@ -210,53 +235,98 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       }
     }
     
-    fetchBackground();
-  }, [slug, supabase]);
+    loadBackground();
+  }, [slug, supabase, pathname, isMainPage]);
 
-  // Apply background to all pages including the main page
-  // Previously this was skipping the main page with:
-  // if (pathname === `/photobooth-premium/${slug}`) {
-  //   return children;
-  // }
+  // Handle video loading errors
+  useEffect(() => {
+    if (videoRef.current && background.videoUrl) {
+      const handleVideoError = (e) => {
+        console.error('Video error:', e);
+        // If video fails, fall back to just showing the image
+        setBackground(prev => ({
+          ...prev,
+          isAnimated: false,
+          error: `Video failed to load: ${e.target.error?.message || 'Unknown error'}`
+        }));
+      };
+      
+      videoRef.current.addEventListener('error', handleVideoError);
+      return () => {
+        if (videoRef.current) {
+          videoRef.current.removeEventListener('error', handleVideoError);
+        }
+      };
+    }
+  }, [background.videoUrl]);
 
   return (
     <>
-      {/* SUPER DIRECT BACKGROUND APPROACH */}
-      <div 
-        id="debug-background-container"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
-          backgroundImage: backgroundInfo.url ? `url('${backgroundInfo.url}')` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      ></div>
-      
-      {/* ALTERNATIVE BACKUP METHOD - Direct img tag */}
-      {backgroundInfo.url && (
-        <img 
-          src={backgroundInfo.url}
-          alt="Background"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: 1,
-            opacity: 0.9
-          }}
-        />
+      {/* Background Image Layer */}
+      {background.imageUrl && (
+        <>
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 0,
+              backgroundImage: `url('${background.imageUrl}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+          
+          {/* Fallback direct image */}
+          <img 
+            src={background.imageUrl}
+            alt="Background"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: 0.5,
+              opacity: background.isAnimated ? 0 : 0.9 // Hide if video is playing
+            }}
+          />
+        </>
       )}
       
-      {/* Overlay for readability */}
+      {/* Video Background Layer - Simplified for reliability */}
+      {background.isAnimated && background.videoUrl && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '100%', 
+          height: '100%', 
+          zIndex: 1,
+          backgroundColor: 'black'
+        }}>
+          <video
+            ref={videoRef}
+            key={background.videoUrl} // Force reload if URL changes
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          >
+            <source src={background.videoUrl} type="video/mp4" />
+          </video>
+        </div>
+      )}
+      
+      {/* Overlay Layer */}
       <div 
         style={{
           position: 'fixed',
@@ -267,9 +337,9 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           backgroundColor: 'rgba(0,0,0,0.3)',
           zIndex: 2
         }}
-      ></div>
+      />
       
-      {/* Content container */}
+      {/* Content Layer */}
       <div style={{ position: 'relative', zIndex: 3 }}>
         {children}
       </div>

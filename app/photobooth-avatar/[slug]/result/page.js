@@ -20,6 +20,7 @@ export default function ResultPage({ params }) {
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [rgpdAccepted, setRgpdAccepted] = useState(false);
   
   useEffect(() => {
     // Load project data from localStorage
@@ -280,30 +281,69 @@ export default function ResultPage({ params }) {
                 <p>Email envoyé avec succès à {email}!</p>
               </div>
             ) : (
-              <form onSubmit={sendEmail} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Adresse email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="votre@email.com"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={emailLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {emailLoading ? 'Envoi en cours...' : 'Envoyer'}
-                </button>
-              </form>
+              <>
+                {/* Affichage du texte RGPD du projet */}
+                {project?.rgpd_text && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <h4 className="text-base font-semibold text-blue-900 mb-1">
+                          Protection des données personnelles (RGPD)
+                        </h4>
+                        <div className="text-sm text-blue-800 leading-relaxed">
+                          <p>{project.rgpd_text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <form onSubmit={sendEmail} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Adresse email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      placeholder="votre@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Checkbox RGPD */}
+                  <div className="flex items-start">
+                    <input
+                      type="checkbox"
+                      id="rgpd"
+                      checked={rgpdAccepted}
+                      onChange={(e) => setRgpdAccepted(e.target.checked)}
+                      className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <label htmlFor="rgpd" className="ml-3 text-sm text-gray-700 leading-relaxed">
+                      J'accepte les conditions de traitement de mes données personnelles selon les conditions énoncées ci-dessus <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={emailLoading || !rgpdAccepted}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: rgpdAccepted ? primaryColor : '#d1d5db' }}
+                  >
+                    {emailLoading ? 'Envoi en cours...' : 'Envoyer'}
+                  </button>
+                </form>
+              </>
             )}
           </div>
         )}

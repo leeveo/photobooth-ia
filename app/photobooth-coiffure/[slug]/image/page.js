@@ -19,6 +19,9 @@ export default function ImagePage({ params }) {
     link_url: "https://www.leeve.fr",
     background_color: "#f5f5f5"
   });
+  
+  // État pour la galerie publique
+  const [showPublicGallery, setShowPublicGallery] = useState(false);
 
   useEffect(() => {
     async function fetchContent() {
@@ -30,6 +33,7 @@ export default function ImagePage({ params }) {
         .single();
 
       if (project?.id) {
+        // Récupérer le contenu personnalisé de la page
         const { data: pageContent } = await supabase
           .from('photobooth_image_page_content')
           .select('*')
@@ -45,6 +49,17 @@ export default function ImagePage({ params }) {
             link_url: pageContent.link_url || content.link_url,
             background_color: pageContent.background_color || content.background_color
           });
+        }
+        
+        // Vérifier si la galerie publique est activée
+        const { data: mosaicSettings } = await supabase
+          .from('mosaic_settings')
+          .select('is_public')
+          .eq('project_id', project.id)
+          .maybeSingle();
+          
+        if (mosaicSettings?.is_public) {
+          setShowPublicGallery(true);
         }
       }
     }
@@ -96,6 +111,18 @@ export default function ImagePage({ params }) {
       >
         Télécharger ma photo
       </a>
+      
+      {/* Lien vers la galerie publique si activée */}
+      {showPublicGallery && (
+        <div className="mb-8">
+          <a
+            href={`/photobooth-coiffure/${slug}/gallery`}
+            className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg transition-all"
+          >
+            🖼️ Voir toutes les photos de l'événement
+          </a>
+        </div>
+      )}
       {/* Boutons de partage */}
       <div className="flex flex-row gap-4 mb-8">
         {/* Facebook */}

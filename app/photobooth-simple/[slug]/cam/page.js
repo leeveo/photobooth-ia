@@ -87,9 +87,49 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         return;
       }
       
-      // Configuration options from highest to lowest quality
-      const configOptions = [
-        // Option 1: Ideal 16:9 HD
+      // Configuration options adaptées selon l'appareil
+      const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
+      
+      const configOptions = isMobile ? [
+        // Mobile: Priorité à la caméra frontale et résolution adaptée
+        { 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            facingMode: "user",
+            width: { min: 640 },
+            height: { min: 480 }
+          } 
+        },
+        { video: { facingMode: "user" } },
+        { video: true }
+      ] : isTablet ? [
+        // Tablette: Résolution intermédiaire
+        { 
+          video: { 
+            width: { ideal: 1600 },
+            height: { ideal: 900 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 800 },
+            height: { min: 600 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true },
+        { video: { facingMode: "user" } }
+      ] : [
+        // PC: Haute résolution
         { 
           video: { 
             width: { ideal: 1920 },
@@ -97,7 +137,13 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
             aspectRatio: { ideal: 16/9 }
           } 
         },
-        // Option 2: Minimum resolution with 16:9
+        { 
+          video: { 
+            width: { min: 1280 },
+            height: { min: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
         { 
           video: { 
             width: { min: 640 },
@@ -105,10 +151,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
             aspectRatio: { ideal: 16/9 }
           } 
         },
-        // Option 3: Just ask for video with no constraints
-        { video: true },
-        // Option 4: Try a different API approach (for older browsers)
-        { video: { facingMode: "user" } }
+        { video: true }
       ];
       
       let stream = null;
@@ -234,6 +277,9 @@ export default function CameraCapture({ params }) {
   // Add videoVisible state that was missing
   const [videoVisible, setVideoVisible] = useState(true);
   
+  // Device detection state
+  const [deviceType, setDeviceType] = useState('desktop');
+  
   // Quota states
   const [quota, setQuota] = useState(null);
   const [quotaUsed, setQuotaUsed] = useState(null);
@@ -251,6 +297,24 @@ export default function CameraCapture({ params }) {
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
   useWebcam({ videoRef, setCameraError, setCameraLoaded });
+  
+  // Device detection effect
+  useEffect(() => {
+    const detectDevice = () => {
+      const userAgent = navigator.userAgent;
+      if (/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+        setDeviceType('mobile');
+      } else if (/(iPad|Android(?!.*Mobile))/i.test(userAgent)) {
+        setDeviceType('tablet');
+      } else {
+        setDeviceType('desktop');
+      }
+    };
+    
+    detectDevice();
+    window.addEventListener('resize', detectDevice);
+    return () => window.removeEventListener('resize', detectDevice);
+  }, []);
   
   // Replace the current captureVideo function with a direct implementation
   // This version directly implements the functionality without relying on other functions
@@ -1284,118 +1348,20 @@ const generateImageReplicate = async () => {
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
     >
-      {/* Animated gradient background */}
-      <motion.div
-        className="fixed inset-0 z-0"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
-        }}
-        animate={{
-          background: [
-            `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}10, ${primaryColor}20, ${secondaryColor}15)`,
-            `linear-gradient(225deg, ${secondaryColor}20, ${primaryColor}10, ${secondaryColor}15, ${primaryColor}25)`,
-            `linear-gradient(315deg, ${primaryColor}20, ${secondaryColor}15, ${primaryColor}10, ${secondaryColor}20)`,
-            `linear-gradient(45deg, ${secondaryColor}15, ${primaryColor}20, ${secondaryColor}10, ${primaryColor}15)`,
-          ]
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-
-      {/* Floating background elements */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        {/* Large floating orbs */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={`orb-${i}`}
-            className="absolute rounded-full opacity-20 backdrop-blur-sm"
-            style={{
-              backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
-              width: `${100 + Math.random() * 200}px`,
-              height: `${100 + Math.random() * 200}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 10 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Small sparkle particles */}
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={`sparkle-${i}`}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              backgroundColor: i % 3 === 0 ? primaryColor : secondaryColor,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: 2 + Math.random() * 3,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-
-        {/* Geometric shapes */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={`shape-${i}`}
-            className="absolute opacity-10"
-            style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: i % 2 === 0 ? '50%' : '0%',
-              backgroundColor: 'transparent',
-              border: `2px solid ${i % 2 === 0 ? primaryColor : secondaryColor}`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              rotate: [0, 360],
-              scale: [1, 1.5, 1],
-              opacity: [0.1, 0.3, 0.1],
-            }}
-            transition={{
-              duration: 15 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: Math.random() * 3,
-            }}
-          />
-        ))}
-      </div>
-
- 
-
       <motion.div 
-        className={`w-full max-w-6xl mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''}`}
+        className={`w-full mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''} ${
+          deviceType === 'mobile' || deviceType === 'tablet' 
+            ? 'flex flex-col items-center justify-center min-h-screen px-4' 
+            : 'max-w-6xl'
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: processing ? 0.2 : 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
         <motion.h2 
-          className="text-xl font-bold text-center mb-6"
+          className={`text-xl font-bold text-center ${
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-4' : 'mb-6'
+          }`}
           style={{ color: secondaryColor }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1409,15 +1375,22 @@ const generateImageReplicate = async () => {
           <button id="retryCamera" onClick={retryCamera}>Retry Camera</button>
         </div>
         
-        {/* Camera viewfinder with larger dimensions */}
+        {/* Camera viewfinder with responsive dimensions and centering */}
         <motion.div 
-          className="relative mx-auto overflow-hidden rounded-lg shadow-2xl"
+          className={`relative overflow-hidden rounded-lg shadow-2xl ${
+            deviceType === 'mobile' || deviceType === 'tablet' 
+              ? 'mx-auto' 
+              : 'mx-auto'
+          }`}
           style={{ 
-            width: '100%',
-            maxWidth: '1400px', // Increased from 1200px
-            aspectRatio: '970/651',
+            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
+            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
+            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
-            backgroundColor: 'black'
+            backgroundColor: 'black',
+            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
+            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+            margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
           }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -1501,7 +1474,7 @@ const generateImageReplicate = async () => {
             )}
           </AnimatePresence>
 
-          {/* Video element with improved sizing */}
+          {/* Video element with responsive sizing matching container */}
           <video 
             ref={videoRef} 
             className="w-full h-full object-cover"
@@ -1509,8 +1482,6 @@ const generateImageReplicate = async () => {
               transform: 'scaleX(-1)',
               display: enabled && !videoVisible ? 'none' : 'block',
               visibility: enabled && !videoVisible ? 'hidden' : 'visible',
-              minHeight: '250px', // Minimum height for better visibility
-              maxHeight: '80vh', // Increased from 75vh
               backgroundColor: '#000'
             }} 
             playsInline
@@ -1529,14 +1500,12 @@ const generateImageReplicate = async () => {
             }}
           />
           
-          {/* Canvas element with improved sizing */}
+          {/* Canvas element with responsive sizing matching container */}
           <canvas 
             ref={previewRef} 
             className="w-full h-full"
             style={{ 
               display: enabled ? 'block' : 'none',
-              minHeight: '400px',
-              maxHeight: '80vh',
               objectFit: 'contain',
               backgroundColor: '#222'
             }}
@@ -1776,8 +1745,8 @@ const generateImageReplicate = async () => {
             </>
           ) : null}
 
-          {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée */}
-          {enabled && (
+          {/* Affiche le bouton REPRENDRE et GÉNÉRER MON IMAGE si une photo est capturée et processing false */}
+          {enabled && !processing && (
             <div className="flex flex-col space-y-4 items-center">
               {/* Bouton Valider ma photo */}
               <motion.button 

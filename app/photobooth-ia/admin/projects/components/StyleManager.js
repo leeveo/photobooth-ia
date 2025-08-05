@@ -269,7 +269,7 @@ const StyleManager = ({
               Choix du Style 
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Choisissez le type de photobooth pour votre projet. Ce choix est définitif et ne peut plus être modifié une fois validé.
+              Choisissez le style pour votre projet. 
             </p>
           </div>
         </div>
@@ -594,9 +594,7 @@ const StyleManager = ({
                       <div>
                         <h5 className="font-bold text-white mb-1 truncate text-lg">{style.name}</h5>
                         <div className="flex items-center text-xs text-indigo-200 mb-2 space-x-2">
-                          <span className="bg-indigo-700/80 text-indigo-100 px-2 py-0.5 rounded-md font-mono tracking-wide shadow">
-                            {style.style_key}
-                          </span>
+                         
                           {style.variations > 1 && (
                             <span className="bg-purple-700/80 text-purple-100 px-2 py-0.5 rounded-md shadow">
                               {style.variations} var.

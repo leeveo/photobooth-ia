@@ -23,6 +23,23 @@ export default function ProjectsPage() {
   const [modalLoading, setModalLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [toggleLoadingId, setToggleLoadingId] = useState(null);
+  const [baseUrl, setBaseUrl] = useState('');
+
+  // Function to get the base URL dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      setBaseUrl(`${url.protocol}//${url.host}`);
+    } else {
+      setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+    }
+  }, []);
+
+  // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
+  const getPhotoboothUrl = (project) => {
+    if (!project?.slug || !project?.photobooth_type || !baseUrl) return '';
+    return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
+  };
 
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -486,8 +503,8 @@ export default function ProjectsPage() {
                           >
                             Configurer
                           </Link>
-                          <Link
-                            href={`/photobooth/${project.slug}`}
+                          <a
+                            href={getPhotoboothUrl(project)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`mr-2 inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-white hover:bg-indigo-50 ${!project.is_active ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
@@ -495,7 +512,7 @@ export default function ProjectsPage() {
                             tabIndex={project.is_active ? 0 : -1}
                           >
                             Accéder au photobooth
-                          </Link>
+                          </a>
                           <button
                             onClick={() => setDeleteConfirm(project)}
                             className="inline-flex items-center px-3 py-1.5 border border-amber-300 text-xs font-medium rounded text-amber-700 bg-white hover:bg-amber-50"

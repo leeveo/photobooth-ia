@@ -207,11 +207,14 @@ export default function PhotoboothProject({ params }) {
   const homeMessage = project.home_message || "Transformez votre photo avec l'IA !";
 
   return (
-    <div className="relative z-10 w-full h-full">
+    <div className="relative z-10 w-full h-full cursor-pointer" onClick={handleStartExperience}>
       {/* Fullscreen button - ONLY show if not already in fullscreen */}
       {settings?.enable_fullscreen && !isFullscreen && (
         <button 
-          onClick={enterFullscreen}
+          onClick={(e) => {
+            e.stopPropagation();
+            enterFullscreen();
+          }}
           className="fixed top-4 right-4 z-50 px-3 py-2 bg-black/50 text-white rounded-lg flex items-center hover:bg-black/70 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -285,7 +288,10 @@ export default function PhotoboothProject({ params }) {
           >
             <div 
               className="relative group cursor-pointer"
-              onClick={handleStartExperience}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStartExperience();
+              }}
             >
               <div 
                 className="absolute -inset-1 bg-gradient-to-r from-white/30 to-white/60 blur-md opacity-75 group-hover:opacity-100 transition duration-500"
@@ -300,7 +306,7 @@ export default function PhotoboothProject({ params }) {
                   color: primaryColor 
                 }}
               >
-                COMMENCER L&apos;EXPÉRIENCE
+                TOUCHER L&apos;ÉCRAN POUR COMMENCER
               </button>
             </div>
           </motion.div>

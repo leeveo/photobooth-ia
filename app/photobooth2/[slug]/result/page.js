@@ -40,6 +40,16 @@ export default function Result({ params }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   
+  // États pour la capture de données
+  const [showDataCapture, setShowDataCapture] = useState(false);
+  const [dataCapture, setDataCapture] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    rgpdAccepted: false
+  });
+  const [savingDataCapture, setSavingDataCapture] = useState(false);
+  
   useEffect(() => {
     // Load project data and settings from localStorage
     const cachedProject = localStorage.getItem('projectData');
