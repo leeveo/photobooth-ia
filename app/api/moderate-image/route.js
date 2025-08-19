@@ -1,6 +1,16 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { ensureTables, createHelperFunctions } from '../db/create-tables';
+
+// Import dynamique pour éviter les problèmes de bundle
+const getDbUtils = async () => {
+  try {
+    const dbUtils = await import('../db/create-tables.js');
+    return dbUtils;
+  } catch (error) {
+    console.error('Could not load db utils:', error);
+    return null;
+  }
+};
 
 export async function POST(request) {
   try {
@@ -13,30 +23,35 @@ export async function POST(request) {
     
     const supabase = createRouteHandlerClient({ cookies });
     
-    // First ensure the database has the necessary tables
-    await createHelperFunctions();
-    const tablesExist = await ensureTables();
+    // Try to get db utils
+    const dbUtils = await getDbUtils();
     
-    if (!tablesExist) {
-      console.log("Creating fallback record since tables may not exist");
+    if (dbUtils) {
+      // First ensure the database has the necessary tables
+      await dbUtils.createHelperFunctions();
+      const tablesExist = await dbUtils.ensureTables();
       
-      // Store the moderation information in a more generic table that likely exists
-      const { error: fallbackError } = await supabase
-        .from('system_logs')
-        .insert({
-          event_type: 'image_moderation',
-          data: { image_id: id, image_url: imageUrl, action: 'moderated' }
+      if (!tablesExist) {
+        console.log("Creating fallback record since tables may not exist");
+        
+        // Store the moderation information in a more generic table that likely exists
+        const { error: fallbackError } = await supabase
+          .from('system_logs')
+          .insert({
+            event_type: 'image_moderation',
+            data: { image_id: id, image_url: imageUrl, action: 'moderated' }
+          });
+        
+        if (fallbackError) {
+          console.error("Fallback logging failed:", fallbackError);
+        }
+        
+        // Return success anyway so the UI can update
+        return Response.json({ 
+          success: true, 
+          message: "Image marked as moderated (fallback mode)" 
         });
-      
-      if (fallbackError) {
-        console.error("Fallback logging failed:", fallbackError);
       }
-      
-      // Return success anyway so the UI can update
-      return Response.json({ 
-        success: true, 
-        message: "Image marked as moderated (fallback mode)" 
-      });
     }
     
     // Check if id is a UUID or a path
@@ -55,7 +70,9 @@ export async function POST(request) {
         // If table doesn't exist, try to create it
         if (updateError.code === '42P01') {
           console.log("Table doesn't exist, trying to create it...");
-          await ensureTables();
+          if (dbUtils) {
+            await dbUtils.ensureTables();
+          }
           
           // Try again after creating the table
           const { error: retryError } = await supabase
@@ -105,8 +122,8 @@ export async function POST(request) {
         console.error('Error finding or creating image record:', error);
         
         // If table doesn't exist, create fallback record
-        if (error.code === '42P01') {
-          await ensureTables();
+        if (error.code === '42P01' && dbUtils) {
+          await dbUtils.ensureTables();
         }
       }
     }
