@@ -1,10 +1,35 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
-import sharp from 'sharp';
+
+// Import Sharp dynamiquement pour éviter les problèmes de bundle size
+const getSharp = async () => {
+  if (typeof window !== 'undefined') {
+    throw new Error('Sharp cannot be used in browser environment');
+  }
+  
+  try {
+    const sharp = await import('sharp');
+    return sharp.default;
+  } catch (error) {
+    console.error('Sharp not available:', error);
+    return null;
+  }
+};
 
 export async function POST(request) {
   console.log('Image watermark API called');
   try {
+    // Vérifier que Sharp est disponible
+    const sharp = await getSharp();
+    if (!sharp) {
+      return NextResponse.json({ 
+        success: true, 
+        watermarked: false, 
+        url: (await request.json()).imageUrl,
+        message: 'Sharp not available, returning original image' 
+      });
+    }
+
     const { imageUrl, projectId } = await request.json();
     
     if (!imageUrl || !projectId) {

@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "app/api/**": {
+      "maxDuration": 30
+    }
+  },
   "routes": [
     {
       "src": "^/_next/static/(.*)",
@@ -34,7 +39,8 @@
   "build": {
     "env": {
       "NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION": "true",
-      "NEXT_PUBLIC_DISABLE_STRICT_MODE": "true"
+      "NEXT_PUBLIC_DISABLE_STRICT_MODE": "true",
+      "NODE_OPTIONS": "--max_old_space_size=4096"
     }
   }
 }

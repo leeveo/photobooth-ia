@@ -2,6 +2,7 @@
 public/uploads/**/*.mp4
 public/uploads/**/*.webm
 public/**/*.psd
+public/**/*.PSD
 public/comcon
 public/iqos
 public/gac
@@ -11,3 +12,55 @@ public/tautaufest/style
 public/haircut/style
 public/pln/style
 public/avatar/base
+
+# Exclure spécifiquement les gros fichiers PSD détectés
+**/photo.psd
+**/preview.psd
+**/Waouh*.psd
+**/style-*.psd
+
+# Ignorer les fichiers de développement
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignorer les fichiers temporaires
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignorer les fichiers de cache
+.next/cache/
+node_modules/.cache/
+
+# Ignorer les certificats de développement
+certificates/
+*.pem
+
+# Ignorer les scripts de développement
+scripts/
+commandes-installation.sh
+fix-dns.bat
+update-github.bat
+update-vercel.bat
+
+# Ignorer les fichiers de test
+test-*.js
+test-*.html
+diagnostic-*.js
+
+# Ignorer les migrations locales
+_migrations/
+db/
+
+# Ignorer les fichiers volumineux inutiles
+public/favicon_io.zip
+
+# Ignorer les fichiers README spécifiques
+SWIPE_SYSTEM_README.md
+prompt.txt
+
+# Ignorer les configurations de développement
+eslint.config.mjs
