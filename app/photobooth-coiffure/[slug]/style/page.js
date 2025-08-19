@@ -30,6 +30,8 @@ export default function PhotoboothStyles({ params }) {
   // Ajoute ces hooks d'état en haut du composant, avant tout usage :
   const [genderFilter, setGenderFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  // New: user-selected hair color for prompt enrichment
+  const [hairColor, setHairColor] = useState('');
 
   // Define fetchStyles first - without dependencies on fetchProjectData
   const fetchStyles = useCallback(async (projectId) => {
@@ -172,6 +174,9 @@ export default function PhotoboothStyles({ params }) {
     localStorage.setItem('styleGenderFix', style.gender || 'g');
     localStorage.setItem('styleGender', style.gender || 'g');
     
+    // Reset hair color selection when changing style
+    setHairColor('');
+    
     // Show confirmation modal
     setShowConfirmModal(true);
   };
@@ -182,6 +187,22 @@ export default function PhotoboothStyles({ params }) {
       return;
     }
     
+    // If a hair color is chosen, append it to the prompt before navigating
+    try {
+      if (hairColor) {
+        const basePrompt = (localStorage.getItem('stylePrompt') || selectedStyle.prompt || '').trim();
+        const needsSeparator = basePrompt && !/[,.]$/.test(basePrompt);
+        const separator = needsSeparator ? ', ' : ' ';
+        const finalPrompt = `${basePrompt}${separator}cheveux ${hairColor}`;
+        localStorage.setItem('stylePrompt', finalPrompt);
+        localStorage.setItem('selectedHairColor', hairColor);
+      } else {
+        // Clear previous selection if any
+        localStorage.removeItem('selectedHairColor');
+      }
+    } catch (_) {
+      // noop if localStorage fails
+    }
     // Navigate to camera page
     router.push(`/photobooth-coiffure/${slug}/cam`);
   };
@@ -224,6 +245,38 @@ export default function PhotoboothStyles({ params }) {
   // Dynamic styles based on project colors
   const primaryColor = project.primary_color || '#811A53';
   const secondaryColor = project.secondary_color || '#E5E40A';
+
+  // Hair color swatches for user selection (optional)
+  // Hair color swatches for user selection (optional)
+  const hairColorOptions = [
+    { label: 'Noir', value: 'black', bg: '/teinte/1_black_haire_tint.jpg' },
+    { label: 'Brun très foncé', value: 'very dark brown', bg: '/teinte/2_very_dark_brown_tint_hair.jpg' },
+    { label: 'Brun foncé', value: 'dark brown', bg: '/teinte/3_dark_brown_tint_hair.jpg' },
+    { label: 'Brun', value: 'brown', bg: '/teinte/4_brown_tint_hair.jpg' },
+    { label: 'Brun clair', value: 'light brown', bg: '/teinte/5_light_brown_tint_hair.jpg' },
+    { label: 'Châtain foncé', value: 'dark chestnut', bg: '/teinte/6_dark_chesnut_tint_hair.jpg' },
+    { label: 'Châtain', value: 'chestnut', bg: '/teinte/7_chesnut_tint_hair.jpg' },
+    { label: 'Châtain clair', value: 'light chestnut', bg: '/teinte/8_light_chesnut_tint_hair.jpg' },
+    { label: 'Blond foncé', value: 'dark blond', bg: '/teinte/9_dark_blond_tint_hair.jpg' },
+    { label: 'Blond', value: 'blond', bg: '/teinte/10_blond_tint_hair.jpg' },
+    { label: 'Blond clair', value: 'light blond', bg: '/teinte/11_light_blond_tint_hair.jpg' },
+    { label: 'Blond très clair', value: 'very light blond', bg: '/teinte/12_very_light_blond_tint_hair.jpg' },
+    { label: 'Blond platine', value: 'platinum blond', bg: '/teinte/13_platinum_blond_tint_hair.jpg' },
+    { label: 'Blond cendré', value: 'ash blond', bg: '/teinte/14_ash_blond_tint_hair.jpg' },
+    { label: 'Blond doré', value: 'golden blond', bg: '/teinte/15_golden_blond_tint_hair.jpg' },
+    { label: 'Blond fraise', value: 'strawberry blond', bg: '/teinte/16_strawberry_blond_tint_hair.jpg' },
+    { label: 'Cerise', value: 'strawberry', bg: '/teinte/17_strawberry_tint_hair.jpg' },
+    { label: 'Roux', value: 'redhead hair', bg: '/teinte/18_redhead_hair_tint_hair.jpg' },
+    { label: 'Cuivré', value: 'copper hair', bg: '/teinte/19_copper_hair_tint_hair.jpg' },
+    { label: 'Gris', value: 'grey', bg: '/teinte/20_grey_hair_tint_hair.jpg' },
+    { label: 'Poivre et sel', value: 'salt and pepper', bg: '/teinte/21_salt_and_pepper_tint_hair.jpg' },
+    { label: 'Blanc', value: 'white', bg: '/teinte/22_white_tint_hair.jpg' },
+    { label: 'Mèches blondes', value: 'blonde highlights', bg: '/teinte/23_blonde_highlights_tint_hair.jpg' },
+    { label: 'Mèches caramel', value: 'caramel highlights', bg: '/teinte/24_caramel_highlights_tint_hair.jpg' },
+    { label: 'Mèches cuivrées', value: 'copper highlights', bg: '/teinte/25_copper_highlights_tint_hair.jpg' },
+    { label: 'Mèches rousses', value: 'red highlights', bg: '/teinte/26_red_highlights_tint_hair.jpg' },
+    { label: 'Dip dye / tie and dye', value: 'dip dye / tie and dye', bg: '/teinte/27_dip_dye_tie_and_dye_tint_hair.jpg' }
+  ];
 
   // Récupérer toutes les valeurs possibles pour les filtres
   const genderOptions = [...new Set(styles.map(s => s.gender).filter(Boolean))];
@@ -311,7 +364,7 @@ export default function PhotoboothStyles({ params }) {
     infinite: filteredStyles.length > 4,
     speed: 500,
     slidesToShow: Math.min(filteredStyles.length, 4),
-    slidesToScroll: 1,
+    slidesToScroll: 4,
     swipeToSlide: true,
     nextArrow: <ArrowRight />,
     prevArrow: <ArrowLeft />,
@@ -436,42 +489,6 @@ export default function PhotoboothStyles({ params }) {
               />
             ))}
           </motion.div>
-
-          <motion.p 
-            className="mt-8 text-white text-opacity-90 text-center max-w-3xl text-xl relative z-10 backdrop-blur-sm bg-white/5 px-6 py-4 rounded-2xl border border-white/10"
-            style={{ 
-              boxShadow: `0 8px 32px ${primaryColor}20`
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            whileHover={{ 
-              scale: 1.02,
-              backgroundColor: "rgba(255,255,255,0.1)"
-            }}
-          >
-            Choisissez un style pour votre expérience photo.
-            
-            {/* Animated border glow */}
-            <motion.div
-              className="absolute inset-0 rounded-2xl opacity-50 -z-10"
-              style={{
-                background: `linear-gradient(45deg, ${primaryColor}30, ${secondaryColor}30, ${primaryColor}30)`
-              }}
-              animate={{
-                background: [
-                  `linear-gradient(45deg, ${primaryColor}30, ${secondaryColor}30, ${primaryColor}30)`,
-                  `linear-gradient(135deg, ${secondaryColor}40, ${primaryColor}40, ${secondaryColor}40)`,
-                  `linear-gradient(225deg, ${primaryColor}30, ${secondaryColor}30, ${primaryColor}30)`,
-                ]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.p>
         </div>
         
         {/* Filtres au-dessus de l'affichage des styles */}
@@ -893,7 +910,7 @@ export default function PhotoboothStyles({ params }) {
                 </div>
                 
                 {/* Content section - Right side on desktop, bottom on mobile */}
-                <div className="bg-gradient-to-br from-white to-gray-50 p-6 lg:p-8 lg:w-1/2 flex flex-col justify-center lg:rounded-r-3xl">
+                <div className="bg-gradient-to-br from-white to-gray-50 p-4 lg:p-6 lg:w-1/2 flex flex-col justify-center lg:rounded-r-3xl">
                   {/* Animated header - Only visible on desktop */}
                   <motion.div 
                     className="hidden lg:block absolute top-0 left-1/2 right-0 h-3 overflow-hidden"
@@ -916,13 +933,13 @@ export default function PhotoboothStyles({ params }) {
 
                   {/* Desktop title - Only visible on large screens */}
                   <motion.div
-                    className="hidden lg:block mb-6"
+                    className="hidden lg:block mb-2"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
                   >
                     <motion.h3 
-                      className="text-3xl font-bold mb-2"
+                      className="text-2xl font-bold mb-1"
                       style={{ color: primaryColor }}
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
@@ -943,28 +960,28 @@ export default function PhotoboothStyles({ params }) {
                   </motion.div>
 
                   <div
-                    className="mb-6 lg:mb-8 p-4 lg:p-6 rounded-2xl border shadow-inner"
+                    className="mb-2 lg:mb-3 p-2 lg:p-3 rounded-xl border shadow-inner"
                     style={{ 
                       backgroundColor: `${primaryColor}08`,
                       borderColor: `${primaryColor}20`
                     }}
                   >
                     <motion.div
-                      className="flex items-center gap-3 mb-3"
+                      className="flex items-center gap-2 mb-1"
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 1.3, duration: 0.5 }}
                     >
                       <div 
-                        className="w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center"
+                        className="w-5 h-5 lg:w-6 lg:h-6 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: primaryColor }}
                       >
-                        <span className="text-white text-sm lg:text-lg">✓</span>
+                        <span className="text-white text-xs lg:text-sm">✓</span>
                       </div>
-                      <h4 className="text-gray-800 font-bold text-base lg:text-lg">Style confirmé</h4>
+                      <h4 className="text-gray-800 font-bold text-sm lg:text-base">Style confirmé</h4>
                     </motion.div>
                     <motion.p 
-                      className="text-gray-700 leading-relaxed text-sm lg:text-base"
+                      className="text-gray-700 leading-relaxed text-xs lg:text-sm"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 1.5, duration: 0.5 }}
@@ -980,12 +997,147 @@ export default function PhotoboothStyles({ params }) {
                     </motion.p>
                   </div>
                   
+                  {/* New: Hair color selector with horizontal slider */}
+                  <div className="mb-2">
+                    <h4 className="text-gray-800 font-bold text-sm lg:text-base mb-2">Couleur des cheveux (optionnel)</h4>
+                    
+                    {/* Hair color slider with wider container and larger squares */}
+                    <div className="relative px-2 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 bg-gray-50/50 rounded-xl">
+                      <Slider 
+                        {...{
+                          dots: false,
+                          infinite: true,
+                          speed: 500,
+                          slidesToShow: 3,
+                          slidesToScroll: 1,
+                          swipeToSlide: true,
+                          arrows: true,
+                          prevArrow: (
+                            <button
+                              type="button"
+                              className="absolute left-[-50px] top-1/2 transform -translate-y-1/2 z-30 w-14 h-14 bg-white rounded-full shadow-2xl border-2 border-black flex items-center justify-center hover:bg-gray-50 hover:scale-110 transition-all duration-300"
+                              style={{ 
+                                color: '#000000',
+                                boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 0 3px rgba(0,0,0,0.2)`
+                              }}
+                            >
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          ),
+                          nextArrow: (
+                            <button
+                              type="button"
+                              className="absolute right-[-50px] top-1/2 transform -translate-y-1/2 z-30 w-14 h-14 bg-white rounded-full shadow-2xl border-2 border-black flex items-center justify-center hover:bg-gray-50 hover:scale-110 transition-all duration-300"
+                              style={{ 
+                                color: '#000000',
+                                boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 0 3px rgba(0,0,0,0.2)`
+                              }}
+                            >
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M9 6L15 12L9 18" stroke="#000000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          ),
+                          responsive: [
+                            {
+                              breakpoint: 768,
+                              settings: {
+                                slidesToShow: 4,
+                                arrows: true
+                              }
+                            },
+                            {
+                              breakpoint: 640,
+                              settings: {
+                                slidesToShow: 4,
+                                arrows: false
+                              }
+                            },
+                            {
+                              breakpoint: 480,
+                              settings: {
+                                slidesToShow: 3,
+                                arrows: false
+                              }
+                            }
+                          ]
+                        }}
+                      >
+                        {/* Option "Aucune couleur" en premier */}
+                        <div key="none" className="px-1 sm:px-2">
+                          <div className="flex flex-col items-center gap-1 py-2">
+                            <button
+                              type="button"
+                              onClick={() => setHairColor('')}
+                              className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border-2 transition-all duration-200 flex items-center justify-center ${
+                                hairColor === '' 
+                                  ? 'bg-white text-gray-800 border-gray-400 ring-1 ring-gray-400 ring-offset-1 sm:ring-2 sm:ring-offset-2 scale-100 sm:scale-105' 
+                                  : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 hover:scale-100 sm:hover:scale-105'
+                              }`}
+                              style={{ borderRadius: '8px' }}
+                              title="Aucune couleur"
+                            >
+                              <span className="text-lg sm:text-xl">×</span>
+                            </button>
+                            <span className="text-xs text-gray-600 text-center leading-tight max-w-[56px] sm:max-w-[64px] lg:max-w-[80px] truncate">
+                              Aucune
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Options de couleurs */}
+                        {hairColorOptions.map(opt => {
+                          const isSelected = hairColor === opt.value;
+                          const isImage = opt.bg.startsWith('/');
+                          const isGradient = opt.bg.startsWith('linear-gradient');
+                          
+                          return (
+                            <div key={opt.value} className="px-1 sm:px-2">
+                              <div className="flex flex-col items-center gap-1 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setHairColor(opt.value)}
+                                  className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 border-2 transition-all duration-200 overflow-hidden relative focus:outline-none ${
+                                    isSelected 
+                                      ? 'border-gray-400 ring-1 ring-gray-400 ring-offset-1 sm:ring-2 sm:ring-offset-2 scale-100 sm:scale-105' 
+                                      : 'border-gray-300 hover:border-gray-400 hover:scale-100 sm:hover:scale-105'
+                                  }`}
+                                  style={{ 
+                                    borderRadius: '8px',
+                                    backgroundColor: isImage ? 'transparent' : (isGradient ? 'transparent' : opt.bg),
+                                    backgroundImage: isImage ? `url(${opt.bg})` : (isGradient ? opt.bg : 'none'),
+                                    backgroundSize: isImage ? 'cover' : 'auto',
+                                    backgroundPosition: isImage ? 'center' : 'initial'
+                                  }}
+                                  title={opt.label}
+                                >
+                                  {isSelected && (
+                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                      <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </button>
+                                <span className="text-xs text-gray-600 text-center leading-tight max-w-[56px] sm:max-w-[64px] lg:max-w-[80px] truncate">
+                                  {opt.label}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </Slider>
+                    </div>
+                  </div>
+
                   {/* Action buttons */}
-                  <div className="flex flex-col items-center gap-4 lg:gap-5">
+                  <div className="flex flex-col items-center gap-1 lg:gap-2">
                     {/* START button */}
                     <motion.button
                       onClick={handleStartClick}
-                      className="relative w-full px-8 lg:px-10 py-4 lg:py-6 rounded-xl lg:rounded-2xl font-black text-lg lg:text-2xl flex items-center justify-center gap-2 lg:gap-3 shadow-2xl overflow-hidden group"
+                      className="relative w-full px-4 lg:px-6 py-2 lg:py-3 rounded-lg lg:rounded-xl font-black text-sm lg:text-lg flex items-center justify-center gap-1 lg:gap-2 shadow-lg overflow-hidden group"
                       style={{ 
                         backgroundColor: secondaryColor, 
                         color: primaryColor,
@@ -1079,7 +1231,7 @@ export default function PhotoboothStyles({ params }) {
                       
                       {/* ...existing SVG arrow... */}
                       <motion.svg 
-                        className="w-6 h-6 lg:w-8 lg:h-8 relative z-10" 
+                        className="w-4 h-4 lg:w-6 lg:h-6 relative z-10" 
                         xmlns="http://www.w3.org/2000/svg" 
                         viewBox="0 0 20 20" 
                         fill="currentColor"
@@ -1095,7 +1247,7 @@ export default function PhotoboothStyles({ params }) {
                     {/* Cancel button */}
                     <motion.button
                       onClick={closeModal}
-                      className="px-4 lg:px-6 py-2 lg:py-3 rounded-lg lg:rounded-xl text-gray-600 font-medium text-sm lg:text-base flex items-center gap-2 hover:bg-gray-100 transition-all duration-300 group"
+                      className="px-2 lg:px-3 py-1 rounded text-gray-600 font-medium text-xs flex items-center gap-1 hover:bg-gray-100 transition-all duration-300 group"
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ opacity: 0 }}
@@ -1103,7 +1255,7 @@ export default function PhotoboothStyles({ params }) {
                       transition={{ delay: 2.3, duration: 0.4 }}
                     >
                       <motion.svg 
-                        className="w-4 h-4 lg:w-5 lg:h-5 group-hover:rotate-[-5deg] transition-transform" 
+                        className="w-2 h-2 lg:w-3 lg:h-3 group-hover:rotate-[-5deg] transition-transform" 
                         xmlns="http://www.w3.org/2000/svg" 
                         viewBox="0 0 20 20" 
                         fill="currentColor"

@@ -1,20 +1,18 @@
 import { NextResponse } from 'next/server';
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { createClient } from '@supabase/supabase-js';
 
-// Configure S3 client
-const s3Client = new S3Client({
-  region: 'eu-west-3',
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-  },
-});
+// Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export async function GET(request) {
   const searchParams = new URL(request.url).searchParams;
   const projectId = searchParams.get('projectId');
   const countOnly = searchParams.get('countOnly') === 'true';
-  const includeModerated = searchParams.get('includeModerated') !== 'false'; // Default to true
+  const page = parseInt(searchParams.get('page')) || 1;
+  const limit = parseInt(searchParams.get('limit')) || 12;
   
   if (!projectId) {
     return Response.json({
@@ -24,49 +22,56 @@ export async function GET(request) {
   }
   
   try {
-    // List objects from S3
-    const prefix = `projects/${projectId}/`;
-    
-    const command = new ListObjectsV2Command({
-      Bucket: 'leeveostockage',
-      Prefix: prefix,
-    });
-    
-    const response = await s3Client.send(command);
-    
     // If we only need the count
     if (countOnly) {
+      const { count, error: countError } = await supabase
+        .from('project_images')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', projectId);
+
+      if (countError) throw countError;
+
       return Response.json({
         success: true,
-        count: response.Contents?.length || 0
+        count: count || 0
       });
     }
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
     
-    // Process the objects into the format expected by the UI
-    const images = response.Contents?.map(item => {
-      const key = item.Key;
-      const filename = key.split('/').pop();
-      const created = item.LastModified || new Date();
-      
-      return {
-        id: key, // Use the S3 key as the ID
-        image_url: `https://leeveostockage.s3.eu-west-3.amazonaws.com/${key}`,
-        project_id: projectId,
-        isModerated: false, // Default all to non-moderated for now
-        created_at: created.toISOString(),
-        metadata: {
-          fileName: filename,
-          size: item.Size
-        }
-      };
-    }) || [];
+    // Get images from database with pagination
+    const { data: images, error } = await supabase
+      .from('project_images')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+    
+    // Transform the data to match expected format
+    const transformedImages = (images || []).map(img => ({
+      id: img.id,
+      url: img.image_url, // Map image_url to url for the frontend
+      image_url: img.image_url, // Keep original field too
+      project_id: img.project_id,
+      created_at: img.created_at,
+      last_modified: img.created_at,
+      metadata: img.metadata || {}
+    }));
     
     return Response.json({
       success: true,
-      images
+      images: transformedImages,
+      pagination: {
+        page,
+        limit,
+        hasMore: transformedImages.length === limit
+      }
     });
   } catch (error) {
-    console.error('Error in S3 project images API:', error);
+    console.error('Error in project images API:', error);
     return Response.json({
       success: false,
       error: error.message,

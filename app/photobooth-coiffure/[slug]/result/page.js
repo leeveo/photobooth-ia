@@ -84,8 +84,26 @@ async function sendPhotoByEmail({ to, project, imageUrl }) {
 const makeAbsoluteUrl = (pathOrUrl) => {
   if (!pathOrUrl) return '';
   if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  
   // Remove any leading slash to avoid double slash
   const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  
+  // Use current domain for local development, production domain otherwise
+  if (typeof window !== 'undefined') {
+    const currentDomain = window.location.origin;
+    // Si on est en local (localhost ou 127.0.0.1), utiliser le domaine local
+    if (currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1')) {
+      return `${currentDomain}${path}`;
+    }
+  }
+  
+  // En cas de SSR ou autres cas, essayer de détecter l'environnement
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+    // Utiliser HTTPS localhost par défaut pour le développement
+    return `https://localhost:3000${path}`;
+  }
+  
+  // Fallback to production domain
   return `https://photobooth.waibooth.app${path}`;
 };
 
@@ -226,7 +244,14 @@ export default function Result({ params }) {
       if (s3Url) {
         // Générer le lien vers la page personnalisée
         const customPagePath = `/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`;
-        setLinkQR(makeAbsoluteUrl(customPagePath)); // Always absolute for QR
+        const absoluteUrl = makeAbsoluteUrl(customPagePath);
+        console.log(`[DEBUG] Generated URLs:`, {
+          customPagePath,
+          absoluteUrl,
+          currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'SSR',
+          environment: process.env.NODE_ENV
+        });
+        setLinkQR(absoluteUrl); // Always absolute for QR
         setGenerateQR(true);
       } else {
         throw new Error("Échec de l'upload de l'image");
@@ -287,7 +312,14 @@ export default function Result({ params }) {
           }
           
           const customPagePath = `/photobooth-coiffure/${slug}/image?img=${encodeURIComponent(s3Url)}`;
-          setLinkQR(makeAbsoluteUrl(customPagePath)); // Always absolute for QR
+          const absoluteUrl = makeAbsoluteUrl(customPagePath);
+          console.log(`[DEBUG] Generated URLs:`, {
+            customPagePath,
+            absoluteUrl,
+            currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'SSR',
+            environment: process.env.NODE_ENV
+          });
+          setLinkQR(absoluteUrl); // Always absolute for QR
           setGenerateQR(true);
 
           // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
@@ -640,26 +672,48 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
-              {/* Remplace le lien par un bouton design */}
-              <a
-                href={linkQR}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="mb-4 w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
-                style={{
-                  background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
-                  color: '#fff',
-                  boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
-                  letterSpacing: '0.05em',
-                  textDecoration: 'none',
-                }}
-              >
-                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                Télécharger
-              </a>
+              {/* Boutons d'action */}
+              <div className="w-full flex flex-col gap-3 mb-4">
+                {/* Bouton pour aller vers la page d'affichage */}
+                <a
+                  href={linkQR}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
+                  style={{
+                    background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                    color: '#fff',
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    letterSpacing: '0.05em',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Voir ma photo
+                </a>
+                
+                {/* Bouton de téléchargement */}
+                <a
+                  href={imageResultAI}
+                  download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg border-2"
+                  style={{
+                    background: '#fff',
+                    color: primaryColor,
+                    borderColor: primaryColor,
+                    boxShadow: `0 4px 16px 0 ${primaryColor}33`,
+                    letterSpacing: '0.05em',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                  Télécharger ma photo
+                </a>
+              </div>
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo
               </p>
@@ -736,18 +790,19 @@ export default function Result({ params }) {
                 }}
               />
             )}
-            {/* Bouton de téléchargement visible uniquement sur mobile */}
+            {/* Bouton pour aller vers la page d'affichage - visible uniquement sur mobile */}
             {linkQR && (
               <a
                 href={linkQR}
-                download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold shadow-lg text-base flex items-center gap-2 md:hidden"
                 style={{ maxWidth: '90vw' }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                Télécharger ma photo
+                Voir ma photo
               </a>
             )}
           </div>
@@ -757,6 +812,33 @@ export default function Result({ params }) {
           </div>
         )}
         
+        {/* Download Button - Always visible */}
+        {imageResultAI && (
+          <div className="mt-6 flex justify-center">
+            <motion.a
+              href={imageResultAI}
+              download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+              className="py-4 px-8 rounded-2xl font-bold text-xl text-center flex items-center justify-center gap-3 max-w-[340px] w-full shadow-lg border-2 transition-all"
+              style={{
+                background: '#fff',
+                color: primaryColor,
+                borderColor: primaryColor,
+                boxShadow: `0 4px 16px 0 ${primaryColor}33`,
+                letterSpacing: '0.05em',
+                textDecoration: 'none',
+              }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+              <span>TÉLÉCHARGER MA PHOTO</span>
+            </motion.a>
+          </div>
+        )}
+
         {/* Action Buttons - Modern redesign with narrower width */}
         <div className="mt-8 flex flex-col items-center space-y-4">
           {settings?.enable_qr_codes && imageResultAI && (

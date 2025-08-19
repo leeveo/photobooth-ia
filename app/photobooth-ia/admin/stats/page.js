@@ -26,12 +26,6 @@ export default function StatsPage() {
     archivedProjects: [],
     photosByMonth: []
   });
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [projectPhotos, setProjectPhotos] = useState([]);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const itemsPerPage = 12;
 
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -172,53 +166,6 @@ export default function StatsPage() {
       setLoading(false);
     }
   }, [supabase, currentAdminId]);
-
-  // Charger les photos d'un projet spécifique
-  const fetchProjectPhotos = useCallback(async (projectId, resetPage = true) => {
-    if (!projectId) return;
-    
-    const currentPage = resetPage ? 1 : page;
-    
-    setLoadingPhotos(true);
-    try {
-      const response = await fetch(`/api/s3-project-images?projectId=${projectId}&page=${currentPage}&limit=${itemsPerPage}`);
-      
-      if (!response.ok) throw new Error('API error');
-      
-      const data = await response.json();
-      
-      if (resetPage) {
-        setProjectPhotos(data.images || []);
-      } else {
-        setProjectPhotos(prev => [...prev, ...(data.images || [])]);
-      }
-      
-      setHasMore((data.images || []).length === itemsPerPage);
-      
-      if (resetPage) {
-        setPage(1);
-      } else {
-        setPage(currentPage + 1);
-      }
-    } catch (err) {
-      console.error('Erreur lors du chargement des photos:', err);
-    } finally {
-      setLoadingPhotos(false);
-    }
-  }, [page]);
-
-  // Quand un projet est sélectionné, charger ses photos
-  const handleProjectSelect = (project) => {
-    setSelectedProject(project);
-    fetchProjectPhotos(project.id, true);
-  };
-
-  // Charger plus de photos (pagination)
-  const loadMorePhotos = () => {
-    if (selectedProject && !loadingPhotos) {
-      fetchProjectPhotos(selectedProject.id, false);
-    }
-  };
 
   useEffect(() => {
     if (currentAdminId) {
@@ -425,123 +372,49 @@ export default function StatsPage() {
             </div>
           )}
 
-          {/* Nouvelle section: Galerie des photos par projet */}
+          {/* Photos par projet */}
           <div className="bg-white shadow rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Photos générées par projet</h2>
-            
-            {/* Sélecteur de projet */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 text-gray-700">Sélectionnez un projet:</label>
-              <div className="flex flex-wrap gap-2">
-                {projects.map(project => (
-                  <button
-                    key={project.id}
-                    onClick={() => handleProjectSelect(project)}
-                    className={`px-4 py-2 text-sm rounded-full transition ${
-                      selectedProject?.id === project.id
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {project.name} ({projectsWithPhotoCount[project.id] || 0})
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Galerie de photos */}
-            {selectedProject ? (
-              <>
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                    <RiImageLine className="text-indigo-500" />
-                    Photos du projet: {selectedProject.name}
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {projectPhotos.length} photo(s) affichée(s)
-                  </span>
-                </div>
-                
-                {loadingPhotos && projectPhotos.length === 0 ? (
-                  <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-                  </div>
-                ) : projectPhotos.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
-                    <RiImageLine className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">Aucune photo trouvée pour ce projet</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {projectPhotos.map((photo, idx) => (
-                        <div key={idx} className="relative group overflow-hidden rounded-lg shadow-sm border border-gray-200">
-                          <div className="aspect-square relative">
+            <h2 className="text-lg font-semibold mb-4">Photos par projet</h2>
+            <div className="flex-1">
+              {projects.length === 0 ? (
+                <div className="text-gray-500">Aucun projet actif trouvé.</div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {projects.map((p, idx) => (
+                    <li key={p.id} className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 h-8 w-8 relative">
+                          {p.logo_url ? (
                             <Image
-                              src={photo.url}
-                              alt={`Photo ${idx + 1}`}
+                              src={p.logo_url}
+                              alt={p.name}
                               fill
-                              className="object-cover transition-all group-hover:opacity-90"
-                              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                              className="object-cover rounded-md"
+                              sizes="32px"
                             />
-                          </div>
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <div className="flex gap-2">
-                              <a
-                                href={photo.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 bg-white rounded-full text-indigo-600 hover:text-indigo-800"
-                                title="Voir l'image"
-                              >
-                                <RiEyeLine className="w-5 h-5" />
-                              </a>
-                              <a
-                                href={photo.url}
-                                download
-                                className="p-2 bg-white rounded-full text-green-600 hover:text-green-800"
-                                title="Télécharger"
-                              >
-                                <RiDownloadLine className="w-5 h-5" />
-                              </a>
-                            </div>
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
-                            {new Date(photo.created_at || photo.last_modified || Date.now()).toLocaleDateString()}
-                          </div>
-                        </div>
-                      ))}
-
-                    </div>
-                    
-                    {/* Bouton "Charger plus" */}
-                    {hasMore && (
-                      <div className="mt-6 text-center">
-                        <button
-                          onClick={loadMorePhotos}
-                          disabled={loadingPhotos}
-                          className="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition font-medium disabled:opacity-50"
-                        >
-                          {loadingPhotos ? (
-                            <span className="flex items-center gap-2">
-                              <span className="inline-block h-4 w-4 border-t-2 border-r-2 border-indigo-600 rounded-full animate-spin"></span>
-                              Chargement...
-                            </span>
                           ) : (
-                            'Afficher plus de photos'
+                            <div className="h-8 w-8 bg-gray-200 rounded-md flex items-center justify-center">
+                              <RiFolder2Line className="h-4 w-4 text-gray-500" />
+                            </div>
                           )}
-                        </button>
+                        </div>
+                        <span className="font-medium">{p.name}</span>
+                        <span className="text-gray-400 text-xs">/{p.slug}</span>
                       </div>
-                    )}
-                  </>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
-                <RiFolder2Line className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">Sélectionnez un projet pour voir ses photos</p>
-              </div>
-            )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-700">{projectsWithPhotoCount[p.id] || 0} photos</span>
+                        <Link
+                          href={`/photobooth-ia/admin/projects/${p.id}`}
+                          className="text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1"
+                        >
+                          Voir <RiArrowRightSLine className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </>
       )}

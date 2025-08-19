@@ -77,6 +77,23 @@ export default function ProjectDetails({ params }) {
   const [emailTemplateError, setEmailTemplateError] = useState(null);
   const [showEmailEditor, setShowEmailEditor] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(true);
+  const [baseUrl, setBaseUrl] = useState('');
+
+  // Function to get the base URL dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      setBaseUrl(`${url.protocol}//${url.host}`);
+    } else {
+      setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+    }
+  }, []);
+
+  // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
+  const getPhotoboothUrl = (project) => {
+    if (!project?.slug || !project?.photobooth_type || !baseUrl) return '';
+    return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
+  };
 
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -790,25 +807,23 @@ export default function ProjectDetails({ params }) {
           
           <div className="flex space-x-3">
             <Link
-              href={
-                project.photobooth_type === 'boomerang'
-                  ? process.env.NODE_ENV === 'production' 
-                    ? `/photobooth/${project.slug}` 
-                    : `/photobooth-boomerang/${project.slug}`
-                  : project.photobooth_type === 'logo'
-                    ? `/photobooth-logo/${project.slug}` // Ajoutez votre nouveau type ici
-                    : `/photobooth/${project.slug}`
-              }
+              href={getPhotoboothUrl(project)}
               target="_blank"
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
             >
               <RiExternalLinkLine className="mr-2 h-4 w-4" />
               Voir le projet
-              {(project.photobooth_type === 'boomerang' && process.env.NODE_ENV === 'production') && (
-                <span className="ml-1 text-xs text-amber-600">(Mode Boomerang)</span>
+              {project.photobooth_type === 'boomerang' && (
+                <span className="ml-1 text-xs text-amber-600">(Boomerang)</span>
               )}
               {project.photobooth_type === 'logo' && (
                 <span className="ml-1 text-xs text-blue-600">(Logo Fusion)</span>
+              )}
+              {project.photobooth_type === 'premium' && (
+                <span className="ml-1 text-xs text-purple-600">(Premium)</span>
+              )}
+              {project.photobooth_type === 'photobooth2' && (
+                <span className="ml-1 text-xs text-green-600">(MiniMax)</span>
               )}
             </Link>
             <Link

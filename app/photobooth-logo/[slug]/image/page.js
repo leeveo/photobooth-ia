@@ -19,6 +19,10 @@ export default function ImagePage({ params }) {
     link_url: "https://www.leeve.fr",
     background_color: "#f5f5f5"
   });
+  
+  // État pour la galerie publique et le swipe
+  const [showPublicGallery, setShowPublicGallery] = useState(false);
+  const [enableSwipe, setEnableSwipe] = useState(false);
 
   useEffect(() => {
     async function fetchContent() {
@@ -30,6 +34,7 @@ export default function ImagePage({ params }) {
         .single();
 
       if (project?.id) {
+        // Récupérer le contenu personnalisé de la page
         const { data: pageContent } = await supabase
           .from('photobooth_image_page_content')
           .select('*')
@@ -45,6 +50,65 @@ export default function ImagePage({ params }) {
             link_url: pageContent.link_url || content.link_url,
             background_color: pageContent.background_color || content.background_color
           });
+        }
+        
+        // Vérifier si la galerie publique et le swipe sont activés
+        console.log('🔍 Fetching mosaic settings for project:', project.id);
+        
+        // Utiliser l'API avec service role pour contourner RLS
+        try {
+          const response = await fetch(`/api/get-mosaic-settings?projectId=${project.id}`);
+          const result = await response.json();
+          
+          console.log('🔍 API Response:', result);
+          
+          if (result.success && result.data) {
+            const mosaicSettings = result.data;
+            console.log('✅ Mosaic Settings trouvés via API:', mosaicSettings);
+            
+            if (mosaicSettings.is_public) {
+              console.log('✅ Setting showPublicGallery to true');
+              setShowPublicGallery(true);
+            } else {
+              console.log('❌ is_public is false:', mosaicSettings.is_public);
+            }
+            
+            if (mosaicSettings.enable_swipe) {
+              console.log('✅ Setting enableSwipe to true');
+              setEnableSwipe(true);
+            } else {
+              console.log('❌ enable_swipe is false:', mosaicSettings.enable_swipe);
+            }
+          } else {
+            console.log('❌ Aucun paramètre mosaic trouvé via API');
+          }
+        } catch (apiError) {
+          console.error('❌ Erreur API get-mosaic-settings:', apiError);
+          
+          // Fallback: essayer la méthode directe Supabase
+          const { data: mosaicSettings, error: mosaicError } = await supabase
+            .from('mosaic_settings')
+            .select('*')
+            .eq('project_id', project.id)
+            .maybeSingle();
+            
+          console.log('🔍 Fallback - Project ID:', project.id);
+          console.log('🔍 Fallback - Mosaic Settings (full):', mosaicSettings);
+          console.log('🔍 Fallback - Mosaic Error:', mosaicError);
+          
+          if (mosaicSettings?.is_public) {
+            console.log('✅ Fallback - Setting showPublicGallery to true');
+            setShowPublicGallery(true);
+          } else {
+            console.log('❌ Fallback - is_public is false or undefined:', mosaicSettings?.is_public);
+          }
+          
+          if (mosaicSettings?.enable_swipe) {
+            console.log('✅ Fallback - Setting enableSwipe to true');
+            setEnableSwipe(true);
+          } else {
+            console.log('❌ Fallback - enable_swipe is false or undefined:', mosaicSettings?.enable_swipe);
+          }
         }
       }
     }
@@ -88,14 +152,51 @@ export default function ImagePage({ params }) {
       <p className="text-base md:text-lg text-gray-600 mb-6 text-center">
         {content.text2}
       </p>
-      {/* Bouton call to action */}
-      <a
-        href={imgUrl}
-        download
-        className="inline-block px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg text-lg transition-all mb-8"
-      >
-        Télécharger ma photo
-      </a>
+      {/* Boutons d'action */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <a
+          href={imgUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg text-lg transition-all"
+        >
+          Voir en grand
+        </a>
+        <a
+          href={imgUrl}
+          download
+          className="inline-block px-8 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg text-lg transition-all"
+        >
+          Télécharger
+        </a>
+      </div>
+      
+      {/* DEBUG: Affichage temporaire pour vérifier l'état */}
+      <div className="mb-4 p-2 bg-yellow-100 border border-yellow-400 rounded text-xs text-center">
+        DEBUG: showPublicGallery = {showPublicGallery ? 'true' : 'false'} | enableSwipe = {enableSwipe ? 'true' : 'false'}
+      </div>
+      
+      {/* Liens vers les galeries publiques si activées */}
+      {(showPublicGallery || enableSwipe) && (
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center">
+          {showPublicGallery && (
+            <a
+              href={`/photobooth-logo/${slug}/gallery`}
+              className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg transition-all"
+            >
+              🖼️ Voir toutes les photos de l'événement
+            </a>
+          )}
+          {enableSwipe && (
+            <a
+              href={`/photobooth-logo/${slug}/swipe`}
+              className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg transition-all"
+            >
+              ❤️ Évaluer les photos (Swipe)
+            </a>
+          )}
+        </div>
+      )}
       {/* Boutons de partage */}
       <div className="flex flex-row gap-4 mb-8">
         {/* Facebook */}

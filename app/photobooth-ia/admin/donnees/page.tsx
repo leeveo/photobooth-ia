@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
-
+import Loader from '../../../components/ui/Loader';
 interface Project {
   id: string;
   name: string;
@@ -322,14 +321,39 @@ export default function DonneesPage() {
       // Grouper par jour
       const days: {[key: string]: number} = {};
       capturedData.forEach(d => {
-        const dt = new Date(d.created_at);
-        const label = dt.toLocaleDateString('fr-FR');
-        days[label] = (days[label] || 0) + 1;
+        try {
+          const dt = new Date(d.created_at);
+          if (!isNaN(dt.getTime())) { // Vérifier que la date est valide
+            const label = dt.toLocaleDateString('fr-FR');
+            if (label && label !== 'Invalid Date') { // Vérifier que le label est valide
+              days[label] = (days[label] || 0) + 1;
+            }
+          }
+        } catch (error) {
+          console.warn('Date invalide détectée:', d.created_at);
+        }
       });
       // Trie par date
       return Object.entries(days)
-        .map(([label, value]) => ({ label, value, date: new Date(label.split('/').reverse().join('-')) }))
-        .sort((a, b) => a.date.getTime() - b.date.getTime());
+        .filter(([label, value]) => label && label.includes('/')) // S'assurer que label contient des slashes
+        .map(([label, value]) => {
+          try {
+            const dateParts = label.split('/');
+            if (dateParts.length === 3) {
+              return { 
+                label, 
+                value, 
+                date: new Date(dateParts.reverse().join('-')) 
+              };
+            }
+            return null;
+          } catch (error) {
+            console.warn('Erreur lors du parsing de la date:', label);
+            return null;
+          }
+        })
+        .filter(item => item !== null) // Filtrer les éléments null
+        .sort((a, b) => a!.date.getTime() - b!.date.getTime());
     }
   })();
 
@@ -403,10 +427,10 @@ export default function DonneesPage() {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-start">
               <button
                 onClick={exportToCSV}
-                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm ${
+                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm h-10 ${
                   selectedProject && capturedData.length > 0
                     ? 'text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent'
                     : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
@@ -420,7 +444,7 @@ export default function DonneesPage() {
 
               <button
                 onClick={exportToCSVUnique}
-                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm ${
+                className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg shadow-sm h-10 ${
                   selectedProject && capturedData.length > 0
                     ? 'text-white bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-transparent'
                     : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
@@ -437,7 +461,7 @@ export default function DonneesPage() {
 
         {loading && selectedProject ? (
           <div className="p-12 flex flex-col items-center justify-center">
-            <LoadingSpinner text="Chargement des données en cours" size="medium" color="indigo" />
+            <Loader size="medium" message="Chargement des données en cours..." variant="premium" />
           </div>
         ) : null}
 

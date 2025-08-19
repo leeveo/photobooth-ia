@@ -98,6 +98,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
   });
   
   const [debugData, setDebugData] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const slug = params.slug;
   const pathname = usePathname();
@@ -125,6 +126,34 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       console.log(`🔍 ${msg}:`, data);
     }
   };
+
+  // Detect mobile/desktop screen orientation
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const isMobileScreen = window.innerWidth <= 768 || window.innerHeight > window.innerWidth;
+      setIsMobile(isMobileScreen);
+      logDebug('Screen detection', {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        isMobile: isMobileScreen,
+        orientation: window.innerHeight > window.innerWidth ? 'portrait' : 'landscape'
+      });
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Listen for orientation/resize changes
+    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkScreenSize, 100); // Delay for orientation change
+    });
+
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener('orientationchange', checkScreenSize);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadBackground() {
@@ -157,11 +186,25 @@ export default function PremiumPhotoboothLayout({ children, params }) {
         });
         
         // 3. Filter animated backgrounds with valid video URLs
-        const animatedBackgrounds = backgrounds.filter(bg => 
-          bg.show_animated === true && bg.video_url && bg.video_url.trim() !== ''
-        );
+        const animatedBackgrounds = backgrounds.filter(bg => {
+          if (isMobile) {
+            // For mobile: check vertical video first, fallback to horizontal
+            return bg.show_animated === true && 
+                   ((bg.video_url_vertical && bg.video_url_vertical.trim() !== '') ||
+                    (bg.video_url && bg.video_url.trim() !== ''));
+          } else {
+            // For desktop: check horizontal video first, fallback to vertical
+            return bg.show_animated === true && 
+                   ((bg.video_url && bg.video_url.trim() !== '') ||
+                    (bg.video_url_vertical && bg.video_url_vertical.trim() !== ''));
+          }
+        });
         
-        logDebug('Animated backgrounds', animatedBackgrounds);
+        logDebug('Animated backgrounds (orientation-aware)', { 
+          animatedBackgrounds, 
+          isMobile,
+          total: animatedBackgrounds.length 
+        });
         
         // 4. Select a background
         let selectedBackground;
@@ -175,16 +218,44 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           const randomIndex = Math.floor(Math.random() * animatedBackgrounds.length);
           selectedBackground = animatedBackgrounds[randomIndex];
           isAnimated = true;
-          videoUrl = selectedBackground.video_url;
-          imageUrl = selectedBackground.image_url || null;
-          logDebug('Selected animated background (main page)', selectedBackground);
+          
+          // Select video URL based on screen orientation
+          if (isMobile) {
+            // Mobile: prefer vertical video, fallback to horizontal
+            videoUrl = selectedBackground.video_url_vertical || selectedBackground.video_url;
+            imageUrl = selectedBackground.image_url_vertical || selectedBackground.image_url || null;
+          } else {
+            // Desktop: prefer horizontal video, fallback to vertical
+            videoUrl = selectedBackground.video_url || selectedBackground.video_url_vertical;
+            imageUrl = selectedBackground.image_url || selectedBackground.image_url_vertical || null;
+          }
+          
+          logDebug('Selected animated background (orientation-aware)', { 
+            selectedBackground, 
+            isMobile,
+            videoUrl,
+            imageUrl 
+          });
         } 
         // Otherwise use a regular background (for sub-pages or when no video available)
         else if (backgrounds.length > 0) {
           const randomIndex = Math.floor(Math.random() * backgrounds.length);
           selectedBackground = backgrounds[randomIndex];
-          imageUrl = selectedBackground.image_url;
-          logDebug('Selected regular background (sub-page or no video)', selectedBackground);
+          
+          // Select image URL based on screen orientation
+          if (isMobile) {
+            // Mobile: prefer vertical image, fallback to horizontal
+            imageUrl = selectedBackground.image_url_vertical || selectedBackground.image_url;
+          } else {
+            // Desktop: prefer horizontal image, fallback to vertical
+            imageUrl = selectedBackground.image_url || selectedBackground.image_url_vertical;
+          }
+          
+          logDebug('Selected regular background (orientation-aware)', { 
+            selectedBackground, 
+            isMobile,
+            imageUrl 
+          });
         } 
         // Fallback to project background
         else if (project.background_image) {
@@ -218,10 +289,12 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           error: null
         });
         
-        logDebug('Final background settings', {
+        logDebug('Final background settings (orientation-aware)', {
           imageUrl,
           videoUrl,
-          isAnimated
+          isAnimated,
+          isMobile,
+          orientation: isMobile ? 'portrait/mobile' : 'landscape/desktop'
         });
         
       } catch (error) {
@@ -235,7 +308,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     }
     
     loadBackground();
-  }, [slug, supabase, pathname, isMainPage]);
+  }, [slug, supabase, pathname, isMainPage, isMobile]);
 
   // Handle video loading errors
   useEffect(() => {

@@ -8,199 +8,400 @@
       "photobooth-coiffure",
       "coiffure"
     ],
-    "styles": [
-      {
-        "name": "Long straight",
-        "gender": "femme",
-        "style_key": "womens_long_straight",
-        "description": "Cheveux longs et lisses",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_long_straight.jpg",
-        "prompt": "Make the hair in a long and straight hair style.",
-        "variations": 1,
-        "type": "cheveux longs"
-      },
-      {
-        "name": "Short bob",
-        "gender": "femme",
-        "style_key": "womens_short_bob",
-        "description": "Carré à hauteur du menton",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_short_bob.jpg",
-        "prompt": "Make the hair in a chin-length bob cut style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Wavy layers",
-        "gender": "femme",
-        "style_key": "womens_wavy_layers",
-        "description": "Cheveux ondulés en dégradé",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_wavy_layers.jpg",
-        "prompt": "Make the hair in a layered wavy hair style.",
-        "variations": 1,
-        "type": "cheveux longs"
-      },
-      {
-        "name": "Curly hair",
-        "gender": "femme",
-        "style_key": "womens_curly_hair",
-        "description": "Boucles naturelles bien définies",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_curly_hair.jpg",
-        "prompt": "Make the hair in a defined natural curls style.",
-        "variations": 1,
-        "type": "cheveux longs"
-      },
-      {
-        "name": "Pixie cut",
-        "gender": "femme",
-        "style_key": "womens_pixie_cut",
-        "description": "Coupe pixie courte",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_pixie_cut.jpg",
-        "prompt": "Make the hair in a short pixie haircut style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Side shave",
-        "gender": "femme",
-        "style_key": "womens_side_shave",
-        "description": "Cheveux longs avec un côté rasé",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_side_shave.jpg",
-        "prompt": "Make the hair in a long hair with one side shaved style.",
-        "variations": 1,
-        "type": "cheveux longs"
-      },
-      {
-        "name": "French braid",
-        "gender": "femme",
-        "style_key": "womens_french_braid",
-        "description": "Tresse française unique",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_french_braid.jpg",
-        "prompt": "Make the hair in a single french braid style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Double buns",
-        "gender": "femme",
-        "style_key": "womens_double_buns",
-        "description": "Cheveux en deux chignons symétriques",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_double_buns.jpg",
-        "prompt": "Make the hair in a hair in two symmetrical buns style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Messy bun",
-        "gender": "femme",
-        "style_key": "womens_messy_bun",
-        "description": "Chignon flou décontracté",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_messy_bun.jpg",
-        "prompt": "Make the hair in a casual messy bun style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Sleek ponytail",
-        "gender": "femme",
-        "style_key": "womens_sleek_ponytail",
-        "description": "Queue de cheval haute et serrée",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_sleek_ponytail.jpg",
-        "prompt": "Make the hair in a tight high ponytail style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Low bun",
-        "gender": "femme",
-        "style_key": "womens_low_bun",
-        "description": "Chignon bas élégant",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_low_bun.jpg",
-        "prompt": "Make the hair in a elegant low bun style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Half-up style",
-        "gender": "femme",
-        "style_key": "womens_half_up",
-        "description": "Coiffure semi-attachée",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_half_up.jpg",
-        "prompt": "Make the hair in a half-up, half-down style style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Braided crown",
-        "gender": "femme",
-        "style_key": "womens_braided_crown",
-        "description": "Couronne tressée autour de la tête",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_braided_crown.jpg",
-        "prompt": "Make the hair in a braided crown around the head style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Vintage waves",
-        "gender": "femme",
-        "style_key": "womens_vintage_waves",
-        "description": "Ondulations rétro style Hollywood",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_vintage_waves.jpg",
-        "prompt": "Make the hair in a retro hollywood waves style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Top knot",
-        "gender": "femme",
-        "style_key": "womens_top_knot",
-        "description": "Chignon haut noué",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_top_knot.jpg",
-        "prompt": "Make the hair in a high top knot bun style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Shag cut",
-        "gender": "femme",
-        "style_key": "womens_shag_cut",
-        "description": "Coupe shag texturée",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_shag_cut.jpg",
-        "prompt": "Make the hair in a textured shag haircut style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Straight with bangs",
-        "gender": "femme",
-        "style_key": "womens_straight_bangs",
-        "description": "Cheveux lisses avec une frange pleine",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_straight_bangs.jpg",
-        "prompt": "Make the hair in a straight hair with full bangs style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "High pigtails",
-        "gender": "femme",
-        "style_key": "womens_high_pigtails",
-        "description": "Couettes hautes et ludiques",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_high_pigtails.jpg",
-        "prompt": "Make the hair in a playful high pigtails style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
-      {
-        "name": "Layered lob",
-        "gender": "femme",
-        "style_key": "womens_layered_lob",
-        "description": "Long carré dégradé",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/womens_layered_lob.jpg",
-        "prompt": "Make the hair in a long bob with layers style.",
-        "variations": 1,
-        "type": "cheveux longs"
-      }
-    ]
-  },
+  "styles": [
+    {
+      "name": "Short Hair",
+      "gender": "femme",
+      "style_key": "short_hair_style",
+      "description": "Cheveux courts",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_hair_style.jpg",
+      "prompt": "Make the hair in a Short hair style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "Medium-Length Hair",
+      "gender": "femme",
+      "style_key": "medium_length_hair_style",
+      "description": "Cheveux mi-longs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/medium_length_hair_style.jpg",
+      "prompt": "Make the hair in a Medium-length hair style",
+      "variations": 1,
+      "type": "cheveux mi-longs"
+    },
+    {
+      "name": "Long Hair",
+      "gender": "femme",
+      "style_key": "long_hair_style",
+      "description": "Cheveux longs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_hair_style.jpg",
+      "prompt": "Make the hair in a Long hair style",
+      "variations": 1,
+      "type": "cheveux longs"
+    },
+    {
+      "name": "Very Long Hair",
+      "gender": "femme",
+      "style_key": "very_long_hair_style",
+      "description": "Cheveux très longs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/very_long_hair_style.jpg",
+      "prompt": "Make the hair in a Very long hair style",
+      "variations": 1,
+      "type": "cheveux très longs"
+    },
+    {
+      "name": "Bob Cut",
+      "gender": "femme",
+      "style_key": "bob_cut_hair_style",
+      "description": "Carré classique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bob_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Bob cut style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "A-Line / Inverted Bob",
+      "gender": "femme",
+      "style_key": "a_line_bob_hair_style",
+      "description": "Carré plongeant (inversé)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/a_line_bob_hair_style.jpg",
+      "prompt": "Make the hair in a A-line bob / inverted bob style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "Buzz Cut",
+      "gender": "femme",
+      "style_key": "buzz_cut_hair_style",
+      "description": "Coupe très courte (tondeuse)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Buzz cut style",
+      "variations": 1,
+      "type": "cheveux très courts"
+    },
+    {
+      "name": "Layered Cut",
+      "gender": "femme",
+      "style_key": "layered_cut_hair_style",
+      "description": "Coupe dégradée",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Layered cut style",
+      "variations": 1,
+      "type": "dégradé"
+    },
+    {
+      "name": "Bowl Cut",
+      "gender": "femme",
+      "style_key": "bowl_cut_hair_style",
+      "description": "Coupe bol",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bowl_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Bowl cut style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "Pixie Cut",
+      "gender": "femme",
+      "style_key": "pixie_cut_hair_style",
+      "description": "Coupe pixie courte",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixie_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Pixie cut style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "Boy Cut",
+      "gender": "femme",
+      "style_key": "boy_cut_hair_style",
+      "description": "Coupe courte façon boyish",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boy_cut_hair_style.jpg",
+      "prompt": "Make the hair in a Boyish cut / boy cut style",
+      "variations": 1,
+      "type": "cheveux courts"
+    },
+    {
+      "name": "Lob (Long Bob)",
+      "gender": "femme",
+      "style_key": "lob_hair_style",
+      "description": "Carré long (lob)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lob_hair_style.jpg",
+      "prompt": "Make the hair in a Lob (long bob) style",
+      "variations": 1,
+      "type": "cheveux mi-longs"
+    },
+    {
+      "name": "Shag Haircut",
+      "gender": "femme",
+      "style_key": "shag_haircut_style",
+      "description": "Shag texturé avec mouvement",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/shag_haircut_style.jpg",
+      "prompt": "Make the hair in a Shag haircut style",
+      "variations": 1,
+      "type": "dégradé"
+    },
+    {
+      "name": "Straight Bangs",
+      "gender": "femme",
+      "style_key": "straight_bangs_hair_style",
+      "description": "Frange droite pleine",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_bangs_hair_style.jpg",
+      "prompt": "Make the hair in a Straight bangs style",
+      "variations": 1,
+      "type": "frange"
+    },
+    {
+      "name": "Curtain Bangs",
+      "gender": "femme",
+      "style_key": "curtain_bangs_hair_style",
+      "description": "Frange rideau",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curtain_bangs_hair_style.jpg",
+      "prompt": "Make the hair in a Curtain bangs style",
+      "variations": 1,
+      "type": "frange"
+    },
+    {
+      "name": "Straight",
+      "gender": "femme",
+      "style_key": "straight_hair_style",
+      "description": "Cheveux lisses",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_hair_style.jpg",
+      "prompt": "Make the hair in a Straight style",
+      "variations": 1,
+      "type": "texture"
+    },
+    {
+      "name": "Wavy",
+      "gender": "femme",
+      "style_key": "wavy_hair_style",
+      "description": "Cheveux ondulés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_style.jpg",
+      "prompt": "Make the hair in a Wavy style",
+      "variations": 1,
+      "type": "texture"
+    },
+    {
+      "name": "Curly",
+      "gender": "femme",
+      "style_key": "curly_hair_style",
+      "description": "Cheveux bouclés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curly_hair_style.jpg",
+      "prompt": "Make the hair in a Curly style",
+      "variations": 1,
+      "type": "texture"
+    },
+    {
+      "name": "Frizzy",
+      "gender": "femme",
+      "style_key": "frizzy_hair_style",
+      "description": "Cheveux frisottés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_style.jpg",
+      "prompt": "Make the hair in a Frizzy style",
+      "variations": 1,
+      "type": "texture"
+    },
+    {
+      "name": "Kinky / Coily",
+      "gender": "femme",
+      "style_key": "kinky_coily_hair_style",
+      "description": "Cheveux crépus / très bouclés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/kinky_coily_hair_style.jpg",
+      "prompt": "Make the hair in a Kinky / coily style",
+      "variations": 1,
+      "type": "texture"
+    },
+    {
+      "name": "Slicked Back",
+      "gender": "femme",
+      "style_key": "slicked_back_hair_style",
+      "description": "Cheveux plaqués en arrière",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/slicked_back_hair_style.jpg",
+      "prompt": "Make the hair in a Slicked back style",
+      "variations": 1,
+      "type": "coiffage"
+    },
+    {
+      "name": "Middle Part",
+      "gender": "femme",
+      "style_key": "middle_part_hair_style",
+      "description": "Raie au milieu",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/middle_part_hair_style.jpg",
+      "prompt": "Make the hair in a Middle part style",
+      "variations": 1,
+      "type": "raie"
+    },
+    {
+      "name": "Side Part",
+      "gender": "femme",
+      "style_key": "side_part_hair_style",
+      "description": "Raie sur le côté",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/side_part_hair_style.jpg",
+      "prompt": "Make the hair in a Side part style",
+      "variations": 1,
+      "type": "raie"
+    },
+    {
+      "name": "Voluminous Hair",
+      "gender": "femme",
+      "style_key": "voluminous_hair_style",
+      "description": "Chevelure volumineuse",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/voluminous_hair_style.jpg",
+      "prompt": "Make the hair in a Voluminous hair style",
+      "variations": 1,
+      "type": "volume"
+    },
+    {
+      "name": "Bun",
+      "gender": "femme",
+      "style_key": "bun_hair_style",
+      "description": "Chignon",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bun_hair_style.jpg",
+      "prompt": "Make the hair in a Bun style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Low Bun",
+      "gender": "femme",
+      "style_key": "low_bun_hair_style",
+      "description": "Chignon bas",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/low_bun_hair_style.jpg",
+      "prompt": "Make the hair in a Low bun style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Top Bun",
+      "gender": "femme",
+      "style_key": "top_bun_hair_style",
+      "description": "Chignon haut",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/top_bun_hair_style.jpg",
+      "prompt": "Make the hair in a Top bun style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Ponytail",
+      "gender": "femme",
+      "style_key": "ponytail_hair_style",
+      "description": "Queue de cheval",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ponytail_hair_style.jpg",
+      "prompt": "Make the hair in a Ponytail style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Braid",
+      "gender": "femme",
+      "style_key": "braid_hair_style",
+      "description": "Tresse simple",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/braid_hair_style.jpg",
+      "prompt": "Make the hair in a Braid style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Fishtail Braid",
+      "gender": "femme",
+      "style_key": "fishtail_braid_hair_style",
+      "description": "Tresse épi (fishtail)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fishtail_braid_hair_style.jpg",
+      "prompt": "Make the hair in a Fishtail braid style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Space Buns",
+      "gender": "femme",
+      "style_key": "space_buns_hair_style",
+      "description": "Deux chignons (space buns)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/space_buns_hair_style.jpg",
+      "prompt": "Make the hair in a Space buns style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Messy Bun",
+      "gender": "femme",
+      "style_key": "messy_bun_hair_style",
+      "description": "Chignon flou, décoiffé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/messy_bun_hair_style.jpg",
+      "prompt": "Make the hair in a Messy bun style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Mullet",
+      "gender": "femme",
+      "style_key": "mullet_hair_style",
+      "description": "Mulet (court devant, long derrière)",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_hair_style.jpg",
+      "prompt": "Make the hair in a Mullet style",
+      "variations": 1,
+      "type": "cheveux moyens"
+    },
+    {
+      "name": "Tousled / Messy Look",
+      "gender": "femme",
+      "style_key": "tousled_messy_hair_style",
+      "description": "Effet coiffé-décoiffé",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tousled_messy_hair_style.jpg",
+      "prompt": "Make the hair in a Tousled / messy look style",
+      "variations": 1,
+      "type": "coiffage"
+    },
+    {
+      "name": "High Ponytail",
+      "gender": "femme",
+      "style_key": "high_ponytail_hair_style",
+      "description": "Queue de cheval haute",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_ponytail_hair_style.jpg",
+      "prompt": "Make the hair in a High ponytail style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Half Ponytail",
+      "gender": "femme",
+      "style_key": "half_ponytail_hair_style",
+      "description": "Demi-queue de cheval",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/half_ponytail_hair_style.jpg",
+      "prompt": "Make the hair in a Half ponytail style",
+      "variations": 1,
+      "type": "semi-attaché"
+    },
+    {
+      "name": "Twists",
+      "gender": "femme",
+      "style_key": "twists_hair_style",
+      "description": "Twists définis",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/twists_hair_style.jpg",
+      "prompt": "Make the hair in a Twists style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Tied Hair",
+      "gender": "femme",
+      "style_key": "tied_hair_style",
+      "description": "Cheveux attachés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tied_hair_style.jpg",
+      "prompt": "Make the hair in a Tied hair style",
+      "variations": 1,
+      "type": "attaché"
+    },
+    {
+      "name": "Loose Hair",
+      "gender": "femme",
+      "style_key": "loose_hair_style",
+      "description": "Cheveux lâchés",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/loose_hair_style.jpg",
+      "prompt": "Make the hair in a Loose hair style",
+      "variations": 1,
+      "type": "cheveux libres"
+    }
+  ]
+},
+
   {
     "id": "mens_hairstyles",
     "name": "Coupes de Cheveux Masculines",

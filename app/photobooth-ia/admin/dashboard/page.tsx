@@ -46,6 +46,23 @@ export default function Dashboard() {
   
   // Ajoute un nouvel état pour le nombre de photos prises sur la période de quota
   const [photosThisPeriod, setPhotosThisPeriod] = useState(0);
+  const [baseUrl, setBaseUrl] = useState('');
+
+  // Function to get the base URL dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      setBaseUrl(`${url.protocol}//${url.host}`);
+    } else {
+      setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+    }
+  }, []);
+
+  // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
+  const getPhotoboothUrl = (project: any) => {
+    if (!project?.slug || !project?.photobooth_type || !baseUrl) return '';
+    return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
+  };
 
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
@@ -538,7 +555,7 @@ export default function Dashboard() {
                       
                       {/* MODIFICATION: Utilise la même URL que dans /projects/[id]/page.js */}
                       <Link
-                        href={`/photobooth/${project.slug}`}
+                        href={getPhotoboothUrl(project)}
                         target="_blank"
                         className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                       >

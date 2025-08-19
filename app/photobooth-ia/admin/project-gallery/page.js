@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Loader from '../../../../components/ui/Loader';
+import Loader from '../../../components/ui/Loader';
 import { 
   RiFilterLine, 
   RiDownloadLine, 
@@ -21,18 +21,25 @@ export default function ProjectGallery() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectImages, setProjectImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingImages, setLoadingImages] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
   const [moderationConfirm, setModerationConfirm] = useState(null);
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
   const [currentAdminId, setCurrentAdminId] = useState(null);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const IMAGES_PER_PAGE = 20;
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
     title: '',
     description: '',
     is_public: false,
+    enable_swipe: false,
     show_qr_code: false,
     qr_title: 'Scannez-moi',
     qr_description: 'Retrouvez toutes les photos ici',
@@ -47,74 +54,56 @@ export default function ProjectGallery() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   
-  // Mettre à jour loadMosaicSettings pour inclure la recherche dans temp_storage
+  // Mettre à jour loadMosaicSettings pour inclure la recherche dans temp_storage (VERSION OPTIMISÉE)
   const loadMosaicSettings = useCallback(async (projectId) => {
     if (!projectId) return;
     
     try {
-      // D'abord essayer de charger depuis mosaic_settings
+      // Essayer d'abord avec l'API service role (plus rapide)
+      try {
+        const response = await fetch(`/api/get-mosaic-settings?projectId=${projectId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const data = result.data;
+          
+          setMosaicSettings({
+            bg_color: data.bg_color || '#000000',
+            bg_image_url: data.bg_image_url || '',
+            title: data.title || '',
+            description: data.description || '',
+            is_public: data.is_public || false,
+            enable_swipe: data.enable_swipe || false,
+            show_qr_code: data.show_qr_code || false,
+            qr_title: data.qr_title || 'Scannez-moi',
+            qr_description: data.qr_description || 'Retrouvez toutes les photos ici',
+            qr_position: data.qr_position || 'center'
+          });
+          
+          if (data.bg_image_url) {
+            setBgImagePreview(data.bg_image_url);
+          }
+          return;
+        }
+      } catch (apiError) {
+        // API fallback silencieux
+      }
+      
+      // Fallback: essayer de charger depuis mosaic_settings directement
       const { data, error } = await supabase
         .from('mosaic_settings')
         .select('*')
         .eq('project_id', projectId)
         .maybeSingle();
       
-      if (error) {
-        console.error('Erreur chargement des paramètres:', error);
-        // Essayer avec temp_storage si erreur
-        const { data: tempData, error: tempError } = await supabase
-          .from('temp_storage')
-          .select('value')
-          .eq('key', `mosaic_settings_${projectId}`)
-          .maybeSingle();
-          
-        if (tempError) {
-          console.error('Erreur chargement des paramètres temporaires:', tempError);
-          // Valeurs par défaut
-          resetMosaicSettings();
-          return;
-        }
-        
-        if (tempData && tempData.value) {
-          try {
-            const parsedSettings = JSON.parse(tempData.value);
-            console.log('Paramètres chargés depuis temp_storage:', parsedSettings);
-            
-            setMosaicSettings({
-              bg_color: parsedSettings.bg_color || '#000000',
-              bg_image_url: parsedSettings.bg_image_url || '',
-              title: parsedSettings.title || '',
-              description: parsedSettings.description || '',
-              is_public: parsedSettings.is_public || false,
-              show_qr_code: parsedSettings.show_qr_code || false,
-              qr_title: parsedSettings.qr_title || 'Scannez-moi',
-              qr_description: parsedSettings.qr_description || 'Retrouvez toutes les photos ici',
-              qr_position: parsedSettings.qr_position || 'center'
-            });
-            
-            if (parsedSettings.bg_image_url) {
-              setBgImagePreview(parsedSettings.bg_image_url);
-            }
-          } catch (parseErr) {
-            console.error('Erreur parsing JSON:', parseErr);
-            resetMosaicSettings();
-          }
-          return;
-        }
-        
-        // Aucune donnée trouvée, utiliser valeurs par défaut
-        resetMosaicSettings();
-        return;
-      }
-      
       if (data) {
-        console.log('Paramètres chargés depuis mosaic_settings:', data);
         setMosaicSettings({
           bg_color: data.bg_color || '#000000',
           bg_image_url: data.bg_image_url || '',
           title: data.title || '',
           description: data.description || '',
           is_public: data.is_public || false,
+          enable_swipe: data.enable_swipe || false,
           show_qr_code: data.show_qr_code || false,
           qr_title: data.qr_title || 'Scannez-moi',
           qr_description: data.qr_description || 'Retrouvez toutes les photos ici',
@@ -124,12 +113,42 @@ export default function ProjectGallery() {
         if (data.bg_image_url) {
           setBgImagePreview(data.bg_image_url);
         }
-      } else {
-        // Aucune donnée trouvée, utiliser valeurs par défaut
-        resetMosaicSettings();
+        return;
       }
+      
+      if (error) {
+        // Essayer avec temp_storage si erreur
+        const { data: tempData } = await supabase
+          .from('temp_storage')
+          .select('value')
+          .eq('key', `mosaic_settings_${projectId}`)
+          .maybeSingle();
+          
+        if (tempData?.value) {
+          try {
+            const parsedSettings = JSON.parse(tempData.value);
+            setMosaicSettings({
+              bg_color: parsedSettings.bg_color || '#000000',
+              bg_image_url: parsedSettings.bg_image_url || '',
+              title: parsedSettings.title || '',
+              description: parsedSettings.description || '',
+              is_public: parsedSettings.is_public || false,
+              enable_swipe: parsedSettings.enable_swipe || false,
+              show_qr_code: parsedSettings.show_qr_code || false,
+              qr_title: parsedSettings.qr_title || 'Scannez-moi',
+              qr_description: parsedSettings.qr_description || 'Retrouvez toutes les photos ici',
+              qr_position: parsedSettings.qr_position || 'center'
+            });
+            return;
+          } catch (parseError) {
+            // Parsing error, use defaults
+          }
+        }
+      }
+      
+      // Valeurs par défaut
+      resetMosaicSettings();
     } catch (err) {
-      console.error('Erreur globale chargement paramètres:', err);
       resetMosaicSettings();
     }
   }, [supabase]);
@@ -142,6 +161,7 @@ export default function ProjectGallery() {
       title: '',
       description: '',
       is_public: false,
+      enable_swipe: false,
       show_qr_code: false,
       qr_title: 'Scannez-moi',
       qr_description: 'Retrouvez toutes les photos ici',
@@ -196,7 +216,7 @@ export default function ProjectGallery() {
     getAdminSession();
   }, [router]);
   
-  // Charger la liste des projets créés par l'admin connecté
+  // Charger la liste des projets créés par l'admin connecté (VERSION ULTRA-OPTIMISÉE)
   useEffect(() => {
     async function loadProjects() {
       setLoading(true);
@@ -213,30 +233,33 @@ export default function ProjectGallery() {
           setLoading(false);
           return;
         }
-        console.log("Projets récupérés:", projectsData);
-
-        // Affiche les project_id récupérés
-        const projectIds = (projectsData || []).map(p => p.id);
-        console.log("IDs des projets récupérés:", projectIds);
 
         setProjects(projectsData || []);
 
-        // 2. Pour chaque projet, compter les images dans sessions (sans filtre is_success)
-        const photoCounts = {};
-        for (const project of projectsData || []) {
-          const { data: sessionRows, count, error: countError } = await supabase
-            .from('sessions')
-            .select('id, project_id, result_s3_url, result_image_url', { count: 'exact', head: false })
-            .eq('project_id', project.id);
-
-          if (countError) {
-            console.error(`Erreur lors du comptage pour le projet ${project.id}:`, countError);
+        // 2. ULTRA-OPTIMISATION: Utiliser notre nouvelle API pour compter toutes les images
+        if (projectsData && projectsData.length > 0) {
+          const projectIds = projectsData.map(p => p.id);
+          
+          try {
+            const response = await fetch(`/api/get-projects-images-count?projectIds=${projectIds.join(',')}`);
+            const result = await response.json();
+            
+            if (result.success) {
+              setProjectsWithPhotoCount(result.data);
+            } else {
+              // Fallback en cas d'erreur API
+              const photoCounts = {};
+              projectIds.forEach(id => photoCounts[id] = 0);
+              setProjectsWithPhotoCount(photoCounts);
+            }
+          } catch (apiError) {
+            console.error("Erreur API comptage:", apiError);
+            // Fallback local en cas d'erreur API
+            const photoCounts = {};
+            projectIds.forEach(id => photoCounts[id] = 0);
+            setProjectsWithPhotoCount(photoCounts);
           }
-          console.log(`Sessions pour projet ${project.id}:`, sessionRows);
-          photoCounts[project.id] = countError ? 0 : (count || 0);
         }
-        setProjectsWithPhotoCount(photoCounts);
-        console.log("Comptes d'images par projet:", photoCounts);
       } catch (err) {
         setError('Impossible de charger les projets');
         console.error("Erreur globale loadProjects:", err);
@@ -248,54 +271,49 @@ export default function ProjectGallery() {
     if (currentAdminId) loadProjects();
   }, [supabase, currentAdminId]);
   
-  // Charger les images du projet sélectionné depuis sessions
+  // Charger les images du projet sélectionné depuis sessions (VERSION OPTIMISÉE)
   useEffect(() => {
     if (!selectedProject) {
       setProjectImages([]);
-      console.log("Aucun projet sélectionné, images vidées");
       return;
     }
 
-    async function loadSessionImages() {
-      setLoading(true);
+    async function loadSessionImages(page = 1) {
+      setLoadingImages(true);
       try {
-        // DEBUG : Affiche toutes les sessions pour voir ce qu'il y a en base
-        const { data: allSessions, error: allSessionsError } = await supabase
-          .from('sessions')
-          .select('*');
-        if (allSessionsError) {
-          console.error("Erreur lors de la récupération de toutes les sessions:", allSessionsError);
-        }
-        console.log("Toutes les sessions en base:", allSessions);
-
-        // DEBUG : Affiche la valeur et le type de selectedProject
-        console.log("selectedProject value:", selectedProject, "type:", typeof selectedProject);
-
-        // Ne pas lancer la requête si selectedProject est vide
         if (!selectedProject) {
           setProjectImages([]);
-          setLoading(false);
+          setLoadingImages(false);
           return;
         }
 
-        // DEBUG : Affiche toutes les sessions pour ce project_id (en forçant le string et trim)
         const projectIdToQuery = String(selectedProject).trim();
-        const { data: sessionsData, error: sessionsError } = await supabase
+        
+        // OPTIMISATION: Une seule requête avec comptage et données
+        const from = (page - 1) * IMAGES_PER_PAGE;
+        const to = page * IMAGES_PER_PAGE - 1;
+        
+        const { data: sessionsData, error: sessionsError, count } = await supabase
           .from('sessions')
-          .select('*')
-          .eq('project_id', projectIdToQuery);
+          .select('*', { count: 'exact' })
+          .eq('project_id', projectIdToQuery)
+          .not('result_s3_url', 'is', null)
+          .not('result_image_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
         if (sessionsError) {
           console.error("Erreur récupération images sessions:", sessionsError);
           setProjectImages([]);
         } else {
-          console.log("Sessions récupérées pour project_id", projectIdToQuery, ":", sessionsData);
+          // Calculer le nombre total de pages
+          setTotalPages(Math.ceil((count || 0) / IMAGES_PER_PAGE));
+          
+          // Transformer les données
           const images = (sessionsData || [])
             .filter(session => {
-              // Filter out sessions without valid image URLs
-              const hasValidUrl = session.result_s3_url || session.result_image_url;
               const url = session.result_s3_url || session.result_image_url;
-              return hasValidUrl && url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
+              return url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
             })
             .map(session => ({
               id: session.id,
@@ -309,17 +327,21 @@ export default function ProjectGallery() {
             }));
           setProjectImages(images);
         }
-        loadMosaicSettings(selectedProject);
+        
+        // Charger les paramètres mosaïque seulement pour la première page
+        if (page === 1) {
+          loadMosaicSettings(selectedProject);
+        }
       } catch (err) {
         setError('Impossible de charger les images du projet');
         console.error("Erreur globale loadSessionImages:", err);
       } finally {
-        setLoading(false);
+        setLoadingImages(false);
       }
     }
 
-    loadSessionImages();
-  }, [selectedProject, loadMosaicSettings, supabase]);
+    loadSessionImages(currentPage);
+  }, [selectedProject, loadMosaicSettings, supabase, currentPage]);
   
   // Télécharger une image
   const downloadImage = (url, filename) => {
@@ -450,7 +472,6 @@ export default function ProjectGallery() {
       
       // Préparer les données pour Supabase
       const mosaicData = {
-        project_id: selectedProject,
         bg_color: mosaicSettings.bg_color || '#000000',
         bg_image_url: bgImageUrl || null,
         title: mosaicSettings.title || '',
@@ -460,68 +481,36 @@ export default function ProjectGallery() {
         qr_description: mosaicSettings.qr_description?.substring(0, 255) || 'Retrouvez toutes les photos ici',
         qr_position: mosaicSettings.qr_position || 'center',
         is_public: mosaicSettings.is_public === true,
+        enable_swipe: mosaicSettings.enable_swipe === true,
         updated_at: new Date().toISOString()
       };
       
-      console.log('Données à enregistrer:', mosaicData);
+      console.log('🔍 Données à enregistrer:', mosaicData);
+      console.log('🔍 Project ID sélectionné:', selectedProject);
+      console.log('🔍 Type de selectedProject:', typeof selectedProject);
       
-      // Vérifier si les paramètres existent déjà
-      const { data: existingSettings } = await supabase
-        .from('mosaic_settings')
-        .select('project_id')
-        .eq('project_id', selectedProject)
-        .maybeSingle();
-        
-      let result;
+      // Utiliser l'API pour sauvegarder avec les permissions service role
+      const response = await fetch('/api/save-mosaic-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mosaicData,
+          projectId: selectedProject
+        })
+      });
       
-      if (existingSettings) {
-        // Mise à jour
-        console.log('Mise à jour des paramètres existants');
-        result = await supabase
-          .from('mosaic_settings')
-          .update(mosaicData)
-          .eq('project_id', selectedProject);
-      } else {
-        // Insertion
-        console.log('Création de nouveaux paramètres');
-        result = await supabase
-          .from('mosaic_settings')
-          .insert(mosaicData);
+      const result = await response.json();
+      
+      console.log('🔍 Réponse API:', result);
+      console.log('🔍 Status de la réponse:', response.status);
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors de la sauvegarde');
       }
       
-      console.log('Résultat de l\'opération Supabase:', result);
-      
-      if (result.error) {
-        console.error('Erreur Supabase:', result.error);
-        
-        // Si l'erreur est liée à RLS, essayer une autre approche
-        if (result.error.message.includes('row-level security')) {
-          // Approche alternative: utiliser une table temporaire sans RLS
-          console.log('Tentative avec table temporaire...');
-          
-          // Création d'une entrée dans temp_storage (table sans RLS)
-          const tempData = {
-            key: `mosaic_settings_${selectedProject}`,
-            value: JSON.stringify(mosaicData),
-            created_at: new Date().toISOString(),
-            created_by: currentAdminId
-          };
-          
-          const { error: tempError } = await supabase
-            .from('temp_storage')
-            .upsert(tempData, { onConflict: 'key' });
-            
-          if (tempError) {
-            throw new Error(`Erreur de stockage temporaire: ${tempError.message}`);
-          }
-          
-          setSuccess('Paramètres de mosaïque enregistrés temporairement');
-        } else {
-          throw new Error(`Erreur de base de données: ${result.error.message}`);
-        }
-      } else {
-        setSuccess('Paramètres de mosaïque enregistrés avec succès');
-      }
+      setSuccess('Paramètres de mosaïque enregistrés avec succès');
       
       setShowMosaicSettings(false);
       
@@ -573,15 +562,13 @@ export default function ProjectGallery() {
     setDeleteConfirm({ id, url });
   };
   
-  // Fonction pour gérer la suppression après confirmation
+  // Fonction pour gérer la suppression après confirmation (VERSION OPTIMISÉE)
   const handleConfirmedDeletion = async () => {
     if (!deleteConfirm) return;
     
     const { id, url } = deleteConfirm;
     
     try {
-      setLoading(true);
-      
       // Appeler notre nouvelle API pour marquer l'image comme modérée
       const response = await fetch('/api/moderate-img', {
         method: 'POST',
@@ -597,9 +584,7 @@ export default function ProjectGallery() {
         throw new Error(result.message || 'Erreur lors de la modération');
       }
       
-      console.log('Réponse API modération:', result);
-      
-      // Mettre à jour l'interface pour montrer l'image comme modérée
+      // Mettre à jour l'interface localement (plus rapide)
       setProjectImages(prevImages => prevImages.map(img => 
         img.id === id 
           ? {...img, isModerated: true} 
@@ -609,37 +594,10 @@ export default function ProjectGallery() {
       setSuccess("Image marquée comme modérée avec succès");
       setTimeout(() => setSuccess(null), 3000);
       
-      // Recharger les images après une courte pause pour s'assurer que les changements sont reflétés
-      setTimeout(() => {
-        if (selectedProject) {
-          const projectIdToQuery = String(selectedProject).trim();
-          supabase
-            .from('sessions')
-            .select('*')
-            .eq('project_id', projectIdToQuery)
-            .then(({ data }) => {
-              if (data) {
-                const images = (data || []).map(session => ({
-                  id: session.id,
-                  image_url: session.result_s3_url || session.result_image_url,
-                  created_at: session.created_at,
-                  metadata: {
-                    fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-                    size: null
-                  },
-                  isModerated: session.moderation === 'M'
-                }));
-                setProjectImages(images);
-              }
-            });
-        }
-      }, 2000);
-      
     } catch (err) {
       console.error('Erreur lors de la modération:', err);
       setError(`Erreur lors de la modération: ${err.message}`);
     } finally {
-      setLoading(false);
       setDeleteConfirm(null);
     }
   };
@@ -649,11 +607,9 @@ export default function ProjectGallery() {
     setDeleteConfirm(null);
   };
 
-  // Fonction pour la démodération d'image
+  // Fonction pour la démodération d'image (VERSION OPTIMISÉE)
   const unmoderateImage = async (id, url) => {
     try {
-      setLoading(true);
-      
       // Appeler notre API pour démodérer l'image
       const response = await fetch('/api/unmoderate-img', {
         method: 'POST',
@@ -669,9 +625,7 @@ export default function ProjectGallery() {
         throw new Error(result.message || 'Erreur lors de la démodération');
       }
       
-      console.log('Réponse API démodération:', result);
-      
-      // Mettre à jour l'interface pour montrer l'image comme non modérée
+      // Mettre à jour l'interface localement (plus rapide)
       setProjectImages(prevImages => prevImages.map(img => 
         img.id === id 
           ? {...img, isModerated: false} 
@@ -681,37 +635,9 @@ export default function ProjectGallery() {
       setSuccess("Image démodérée avec succès");
       setTimeout(() => setSuccess(null), 3000);
       
-      // Recharger les images après une courte pause
-      setTimeout(() => {
-        if (selectedProject) {
-          const projectIdToQuery = String(selectedProject).trim();
-          supabase
-            .from('sessions')
-            .select('*')
-            .eq('project_id', projectIdToQuery)
-            .then(({ data }) => {
-              if (data) {
-                const images = (data || []).map(session => ({
-                  id: session.id,
-                  image_url: session.result_s3_url || session.result_image_url,
-                  created_at: session.created_at,
-                  metadata: {
-                    fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-                    size: null
-                  },
-                  isModerated: session.moderation === 'M'
-                }));
-                setProjectImages(images);
-              }
-            });
-        }
-      }, 2000);
-      
     } catch (err) {
       console.error('Erreur lors de la démodération:', err);
       setError(`Erreur lors de la démodération: ${err.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -732,11 +658,19 @@ export default function ProjectGallery() {
     <div className="space-y-6">
       {/* Loader global - affiche tant que loading est true */}
       {loading ? (
-        <Loader text="Chargement complet des données..." size="large" color="indigo" />
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader size="large" message="Chargement des projets..." variant="premium" />
+          <div className="mt-4 text-sm text-gray-500 max-w-md text-center">
+            📊 Récupération des projets et comptage des images en cours...
+          </div>
+        </div>
       ) : (
         <>
           <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-            Galerie des Photobooths
+            Galerie des Photobooths 
+            <span className="text-sm font-normal text-green-600 ml-2">
+              ⚡ Optimisé pour des performances rapides
+            </span>
           </h2>
           
           {error && (
@@ -902,7 +836,7 @@ export default function ProjectGallery() {
             
             {loading && selectedProject ? (
               <div className="p-12 flex flex-col items-center justify-center">
-                <Loader text="Chargement des images en cours" size="medium" color="indigo" />
+                <Loader size="medium" message="Chargement des images en cours..." variant="premium" />
               </div>
             ) : null}
             
@@ -947,6 +881,9 @@ export default function ProjectGallery() {
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="rounded-t-md"
                             onError={() => handleImageError(image.id)}
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                           />
                         )}
                       </div>
@@ -996,6 +933,37 @@ export default function ProjectGallery() {
                     </div>
                   ))}
                 </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1 || loadingImages}
+                      className="px-3 py-2 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Précédent
+                    </button>
+                    
+                    <span className="px-3 py-2 text-sm text-gray-700">
+                      Page {currentPage} sur {totalPages}
+                    </span>
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || loadingImages}
+                      className="px-3 py-2 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                )}
+                
+                {loadingImages && (
+                  <div className="flex justify-center mt-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1197,6 +1165,33 @@ export default function ProjectGallery() {
                               ✅ La galerie sera accessible à l'adresse : 
                               <br />
                               <code className="bg-white px-1 rounded">/photobooth-coiffure/[slug]/gallery</code>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Swipe/Like système */}
+                        <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                          <div className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              id="enable_swipe"
+                              checked={mosaicSettings.enable_swipe || false}
+                              onChange={(e) => setMosaicSettings({...mosaicSettings, enable_swipe: e.target.checked})}
+                              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                            />
+                            <label htmlFor="enable_swipe" className="ml-2 block text-sm font-medium text-gray-700">
+                              ❤️ Système de Swipe (Like/Dislike)
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-600 ml-6">
+                            Si activé, un lien vers le système de swipe sera affiché sur la page de récupération des photos.
+                            Les utilisateurs pourront liker ou disliker les photos de l'événement façon Tinder.
+                          </p>
+                          {mosaicSettings.enable_swipe && (
+                            <div className="mt-2 ml-6 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                              ✅ Le swipe sera accessible à l'adresse : 
+                              <br />
+                              <code className="bg-white px-1 rounded">/photobooth-coiffure/[slug]/swipe</code>
                             </div>
                           )}
                         </div>

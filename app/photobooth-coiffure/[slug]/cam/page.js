@@ -262,20 +262,28 @@ export default function CameraCapture({ params }) {
   // Restore camera error display for better debugging
   const [cameraError, setCameraError] = useState(null);
   
-  // Détecter le type d'appareil pour l'affichage
-  const [deviceType, setDeviceType] = useState('desktop');
+  // Détecter le type d'appareil pour l'affichage - basé sur la largeur d'écran
+  const [deviceType, setDeviceType] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const screenWidth = window.innerWidth;
+      
+      if (screenWidth <= 768) return 'mobile';  // Écrans mobiles
+      if (screenWidth <= 1024) return 'tablet'; // Écrans tablettes
+      return 'desktop'; // Écrans desktop
+    }
+    return 'desktop';
+  });
   
   useEffect(() => {
     const detectDevice = () => {
-      const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
+      const screenWidth = window.innerWidth;
       
-      if (isMobile) {
-        setDeviceType('mobile');
-      } else if (isTablet) {
-        setDeviceType('tablet');
+      if (screenWidth <= 768) {
+        setDeviceType('mobile');   // Format smartphone/mobile
+      } else if (screenWidth <= 1024) {
+        setDeviceType('tablet');   // Format tablette
       } else {
-        setDeviceType('desktop');
+        setDeviceType('desktop');  // Format desktop
       }
     };
     
@@ -908,11 +916,15 @@ export default function CameraCapture({ params }) {
       }
       
       // Log pour débogage des variables d'entrée
-      console.log('Flux transformation input:', {
-          prompt: stylePrompt,
-          input_image: imageFile ? 'base64_image present' : 'image missing',
-          output_format: 'jpg'
-      });
+      console.group("[Replicate] Request Details (generateImageSwap)");
+      console.log('Model:', "black-forest-labs/flux-kontext-pro");
+      console.log('Prompt:', stylePrompt);
+      console.log('Input image present:', !!imageFile);
+      console.log('Input image size:', imageFile ? `${imageFile.length.toLocaleString()} chars` : 0);
+      console.log('Project ID:', project?.id);
+      console.log('Slug:', slug);
+      console.log('Image header:', imageFile ? imageFile.substring(0, 50) + '...' : 'N/A');
+      console.groupEnd();
       
       // Ajouter à la liste des logs
       setLogs(prevLogs => [...prevLogs, "Préparation de l'image..."]);
@@ -964,40 +976,108 @@ export default function CameraCapture({ params }) {
         }
       };
       
-      console.log('Sending request to Replicate with model:', requestBody.model);
-      console.log('Requesting specific output dimensions: 970x651');
+      // Exposer une version safe du payload pour debug (sans le base64 complet)
+      window.debugReplicatePayload = {
+        ...requestBody,
+        input: {
+          ...requestBody.input,
+          input_image: imageFile ? `${imageFile.substring(0, 30)}... (length: ${imageFile.length})` : null
+        }
+      };
+      console.log('[Replicate] Payload summary:', window.debugReplicatePayload);
       
-      const response = await fetch('/api/replicate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      console.log('[Replicate] Starting request to /api/replicate...');
+      setLogs(prevLogs => [...prevLogs, "Connexion au serveur Replicate..."]);
+      
+      const fetchStart = Date.now();
+      let response;
+      try {
+        response = await fetch('/api/replicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } catch (networkErr) {
+        console.error('[Replicate] Network error during fetch:', networkErr);
+        setLogs(prevLogs => [...prevLogs, `Erreur réseau: ${networkErr.message}`]);
+        throw new Error(`Erreur réseau Replicate: ${networkErr.message}`);
+      }
+      
+      const responseTime = Date.now() - fetchStart;
+      console.log(`[Replicate] Response received after ${responseTime}ms`);
+      console.log(`[Replicate] Status: ${response.status} ${response.statusText}`);
+      
+      // Log response headers
+      try {
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log('[Replicate] Response headers:', headers);
+      } catch (headerErr) {
+        console.warn('[Replicate] Could not log headers:', headerErr);
+      }
       
       // Check if the request was successful
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Replicate API responded with error:', response.status, errorText);
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch (textErr) {
+          console.error('[Replicate] Could not read error text:', textErr);
+        }
+        
+        console.error('[Replicate] HTTP Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText?.substring(0, 500)
+        });
+        
+        setLogs(prevLogs => [...prevLogs, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
         throw new Error(`Erreur du serveur Replicate: ${response.status} ${errorText}`);
       }
       
-      const data = await response.json();
-      console.log('Replicate API response:', data);
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[Replicate] JSON parse error:', parseErr);
+        let rawText = '';
+        try {
+          rawText = await response.text();
+        } catch (textErr) {
+          console.error('[Replicate] Could not read response as text:', textErr);
+        }
+        console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
+        setLogs(prevLogs => [...prevLogs, 'Réponse invalide du serveur Replicate']);
+        throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
+      }
+      
+      console.log('[Replicate] Successfully parsed JSON response:', data);
       
       if (!data.success) {
+        console.error('[Replicate] API indicated failure:', data.error);
+        setLogs(prevLogs => [...prevLogs, `Erreur API: ${data.error || "Erreur inconnue"}`]);
         throw new Error(data.error || "Erreur lors de la génération de l'image");
       }
+      
       const result = data.output;
+      console.log('[Replicate] Output received:', typeof result, result ? 'present' : 'missing');
       setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
 
       let resultImageUrl = typeof result === 'string' ? result : 
         Array.isArray(result) ? result[0] : 
-        result.url || result.image || result;
+        result?.url || result?.image || result;
 
       if (!resultImageUrl) {
+        console.error('[Replicate] Missing image URL in response. Full output:', result);
         throw new Error("URL d'image non trouvée dans la réponse");
       }
+      
+      console.log('[Replicate] Final image URL:', resultImageUrl);
+      setLogs(prevLogs => [...prevLogs, "URL d'image reçue avec succès !"]);
 
       // 2. Ajout du layout (watermark) si disponible
       setLogs(logs => [...logs, "Récupération du layout du projet..."]);
@@ -1169,31 +1249,99 @@ const generateImageReplicate = async () => {
     const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
     const image = imageFile; // base64
 
+    // Logs détaillés avant envoi
+    console.group('[Replicate] Request (generateImageReplicate)');
+    console.log('Model:', 'black-forest-labs/flux-kontext-pro');
+    console.log('Prompt:', prompt);
+    console.log('Input image present:', !!image);
+    console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
+    console.log('Project ID:', project?.id);
+    console.log('Slug:', slug);
+    console.log('Image header:', image ? image.substring(0, 50) + '...' : 'N/A');
+    console.groupEnd();
+
     setLogs(["Envoi de la requête à Replicate..."]);
 
-    // 1. Génération de l'image via Replicate
-    const response = await fetch('/api/replicate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "black-forest-labs/flux-kontext-pro",
-        input: {
-          prompt,
-          input_image: image,
-          output_format: "jpg",
-          width: 970,
-          height: 651
-        }
-      }),
-    });
+    const reqBody = {
+      model: "black-forest-labs/flux-kontext-pro",
+      input: {
+        prompt,
+        input_image: image,
+        output_format: "jpg",
+        width: 970,
+        height: 651
+      }
+    };
+
+    // Version sûre pour le debug (sans base64 complet)
+    window.debugReplicatePayload = {
+      ...reqBody,
+      input: {
+        ...reqBody.input,
+        input_image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
+      }
+    };
+    console.log('[Replicate] Payload summary:', window.debugReplicatePayload);
+
+    console.log('[Replicate] Starting request to /api/replicate...');
+    setLogs(prev => [...prev, "Connexion au serveur Replicate..."]);
+
+    const fetchStart = Date.now();
+    let response;
+    try {
+      response = await fetch('/api/replicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody),
+      });
+    } catch (networkErr) {
+      console.error('[Replicate] Network error:', networkErr);
+      setLogs(prev => [...prev, `Erreur réseau: ${networkErr.message}`]);
+      throw new Error(`Erreur réseau Replicate: ${networkErr.message}`);
+    }
+
+    const responseTime = Date.now() - fetchStart;
+    console.log(`[Replicate] Response received after ${responseTime}ms`);
+    console.log(`[Replicate] Status: ${response.status} ${response.statusText}`);
+    
+    // Log response headers
+    try {
+      const headers = {};
+      response.headers.forEach((value, key) => { headers[key] = value; });
+      console.log('[Replicate] Response headers:', headers);
+    } catch {}
 
     if (!response.ok) {
-      const errorText = await response.text();
+      let errorText = '';
+      try { errorText = await response.text(); } catch {}
+      console.error('[Replicate] HTTP Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText?.substring(0, 500)
+      });
+      setLogs(prev => [...prev, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
       throw new Error(errorText || "Erreur Replicate");
     }
 
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error || "Erreur Replicate");
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      console.error('[Replicate] JSON parse error:', parseErr);
+      let rawText = '';
+      try { rawText = await response.text(); } catch {}
+      console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
+      setLogs(prev => [...prev, 'Réponse invalide du serveur Replicate']);
+      throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
+    }
+
+    console.log('[Replicate] Successfully parsed JSON response:', data);
+
+    if (!data.success) {
+      console.error('[Replicate] API indicated failure:', data.error);
+      setLogs(prev => [...prev, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+      throw new Error(data.error || "Erreur Replicate");
+    }
 
     let resultUrl = typeof data.output === 'string'
       ? data.output
@@ -1201,8 +1349,12 @@ const generateImageReplicate = async () => {
         ? data.output[0]
         : data.output?.url || data.output?.image || data.output;
 
-    if (!resultUrl) throw new Error("Aucune image générée");
+    if (!resultUrl) {
+      console.error('[Replicate] Missing image URL. Full output:', data.output);
+      throw new Error("Aucune image générée");
+    }
 
+    console.log('[Replicate] Final image URL:', resultUrl);
     setLogs(["Image générée avec succès !"]);
     localStorage.setItem("faceURLResult", resultUrl);
 
@@ -1960,18 +2112,11 @@ const generateImageReplicate = async () => {
           {/* Affiche le bouton uniquement si quota non atteint */}
           {!enabled && !quotaAtteint ? (
             <>
-              {/* Debug info for development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mb-3 text-xs text-white/50 text-center">
-                  Camera status: {cameraLoaded ? 'Loaded' : 'Loading'} 
-                  {cameraError ? ` (Error: ${cameraError.substring(0, 30)}...)` : ''}
-                </div>
-              )}
-              
               {/* Enhanced photo button with animations */}
               <motion.button
                 onClick={() => {
                   console.log("🔴 PHOTO button clicked, camera state:", { cameraLoaded, cameraError });
+                  console.log("🔴 Device type detected:", deviceType);
                   // Direct approach without unnecessary complexity
                   setShowCountdown(true);
                   setCountdownNumber(3);
@@ -1982,28 +2127,30 @@ const generateImageReplicate = async () => {
                     processCapture();
                   }, 3000);
                 }}
-                className={`relative rounded-2xl font-black overflow-hidden group shadow-2xl ${
-                  deviceType === 'mobile' 
-                    ? 'px-8 py-4 text-lg' 
-                    : deviceType === 'tablet' 
-                      ? 'px-10 py-5 text-xl' 
-                      : 'px-12 py-6 text-2xl'
+                className={`relative font-black overflow-hidden group shadow-2xl ${
+                  deviceType === 'mobile' || deviceType === 'tablet'
+                    ? 'w-20 h-20 rounded-full flex items-center justify-center' // Bouton rond pour mobile/tablette
+                    : 'px-12 py-6 text-2xl rounded-2xl' // Bouton rectangulaire pour desktop
                 }`}
                 style={{ 
-                  backgroundColor: secondaryColor, 
-                  color: primaryColor,
+                  backgroundColor: deviceType === 'mobile' || deviceType === 'tablet' ? '#ff4444' : secondaryColor,
+                  color: deviceType === 'mobile' || deviceType === 'tablet' ? 'white' : primaryColor,
                   opacity: cameraLoaded && !showCountdown ? 1 : 0.5,
-                  boxShadow: `0 20px 40px ${secondaryColor}40`
+                  boxShadow: deviceType === 'mobile' || deviceType === 'tablet' 
+                    ? '0 8px 20px rgba(255, 68, 68, 0.4)'
+                    : `0 20px 40px ${secondaryColor}40`
                 }}
                 whileHover={cameraLoaded && !showCountdown ? { 
                   scale: 1.05,
-                  boxShadow: `0 25px 50px ${secondaryColor}60`
+                  boxShadow: deviceType === 'mobile' || deviceType === 'tablet'
+                    ? '0 12px 30px rgba(255, 68, 68, 0.6)'
+                    : `0 25px 50px ${secondaryColor}60`
                 } : {}}
                 whileTap={cameraLoaded && !showCountdown ? { scale: 0.95 } : {}}
                 disabled={!cameraLoaded || showCountdown}
               >
-                {/* Animated floating bubbles */}
-                {[...Array(6)].map((_, i) => (
+                {/* Animated floating bubbles - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && [...Array(6)].map((_, i) => (
                   <motion.div
                     key={`photo-bubble-${i}`}
                     className="absolute rounded-full opacity-30"
@@ -2026,30 +2173,60 @@ const generateImageReplicate = async () => {
                       delay: Math.random() * 2,
                       ease: "easeInOut"
                     }}
-              />
+                  />
                 ))}
 
-                {/* Animated wave pattern */}
-                <motion.div
-                  className="absolute inset-0 opacity-15"
-                  style={{
-                    background: `repeating-linear-gradient(
-                      45deg,
-                      transparent,
-                      transparent 8px,
-                      ${primaryColor}30 8px,
-                      ${primaryColor}30 16px
-                    )`
-                  }}
-                  animate={{
-                    backgroundPosition: ["0px 0px", "32px 32px"],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                />
+                {/* Cercle intérieur pour mobile/tablette */}
+                {(deviceType === 'mobile' || deviceType === 'tablet') && (
+                  <motion.div
+                    className="w-14 h-14 bg-white rounded-full flex items-center justify-center"
+                    animate={cameraLoaded && !showCountdown ? {
+                      scale: [1, 1.1, 1],
+                    } : {}}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <motion.div
+                      className="w-10 h-10 bg-red-500 rounded-full"
+                      animate={cameraLoaded && !showCountdown ? {
+                        scale: [1, 0.9, 1],
+                      } : {}}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 0.5
+                      }}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Animated wave pattern - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
+                  <motion.div
+                    className="absolute inset-0 opacity-15"
+                    style={{
+                      background: `repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 8px,
+                        ${primaryColor}30 8px,
+                        ${primaryColor}30 16px
+                      )`
+                    }}
+                    animate={{
+                      backgroundPosition: ["0px 0px", "32px 32px"],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                  />
+                )}
 
                 {/* Pulsing rings */}
                 {[...Array(2)].map((_, i) => (
@@ -2057,9 +2234,9 @@ const generateImageReplicate = async () => {
                     key={`photo-ring-${i}`}
                     className="absolute rounded-full border-2 opacity-30"
                     style={{
-                      borderColor: primaryColor,
-                      width: `${40 + i * 20}px`,
-                      height: `${40 + i * 20}px`,
+                      borderColor: deviceType === 'mobile' || deviceType === 'tablet' ? '#ff4444' : primaryColor,
+                      width: `${(deviceType === 'mobile' || deviceType === 'tablet' ? 30 : 40) + i * 20}px`,
+                      height: `${(deviceType === 'mobile' || deviceType === 'tablet' ? 30 : 40) + i * 20}px`,
                       left: '50%',
                       top: '50%',
                       transform: 'translate(-50%, -50%)'
@@ -2075,79 +2252,89 @@ const generateImageReplicate = async () => {
                       delay: i * 0.4,
                       ease: "easeInOut"
                     }}
-              />
+                  />
                 ))}
 
-                {/* Rotating gradient overlay */}
-                <motion.div
-                  className="absolute inset-0 opacity-20 rounded-2xl"
-                  style={{
-                    background: `conic-gradient(from 0deg, transparent, ${primaryColor}30, transparent, ${primaryColor}40, transparent)`
-                  }}
-                  animate={{ rotate: [0, 360] }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                />
+                {/* Rotating gradient overlay - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
+                  <motion.div
+                    className="absolute inset-0 opacity-20 rounded-2xl"
+                    style={{
+                      background: `conic-gradient(from 0deg, transparent, ${primaryColor}30, transparent, ${primaryColor}40, transparent)`
+                    }}
+                    animate={{ rotate: [0, 360] }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                  />
+                )}
 
-                {/* Sparkle explosion on hover */}
-                <motion.div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                >
-                  {[...Array(8)].map((_, i) => (
-                    <motion.div
-                      key={`photo-sparkle-${i}`}
-                      className="absolute w-1 h-1 rounded-full"
-                      style={{
-                        backgroundColor: primaryColor,
-                        left: '50%',
-                        top: '50%',
-                      }}
-                      animate={{
-                        x: [0, (Math.cos(i * 45 * Math.PI / 180) * 40)],
-                        y: [0, (Math.sin(i * 45 * Math.PI / 180) * 40)],
-                        opacity: [1, 0],
-                        scale: [0, 1.2, 0],
-                      }}
-                      transition={{
-                        duration: 0.8,
-                        repeat: Infinity,
-                        delay: i * 0.1,
-                        ease: "easeOut"
-                      }}
-                    />
-                  ))}
-                </motion.div>
+                {/* Sparkle explosion on hover - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
+                  <motion.div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    {[...Array(8)].map((_, i) => (
+                      <motion.div
+                        key={`photo-sparkle-${i}`}
+                        className="absolute w-1 h-1 rounded-full"
+                        style={{
+                          backgroundColor: primaryColor,
+                          left: '50%',
+                          top: '50%',
+                        }}
+                        animate={{
+                          x: [0, (Math.cos(i * 45 * Math.PI / 180) * 40)],
+                          y: [0, (Math.sin(i * 45 * Math.PI / 180) * 40)],
+                          opacity: [1, 0],
+                          scale: [0, 1.2, 0],
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          repeat: Infinity,
+                          delay: i * 0.1,
+                          ease: "easeOut"
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
 
-                {/* Animated background shine */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  initial={{ x: "-100%" }}
-                  animate={{ x: "100%" }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3
-                  }}
-                />
+                {/* Animated background shine - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "100%" }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3
+                    }}
+                  />
+                )}
 
-                {/* Button text */}
-                <span className="relative z-10 flex items-center gap-3">
-                  📸
-                  {showCountdown
-                    ? 'PRISE DE PHOTO...'
-                    : cameraLoaded
-                      ? 'PRENDRE UNE PHOTO'
-                      : 'ATTENTE DE LA CAMÉRA...'}
-                </span>
+                {/* Button text - uniquement pour desktop */}
+                {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
+                  <span className="relative z-10 flex items-center gap-3">
+                    📸
+                    {showCountdown
+                      ? 'PRISE DE PHOTO...'
+                      : cameraLoaded
+                        ? 'PRENDRE UNE PHOTO'
+                        : 'ATTENTE DE LA CAMÉRA...'}
+                  </span>
+                )}
 
                 {/* Enhanced pulse effect when ready */}
                 {cameraLoaded && !showCountdown && (
                   <motion.span
-                    className="absolute inset-0 rounded-2xl border-2"
-                    style={{ borderColor: primaryColor }}
+                    className={`absolute inset-0 border-2 ${
+                      deviceType === 'mobile' || deviceType === 'tablet' ? 'rounded-full' : 'rounded-2xl'
+                    }`}
+                    style={{ borderColor: deviceType === 'mobile' || deviceType === 'tablet' ? '#ff4444' : primaryColor }}
                     animate={{ 
                       opacity: [0.2, 0.5, 0.2],
                       scale: [1, 1.05, 1]

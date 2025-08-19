@@ -16,11 +16,36 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
   });
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
+  const [showPublicGallery, setShowPublicGallery] = useState(false);
+  const [projectSlug, setProjectSlug] = useState('');
 
   useEffect(() => {
     async function fetchContent() {
       setLoading(true);
       setError(null);
+      
+      // Récupérer les informations du projet
+      const { data: project } = await supabase
+        .from('projects')
+        .select('slug')
+        .eq('id', projectId)
+        .single();
+      
+      if (project?.slug) {
+        setProjectSlug(project.slug);
+        
+        // Vérifier si la galerie publique est activée
+        const { data: mosaicSettings } = await supabase
+          .from('mosaic_settings')
+          .select('is_public')
+          .eq('project_id', projectId)
+          .maybeSingle();
+          
+        if (mosaicSettings?.is_public) {
+          setShowPublicGallery(true);
+        }
+      }
+      
       const { data } = await supabase
         .from('photobooth_image_page_content')
         .select('*')
@@ -119,6 +144,8 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
             Ils peuvent visualiser leur image, la télécharger, et la partager facilement sur les réseaux sociaux.
             <br />
             Vous pouvez personnaliser ici le texte, les couleurs et le lien affichés sur cette page pour offrir une expérience sur-mesure à vos participants.
+            <br />
+            <strong>Note :</strong> Si la galerie publique est activée dans les paramètres de mosaïque, un lien vers toutes les photos de l'événement apparaîtra automatiquement.
           </p>
         </div>
       </div>
@@ -315,6 +342,28 @@ export default function PhotoboothImagePageContentEditor({ projectId }) {
               >
                 Télécharger ma photo
               </a>
+              
+              {/* Lien vers la galerie publique si activée */}
+              {showPublicGallery && (
+                <a
+                  href="#"
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 24px',
+                    borderRadius: 28,
+                    background: 'linear-gradient(90deg,#9333ea,#ec4899)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 12px #9333ea55',
+                    margin: '0 0 8px 0'
+                  }}
+                >
+                  🖼️ Voir toutes les photos de l'événement
+                </a>
+              )}
+              
               {/* Boutons de partage réseaux sociaux */}
               <div style={{ display: 'flex', gap: '12px', margin: '0 0 8px 0', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {/* Facebook */}

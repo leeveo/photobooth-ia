@@ -139,17 +139,21 @@ export default function Loader({ size = 'default', message = 'Chargement en cour
             
             {/* Spinning dots around the circle */}
             <div className="absolute inset-0 animate-spin-slower">
-              {[...Array(6)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="absolute w-2 h-2 bg-white rounded-full shadow-md"
-                  style={{ 
-                    top: '10%', 
-                    left: '50%', 
-                    transform: `rotate(${i * 60}deg) translateY(-${sizeClasses[size].split('-')[1].split('w')[0] / 2 + 6}px)` 
-                  }}
-                ></div>
-              ))}
+              {[...Array(6)].map((_, i) => {
+                const sizeValue = sizeClasses[size] || sizeClasses.default;
+                const widthPx = sizeValue.includes('w-8') ? 32 : sizeValue.includes('w-24') ? 96 : 64;
+                return (
+                  <div 
+                    key={i} 
+                    className="absolute w-2 h-2 bg-white rounded-full shadow-md"
+                    style={{ 
+                      top: '10%', 
+                      left: '50%', 
+                      transform: `rotate(${i * 60}deg) translateY(-${widthPx / 2 + 6}px)` 
+                    }}
+                  ></div>
+                );
+              })}
             </div>
           </div>
         </div>

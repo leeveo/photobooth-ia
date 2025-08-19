@@ -630,15 +630,24 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
-              {/* Ajout du lien cliquable sous le QR code */}
+              {/* Bouton de téléchargement stylisé sous le QR code */}
               <a
                 href={linkQR}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mb-4 text-indigo-600 underline break-all text-center font-semibold"
-                style={{ wordBreak: 'break-all' }}
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 mb-4 rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                style={{
+                  background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                  color: '#fff',
+                  boxShadow: `0 6px 20px 0 ${primaryColor}44, inset 0 1px 0 rgba(255,255,255,0.2)`,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  border: `2px solid rgba(255,255,255,0.1)`
+                }}
               >
-                {linkQR}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                <span className="font-extrabold tracking-wide">TÉLÉCHARGER</span>
               </a>
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo

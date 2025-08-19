@@ -282,7 +282,7 @@ const PhotoboothTypeManager = ({
           </div>
 
           {/* Grid des types de photobooth */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-7">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
             {/* CARTE SIMPLE */}
             <div className={`
               group relative bg-gradient-to-br from-gray-800 via-indigo-800 to-purple-800 rounded-2xl overflow-visible shadow-xl border-2 border-transparent transition-all duration-300 transform hover:-translate-y-2 hover:scale-105

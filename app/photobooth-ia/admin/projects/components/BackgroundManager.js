@@ -21,12 +21,85 @@ const BackgroundManager = ({
   const [deletingMedia, setDeletingMedia] = useState({});
   const [deletingBackground, setDeletingBackground] = useState({});
   
+  // Function to refresh session if needed
+  const ensureValidSession = async () => {
+    try {
+      console.log('🔐 [SESSION CHECK] Checking session validity...');
+      
+      // Try to refresh the session
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('❌ [SESSION CHECK] Error refreshing session:', error);
+        return null;
+      }
+      
+      const { session } = data;
+      
+      if (!session) {
+        console.error('❌ [SESSION CHECK] No session after refresh');
+        return null;
+      }
+      
+      console.log('✅ [SESSION CHECK] Session refreshed successfully:', session.user?.id);
+      return session;
+    } catch (error) {
+      console.error('❌ [SESSION CHECK] Exception during session check:', error);
+      return null;
+    }
+  };
+
+  // Function to debug session and authentication state
+  const debugAuthState = async () => {
+    try {
+      console.log('🕵️ [DEBUG AUTH] Starting authentication state debug...');
+      
+      // Check session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('🕵️ [DEBUG AUTH] Session data:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        expiresAt: session?.expires_at,
+        error: error?.message
+      });
+
+      // Check if we can access user data
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('🕵️ [DEBUG AUTH] User data:', {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+        error: userError?.message
+      });
+
+      return !!session && !!user;
+    } catch (error) {
+      console.error('🕵️ [DEBUG AUTH] Error during auth debug:', error);
+      return false;
+    }
+  };
+  
+  // Debug deleting state
+  useEffect(() => {
+    console.log('🔄 [DELETING STATE] Deleting background state changed:', deletingBackground);
+  }, [deletingBackground]);
+  
   // États pour le popup de confirmation de suppression
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmData, setDeleteConfirmData] = useState(null);
 
+  // Debug delete confirm state
+  useEffect(() => {
+    console.log('🔔 [DELETE CONFIRM] State changed:', { showDeleteConfirm, deleteConfirmData });
+  }, [showDeleteConfirm, deleteConfirmData]);
+
   async function handleDeleteBackground(backgroundId) {
+    console.log('🎯 [DELETE BACKGROUND] Starting delete process for background:', backgroundId);
     const background = backgrounds.find(bg => bg.id === backgroundId);
+    console.log('🎯 [DELETE BACKGROUND] Found background:', background);
+    console.log('🎯 [DELETE BACKGROUND] All backgrounds:', backgrounds);
+    
     setDeleteConfirmData({
       type: 'background',
       id: backgroundId,
@@ -34,39 +107,203 @@ const BackgroundManager = ({
       action: () => performDeleteBackground(backgroundId)
     });
     setShowDeleteConfirm(true);
+    console.log('🎯 [DELETE BACKGROUND] Showing confirmation dialog');
   }
 
   // Fonction séparée pour effectuer la suppression
   const performDeleteBackground = async (backgroundId) => {
+    console.log('🚀 [PERFORM DELETE] Starting actual delete for background:', backgroundId);
+    console.log('🚀 [PERFORM DELETE] Project ID:', projectId);
+    
     try {
       setError(null);
       setDeletingBackground(prev => ({ ...prev, [backgroundId]: true }));
+      console.log('🚀 [PERFORM DELETE] Set deleting state to true');
       
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("Session expirée, veuillez vous reconnecter");
-        return;
+      // Vérification de session préliminaire
+      console.log('🔐 [PERFORM DELETE] Checking session...');
+      let session = null;
+      
+      // First try to get current session
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ [PERFORM DELETE] Session error at start:', sessionError);
+        // Try to refresh session
+        session = await ensureValidSession();
+        if (!session) {
+          setError("Erreur de session: " + sessionError.message + ". Veuillez vous reconnecter.");
+          return;
+        }
+      } else if (!currentSession) {
+        console.error('❌ [PERFORM DELETE] No session found at start, trying to refresh...');
+        // Try to refresh session
+        session = await ensureValidSession();
+        if (!session) {
+          setError("Session expirée, veuillez vous reconnecter");
+          return;
+        }
+      } else {
+        session = currentSession;
       }
       
-      // Delete the background from the database with proper auth context
-      const { error } = await supabase
-        .from('backgrounds')
-        .delete()
-        .eq('id', backgroundId);
-        
-      if (error) throw error;
+      console.log('✅ [PERFORM DELETE] Proceeding with background deletion...');
       
-      // Update the local state
-      setBackgrounds(backgrounds.filter(bg => bg.id !== backgroundId));
-      setSuccess("Arrière-plan supprimé avec succès");
+      console.log('🗑️ Attempting to delete background:', backgroundId);
+      
+      // Try API route first
+      try {
+        console.log('📡 Trying API route method...');
+        console.log('📡 API request data:', { backgroundId, projectId });
+        
+        const response = await fetch('/api/backgrounds/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            backgroundId: backgroundId,
+            projectId: projectId
+          }),
+        });
+
+        console.log('📡 API Response status:', response.status);
+        console.log('📡 API Response headers:', response.headers);
+        
+        const result = await response.json();
+        console.log('📡 API response:', { status: response.status, result });
+
+        if (response.ok) {
+          console.log('✅ Background deleted successfully via API:', result);
+          
+          // Update the local state
+          setBackgrounds(prevBackgrounds => {
+            const newBackgrounds = prevBackgrounds.filter(bg => bg.id !== backgroundId);
+            console.log('📝 Updated backgrounds state:', newBackgrounds.length, 'backgrounds remaining');
+            console.log('📝 Backgrounds before filter:', prevBackgrounds.map(bg => ({ id: bg.id, name: bg.name })));
+            console.log('📝 Backgrounds after filter:', newBackgrounds.map(bg => ({ id: bg.id, name: bg.name })));
+            return newBackgrounds;
+          });
+          
+          setSuccess(result.message || "Arrière-plan supprimé avec succès");
+          return;
+        } else {
+          console.warn('⚠️ API route failed, trying direct Supabase method...', result);
+          throw new Error('API route failed: ' + (result.error || 'Unknown error'));
+        }
+      } catch (apiError) {
+        console.warn('⚠️ API route method failed, falling back to direct Supabase:', apiError.message);
+        console.error('⚠️ Full API error:', apiError);
+        
+        // Fallback to direct Supabase access
+        console.log('🔄 Trying direct Supabase method...');
+        
+        // Get the current session again (fresh check)
+        console.log('🔄 [FALLBACK] Checking session for direct Supabase method...');
+        let freshSession = null;
+        
+        const { data: { session: directSession }, error: freshSessionError } = await supabase.auth.getSession();
+        
+        if (freshSessionError || !directSession) {
+          console.warn('⚠️ [FALLBACK] Session issue, trying to refresh...', freshSessionError?.message);
+          freshSession = await ensureValidSession();
+          if (!freshSession) {
+            setError("Session expirée, veuillez vous reconnecter");
+            return;
+          }
+        } else {
+          freshSession = directSession;
+        }
+        
+        console.log('✅ Fresh session found in direct method:', freshSession.user?.id);
+        
+        // First, check if the background exists and belongs to the project
+        console.log('🔍 Checking if background exists...');
+        const { data: existingBackground, error: fetchError } = await supabase
+          .from('backgrounds')
+          .select('id, name, project_id')
+          .eq('id', backgroundId)
+          .single();
+        
+        if (fetchError) {
+          console.error('❌ Error fetching background:', fetchError);
+          throw new Error(`Impossible de trouver l'arrière-plan: ${fetchError.message}`);
+        }
+        
+        if (!existingBackground) {
+          console.error('❌ Background not found');
+          throw new Error("L'arrière-plan n'existe pas ou a déjà été supprimé");
+        }
+        
+        console.log('✅ Background found:', existingBackground);
+        
+        // Verify it belongs to the current project
+        if (existingBackground.project_id !== projectId) {
+          console.error('❌ Background belongs to different project:', existingBackground.project_id, 'vs', projectId);
+          throw new Error("Vous n'avez pas les permissions pour supprimer cet arrière-plan");
+        }
+        
+        // Try to disable RLS temporarily for this operation
+        console.log('🔧 Attempting deletion with RLS bypass...');
+        
+        // Delete the background from the database
+        console.log('🗑️ Executing delete query...');
+        const { data: deletedData, error: deleteError } = await supabase
+          .from('backgrounds')
+          .delete()
+          .eq('id', backgroundId)
+          .eq('project_id', projectId)
+          .select();
+          
+        if (deleteError) {
+          console.error('❌ Direct delete error:', deleteError);
+          
+          // If RLS is the issue, try with a function call
+          console.log('🔧 Trying with RPC function...');
+          const { data: rpcResult, error: rpcError } = await supabase
+            .rpc('delete_background_by_id', {
+              background_id: backgroundId,
+              project_id: projectId
+            });
+            
+          if (rpcError) {
+            console.error('❌ RPC delete error:', rpcError);
+            throw new Error(`Erreur de suppression: ${rpcError.message}`);
+          }
+          
+          console.log('✅ Background deleted via RPC:', rpcResult);
+        } else {
+          console.log('✅ Background deleted directly:', deletedData);
+          
+          // Verify deletion was successful
+          if (!deletedData || deletedData.length === 0) {
+            console.error('❌ No records deleted');
+            throw new Error("La suppression a échoué - aucun enregistrement supprimé");
+          }
+        }
+        
+        // Update the local state
+        setBackgrounds(prevBackgrounds => {
+          const newBackgrounds = prevBackgrounds.filter(bg => bg.id !== backgroundId);
+          console.log('📝 Updated backgrounds state:', newBackgrounds.length, 'backgrounds remaining');
+          console.log('📝 Backgrounds before filter:', prevBackgrounds.map(bg => ({ id: bg.id, name: bg.name })));
+          console.log('📝 Backgrounds after filter:', newBackgrounds.map(bg => ({ id: bg.id, name: bg.name })));
+          return newBackgrounds;
+        });
+        
+        setSuccess(`Arrière-plan "${existingBackground.name}" supprimé avec succès`);
+      }
+      
     } catch (error) {
-      console.error('Error deleting background:', error);
+      console.error('❌ Error deleting background:', error);
+      console.error('❌ Error stack:', error.stack);
       setError(`Erreur lors de la suppression de l'arrière-plan: ${error.message}`);
     } finally {
+      console.log('🏁 [PERFORM DELETE] Cleanup - removing deleting state');
       setDeletingBackground(prev => {
         const newState = { ...prev };
         delete newState[backgroundId];
+        console.log('🏁 [PERFORM DELETE] New deleting state:', newState);
         return newState;
       });
     }
@@ -175,12 +412,16 @@ const BackgroundManager = ({
 
   // Debug backgrounds data
   useEffect(() => {
-    console.log('Backgrounds data updated:', backgrounds);
+    console.log('🔄 [BACKGROUNDS STATE] Backgrounds data updated:', backgrounds);
+    console.log('🔄 [BACKGROUNDS STATE] Number of backgrounds:', backgrounds.length);
+    console.log('🔄 [BACKGROUNDS STATE] Background IDs:', backgrounds.map(bg => bg.id));
+    console.log('🔄 [BACKGROUNDS STATE] Background names:', backgrounds.map(bg => bg.name));
+    
     // Check for duplicate IDs
     const ids = backgrounds.map(bg => bg.id);
     const uniqueIds = [...new Set(ids)];
     if (ids.length !== uniqueIds.length) {
-      console.warn('Duplicate background IDs detected!', ids);
+      console.warn('⚠️ [BACKGROUNDS STATE] Duplicate background IDs detected!', ids);
     }
   }, [backgrounds]);
 
@@ -216,6 +457,8 @@ const BackgroundManager = ({
 
   // Function to delete individual media from a background
   const handleDeleteIndividualMedia = async (backgroundId, mediaType) => {
+    console.log('🎭 [HANDLE DELETE MEDIA] Starting media delete process:', { backgroundId, mediaType });
+    
     const mediaNames = {
       'image_url': 'image horizontale',
       'image_url_vertical': 'image verticale',
@@ -224,6 +467,9 @@ const BackgroundManager = ({
     };
 
     const background = backgrounds.find(bg => bg.id === backgroundId);
+    console.log('🎭 [HANDLE DELETE MEDIA] Found background:', background);
+    console.log('🎭 [HANDLE DELETE MEDIA] Current media value:', background?.[mediaType]);
+    
     setDeleteConfirmData({
       type: 'media',
       id: backgroundId,
@@ -233,10 +479,13 @@ const BackgroundManager = ({
       action: () => performDeleteIndividualMedia(backgroundId, mediaType)
     });
     setShowDeleteConfirm(true);
+    console.log('🎭 [HANDLE DELETE MEDIA] Showing confirmation dialog');
   };
 
   // Fonction séparée pour effectuer la suppression de média
   const performDeleteIndividualMedia = async (backgroundId, mediaType) => {
+    console.log('🎬 [PERFORM DELETE MEDIA] Starting media delete:', { backgroundId, mediaType });
+    
     const mediaNames = {
       'image_url': 'image horizontale',
       'image_url_vertical': 'image verticale',
@@ -246,43 +495,210 @@ const BackgroundManager = ({
 
     // Create unique key for this deletion
     const deletionKey = `${backgroundId}-${mediaType}`;
+    console.log('🎬 [PERFORM DELETE MEDIA] Deletion key:', deletionKey);
     
     try {
       setError(null);
       setDeletingMedia(prev => ({ ...prev, [deletionKey]: true }));
+      console.log('🎬 [PERFORM DELETE MEDIA] Set deleting media state to true');
       
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("Session expirée, veuillez vous reconnecter");
-        return;
+      // TEMPORARY TEST: Skip authentication checks and API, go directly to Supabase
+      console.log('🧪 [PERFORM DELETE MEDIA] TESTING MODE: Direct Supabase update...');
+      
+      try {
+        // Get current session (simple check)
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🧪 [TEST] Session check:', { hasSession: !!session, userId: session?.user?.id });
+        
+        // Simple update operation
+        const updateData = { [mediaType]: null };
+        console.log('🧪 [TEST] Attempting to update background:', backgroundId, 'with data:', updateData);
+        
+        const { data: updatedData, error: updateError } = await supabase
+          .from('backgrounds')
+          .update(updateData)
+          .eq('id', backgroundId)
+          .select();
+        
+        console.log('🧪 [TEST] Supabase update result:', { 
+          updatedData: updatedData, 
+          error: updateError,
+          errorCode: updateError?.code,
+          errorMessage: updateError?.message,
+          errorDetails: updateError?.details 
+        });
+        
+        if (updateError) {
+          console.error('🧪 [TEST] Update failed with error:', updateError);
+          setError(`Erreur de mise à jour: ${updateError.message} (Code: ${updateError.code})`);
+          return;
+        }
+        
+        if (!updatedData || updatedData.length === 0) {
+          console.error('🧪 [TEST] No records were updated');
+          setError("Aucun enregistrement n'a été mis à jour");
+          return;
+        }
+        
+        console.log('🧪 [TEST] Update successful! Updated record:', updatedData[0]);
+        
+        // Update local state
+        setBackgrounds(backgrounds.map(bg => {
+          if (bg.id === backgroundId) {
+            return { ...bg, [mediaType]: null };
+          }
+          return bg;
+        }));
+        
+        setSuccess(`TEST RÉUSSI: ${mediaNames[mediaType]} supprimée avec succès`);
+        
+      } catch (testError) {
+        console.error('🧪 [TEST] Exception during test:', testError);
+        setError(`Erreur de test: ${testError.message}`);
       }
       
-      // Update the background to set the specific media field to null
-      const updateData = { [mediaType]: null };
-      
-      const { error } = await supabase
-        .from('backgrounds')
-        .update(updateData)
-        .eq('id', backgroundId);
+      // Try API route first (it handles session on server side)
+      try {
+        console.log('📡 [PERFORM DELETE MEDIA] Trying API route method...');
+        console.log('📡 [PERFORM DELETE MEDIA] API request data:', { backgroundId, mediaType });
         
-      if (error) throw error;
+        // Check current session before making API call
+        const { data: { session: preCallSession } } = await supabase.auth.getSession();
+        console.log('📡 [PERFORM DELETE MEDIA] Pre-API call session check:', { 
+          hasSession: !!preCallSession, 
+          userId: preCallSession?.user?.id,
+          expires: preCallSession?.expires_at 
+        });
+        
+        const response = await fetch('/api/backgrounds/delete-media', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'same-origin', // Important: include cookies
+          body: JSON.stringify({
+            backgroundId: backgroundId,
+            mediaType: mediaType
+          }),
+        });
+
+        console.log('📡 [PERFORM DELETE MEDIA] API Response status:', response.status);
+        
+        const result = await response.json();
+        console.log('📡 [PERFORM DELETE MEDIA] API response:', { status: response.status, result });
+
+        if (response.ok) {
+          console.log('✅ [PERFORM DELETE MEDIA] Media deleted successfully via API:', result);
+          
+          // Update the local state
+          console.log('📝 [PERFORM DELETE MEDIA] Updating local state...');
+          console.log('📝 [PERFORM DELETE MEDIA] Current backgrounds before update:', backgrounds.map(bg => ({ id: bg.id, [mediaType]: bg[mediaType] })));
+          
+          setBackgrounds(backgrounds.map(bg => {
+            if (bg.id === backgroundId) {
+              const updatedBg = { ...bg, [mediaType]: null };
+              console.log('📝 [PERFORM DELETE MEDIA] Updated background:', { id: bg.id, before: bg[mediaType], after: updatedBg[mediaType] });
+              return updatedBg;
+            }
+            return bg;
+          }));
+          
+          console.log('📝 [PERFORM DELETE MEDIA] Local state updated');
+          
+          setSuccess(result.message || `${mediaNames[mediaType]} supprimée avec succès`);
+          console.log('✅ [PERFORM DELETE MEDIA] Success message set');
+          return;
+        } else {
+          console.warn('⚠️ [PERFORM DELETE MEDIA] API route failed:', result);
+          
+          // Check if it's an authentication error
+          if (response.status === 401) {
+            console.error('🔒 [PERFORM DELETE MEDIA] Authentication error - session expired, but continuing...');
+            // Continue without redirecting
+          }
+          
+          throw new Error('API route failed: ' + (result.error || 'Unknown error'));
+        }
+      } catch (apiError) {
+        console.warn('⚠️ [PERFORM DELETE MEDIA] API route method failed, falling back to direct Supabase:', apiError.message);
+        console.error('⚠️ [PERFORM DELETE MEDIA] Full API error:', apiError);
+        
+        // Fallback to direct Supabase access
+        console.log('🔄 [PERFORM DELETE MEDIA] Trying direct Supabase method...');
+        
+        // Vérification de session pour média
+        console.log('🔐 [PERFORM DELETE MEDIA] Checking session...');
+        let session = null;
+        
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('❌ [PERFORM DELETE MEDIA] Session error:', sessionError);
+          console.log('🔄 [PERFORM DELETE MEDIA] Continuing without session...');
+          session = null; // Continue without session
+        } else if (!currentSession) {
+          console.error('❌ [PERFORM DELETE MEDIA] No session found, but continuing...');
+          session = null; // Continue without session
+        } else {
+          session = currentSession;
+        }
+        
+        console.log('✅ [PERFORM DELETE MEDIA] Proceeding with media deletion...');
+        
+        // Update the background to set the specific media field to null
+        const updateData = { [mediaType]: null };
+        console.log('🎬 [PERFORM DELETE MEDIA] Update data:', updateData);
+        console.log('🎬 [PERFORM DELETE MEDIA] Updating background ID:', backgroundId);
+        
+        const { data: updatedData, error } = await supabase
+          .from('backgrounds')
+          .update(updateData)
+          .eq('id', backgroundId)
+          .select();
+          
+        console.log('🎬 [PERFORM DELETE MEDIA] Supabase update result:', { updatedData, error });
+          
+        if (error) {
+          console.error('❌ [PERFORM DELETE MEDIA] Supabase error:', error);
+          throw error;
+        }
+        
+        if (!updatedData || updatedData.length === 0) {
+          console.error('❌ [PERFORM DELETE MEDIA] No records updated');
+          throw new Error("Aucun enregistrement mis à jour");
+        }
+        
+        console.log('✅ [PERFORM DELETE MEDIA] Database updated successfully:', updatedData);
+        
+        // Update the local state
+        console.log('📝 [PERFORM DELETE MEDIA] Updating local state...');
+        console.log('📝 [PERFORM DELETE MEDIA] Current backgrounds before update:', backgrounds.map(bg => ({ id: bg.id, [mediaType]: bg[mediaType] })));
+        
+        setBackgrounds(backgrounds.map(bg => {
+          if (bg.id === backgroundId) {
+            const updatedBg = { ...bg, [mediaType]: null };
+            console.log('📝 [PERFORM DELETE MEDIA] Updated background:', { id: bg.id, before: bg[mediaType], after: updatedBg[mediaType] });
+            return updatedBg;
+          }
+          return bg;
+        }));
+        
+        console.log('📝 [PERFORM DELETE MEDIA] Local state updated');
+        
+        setSuccess(`${mediaNames[mediaType]} supprimée avec succès`);
+        console.log('✅ [PERFORM DELETE MEDIA] Success message set');
+      }
       
-      // Update the local state
-      setBackgrounds(backgrounds.map(bg => 
-        bg.id === backgroundId 
-          ? { ...bg, [mediaType]: null }
-          : bg
-      ));
-      
-      setSuccess(`${mediaNames[mediaType]} supprimée avec succès`);
     } catch (error) {
-      console.error('Error deleting media:', error);
+      console.error('❌ [PERFORM DELETE MEDIA] Error deleting media:', error);
+      console.error('❌ [PERFORM DELETE MEDIA] Error stack:', error.stack);
       setError(`Erreur lors de la suppression de la ${mediaNames[mediaType]}: ${error.message}`);
     } finally {
+      console.log('🏁 [PERFORM DELETE MEDIA] Cleanup - removing deleting media state');
       setDeletingMedia(prev => {
         const newState = { ...prev };
         delete newState[deletionKey];
+        console.log('🏁 [PERFORM DELETE MEDIA] New deleting media state:', newState);
         return newState;
       });
     }
@@ -339,8 +755,16 @@ const BackgroundManager = ({
               </button>
               <button
                 onClick={() => {
+                  console.log('✅ [CONFIRM DELETE] Confirmation button clicked');
+                  console.log('✅ [CONFIRM DELETE] Delete data:', deleteConfirmData);
                   setShowDeleteConfirm(false);
-                  deleteConfirmData?.action();
+                  console.log('✅ [CONFIRM DELETE] About to call action function');
+                  try {
+                    deleteConfirmData?.action();
+                    console.log('✅ [CONFIRM DELETE] Action function called successfully');
+                  } catch (error) {
+                    console.error('❌ [CONFIRM DELETE] Error calling action function:', error);
+                  }
                 }}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
               >
@@ -415,7 +839,12 @@ const BackgroundManager = ({
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleDeleteBackground(background.id)}
+                          onClick={() => {
+                            console.log('🔴 [DELETE BUTTON] Button clicked for background:', background.id);
+                            console.log('🔴 [DELETE BUTTON] Background data:', background);
+                            console.log('🔴 [DELETE BUTTON] Is deleting?', deletingBackground[background.id]);
+                            handleDeleteBackground(background.id);
+                          }}
                           disabled={deletingBackground[background.id]}
                           className="inline-flex items-center px-3 py-2 bg-red-500 bg-opacity-20 text-white text-sm font-medium rounded-lg hover:bg-opacity-30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >

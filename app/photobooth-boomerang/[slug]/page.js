@@ -137,10 +137,10 @@ export default function PhotoboothProject({ params }) {
   const handleStartExperience = () => {
     if (project?.photobooth_type === 'boomerang') {
       router.push(`/photobooth-boomerang/${slug}/cam`);
-    } else if (project?.photobooth_type === 'premium') {
-      router.push(`/photobooth-premium/${slug}/style`);
+    } else if (project?.photobooth_type === 'boomerang') {
+      router.push(`/photobooth-boomerang/${slug}/style`);
     } else {
-      router.push(`/photobooth-premium/${slug}/how`);
+      router.push(`/photobooth-boomerang/${slug}/how`);
     }
   };
 

@@ -11,6 +11,105 @@
 body {
   color: rgb(var(--foreground-rgb));
   background-color: rgb(var(--background-rgb));
+  /* Optimisations pour mobile */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Styles pour mobile - masquer les barres du navigateur */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+/* Optimisations tactiles */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Safe area pour les appareils avec encoche */
+.pb-safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe-area-inset-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Animations Web3 pour le podium */
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 30px rgba(255,215,0,0.8), inset 0 3px 6px rgba(255,255,255,0.4);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(255,215,0,1), inset 0 3px 6px rgba(255,255,255,0.6);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(255,215,0,0.8), inset 0 3px 6px rgba(255,255,255,0.4);
+  }
+}
+
+@keyframes scan {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255,255,255,0.8);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
 }
 
 /* Styles génériques pour remplacer les arrière-plans d'images */
