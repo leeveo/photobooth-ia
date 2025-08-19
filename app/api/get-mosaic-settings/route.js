@@ -18,7 +18,7 @@ const supabaseServiceRole = createClient(supabaseUrl, serviceRoleKey, {
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const projectId = searchParams.get('projectId');
 
     console.log('🔍 API READ: Project ID reçu:', projectId);

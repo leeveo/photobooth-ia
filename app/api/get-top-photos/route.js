@@ -13,7 +13,7 @@ const supabase = createClient(
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const projectId = searchParams.get('projectId');
 
     console.log('🔍 GET TOP PHOTOS: Project ID reçu:', projectId);
