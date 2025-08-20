@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
-import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import LoadingSpinnerCoiffure from '../../components/ui/LoadingSpinnerCoiffure';
 
 export default function PhotoboothProject({ params }) {
   const slug = params.slug;
@@ -186,13 +186,13 @@ export default function PhotoboothProject({ params }) {
   // Show loading state
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <LoadingSpinner 
-          text="Préparation de votre expérience coiffure..." 
-          size="large" 
-          color="purple" 
-        />
-      </div>
+      <LoadingSpinnerCoiffure 
+        message="Préparation de votre expérience coiffure..." 
+        size="large" 
+        primaryColor={project?.primary_color || '#811A53'}
+        secondaryColor={project?.secondary_color || '#E5E40A'}
+        accentColor="#C4A484"
+      />
     );
   }
 

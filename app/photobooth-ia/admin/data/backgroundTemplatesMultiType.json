@@ -2930,37 +2930,53 @@
 
 
   "vertical_videos": [
+   
     {
-      "id": "ocean-waves-v",
-      "name": "Vagues Océan Vertical",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/ocean-waves-portrait.mp4",
-      "category": "Nature"
+      "id": "video_coiffeur_vertical_01",
+      "name": "Salon de Coiffure Vertical 1",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(12).mp4",
+      "category": "Coiffeur"
     },
     {
-      "id": "city-lights-v",
-      "name": "Lumières Ville Vertical",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/city-lights-portrait.mp4",
-      "category": "Urbain"
+      "id": "video_coiffeur_vertical_02",
+      "name": "Salon de Coiffure Vertical 2",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(2).mp4",
+      "category": "Coiffeur"
     },
     {
-      "id": "abstract-motion-v",
-      "name": "Mouvement Abstrait Vertical",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/abstract-motion-portrait.mp4",
-      "category": "Abstrait"
+      "id": "video_coiffeur_vertical_03",
+      "name": "Salon de Coiffure Vertical 3",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(6).mp4",
+      "category": "Coiffeur"
     }
   ],
+
+
+
+
+
+  "horizontal_videos": [
+   {
+      "id": "video_coiffeur_horizontal_01",
+      "name": "Salon de Coiffure Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(2).mp4",
+      "category": "Coiffeur"
+    }
+
+     ],
+
   "packages": [
     {
-      "id": "nature-complete-1",
-      "name": "Package Nature Complet",
-      "category": "Nature",
-      "description": "Package complet avec images et vidéos nature",
-      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/003.png",
+      "id": "coiffeur-complete-1",
+      "name": "Package Coiffeur Complet",
+      "category": "Coiffeur",
+      "description": "Package complet avec images et vidéos coiffure professionnelle",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/coiffeur%20(2).jpg",
       "media": {
-        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/003.png",
-        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/green-nature-portrait.jpg",
-        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/nature-forest.mp4",
-        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/forest-vertical.mp4"
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/coiffeur%20(2).jpg",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_coiffeur%20(2).jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(2).mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(2).mp4"
       }
     },
     {

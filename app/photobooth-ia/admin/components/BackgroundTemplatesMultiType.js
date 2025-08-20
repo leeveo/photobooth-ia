@@ -16,7 +16,6 @@ const BackgroundTemplatesMultiType = ({
   const [templates, setTemplates] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
   const [savingBackground, setSavingBackground] = useState(false);
   const [activeTab, setActiveTab] = useState('packages'); // Commencer par les packages
   
@@ -229,13 +228,12 @@ const BackgroundTemplatesMultiType = ({
     reader.readAsDataURL(file);
   };
 
-  // Filter templates based on category, search query and active tab
+  // Filter templates based on category and active tab
   const filteredTemplates = (() => {
     const currentTabTemplates = templates[activeTab] || [];
     return currentTabTemplates.filter(template => {
       const matchesCategory = activeCategory === 'All' || template.category === activeCategory;
-      const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      return matchesCategory;
     });
   })();
 
@@ -521,26 +519,11 @@ const BackgroundTemplatesMultiType = ({
         </div>
       </div>
 
-      {/* Search & Upload Section */}
-      <div className="flex flex-col md:flex-row gap-2 mb-3">
-        <div className="relative flex-grow">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder={`Rechercher pour ${currentTab?.label}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
+      {/* Upload Section */}
+      <div className="flex justify-center mb-3">
         {/* Upload button - masqué pour les packages */}
         {activeTab !== 'packages' && (
-          <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white ${getUploadButtonClasses(activeTab)} transition-colors whitespace-nowrap`}>
+          <label className={`cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white ${getUploadButtonClasses(activeTab)} transition-colors`}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -794,7 +777,7 @@ const BackgroundTemplatesMultiType = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <p className="mt-4 text-gray-500">
-                  Aucun arrière-plan trouvé pour cette recherche.
+                  Aucun arrière-plan trouvé dans cette catégorie.
                 </p>
               </div>
             )}

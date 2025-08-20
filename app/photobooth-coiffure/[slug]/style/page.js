@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingSpinnerCoiffure from '../../../components/ui/LoadingSpinnerCoiffure';
 import './style.css'; // Import CSS for masonry grid
 
 // Ajout des imports react-slick
@@ -230,14 +231,13 @@ export default function PhotoboothStyles({ params }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="h-32 w-32 border-t-4 border-b-4 rounded-full"
-          style={{ borderTopColor: '#E5E40A', borderBottomColor: '#811A53' }}
-        />
-      </div>
+      <LoadingSpinnerCoiffure 
+        message="Chargement des styles de coiffure..." 
+        size="large" 
+        primaryColor={project?.primary_color || '#811A53'}
+        secondaryColor={project?.secondary_color || '#E5E40A'}
+        accentColor="#C4A484"
+      />
     );
   }
   
@@ -278,7 +278,14 @@ export default function PhotoboothStyles({ params }) {
     { label: 'Mèches caramel', value: 'caramel highlights', bg: '/teinte/24_caramel_highlights_tint_hair.jpg', teinte: 'brun' },
     { label: 'Mèches cuivrées', value: 'copper highlights', bg: '/teinte/25_copper_highlights_tint_hair.jpg', teinte: 'roux' },
     { label: 'Mèches rousses', value: 'red highlights', bg: '/teinte/26_red_highlights_tint_hair.jpg', teinte: 'roux' },
-    { label: 'Dip dye / tie and dye', value: 'dip dye / tie and dye', bg: '/teinte/27_dip_dye_tie_and_dye_tint_hair.jpg', teinte: 'fantaisie' }
+    { label: 'Dip dye / tie and dye', value: 'dip dye / tie and dye', bg: '/teinte/27_dip_dye_tie_and_dye_tint_hair.jpg', teinte: 'fantaisie' },
+    { label: 'Bleu', value: 'blue', bg: '/teinte/28_blue.jpg', teinte: 'fantaisie' },
+    { label: 'Vert', value: 'green', bg: '/teinte/29_green.jpg', teinte: 'fantaisie' },
+    { label: 'Rose', value: 'pink', bg: '/teinte/30_pink.jpg', teinte: 'fantaisie' },
+    { label: 'Rose pastel', value: 'pastel pink', bg: '/teinte/31_pastel_pink.jpg', teinte: 'fantaisie' },
+    { label: 'Violet', value: 'violet', bg: '/teinte/32_violet.jpg', teinte: 'fantaisie' },
+    { label: 'Lavande pastel', value: 'pastel lavender', bg: '/teinte/33_pastel_lavender.jpg', teinte: 'fantaisie' },
+    { label: 'Blanc nacré', value: 'pearl white', bg: '/teinte/34_pearl_white.jpg', teinte: 'fantaisie' }
   ];
 
   // Catégories de teintes avec images et couleurs
