@@ -12,6 +12,92 @@
   position: relative;
 }
 
+/* Styles pour le slider multi-row */
+.slick-slider .slick-list {
+  padding: 20px 0 !important;
+}
+
+.slick-slider .slick-track {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: stretch !important;
+}
+
+.slick-slider.slick-vertical .slick-slide > div {
+  height: auto !important;
+}
+
+/* Styles pour les slides multi-row */
+.slick-slide {
+  padding: 8px !important;
+  box-sizing: border-box !important;
+}
+
+.slick-slide > div {
+  height: 100% !important;
+}
+
+/* Ajustements pour les cartes de style dans le slider multi-row */
+.slick-slider .style-card {
+  height: 280px !important; /* Hauteur fixe pour uniformiser */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.slick-slider .style-card > div:first-child {
+  flex: 1 !important;
+  height: 200px !important; /* Hauteur de l'image */
+}
+
+.slick-slider .style-card > div:last-child {
+  height: 80px !important; /* Hauteur de la description */
+  overflow: hidden !important;
+}
+
+/* Centrage du contenu multi-row */
+.slick-slider.center .slick-track {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Responsive pour multi-row */
+@media (max-width: 900px) {
+  .slick-slider .style-card {
+    height: 250px !important;
+  }
+  
+  .slick-slider .style-card > div:first-child {
+    height: 180px !important;
+  }
+  
+  .slick-slider .style-card > div:last-child {
+    height: 70px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .slick-slider .style-card {
+    height: 350px !important; /* Hauteur plus grande pour une meilleure visibilité */
+  }
+  
+  .slick-slider .style-card > div:first-child {
+    height: 250px !important; /* Plus d'espace pour l'image */
+  }
+  
+  .slick-slider .style-card > div:last-child {
+    height: 100px !important;
+  }
+  
+  /* Styles spécifiques pour une seule ligne sur mobile */
+  .slick-slider .slick-track {
+    align-items: center !important;
+  }
+  
+  .slick-slide {
+    padding: 4px 8px !important; /* Padding réduit pour plus d'espace */
+  }
+}
+
 /* Styliser la scrollbar plus visible et PLUS LARGE pour Chrome/Safari/Edge */
 .styles-scrollable-container::-webkit-scrollbar {
   width: 20px; /* Largeur considérablement augmentée (de 12px à 20px) */

@@ -404,22 +404,24 @@ export default function PhotoboothStyles({ params }) {
     );
   }
 
-  // Configuration du carrousel react-slick
+  // Configuration du carrousel react-slick avec multiple rows
   const sliderSettings = {
-    dots: false,
-    infinite: filteredStyles.length > 1,
+    className: "center",
+    centerMode: true,
+    infinite: filteredStyles.length > 6, // Besoin de plus d'éléments pour l'infinite avec multiple rows
+    centerPadding: "60px",
+    slidesToShow: 3,
     speed: 500,
-    slidesToShow: Math.min(filteredStyles.length, 4),
-    slidesToScroll: 1, // Changé de 4 à 1 pour un meilleur contrôle
+    rows: 2,
+    slidesPerRow: 2,
+    dots: false,
     swipeToSlide: true,
-    touchThreshold: 10, // Ajouté pour une meilleure sensibilité tactile
+    touchThreshold: 10,
     swipe: true,
     touchMove: true,
     draggable: true,
     accessibility: true,
     useTransform: true,
-    centerMode: false,
-    variableWidth: false,
     nextArrow: <ArrowRight />,
     prevArrow: <ArrowLeft />,
     appendArrows: (container) => (
@@ -433,22 +435,29 @@ export default function PhotoboothStyles({ params }) {
       {
         breakpoint: 1280,
         settings: {
-          slidesToShow: Math.min(filteredStyles.length, 3),
-          slidesToScroll: 1,
+          slidesToShow: 2,
+          rows: 2,
+          slidesPerRow: 2,
+          centerPadding: "40px",
         }
       },
       {
         breakpoint: 900,
         settings: {
-          slidesToShow: Math.min(filteredStyles.length, 2),
-          slidesToScroll: 1,
+          slidesToShow: 2,
+          rows: 2,
+          slidesPerRow: 1,
+          centerPadding: "30px",
         }
       },
       {
         breakpoint: 600,
         settings: {
           slidesToShow: 1,
-          slidesToScroll: 1,
+          rows: 1,
+          slidesPerRow: 1,
+          centerPadding: "20px",
+          centerMode: false,
         }
       }
     ]
