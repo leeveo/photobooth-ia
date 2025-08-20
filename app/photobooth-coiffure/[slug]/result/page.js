@@ -812,97 +812,107 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {/* Download Button - Always visible */}
+        {/* Action Icons - 3 icons aligned horizontally */}
         {imageResultAI && (
-          <div className="mt-6 flex justify-center">
-            <motion.a
-              href={imageResultAI}
-              download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
-              className="py-4 px-8 rounded-2xl font-bold text-xl text-center flex items-center justify-center gap-3 max-w-[340px] w-full shadow-lg border-2 transition-all"
-              style={{
-                background: '#fff',
-                color: primaryColor,
-                borderColor: primaryColor,
-                boxShadow: `0 4px 16px 0 ${primaryColor}33`,
-                letterSpacing: '0.05em',
-                textDecoration: 'none',
-              }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              </svg>
-              <span>TÉLÉCHARGER MA PHOTO</span>
-            </motion.a>
+          <div className="mt-8 flex justify-center items-start gap-8 px-4">
+            {/* 1. Icône Télécharger */}
+            <div className="flex flex-col items-center">
+              <motion.a
+                href={imageResultAI}
+                download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+                className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
+                style={{
+                  background: '#fff',
+                  color: primaryColor,
+                  border: `3px solid ${primaryColor}`,
+                  boxShadow: `0 4px 16px 0 ${primaryColor}33`,
+                  width: '80px',
+                  height: '80px'
+                }}
+                whileHover={{ scale: 1.1, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                title="Télécharger ma photo"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+              </motion.a>
+              <span className="mt-2 text-sm font-medium text-black">Télécharger</span>
+            </div>
+
+            {/* 2. Icône Envoyer ma photo */}
+            {settings?.enable_qr_codes && (
+              <div className="flex flex-col items-center">
+                <motion.button 
+                  onClick={handleShare}
+                  disabled={loadingUpload}
+                  className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
+                  style={{ 
+                    backgroundColor: secondaryColor, 
+                    color: primaryColor,
+                    border: `3px solid ${primaryColor}`,
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  whileHover={{ scale: loadingUpload ? 1 : 1.1, y: loadingUpload ? 0 : -4 }}
+                  whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  title={project?.datacapture ? "Envoyer ma photo" : "Partager ma photo"}
+                >
+                  {loadingUpload ? (
+                    <svg className="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : project?.datacapture ? (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  )}
+                </motion.button>
+                <span className="mt-2 text-sm font-medium text-black">
+                  {project?.datacapture ? "E-Mail" : "Partage"}
+                </span>
+              </div>
+            )}
+
+            {/* 3. Icône Recommencer */}
+            <div className="flex flex-col items-center">
+              <motion.div
+                whileHover={{ scale: 1.1, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <Link 
+                  href={`/photobooth-coiffure/${slug}/`}
+                  onClick={handleStartOver}
+                  className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    color: '#fff',
+                    border: '3px solid rgba(255, 255, 255, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 16px 0 rgba(255, 255, 255, 0.2)',
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  title="Recommencer"
+                >
+                  <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </Link>
+              </motion.div>
+              <span className="mt-2 text-sm font-medium text-black">Retour</span>
+            </div>
           </div>
         )}
-
-        {/* Action Buttons - Modern redesign with narrower width */}
-        <div className="mt-8 flex flex-col items-center space-y-4">
-          {settings?.enable_qr_codes && imageResultAI && (
-            <motion.button 
-              onClick={handleShare}
-              disabled={loadingUpload}
-              className={`py-5 px-10 rounded-2xl font-extrabold text-2xl text-center flex items-center justify-center gap-3 max-w-[340px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
-              style={{ 
-                backgroundColor: secondaryColor, 
-                color: primaryColor,
-                letterSpacing: '0.05em',
-                boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
-              }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              {loadingUpload ? (
-                <>
-                  <svg className="animate-spin w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>PRÉPARATION...</span>
-                </>
-              ) : project?.datacapture ? (
-                <>
-                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>ENVOYER MA PHOTO</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  
-                  <span>PARTAGER MA PHOTO</span>
-                </>
-              )}
-            </motion.button>
-          )}
-          
-          <motion.div
-            className="w-full max-w-[340px]" // largeur augmentée
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link 
-              href={`/photobooth-coiffure/${slug}/how`}
-              onClick={handleStartOver}
-              className="py-5 px-10 rounded-2xl font-extrabold text-2xl text-center bg-white bg-opacity-30 hover:bg-opacity-40 text-white transition-all flex items-center justify-center gap-3 w-full backdrop-blur-sm shadow-lg"
-              style={{
-                letterSpacing: '0.05em'
-              }}
-            >
-              <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>RECOMMENCER</span>
-            </Link>
-          </motion.div>
-        </div>
       </div>
     </main>
   );

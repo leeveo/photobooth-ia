@@ -987,7 +987,7 @@ export default function CameraCapture({ params }) {
       console.log('[Replicate] Payload summary:', window.debugReplicatePayload);
       
       console.log('[Replicate] Starting request to /api/replicate...');
-      setLogs(prevLogs => [...prevLogs, "Connexion au serveur Replicate..."]);
+      setLogs(prevLogs => [...prevLogs, "Connexion au serveur IA ."]);
       
       const fetchStart = Date.now();
       let response;
@@ -1918,7 +1918,7 @@ const generateImageReplicate = async () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {enabled ? 'Vérifiez votre photo' : 'Prenez une photo'}
+          {enabled ? 'Vérifiez votre photo' : 'Prenez votre photo'}
         </motion.h2>
         
         {/* Invisible retry button that can be triggered programmatically */}
@@ -1934,13 +1934,13 @@ const generateImageReplicate = async () => {
               : 'mx-auto'
           }`}
           style={{ 
-            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
-            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
+            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '95vw' : '100%',
+            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '800px' : '1400px',
             aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
             backgroundColor: 'black',
-            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
-            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
+            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
             margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
           }}
           initial={{ scale: 0.95, opacity: 0 }}
@@ -2033,8 +2033,8 @@ const generateImageReplicate = async () => {
               transform: 'scaleX(-1)',
               display: enabled && !videoVisible ? 'none' : 'block',
               visibility: enabled && !videoVisible ? 'hidden' : 'visible',
-              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
-              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
               backgroundColor: '#000',
               objectPosition: 'center center'
             }} 

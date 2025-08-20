@@ -343,6 +343,7 @@ const BackgroundTemplatesMultiType = ({
         project_id: projectId,
         name: `Background Multi-Type ${new Date().toLocaleDateString()}`,
         is_active: true,
+        show_animated: true, // Automatiquement activé pour que les vidéos s'affichent
         created_by: userId
       };
 
@@ -384,6 +385,7 @@ const BackgroundTemplatesMultiType = ({
       formData.append('projectId', projectId);
       formData.append('name', backgroundData.name);
       formData.append('isActive', 'true');
+      formData.append('showAnimated', 'true'); // Automatiquement activé pour que les vidéos s'affichent
 
       let hasUploadedFiles = false;
 

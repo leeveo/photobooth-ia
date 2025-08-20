@@ -14,7 +14,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     error: null
   });
   
-  const [debugData, setDebugData] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const slug = params.slug;
@@ -96,11 +95,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           
         if (backgroundsError) throw backgroundsError;
         logDebug('Available backgrounds', backgrounds);
-        
-        setDebugData({
-          project,
-          backgrounds
-        });
         
         // 3. Filter animated backgrounds with valid video URLs
         const animatedBackgrounds = backgrounds.filter(bg => {
@@ -206,6 +200,26 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           error: null
         });
         
+        // ENHANCED DEBUG LOGGING
+        console.log('🎬 FINAL BACKGROUND SETTINGS:', {
+          imageUrl,
+          videoUrl,
+          isAnimated,
+          isMobile,
+          isMainPage,
+          orientation: isMobile ? 'portrait/mobile' : 'landscape/desktop',
+          animatedBackgroundsCount: animatedBackgrounds.length,
+          totalBackgroundsCount: backgrounds.length
+        });
+        
+        if (isAnimated && videoUrl) {
+          console.log('✅ VIDEO SHOULD BE DISPLAYED:', videoUrl);
+        } else if (imageUrl) {
+          console.log('📷 IMAGE BACKGROUND:', imageUrl);
+        } else {
+          console.log('❌ NO BACKGROUND AVAILABLE');
+        }
+        
         logDebug('Final background settings (orientation-aware)', {
           imageUrl,
           videoUrl,
@@ -248,6 +262,19 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       };
     }
   }, [background.videoUrl]);
+
+  // CONSOLE LOG CURRENT BACKGROUND STATE
+  console.log('🎯 CURRENT BACKGROUND STATE:', {
+    loading: background.loading,
+    isAnimated: background.isAnimated,
+    hasVideoUrl: !!background.videoUrl,
+    hasImageUrl: !!background.imageUrl,
+    videoUrl: background.videoUrl,
+    imageUrl: background.imageUrl,
+    error: background.error,
+    isMainPage,
+    pathname
+  });
 
   return (
     <>
@@ -304,6 +331,11 @@ export default function PremiumPhotoboothLayout({ children, params }) {
             loop
             muted
             playsInline
+            onLoadStart={() => console.log('🎬 Video loading started:', background.videoUrl)}
+            onCanPlay={() => console.log('✅ Video can play:', background.videoUrl)}
+            onPlaying={() => console.log('▶️ Video is playing:', background.videoUrl)}
+            onError={(e) => console.error('❌ Video error:', e, background.videoUrl)}
+            onLoadedData={() => console.log('📹 Video data loaded:', background.videoUrl)}
             style={{
               width: '100%',
               height: '100%',
@@ -311,6 +343,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
             }}
           >
             <source src={background.videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
           </video>
         </div>
       )}

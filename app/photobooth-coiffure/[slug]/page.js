@@ -161,7 +161,7 @@ export default function PhotoboothProject({ params }) {
     } else if (project?.photobooth_type === 'coiffure') {
       router.push(`/photobooth-coiffure/${slug}/style`);
     } else {
-      router.push(`/photobooth-coiffure/${slug}/how`);
+      router.push(`/photobooth-coiffure/${slug}/style`);
     }
   };
 
@@ -279,12 +279,456 @@ export default function PhotoboothProject({ params }) {
             </motion.p>
           </motion.div>
 
+          {/* Section des étapes - Comment ça marche */}
+          <motion.div 
+            className="w-full mb-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            {/* Version Mobile et Tablette - Design simple */}
+            <div className="hidden sm:block lg:hidden">
+              <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-8">
+                
+                {/* Étape 1 - Mobile/Tablette */}
+                <motion.div 
+                  className="flex flex-col items-center text-center w-full sm:w-auto"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 1.0 }}
+                >
+                  <motion.div 
+                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
+                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>1</span>
+                  </motion.div>
+                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                    Choisissez votre style
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Sélectionnez le style qui vous plaît</p>
+                </motion.div>
+
+                {/* Séparateur mobile */}
+                <motion.div 
+                  className="flex justify-center sm:hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 1.2 }}
+                >
+                  <div className="w-1 h-4 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+                </motion.div>
+
+                {/* Étape 2 - Mobile/Tablette */}
+                <motion.div 
+                  className="flex flex-col items-center text-center w-full sm:w-auto"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 1.2 }}
+                >
+                  <motion.div 
+                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
+                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>2</span>
+                  </motion.div>
+                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                    Prenez une photo
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Capturez votre plus beau sourire</p>
+                </motion.div>
+
+                {/* Séparateur mobile */}
+                <motion.div 
+                  className="flex justify-center sm:hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 1.4 }}
+                >
+                  <div className="w-1 h-4 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+                </motion.div>
+
+                {/* Étape 3 - Mobile/Tablette */}
+                <motion.div 
+                  className="flex flex-col items-center text-center w-full sm:w-auto"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 1.4 }}
+                >
+                  <motion.div 
+                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
+                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>3</span>
+                  </motion.div>
+                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                    Récupérez votre création
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Téléchargez votre photo transformée</p>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Version Desktop - Design Web 3.0 */}
+            <div className="hidden lg:block">
+              {/* Conteneur principal avec effet glassmorphism */}
+              <motion.div 
+                className="relative backdrop-blur-md bg-white/3 rounded-3xl border border-white/20 p-8 shadow-2xl overflow-hidden max-w-5xl mx-auto"
+                style={{
+                  background: `linear-gradient(135deg, 
+                    ${primaryColor}08 0%, 
+                    ${secondaryColor}12 35%, 
+                    transparent 90%),
+                    linear-gradient(45deg, 
+                    rgba(255,255,255,0.05) 0%, 
+                    rgba(255,255,255,0.02) 100%)`
+                }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 1.0 }}
+              >
+                
+                {/* Titre section avec effet néon */}
+                <motion.div 
+                  className="text-center mb-8"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.2 }}
+                >
+                  <h2 
+                    className="text-3xl font-bold mb-2 bg-gradient-to-r bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: `linear-gradient(45deg, ${secondaryColor}, ${primaryColor}, ${secondaryColor})`,
+                      filter: 'drop-shadow(0 0 20px rgba(229, 228, 10, 0.8))'
+                    }}
+                  >
+                    Comment ça marche ?
+                  </h2>
+                  <div 
+                    className="w-16 h-1 mx-auto rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor}, ${primaryColor})`
+                    }}
+                  />
+                </motion.div>
+
+                {/* Grille des étapes */}
+                <div className="grid grid-cols-3 gap-6 relative">
+                  
+                  {/* Lignes de connexion pour desktop */}
+                  <div className="absolute top-1/2 left-1/3 right-1/3 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent transform -translate-y-1/2 z-0" />
+                  
+                  {/* Étape 1 - Web 3.0 Card */}
+                  <motion.div 
+                    className="relative group"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 1.4 }}
+                  >
+                    <div 
+                      className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8"
+                      style={{
+                        boxShadow: `0 8px 32px ${primaryColor}20, 
+                                   0 0 0 1px ${secondaryColor}30 inset,
+                                   0 0 20px rgba(255,255,255,0.1) inset`
+                      }}
+                    >
+                      {/* Effet de brillance animé */}
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div 
+                          className="absolute inset-0 rounded-2xl"
+                          style={{
+                            background: `conic-gradient(from 0deg, transparent 0deg, ${secondaryColor}40 60deg, transparent 120deg)`,
+                            filter: 'blur(1px)'
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Numéro avec effet holographique */}
+                      <motion.div 
+                        className="relative mx-auto mb-3 w-16 h-16 rounded-full flex items-center justify-center border-2"
+                        style={{ 
+                          background: `radial-gradient(circle at 30% 30%, ${secondaryColor}80, ${secondaryColor}40, ${primaryColor}60)`,
+                          borderColor: secondaryColor,
+                          boxShadow: `0 0 30px ${secondaryColor}50, 0 0 60px ${primaryColor}30 inset`
+                        }}
+                        whileHover={{ 
+                          scale: 1.15, 
+                          rotate: 10,
+                          boxShadow: `0 0 40px ${secondaryColor}70, 0 0 80px ${primaryColor}40 inset`
+                        }}
+                      >
+                        <span 
+                          className="text-xl font-bold z-10 relative"
+                          style={{ 
+                            color: primaryColor,
+                            textShadow: `0 0 10px ${primaryColor}80`
+                          }}
+                        >
+                          1
+                        </span>
+                        
+                        {/* Particules flottantes */}
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              top: '20%', 
+                              left: '25%',
+                              animationDelay: '0s',
+                              animationDuration: '2s'
+                            }}
+                          />
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              top: '70%', 
+                              right: '30%',
+                              animationDelay: '1s',
+                              animationDuration: '3s'
+                            }}
+                          />
+                        </div>
+                      </motion.div>
+                      
+                      <h3 
+                        className="font-bold text-lg mb-2"
+                        style={{ color: secondaryColor }}
+                      >
+                        Choisissez votre style
+                      </h3>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        Explorez notre galerie d'styles IA uniques
+                      </p>
+                      
+                      {/* Indicateur de progression */}
+                      <div className="mt-3 w-full bg-white/10 rounded-full h-1">
+                        <motion.div 
+                          className="h-1 rounded-full"
+                          style={{ backgroundColor: secondaryColor }}
+                          initial={{ width: 0 }}
+                          animate={{ width: '33%' }}
+                          transition={{ duration: 1, delay: 1.6 }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Étape 2 - Web 3.0 */}
+                  <motion.div 
+                    className="relative group"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 1.6 }}
+                  >
+                    <div 
+                      className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8"
+                      style={{
+                        boxShadow: `0 8px 32px ${primaryColor}20, 
+                                   0 0 0 1px ${secondaryColor}30 inset,
+                                   0 0 20px rgba(255,255,255,0.1) inset`
+                      }}
+                    >
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div 
+                          className="absolute inset-0 rounded-2xl"
+                          style={{
+                            background: `conic-gradient(from 120deg, transparent 0deg, ${primaryColor}40 60deg, transparent 120deg)`,
+                            filter: 'blur(1px)'
+                          }}
+                        />
+                      </div>
+                      
+                      <motion.div 
+                        className="relative mx-auto mb-3 w-16 h-16 rounded-full flex items-center justify-center border-2"
+                        style={{ 
+                          background: `radial-gradient(circle at 70% 30%, ${primaryColor}80, ${primaryColor}40, ${secondaryColor}60)`,
+                          borderColor: primaryColor,
+                          boxShadow: `0 0 30px ${primaryColor}50, 0 0 60px ${secondaryColor}30 inset`
+                        }}
+                        whileHover={{ 
+                          scale: 1.15, 
+                          rotate: -10,
+                          boxShadow: `0 0 40px ${primaryColor}70, 0 0 80px ${secondaryColor}40 inset`
+                        }}
+                      >
+                        <span 
+                          className="text-xl font-bold z-10 relative"
+                          style={{ 
+                            color: secondaryColor,
+                            textShadow: `0 0 10px ${secondaryColor}80`
+                          }}
+                        >
+                          2
+                        </span>
+                        
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              top: '30%', 
+                              right: '20%',
+                              animationDelay: '0.5s',
+                              animationDuration: '2.5s'
+                            }}
+                          />
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              bottom: '25%', 
+                              left: '25%',
+                              animationDelay: '1.5s',
+                              animationDuration: '3s'
+                            }}
+                          />
+                        </div>
+                      </motion.div>
+                      
+                      <h3 
+                        className="font-bold text-lg mb-2"
+                        style={{ color: secondaryColor }}
+                      >
+                        Prenez une photo
+                      </h3>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        Capturez votre moment parfait en HD
+                      </p>
+                      
+                      <div className="mt-3 w-full bg-white/10 rounded-full h-1">
+                        <motion.div 
+                          className="h-1 rounded-full"
+                          style={{ backgroundColor: primaryColor }}
+                          initial={{ width: 0 }}
+                          animate={{ width: '66%' }}
+                          transition={{ duration: 1, delay: 1.8 }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Étape 3 - Web 3.0 */}
+                  <motion.div 
+                    className="relative group"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 1.8 }}
+                  >
+                    <div 
+                      className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8"
+                      style={{
+                        boxShadow: `0 8px 32px ${secondaryColor}20, 
+                                   0 0 0 1px ${primaryColor}30 inset,
+                                   0 0 20px rgba(255,255,255,0.1) inset`
+                      }}
+                    >
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div 
+                          className="absolute inset-0 rounded-2xl"
+                          style={{
+                            background: `conic-gradient(from 240deg, transparent 0deg, ${secondaryColor}50 60deg, transparent 120deg)`,
+                            filter: 'blur(1px)'
+                          }}
+                        />
+                      </div>
+                      
+                      <motion.div 
+                        className="relative mx-auto mb-3 w-16 h-16 rounded-full flex items-center justify-center border-2"
+                        style={{ 
+                          background: `radial-gradient(circle at 50% 20%, ${secondaryColor}90, ${primaryColor}50, ${secondaryColor}70)`,
+                          borderColor: secondaryColor,
+                          boxShadow: `0 0 30px ${secondaryColor}60, 0 0 60px ${primaryColor}20 inset`
+                        }}
+                        whileHover={{ 
+                          scale: 1.15, 
+                          rotate: 15,
+                          boxShadow: `0 0 50px ${secondaryColor}80, 0 0 80px ${primaryColor}30 inset`
+                        }}
+                      >
+                        <span 
+                          className="text-xl font-bold z-10 relative"
+                          style={{ 
+                            color: primaryColor,
+                            textShadow: `0 0 10px ${primaryColor}80`
+                          }}
+                        >
+                          3
+                        </span>
+                        
+                        <div className="absolute inset-0 rounded-full overflow-hidden">
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              top: '15%', 
+                              left: '40%',
+                              animationDelay: '0.2s',
+                              animationDuration: '2.8s'
+                            }}
+                          />
+                          <div 
+                            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                            style={{ 
+                              bottom: '20%', 
+                              right: '35%',
+                              animationDelay: '2s',
+                              animationDuration: '2.2s'
+                            }}
+                          />
+                        </div>
+                      </motion.div>
+                      
+                      <h3 
+                        className="font-bold text-lg mb-2"
+                        style={{ color: secondaryColor }}
+                      >
+                        Récupérez votre création
+                      </h3>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        Téléchargez votre chef-d'œuvre transformé
+                      </p>
+                      
+                      <div className="mt-3 w-full bg-white/10 rounded-full h-1">
+                        <motion.div 
+                          className="h-1 rounded-full"
+                          style={{ backgroundColor: secondaryColor }}
+                          initial={{ width: 0 }}
+                          animate={{ width: '100%' }}
+                          transition={{ duration: 1, delay: 2.0 }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                </div>
+                
+                {/* Effet de brillance globale */}
+                <div className="absolute inset-0 rounded-3xl pointer-events-none">
+                  <motion.div 
+                    className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    animate={{ 
+                      x: ['-100%', '200%'],
+                      opacity: [0, 1, 0]
+                    }}
+                    transition={{ 
+                      duration: 3, 
+                      repeat: Infinity, 
+                      repeatDelay: 5 
+                    }}
+                  />
+                </div>
+                
+              </motion.div>
+            </div>
+          </motion.div>
+
           {/* Start button with modern hover effect */}
           <motion.div 
             className="flex justify-center items-center mt-12 mb-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.9 }}
+            transition={{ duration: 0.8, delay: 2.2 }}
           >
             <div 
               className="relative group cursor-pointer"
@@ -316,7 +760,7 @@ export default function PhotoboothProject({ params }) {
             className="mt-12 flex justify-center mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
+            transition={{ delay: 2.4, duration: 0.6 }}
           >
             <div className="flex space-x-3 items-center">
               <div className="flex space-x-1">

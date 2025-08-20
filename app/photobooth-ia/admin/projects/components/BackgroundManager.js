@@ -426,33 +426,10 @@ const BackgroundManager = ({
   }, [backgrounds]);
 
   const handleToggleShowAnimated = async (backgroundId, currentValue) => {
-    try {
-      setError(null);
-      // Get session for auth
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("Session expirée, veuillez vous reconnecter");
-        return;
-      }
-      // Update show_animated in backgrounds table
-      const { data, error } = await supabase
-        .from('backgrounds')
-        .update({ show_animated: !currentValue })
-        .eq('id', backgroundId)
-        .select();
-
-      if (error) {
-        setError("Erreur lors de la mise à jour du champ animé: " + error.message);
-        return;
-      }
-      // Update local state
-      setBackgrounds(backgrounds.map(bg =>
-        bg.id === backgroundId ? { ...bg, show_animated: !currentValue } : bg
-      ));
-      setSuccess("Champ animé mis à jour !");
-    } catch (err) {
-      setError("Erreur: " + err.message);
-    }
+    // Cette fonction est désactivée car show_animated est maintenant automatiquement true
+    // quand des vidéos sont présentes
+    console.log('handleToggleShowAnimated désactivée - show_animated géré automatiquement');
+    return;
   };
 
   // Function to delete individual media from a background
@@ -1167,31 +1144,17 @@ const BackgroundManager = ({
                       </div>
                     </div>
 
-                    {/* Section contrôles */}
+                    {/* Section informations */}
                     <div className="border-t border-gray-200 pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          {/* Checkbox animation */}
-                          <label className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!!background.show_animated}
-                              onChange={() => handleToggleShowAnimated(background.id, !!background.show_animated)}
-                              className="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500"
-                              disabled={!background.video_url && !background.video_url_vertical}
-                            />
+                          {/* Indicateur de statut vidéo automatique */}
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-3 h-3 rounded-full ${(background.video_url || background.video_url_vertical) ? 'bg-green-400' : 'bg-gray-300'}`}></div>
                             <span className="text-sm font-medium text-gray-700">
                               {(background.video_url || background.video_url_vertical) ? 
-                                "Background animé actif" : 
-                                "Background animé (nécessite une vidéo)"}
-                            </span>
-                          </label>
-                          
-                          {/* Indicateur de statut */}
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-3 h-3 rounded-full ${background.show_animated ? 'bg-green-400' : 'bg-gray-300'}`}></div>
-                            <span className="text-xs text-gray-500">
-                              {background.show_animated ? 'Actif' : 'Inactif'}
+                                "Animation vidéo activée automatiquement" : 
+                                "Aucune vidéo disponible pour l'animation"}
                             </span>
                           </div>
                         </div>

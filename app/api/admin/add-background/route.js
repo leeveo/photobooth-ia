@@ -23,6 +23,7 @@ export async function POST(request) {
     const fileVertical = formData.get('fileVertical');
     const videoFile = formData.get('videoFile');
     const videoFileVertical = formData.get('videoFileVertical');
+    const showAnimated = formData.get('showAnimated') === 'true'; // Récupérer show_animated
     
     // Get template URLs if no files are provided
     const templateImageUrl = formData.get('templateImageUrl');
@@ -260,7 +261,8 @@ export async function POST(request) {
     const insertData = {
       name: name,
       project_id: projectId,
-      is_active: true
+      is_active: true,
+      show_animated: showAnimated // Utiliser la valeur reçue (true par défaut)
     };
     
     // We need to ensure at least image_url has a value to satisfy NOT NULL constraint

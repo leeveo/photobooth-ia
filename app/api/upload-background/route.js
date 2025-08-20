@@ -90,7 +90,8 @@ export async function POST(request) {
         image_url: urlData.publicUrl,
         storage_path: filePath,
         project_id: projectId,
-        is_active: true
+        is_active: true,
+        show_animated: true // ✅ Par défaut, animations activées
       })
       .select();
     

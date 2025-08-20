@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiSaveLine, RiShieldLine } from 'react-icons/ri';
 import { QRCodeSVG } from 'qrcode.react';
+import Image from 'next/image';
 import Loader from './Loader';
 
 const ProjectInfoForm = ({ 
@@ -19,6 +20,9 @@ const ProjectInfoForm = ({
   const [baseUrl, setBaseUrl] = useState('');
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [savingProject, setSavingProject] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Function to get the base URL dynamically
   useEffect(() => {
@@ -104,10 +108,68 @@ const ProjectInfoForm = ({
     });
   };
 
+  // Fonction pour gérer le changement d'image du logo
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Fonction pour supprimer le logo
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setProject({
+      ...project,
+      logo_url: null
+    });
+  };
+
   // Nouvelle fonction pour confirmer l'enregistrement
   const handleSaveConfirmed = async () => {
     setSavingProject(true);
     try {
+      let logoUrl = project.logo_url; // Conserver le logo existant par défaut
+      
+      // Upload du nouveau logo si sélectionné
+      if (logoFile) {
+        setUploadingLogo(true);
+        // Créer un nom de fichier unique avec timestamp et ID projet
+        const timestamp = Date.now();
+        const uniqueFilename = `${timestamp}-${project.id.substring(0, 8)}-${logoFile.name.replace(/\s+/g, '-')}`;
+        const s3Path = `photobooth_uploads/logos/${uniqueFilename}`;
+        
+        console.log(`Uploading logo to S3: ${s3Path}`);
+        
+        // Préparer le FormData pour l'upload
+        const formData = new FormData();
+        formData.append('file', logoFile);
+        formData.append('bucket', 'leeveostockage');
+        formData.append('path', s3Path);
+        
+        // Appeler l'API d'upload S3
+        const uploadResponse = await fetch('/api/upload-s3', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(`Erreur d'upload du logo: ${errorData.error || uploadResponse.statusText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        logoUrl = uploadResult.url;
+        console.log(`Logo uploaded successfully to: ${logoUrl}`);
+        setUploadingLogo(false);
+      }
+
       const { error } = await supabase
         .from('projects')
         .update({
@@ -116,11 +178,22 @@ const ProjectInfoForm = ({
           home_message: project.home_message,
           primary_color: project.primary_color,
           secondary_color: project.secondary_color,
-          event_date: project.event_date
+          event_date: project.event_date,
+          logo_url: logoUrl
         })
         .eq('id', project.id);
 
       if (error) throw error;
+
+      // Mettre à jour le projet local avec la nouvelle URL du logo
+      setProject({
+        ...project,
+        logo_url: logoUrl
+      });
+
+      // Réinitialiser les états de upload
+      setLogoFile(null);
+      setLogoPreview(null);
 
       setShowSuccessPopup(true);
       setShowSaveConfirm(false);
@@ -130,10 +203,11 @@ const ProjectInfoForm = ({
       }, 3000);
     } catch (error) {
       console.error('Error updating project info:', error);
-      setError("Erreur lors de la mise à jour des informations du projet");
+      setError(`Erreur lors de la mise à jour des informations du projet: ${error.message}`);
       setShowSaveConfirm(false);
     } finally {
       setSavingProject(false);
+      setUploadingLogo(false);
     }
   };
 
@@ -275,6 +349,76 @@ const ProjectInfoForm = ({
                     {project.description?.length || 0}/200
                   </span>
                 </p>
+              </div>
+
+              {/* Logo du projet */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Logo du projet</label>
+                <div className="border-2 border-gray-300 border-dashed rounded-lg p-4">
+                  {(project.logo_url || logoPreview) ? (
+                    <div className="flex flex-col items-center">
+                      <div className="w-32 h-32 mb-3 relative">
+                        <Image
+                          src={logoPreview || project.logo_url}
+                          alt="Logo du projet"
+                          fill
+                          style={{ objectFit: "contain" }}
+                          className="rounded-lg"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {logoPreview ? 'Nouveau logo sélectionné' : 'Logo actuel'}
+                      </p>
+                      <div className="flex space-x-2">
+                        <label
+                          htmlFor="logoUpload"
+                          className="cursor-pointer text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 transition-colors"
+                        >
+                          Changer
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          className="text-xs px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                      <input
+                        id="logoUpload"
+                        type="file"
+                        className="sr-only"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <div className="mt-4">
+                        <label
+                          htmlFor="logoUpload"
+                          className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 transition-colors"
+                        >
+                          <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Ajouter un logo
+                        </label>
+                        <input
+                          id="logoUpload"
+                          type="file"
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleLogoChange}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">PNG, JPG, GIF jusqu'à 10MB</p>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Message d'accueil */}
@@ -520,13 +664,15 @@ const ProjectInfoForm = ({
           <button
             type="button"
             onClick={() => setShowSaveConfirm(true)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingLogo}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
           >
-            {isSubmitting ? (
+            {(isSubmitting || uploadingLogo) ? (
               <>
                 <Loader size="small" message="" variant="premium" />
-                <span className="ml-2">Enregistrement...</span>
+                <span className="ml-2">
+                  {uploadingLogo ? 'Upload du logo...' : 'Enregistrement...'}
+                </span>
               </>
             ) : (
               <>
@@ -555,6 +701,16 @@ const ProjectInfoForm = ({
                 <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
                   Voulez-vous enregistrer les modifications apportées à ce projet ?
                 </p>
+                {logoFile && (
+                  <div className="mt-4 p-3 bg-blue-900 bg-opacity-30 rounded-lg border border-blue-700 animate-success-text" style={{ animationDelay: "0.15s" }}>
+                    <p className="text-blue-300 text-sm">
+                      <svg className="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Un nouveau logo sera uploadé et remplacera l'ancien.
+                    </p>
+                  </div>
+                )}
                 <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.2s" }}>
                   Ces informations seront appliquées immédiatement.
                 </div>
@@ -565,7 +721,7 @@ const ProjectInfoForm = ({
                   type="button"
                   onClick={() => setShowSaveConfirm(false)}
                   className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
-                  disabled={savingProject}
+                  disabled={savingProject || uploadingLogo}
                 >
                   Annuler
                 </button>
@@ -573,15 +729,15 @@ const ProjectInfoForm = ({
                   type="button"
                   onClick={handleSaveConfirmed}
                   className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
-                  disabled={savingProject}
+                  disabled={savingProject || uploadingLogo}
                 >
-                  {savingProject ? (
+                  {(savingProject || uploadingLogo) ? (
                     <>
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Enregistrement...
+                      {uploadingLogo ? 'Upload du logo...' : 'Enregistrement...'}
                     </>
                   ) : (
                     <>
