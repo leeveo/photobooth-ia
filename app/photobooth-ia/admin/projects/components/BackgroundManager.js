@@ -815,27 +815,7 @@ const BackgroundManager = ({
                         <p className="text-indigo-100 text-sm">ID: {background.id?.substring(0, 8)}...</p>
                       </div>
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            console.log('🔴 [DELETE BUTTON] Button clicked for background:', background.id);
-                            console.log('🔴 [DELETE BUTTON] Background data:', background);
-                            console.log('🔴 [DELETE BUTTON] Is deleting?', deletingBackground[background.id]);
-                            handleDeleteBackground(background.id);
-                          }}
-                          disabled={deletingBackground[background.id]}
-                          className="inline-flex items-center px-3 py-2 bg-red-500 bg-opacity-20 text-white text-sm font-medium rounded-lg hover:bg-opacity-30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {deletingBackground[background.id] ? (
-                            <Loader size="small" message="" variant="default" />
-                          ) : (
-                            <>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Supprimer
-                            </>
-                          )}
-                        </button>
+                       
                       </div>
                     </div>
                   </div>

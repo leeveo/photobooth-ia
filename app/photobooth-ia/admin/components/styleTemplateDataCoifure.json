@@ -15,7 +15,7 @@
       "style_key": "short_hair_style",
       "description": "Cheveux courts",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_hair_style.jpg",
-      "prompt": "Make the hair in a Short hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Short hair style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -25,9 +25,9 @@
       "style_key": "medium_length_hair_style",
       "description": "Cheveux mi-longs",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/medium_length_hair_style.jpg",
-      "prompt": "Make the hair in a Medium-length hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Medium-length hair style",
       "variations": 1,
-      "type": "cheveux mi-longs"
+      "type": "cheveux longs"
     },
     {
       "name": "Long Hair",
@@ -35,7 +35,7 @@
       "style_key": "long_hair_style",
       "description": "Cheveux longs",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_hair_style.jpg",
-      "prompt": "Make the hair in a Long hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Long hair style",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -45,9 +45,9 @@
       "style_key": "very_long_hair_style",
       "description": "Cheveux très longs",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/very_long_hair_style.jpg",
-      "prompt": "Make the hair in a Very long hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Very long hair style",
       "variations": 1,
-      "type": "cheveux très longs"
+      "type": "cheveux longs"
     },
     {
       "name": "Bob Cut",
@@ -55,7 +55,7 @@
       "style_key": "bob_cut_hair_style",
       "description": "Carré classique",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bob_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Bob cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Bob cut style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -65,7 +65,7 @@
       "style_key": "a_line_bob_hair_style",
       "description": "Carré plongeant (inversé)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/a_line_bob_hair_style.jpg",
-      "prompt": "Make the hair in a A-line bob / inverted bob style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a A-line bob / inverted bob style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -75,9 +75,9 @@
       "style_key": "buzz_cut_hair_style",
       "description": "Coupe très courte (tondeuse)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Buzz cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Buzz cut style",
       "variations": 1,
-      "type": "cheveux très courts"
+      "type": "cheveux courts"
     },
     {
       "name": "Layered Cut",
@@ -85,9 +85,9 @@
       "style_key": "layered_cut_hair_style",
       "description": "Coupe dégradée",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Layered cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Layered cut style",
       "variations": 1,
-      "type": "dégradé"
+      "type": "cheveux longs"
     },
     {
       "name": "Bowl Cut",
@@ -95,7 +95,7 @@
       "style_key": "bowl_cut_hair_style",
       "description": "Coupe bol",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bowl_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Bowl cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Bowl cut style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -105,7 +105,7 @@
       "style_key": "pixie_cut_hair_style",
       "description": "Coupe pixie courte",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixie_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Pixie cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Pixie cut style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -115,7 +115,7 @@
       "style_key": "boy_cut_hair_style",
       "description": "Coupe courte façon boyish",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boy_cut_hair_style.jpg",
-      "prompt": "Make the hair in a Boyish cut / boy cut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Boyish cut / boy cut style",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -125,9 +125,9 @@
       "style_key": "lob_hair_style",
       "description": "Carré long (lob)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lob_hair_style.jpg",
-      "prompt": "Make the hair in a Lob (long bob) style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Lob (long bob) style",
       "variations": 1,
-      "type": "cheveux mi-longs"
+      "type": "cheveux longs"
     },
     {
       "name": "Shag Haircut",
@@ -135,9 +135,9 @@
       "style_key": "shag_haircut_style",
       "description": "Shag texturé avec mouvement",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/shag_haircut_style.jpg",
-      "prompt": "Make the hair in a Shag haircut style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Shag haircut style",
       "variations": 1,
-      "type": "dégradé"
+      "type": "cheveux longs"
     },
     {
       "name": "Straight Bangs",
@@ -145,9 +145,9 @@
       "style_key": "straight_bangs_hair_style",
       "description": "Frange droite pleine",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_bangs_hair_style.jpg",
-      "prompt": "Make the hair in a Straight bangs style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Straight bangs style",
       "variations": 1,
-      "type": "frange"
+      "type": "cheveux longs"
     },
     {
       "name": "Curtain Bangs",
@@ -155,9 +155,9 @@
       "style_key": "curtain_bangs_hair_style",
       "description": "Frange rideau",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curtain_bangs_hair_style.jpg",
-      "prompt": "Make the hair in a Curtain bangs style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Curtain bangs style",
       "variations": 1,
-      "type": "frange"
+      "type": "cheveux longs"
     },
     {
       "name": "Straight",
@@ -165,9 +165,9 @@
       "style_key": "straight_hair_style",
       "description": "Cheveux lisses",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_hair_style.jpg",
-      "prompt": "Make the hair in a Straight style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Straight style",
       "variations": 1,
-      "type": "texture"
+      "type": "cheveux longs"
     },
     {
       "name": "Wavy",
@@ -175,9 +175,9 @@
       "style_key": "wavy_hair_style",
       "description": "Cheveux ondulés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_style.jpg",
-      "prompt": "Make the hair in a Wavy style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Wavy style",
       "variations": 1,
-      "type": "texture"
+      "type": "cheveux longs"
     },
     {
       "name": "Curly",
@@ -185,9 +185,9 @@
       "style_key": "curly_hair_style",
       "description": "Cheveux bouclés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curly_hair_style.jpg",
-      "prompt": "Make the hair in a Curly style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Curly style",
       "variations": 1,
-      "type": "texture"
+      "type": "cheveux longs"
     },
     {
       "name": "Frizzy",
@@ -195,9 +195,9 @@
       "style_key": "frizzy_hair_style",
       "description": "Cheveux frisottés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_style.jpg",
-      "prompt": "Make the hair in a Frizzy style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Frizzy style",
       "variations": 1,
-      "type": "texture"
+      "type": "cheveux longs"
     },
     {
       "name": "Kinky / Coily",
@@ -205,9 +205,9 @@
       "style_key": "kinky_coily_hair_style",
       "description": "Cheveux crépus / très bouclés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/kinky_coily_hair_style.jpg",
-      "prompt": "Make the hair in a Kinky / coily style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Kinky / coily style",
       "variations": 1,
-      "type": "texture"
+      "type": "cheveux longs"
     },
     {
       "name": "Slicked Back",
@@ -215,9 +215,9 @@
       "style_key": "slicked_back_hair_style",
       "description": "Cheveux plaqués en arrière",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/slicked_back_hair_style.jpg",
-      "prompt": "Make the hair in a Slicked back style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Slicked back style",
       "variations": 1,
-      "type": "coiffage"
+      "type": "cheveux longs"
     },
     {
       "name": "Middle Part",
@@ -225,9 +225,9 @@
       "style_key": "middle_part_hair_style",
       "description": "Raie au milieu",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/middle_part_hair_style.jpg",
-      "prompt": "Make the hair in a Middle part style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Middle part style",
       "variations": 1,
-      "type": "raie"
+      "type": "cheveux longs"
     },
     {
       "name": "Side Part",
@@ -235,9 +235,9 @@
       "style_key": "side_part_hair_style",
       "description": "Raie sur le côté",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/side_part_hair_style.jpg",
-      "prompt": "Make the hair in a Side part style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Side part style",
       "variations": 1,
-      "type": "raie"
+      "type": "cheveux longs"
     },
     {
       "name": "Voluminous Hair",
@@ -245,9 +245,9 @@
       "style_key": "voluminous_hair_style",
       "description": "Chevelure volumineuse",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/voluminous_hair_style.jpg",
-      "prompt": "Make the hair in a Voluminous hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Voluminous hair style",
       "variations": 1,
-      "type": "volume"
+      "type": "cheveux longs"
     },
     {
       "name": "Bun",
@@ -255,9 +255,9 @@
       "style_key": "bun_hair_style",
       "description": "Chignon",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bun_hair_style.jpg",
-      "prompt": "Make the hair in a Bun style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Bun style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Low Bun",
@@ -265,9 +265,9 @@
       "style_key": "low_bun_hair_style",
       "description": "Chignon bas",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/low_bun_hair_style.jpg",
-      "prompt": "Make the hair in a Low bun style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Low bun style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Top Bun",
@@ -275,9 +275,9 @@
       "style_key": "top_bun_hair_style",
       "description": "Chignon haut",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/top_bun_hair_style.jpg",
-      "prompt": "Make the hair in a Top bun style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Top bun style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Ponytail",
@@ -285,9 +285,9 @@
       "style_key": "ponytail_hair_style",
       "description": "Queue de cheval",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ponytail_hair_style.jpg",
-      "prompt": "Make the hair in a Ponytail style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Ponytail style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Braid",
@@ -295,9 +295,9 @@
       "style_key": "braid_hair_style",
       "description": "Tresse simple",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/braid_hair_style.jpg",
-      "prompt": "Make the hair in a Braid style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Braid style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Fishtail Braid",
@@ -305,9 +305,9 @@
       "style_key": "fishtail_braid_hair_style",
       "description": "Tresse épi (fishtail)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fishtail_braid_hair_style.jpg",
-      "prompt": "Make the hair in a Fishtail braid style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Fishtail braid style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Space Buns",
@@ -315,9 +315,9 @@
       "style_key": "space_buns_hair_style",
       "description": "Deux chignons (space buns)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/space_buns_hair_style.jpg",
-      "prompt": "Make the hair in a Space buns style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Space buns style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Messy Bun",
@@ -325,9 +325,9 @@
       "style_key": "messy_bun_hair_style",
       "description": "Chignon flou, décoiffé",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/messy_bun_hair_style.jpg",
-      "prompt": "Make the hair in a Messy bun style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Messy bun style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Mullet",
@@ -335,9 +335,9 @@
       "style_key": "mullet_hair_style",
       "description": "Mulet (court devant, long derrière)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_hair_style.jpg",
-      "prompt": "Make the hair in a Mullet style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Mullet style",
       "variations": 1,
-      "type": "cheveux moyens"
+      "type": "cheveux longs"
     },
     {
       "name": "Tousled / Messy Look",
@@ -345,9 +345,9 @@
       "style_key": "tousled_messy_hair_style",
       "description": "Effet coiffé-décoiffé",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tousled_messy_hair_style.jpg",
-      "prompt": "Make the hair in a Tousled / messy look style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Tousled / messy look style",
       "variations": 1,
-      "type": "coiffage"
+      "type": "cheveux longs"
     },
     {
       "name": "High Ponytail",
@@ -355,9 +355,9 @@
       "style_key": "high_ponytail_hair_style",
       "description": "Queue de cheval haute",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_ponytail_hair_style.jpg",
-      "prompt": "Make the hair in a High ponytail style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a High ponytail style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Half Ponytail",
@@ -365,9 +365,9 @@
       "style_key": "half_ponytail_hair_style",
       "description": "Demi-queue de cheval",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/half_ponytail_hair_style.jpg",
-      "prompt": "Make the hair in a Half ponytail style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Half ponytail style",
       "variations": 1,
-      "type": "semi-attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Twists",
@@ -375,9 +375,9 @@
       "style_key": "twists_hair_style",
       "description": "Twists définis",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/twists_hair_style.jpg",
-      "prompt": "Make the hair in a Twists style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Twists style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Tied Hair",
@@ -385,9 +385,9 @@
       "style_key": "tied_hair_style",
       "description": "Cheveux attachés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tied_hair_style.jpg",
-      "prompt": "Make the hair in a Tied hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Tied hair style",
       "variations": 1,
-      "type": "attaché"
+      "type": "cheveux longs"
     },
     {
       "name": "Loose Hair",
@@ -395,9 +395,9 @@
       "style_key": "loose_hair_style",
       "description": "Cheveux lâchés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/loose_hair_style.jpg",
-      "prompt": "Make the hair in a Loose hair style",
+      "prompt": "While keeping the same face and same facial expression Make the hair in a Loose hair style",
       "variations": 1,
-      "type": "cheveux libres"
+      "type": "cheveux longs"
     }
   ]
 },
@@ -418,7 +418,7 @@
         "style_key": "mens_buzz_cut",
         "description": "Coupe très courte à la tondeuse",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_buzz_cut.jpg",
-        "prompt": "Make the hair in a ultra short buzz cut style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a ultra short buzz cut style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -428,7 +428,7 @@
         "style_key": "mens_crew_cut",
         "description": "Coupe classique avec côtés courts",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_crew_cut.jpg",
-        "prompt": "Make the hair in a classic crew cut with short sides style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a classic crew cut with short sides style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -438,7 +438,7 @@
         "style_key": "mens_fade_cut",
         "description": "Fondu moderne avec contours nets",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_fade_cut.jpg",
-        "prompt": "Make the hair in a modern fade with sharp edges style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a modern fade with sharp edges style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -448,7 +448,7 @@
         "style_key": "mens_pompadour",
         "description": "Pompadour volumineux",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_pompadour.jpg",
-        "prompt": "Make the hair in a voluminous pompadour style style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a voluminous pompadour style style.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -458,7 +458,7 @@
         "style_key": "mens_undercut",
         "description": "Undercut avec dessus long et côtés rasés",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_undercut.jpg",
-        "prompt": "Make the hair in a undercut with long top and shaved sides style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a undercut with long top and shaved sides style.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -468,7 +468,7 @@
         "style_key": "mens_quiff",
         "description": "Banane stylisée avec du volume",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_quiff.jpg",
-        "prompt": "Make the hair in a styled quiff with volume style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a styled quiff with volume style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -478,7 +478,7 @@
         "style_key": "mens_slick_back",
         "description": "Cheveux plaqués en arrière avec du gel",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_slick_back.jpg",
-        "prompt": "Make the hair in a hair slicked back with gel style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a hair slicked back with gel style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -488,7 +488,7 @@
         "style_key": "mens_side_part",
         "description": "Style classique avec raie sur le côté",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_side_part.jpg",
-        "prompt": "Make the hair in a side-parted classic style style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a side-parted classic style style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -498,7 +498,7 @@
         "style_key": "mens_curly_top",
         "description": "Côtés courts avec boucles naturelles sur le dessus",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_curly_top.jpg",
-        "prompt": "Make the hair in a short sides with natural curls on top style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a short sides with natural curls on top style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -508,7 +508,7 @@
         "style_key": "mens_messy_textured",
         "description": "Look décoiffé texturé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_messy_textured.jpg",
-        "prompt": "Make the hair in a textured messy look style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a textured messy look style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -518,9 +518,9 @@
         "style_key": "mens_mullet",
         "description": "Mulet rétro avec devant court et arrière long",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
-        "prompt": "Make the hair in a retro mullet with short front, long back style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a retro mullet with short front, long back style.",
         "variations": 1,
-        "type": "cheveux longs"
+        "type": "cheveux courts"
       },
       {
         "name": "Man bun",
@@ -528,9 +528,9 @@
         "style_key": "mens_man_bun",
         "description": "Chignon masculin attaché",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_man_bun.jpg",
-        "prompt": "Make the hair in a tied back man bun style style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a tied back man bun style style.",
         "variations": 1,
-        "type": "cheveux courts"
+        "type": "cheveux longs"
       },
       {
         "name": "Top knot",
@@ -538,7 +538,7 @@
         "style_key": "mens_top_knot",
         "description": "Chignon haut avec côtés rasés",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
-        "prompt": "Make the hair in a top knot with undercut style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a top knot with undercut style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -548,7 +548,7 @@
         "style_key": "mens_french_crop",
         "description": "Coupe courte avec frange",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_french_crop.jpg",
-        "prompt": "Make the hair in a short fringe crop style style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a short fringe crop style style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -558,7 +558,7 @@
         "style_key": "mens_long_layered",
         "description": "Cheveux mi-longs en dégradé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_long_layered.jpg",
-        "prompt": "Make the hair in a shoulder-length layered hair style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a shoulder-length layered hair style.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -568,9 +568,9 @@
         "style_key": "mens_afro",
         "description": "Afro complet et arrondi",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_afro.jpg",
-        "prompt": "Make the hair in a full rounded afro style style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a full rounded afro style style.",
         "variations": 1,
-        "type": "cheveux longs"
+        "type": "cheveux courts"
       },
       {
         "name": "Cornrows",
@@ -578,7 +578,7 @@
         "style_key": "mens_cornrows",
         "description": "Tresses collées au cuir chevelu",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_cornrows.jpg",
-        "prompt": "Make the hair in a braided cornrows close to scalp style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a braided cornrows close to scalp style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -588,7 +588,7 @@
         "style_key": "mens_dreadlocks",
         "description": "Dreadlocks longues et épaisses",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_dreadlocks.jpg",
-        "prompt": "Make the hair in a thick long dreadlocks style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a thick long dreadlocks style.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -598,7 +598,7 @@
         "style_key": "mens_spiky",
         "description": "Cheveux courts coiffés en pics avec du gel",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_spiky.jpg",
-        "prompt": "Make the hair in a short and spiked with gel style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a short and spiked with gel style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -608,7 +608,7 @@
         "style_key": "mens_ivy_league",
         "description": "Coiffure chic style Ivy League",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ivy_league.jpg",
-        "prompt": "Make the hair in a preppy ivy league hairstyle style.",
+        "prompt": "While keeping the same face and same facial expression Make the hair in a preppy ivy league hairstyle style.",
         "variations": 1,
         "type": "cheveux courts"
       }

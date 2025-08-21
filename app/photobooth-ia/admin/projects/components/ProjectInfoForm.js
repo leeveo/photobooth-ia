@@ -6,6 +6,7 @@ import { RiSaveLine, RiShieldLine } from 'react-icons/ri';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import Loader from './Loader';
+import IframeIntegrationSection from './IframeIntegrationSection';
 
 const ProjectInfoForm = ({ 
   project, 
@@ -574,86 +575,91 @@ const ProjectInfoForm = ({
             </div>
             {/* Colonne droite : QR code */}
             <div>
-              {/* Nouveau design QR code */}
-              <div className="relative bg-gradient-to-br from-indigo-100 via-purple-100 to-white p-5 rounded-2xl border-2 border-indigo-300 shadow-xl h-full flex flex-col items-center animate-pulse border-dashed">
-                {/* Bordure animée */}
-                <div className="absolute inset-0 rounded-2xl pointer-events-none border-4 border-transparent border-double"
-                  style={{
-                    background: 'linear-gradient(120deg, #7f5af0 0%, #ff80b5 100%)',
-                    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                    maskComposite: 'exclude',
-                    zIndex: 1,
-                  }}
-                />
-                {/* Icône stylisée */}
-                <div className="flex items-center justify-center mb-2 z-10">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg">
-                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
-                      <rect width="24" height="24" rx="6" fill="#fff" />
-                      <path d="M7 7h2v2H7V7zm8 0h2v2h-2V7zM7 15h2v2H7v-2zm8 0h2v2h-2v-2z" fill="#7f5af0"/>
-                      <rect x="10" y="10" width="4" height="4" rx="1" fill="#7f5af0"/>
-                    </svg>
-                  </span>
-                </div>
-                {/* Titre stylisé */}
-                <h4 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 z-10 tracking-tight uppercase drop-shadow-lg">
-                  Accès Photobooth
-                </h4>
-                {/* URL stylisée */}
-                <div className="relative w-full mb-3 z-10">
-                  {/* L'URL affichée ici est générée par getPhotoboothUrl() */}
-                  <input
-                    type="text"
-                    value={getPhotoboothUrl()}
-                    readOnly
-                    className="pl-8 pr-2 block w-full rounded-md border-2 border-indigo-200 bg-white py-2 text-sm text-indigo-700 font-semibold shadow focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition"
+              <div className="space-y-6">
+                {/* Nouveau design QR code */}
+                <div className="relative bg-gradient-to-br from-indigo-100 via-purple-100 to-white p-5 rounded-2xl border-2 border-indigo-300 shadow-xl flex flex-col items-center animate-pulse border-dashed">
+                  {/* Bordure animée */}
+                  <div className="absolute inset-0 rounded-2xl pointer-events-none border-4 border-transparent border-double"
+                    style={{
+                      background: 'linear-gradient(120deg, #7f5af0 0%, #ff80b5 100%)',
+                      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      maskComposite: 'exclude',
+                      zIndex: 1,
+                    }}
                   />
-                  <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                  {/* Icône stylisée */}
+                  <div className="flex items-center justify-center mb-2 z-10">
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg">
+                      <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+                        <rect width="24" height="24" rx="6" fill="#fff" />
+                        <path d="M7 7h2v2H7V7zm8 0h2v2h-2V7zM7 15h2v2H7v-2zm8 0h2v2h-2v-2z" fill="#7f5af0"/>
+                        <rect x="10" y="10" width="4" height="4" rx="1" fill="#7f5af0"/>
+                      </svg>
+                    </span>
                   </div>
-                </div>
-                <button
-                  onClick={copyProjectUrl}
-                  className="mb-4 inline-flex justify-center items-center px-4 py-2 border border-indigo-300 shadow text-xs font-bold rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
-                  </svg>
-                  Copier l'URL
-                </button>
-                {/* Bouton pour ouvrir le photobooth dans un nouvel onglet */}
-                {getPhotoboothUrl() && (
+                  {/* Titre stylisé */}
+                  <h4 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 z-10 tracking-tight uppercase drop-shadow-lg">
+                    Accès Photobooth
+                  </h4>
+                  {/* URL stylisée */}
+                  <div className="relative w-full mb-3 z-10">
+                    {/* L'URL affichée ici est générée par getPhotoboothUrl() */}
+                    <input
+                      type="text"
+                      value={getPhotoboothUrl()}
+                      readOnly
+                      className="pl-8 pr-2 block w-full rounded-md border-2 border-indigo-200 bg-white py-2 text-sm text-indigo-700 font-semibold shadow focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition"
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                  </div>
                   <button
-                    onClick={() => window.open(getPhotoboothUrl(), '_blank', 'noopener,noreferrer')}
+                    onClick={copyProjectUrl}
                     className="mb-4 inline-flex justify-center items-center px-4 py-2 border border-indigo-300 shadow text-xs font-bold rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition"
                   >
-                    <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 3h7v7m0 0L10 21l-7-7 11-11z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
                     </svg>
-                    Ouvrir le photobooth
+                    Copier l'URL
                   </button>
-                )}
-                {/* QR code avec effet */}
-                <div className="flex-1 flex flex-col items-center justify-center bg-white/80 p-4 rounded-xl border-2 border-indigo-100 shadow-inner z-10">
-                  {/* Le QR code encode l'URL générée par getPhotoboothUrl() */}
-                  {project && baseUrl && (
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-200 via-purple-200 to-white shadow-lg border border-indigo-200">
-                      <QRCodeSVG
-                        value={getPhotoboothUrl()}
-                        size={240}
-                        level="M"
-                        bgColor="#FFFFFF"
-                        fgColor="#7f5af0"
-                        className="mb-2"
-                      />
-                    </div>
+                  {/* Bouton pour ouvrir le photobooth dans un nouvel onglet */}
+                  {getPhotoboothUrl() && (
+                    <button
+                      onClick={() => window.open(getPhotoboothUrl(), '_blank', 'noopener,noreferrer')}
+                      className="mb-4 inline-flex justify-center items-center px-4 py-2 border border-indigo-300 shadow text-xs font-bold rounded-lg text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition"
+                    >
+                      <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 3h7v7m0 0L10 21l-7-7 11-11z"/>
+                      </svg>
+                      Ouvrir le photobooth
+                    </button>
                   )}
-                  <p className="mt-2 text-xs text-indigo-700 text-center font-semibold">
-                    <span className="inline-block animate-bounce">👇</span> Scannez ce code pour accéder directement au photobooth
-                  </p>
+                  {/* QR code avec effet */}
+                  <div className="flex-1 flex flex-col items-center justify-center bg-white/80 p-4 rounded-xl border-2 border-indigo-100 shadow-inner z-10">
+                    {/* Le QR code encode l'URL générée par getPhotoboothUrl() */}
+                    {project && baseUrl && (
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-200 via-purple-200 to-white shadow-lg border border-indigo-200">
+                        <QRCodeSVG
+                          value={getPhotoboothUrl()}
+                          size={200}
+                          level="M"
+                          bgColor="#FFFFFF"
+                          fgColor="#7f5af0"
+                          className="mb-2"
+                        />
+                      </div>
+                    )}
+                    <p className="mt-2 text-xs text-indigo-700 text-center font-semibold">
+                      <span className="inline-block animate-bounce">👇</span> Scannez ce code pour accéder directement au photobooth
+                    </p>
+                  </div>
                 </div>
+
+                {/* Section Intégration iframe */}
+                <IframeIntegrationSection photoboothUrl={getPhotoboothUrl()} />
               </div>
             </div>
           </div>

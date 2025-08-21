@@ -98,6 +98,33 @@
   }
 }
 
+/* Optimisations spécifiques pour le slider de teintes mobile */
+@media (max-width: 480px) {
+  /* Teintes en 1 ligne avec 3 éléments */
+  .slick-slider[class*="teinte"] .slick-slide {
+    width: 33.333% !important; /* 3 teintes par ligne */
+    padding: 2px 4px !important;
+  }
+  
+  .slick-slider[class*="teinte"] .slick-track {
+    display: flex !important;
+    align-items: center !important;
+    height: auto !important;
+  }
+  
+  /* Boutons de teintes plus compacts sur mobile */
+  .slick-slider[class*="teinte"] button {
+    width: 40px !important;
+    height: 40px !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Espacement réduit entre slider et bouton */
+  .modal-action-spacing {
+    margin-top: 8px !important;
+  }
+}
+
 /* Styliser la scrollbar plus visible et PLUS LARGE pour Chrome/Safari/Edge */
 .styles-scrollable-container::-webkit-scrollbar {
   width: 20px; /* Largeur considérablement augmentée (de 12px à 20px) */
@@ -259,5 +286,61 @@
     columns: 2 !important;
     -webkit-columns: 2 !important;
     -moz-columns: 2 !important;
+  }
+}
+
+/* Styles spécifiques pour l'affichage tablette/desktop optimisé */
+@media (min-width: 640px) and (max-width: 1279px) {
+  .slick-slider .style-card {
+    height: 260px !important; /* Taille réduite pour tablette */
+    margin-bottom: 16px !important; /* Espacement vertical ajouté */
+  }
+  
+  .slick-slider .style-card > div:first-child {
+    height: 180px !important;
+  }
+  
+  .slick-slider .style-card > div:last-child {
+    height: 80px !important;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 900px) {
+  .slick-slider .style-card {
+    height: 240px !important; /* Plus compact pour tablette moyenne */
+    margin-bottom: 12px !important;
+  }
+  
+  .slick-slider .style-card > div:first-child {
+    height: 160px !important;
+  }
+  
+  .slick-slider .style-card > div:last-child {
+    height: 80px !important;
+  }
+}
+
+/* Grille mobile pour les styles */
+@media (max-width: 639px) {
+  .mobile-styles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .mobile-style-card {
+    aspect-ratio: 3/4;
+    min-height: 140px;
+  }
+  
+  .mobile-style-image {
+    height: 100px !important;
+  }
+  
+  .mobile-style-info {
+    height: 40px !important;
+    padding: 4px !important;
   }
 }

@@ -224,15 +224,35 @@ export default function PhotoboothProject({ params }) {
         </button>
       )}
 
-      <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative z-10">
-        {/* Header with logo */}
+      <main className="min-h-screen py-6 sm:py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative z-10">
+        {/* Header with logo - Responsive */}
         <motion.div 
           className="w-full flex justify-center mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="w-[280px] h-[180px] relative">
+          {/* Version Mobile - Logo plus petit */}
+          <div className="block sm:hidden w-[200px] h-[120px] relative">
+            {project.logo_url ? (
+              <Image 
+                src={project.logo_url} 
+                fill
+                alt={project.name} 
+                className="object-contain drop-shadow-2xl" 
+                priority 
+              />
+            ) : (
+              <h1 
+                className="text-2xl font-bold text-center" 
+                style={{ color: secondaryColor }}
+              >
+                {project.name}
+              </h1>
+            )}
+          </div>
+          {/* Version Tablette et Desktop - Logo normal */}
+          <div className="hidden sm:block w-[280px] h-[180px] relative">
             {project.logo_url ? (
               <Image 
                 src={project.logo_url} 
@@ -254,15 +274,16 @@ export default function PhotoboothProject({ params }) {
 
         {/* Main content */}
         <div className="max-w-6xl mx-auto">
-          {/* Welcome message */}
+          {/* Welcome message - Responsive */}
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 lg:mb-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
+            {/* Version Mobile */}
             <motion.h2 
-              className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg"
+              className="block sm:hidden text-2xl font-bold mb-4 text-white drop-shadow-lg px-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.5 }}
@@ -270,7 +291,25 @@ export default function PhotoboothProject({ params }) {
               {homeMessage}
             </motion.h2>
             <motion.p 
-              className="text-xl text-white/90 max-w-3xl mx-auto"
+              className="block sm:hidden text-base text-white/90 max-w-sm mx-auto px-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
+              Transformez votre portrait avec l'IA.
+            </motion.p>
+            
+            {/* Version Tablette et Desktop */}
+            <motion.h2 
+              className="hidden sm:block text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              {homeMessage}
+            </motion.h2>
+            <motion.p 
+              className="hidden sm:block text-xl text-white/90 max-w-3xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.7 }}
@@ -281,14 +320,152 @@ export default function PhotoboothProject({ params }) {
 
           {/* Section des étapes - Comment ça marche */}
           <motion.div 
-            className="w-full mb-16"
+            className="w-full mb-8 sm:mb-12 lg:mb-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
-            {/* Version Mobile et Tablette - Design simple */}
+            {/* Version Mobile Pure (< 640px) - Design ultra-simple */}
+            <div className="block sm:hidden">
+              {/* Conteneur avec background uniforme */}
+              <div 
+                className="relative backdrop-blur-md bg-white/3 rounded-3xl border border-white/20 p-6 shadow-2xl overflow-hidden max-w-sm mx-auto"
+                style={{
+                  background: `linear-gradient(135deg, 
+                    ${primaryColor}08 0%, 
+                    ${secondaryColor}12 35%, 
+                    transparent 90%),
+                    linear-gradient(45deg, 
+                    rgba(255,255,255,0.05) 0%, 
+                    rgba(255,255,255,0.02) 100%)`
+                }}
+              >
+                <div className="flex flex-col items-center space-y-4 px-4">
+                
+                {/* Titre mobile */}
+                <motion.h2 
+                  className="text-2xl font-bold text-center mb-3 bg-gradient-to-r bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage: `linear-gradient(45deg, ${secondaryColor}, ${primaryColor})`,
+                  }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.0 }}
+                >
+                  Comment ça marche ?
+                </motion.h2>
+
+                {/* Étapes empilées verticalement */}
+                <div className="w-full max-w-xs space-y-4">
+                  
+                  {/* Étape 1 Mobile */}
+                  <motion.div 
+                    className="flex items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 1.2 }}
+                  >
+                    <div 
+                      className="flex-shrink-0 rounded-full h-12 w-12 flex items-center justify-center mr-3 border-2"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    >
+                      <span className="text-lg font-bold" style={{ color: primaryColor }}>1</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-sm mb-1" style={{ color: secondaryColor }}>
+                        Choisissez
+                      </h3>
+                      <p className="text-xs text-white/80">Votre style préféré</p>
+                    </div>
+                  </motion.div>
+
+                  {/* Étape 2 Mobile */}
+                  <motion.div 
+                    className="flex items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 1.4 }}
+                  >
+                    <div 
+                      className="flex-shrink-0 rounded-full h-12 w-12 flex items-center justify-center mr-3 border-2"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    >
+                      <span className="text-lg font-bold" style={{ color: primaryColor }}>2</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-sm mb-1" style={{ color: secondaryColor }}>
+                        Photographiez
+                      </h3>
+                      <p className="text-xs text-white/80">Votre plus beau sourire</p>
+                    </div>
+                  </motion.div>
+
+                  {/* Étape 3 Mobile */}
+                  <motion.div 
+                    className="flex items-center bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 1.6 }}
+                  >
+                    <div 
+                      className="flex-shrink-0 rounded-full h-12 w-12 flex items-center justify-center mr-3 border-2"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    >
+                      <span className="text-lg font-bold" style={{ color: primaryColor }}>3</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-sm mb-1" style={{ color: secondaryColor }}>
+                        Téléchargez
+                      </h3>
+                      <p className="text-xs text-white/80">Votre création unique</p>
+                    </div>
+                  </motion.div>
+
+                </div>
+              </div>
+              </div>
+            </div>
+
+            {/* Version Tablette (640px - 1023px) - Design simple */}
             <div className="hidden sm:block lg:hidden">
-              <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-8">
+              {/* Conteneur avec background uniforme */}
+              <div 
+                className="relative backdrop-blur-md bg-white/3 rounded-3xl border border-white/20 p-6 shadow-2xl overflow-hidden max-w-4xl mx-auto"
+                style={{
+                  background: `linear-gradient(135deg, 
+                    ${primaryColor}08 0%, 
+                    ${secondaryColor}12 35%, 
+                    transparent 90%),
+                    linear-gradient(45deg, 
+                    rgba(255,255,255,0.05) 0%, 
+                    rgba(255,255,255,0.02) 100%)`
+                }}
+              >
+                {/* Titre section tablette */}
+                <motion.div 
+                  className="text-center mb-6"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.0 }}
+                >
+                  <h2 
+                    className="text-2xl font-bold mb-2 bg-gradient-to-r bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: `linear-gradient(45deg, ${secondaryColor}, ${primaryColor}, ${secondaryColor})`,
+                      filter: 'drop-shadow(0 0 15px rgba(229, 228, 10, 0.6))'
+                    }}
+                  >
+                    Comment ça marche ?
+                  </h2>
+                  <div 
+                    className="w-12 h-1 mx-auto rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor}, ${primaryColor})`
+                    }}
+                  />
+                </motion.div>
+
+                <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 md:space-x-8">
                 
                 {/* Étape 1 - Mobile/Tablette */}
                 <motion.div 
@@ -297,27 +474,26 @@ export default function PhotoboothProject({ params }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 1.0 }}
                 >
-                  <motion.div 
-                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
-                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  <div 
+                    className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8 w-full max-w-xs"
+                    style={{
+                      boxShadow: `0 8px 32px ${primaryColor}20, 
+                                 0 0 0 1px ${secondaryColor}30 inset,
+                                 0 0 20px rgba(255,255,255,0.1) inset`
+                    }}
                   >
-                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>1</span>
-                  </motion.div>
-                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
-                    Choisissez votre style
-                  </h3>
-                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Sélectionnez le style qui vous plaît</p>
-                </motion.div>
-
-                {/* Séparateur mobile */}
-                <motion.div 
-                  className="flex justify-center sm:hidden"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 1.2 }}
-                >
-                  <div className="w-1 h-4 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+                    <motion.div 
+                      className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4 mx-auto"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                    >
+                      <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>1</span>
+                    </motion.div>
+                    <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                      Choisissez votre style
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Sélectionnez le style qui vous plaît</p>
+                  </div>
                 </motion.div>
 
                 {/* Étape 2 - Mobile/Tablette */}
@@ -327,27 +503,26 @@ export default function PhotoboothProject({ params }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 1.2 }}
                 >
-                  <motion.div 
-                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
-                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
-                    whileHover={{ scale: 1.1, rotate: -5 }}
+                  <div 
+                    className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8 w-full max-w-xs"
+                    style={{
+                      boxShadow: `0 8px 32px ${primaryColor}20, 
+                                 0 0 0 1px ${secondaryColor}30 inset,
+                                 0 0 20px rgba(255,255,255,0.1) inset`
+                    }}
                   >
-                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>2</span>
-                  </motion.div>
-                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
-                    Prenez une photo
-                  </h3>
-                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Capturez votre plus beau sourire</p>
-                </motion.div>
-
-                {/* Séparateur mobile */}
-                <motion.div 
-                  className="flex justify-center sm:hidden"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 1.4 }}
-                >
-                  <div className="w-1 h-4 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+                    <motion.div 
+                      className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4 mx-auto"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                      whileHover={{ scale: 1.1, rotate: -5 }}
+                    >
+                      <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>2</span>
+                    </motion.div>
+                    <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                      Prenez une photo
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Capturez votre plus beau sourire</p>
+                  </div>
                 </motion.div>
 
                 {/* Étape 3 - Mobile/Tablette */}
@@ -357,18 +532,28 @@ export default function PhotoboothProject({ params }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7, delay: 1.4 }}
                 >
-                  <motion.div 
-                    className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4"
-                    style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
+                  <div 
+                    className="relative backdrop-blur-lg bg-white/5 rounded-2xl border border-white/20 p-4 text-center transition-all duration-500 hover:scale-105 hover:bg-white/8 w-full max-w-xs"
+                    style={{
+                      boxShadow: `0 8px 32px ${secondaryColor}20, 
+                                 0 0 0 1px ${primaryColor}30 inset,
+                                 0 0 20px rgba(255,255,255,0.1) inset`
+                    }}
                   >
-                    <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>3</span>
-                  </motion.div>
-                  <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
-                    Récupérez votre création
-                  </h3>
-                  <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Téléchargez votre photo transformée</p>
+                    <motion.div 
+                      className="rounded-full h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center mb-2 shadow-lg border-3 sm:border-4 mx-auto"
+                      style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                    >
+                      <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>3</span>
+                    </motion.div>
+                    <h3 className="font-bold text-base sm:text-lg mb-1 px-2" style={{ color: secondaryColor }}>
+                      Récupérez votre création
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/80 px-4 sm:px-2">Téléchargez votre photo transformée</p>
+                  </div>
                 </motion.div>
+              </div>
               </div>
             </div>
 
@@ -723,9 +908,9 @@ export default function PhotoboothProject({ params }) {
             </div>
           </motion.div>
 
-          {/* Start button with modern hover effect */}
+          {/* Start button with responsive design */}
           <motion.div 
-            className="flex justify-center items-center mt-12 mb-8"
+            className="flex justify-center items-center mt-8 sm:mt-10 lg:mt-12 mb-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 2.2 }}
@@ -743,8 +928,19 @@ export default function PhotoboothProject({ params }) {
                   borderRadius: '0.75rem', 
                 }}
               ></div>
+              {/* Version Mobile */}
               <button 
-                className="relative px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
+                className="relative block sm:hidden px-8 py-4 text-lg font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl text-center w-full max-w-xs"
+                style={{ 
+                  backgroundColor: secondaryColor, 
+                  color: primaryColor 
+                }}
+              >
+                COMMENCER
+              </button>
+              {/* Version Tablette et Desktop */}
+              <button 
+                className="relative hidden sm:block px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor 
@@ -752,23 +948,6 @@ export default function PhotoboothProject({ params }) {
               >
                 TOUCHER L&apos;ÉCRAN POUR COMMENCER
               </button>
-            </div>
-          </motion.div>
-          
-          {/* Animation de chargement en bas */}
-          <motion.div 
-            className="mt-12 flex justify-center mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2.4, duration: 0.6 }}
-          >
-            <div className="flex space-x-3 items-center">
-              <div className="flex space-x-1">
-                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-3 h-3 rounded-full bg-white/70 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-              
             </div>
           </motion.div>
         </div>

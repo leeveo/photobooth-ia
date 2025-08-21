@@ -319,6 +319,12 @@
       "category": "Coiffeur"
     },
     {
+      "id": "coiffeur-17",
+      "name": "Coiffeur 17",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/coiffeur-(17).jpg",
+      "category": "Coiffeur"
+    },
+    {
       "id": "comics-1",
       "name": "Comics 1",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/comics%20(1).jpg",
@@ -1573,25 +1579,20 @@
 
   
   "horizontal_videos": [
+    
     {
-      "id": "ocean-waves-h",
-      "name": "Vagues Océan Horizontal",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/ocean-waves.mp4",
-      "category": "Nature"
+      "id": "video_coiffeur_horizontal_17",
+      "name": "Salon de Coiffure Horizontal 17",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(17).mp4",
+      "category": "Coiffeur"
     },
-    {
-      "id": "city-lights-h",
-      "name": "Lumières Ville Horizontal",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/city-lights.mp4",
-      "category": "Urbain"
-    },
-    {
-      "id": "abstract-motion-h",
-      "name": "Mouvement Abstrait Horizontal",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/abstract-motion.mp4",
-      "category": "Abstrait"
+      {
+      "id": "video_coiffeur_horizontal_17",
+      "name": "Salon de Coiffure Horizontal 17",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(2).mp4",
+
+      "category": "Coiffeur"
     }
-   
   ],
 
 
@@ -1812,6 +1813,12 @@
       "id": "v_coiffeur-16",
       "name": "Coiffeur 16",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_coiffeur%20(16).jpg",
+      "category": "Coiffeur"
+    },
+    {
+      "id": "v_coiffeur-17",
+      "name": "Coiffeur 17",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_coiffeur%20(17).jpg",
       "category": "Coiffeur"
     },
     {
@@ -2948,22 +2955,18 @@
       "name": "Salon de Coiffure Vertical 3",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(6).mp4",
       "category": "Coiffeur"
+    },
+    {
+      "id": "video_coiffeur_vertical_17",
+      "name": "Salon de Coiffure Vertical 17",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(17).mp4",
+      "category": "Coiffeur"
     }
   ],
 
 
 
 
-
-  "horizontal_videos": [
-   {
-      "id": "video_coiffeur_horizontal_01",
-      "name": "Salon de Coiffure Horizontal",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(2).mp4",
-      "category": "Coiffeur"
-    }
-
-     ],
 
   "packages": [
     {
@@ -2980,43 +2983,19 @@
       }
     },
     {
-      "id": "urban-complete-1",
-      "name": "Package Urbain Complet",
-      "category": "Urbain",
-      "description": "Package complet avec images et vidéos urbaines",
-      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/004.png",
+      "id": "coiffeur-complete-17",
+      "name": "Package Coiffeur 17 Complet",
+      "category": "Coiffeur",
+      "description": "Package complet coiffeur 17 avec images et vidéos professionnelles",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/horizontal_coiffeur%20(17).png",
       "media": {
-        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/004.png",
-        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/cityscape-portrait.jpg",
-        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/city-traffic.mp4",
-        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/city-lights-portrait.mp4"
-      }
-    },
-    {
-      "id": "abstract-complete-1",
-      "name": "Package Abstrait Complet",
-      "category": "Abstrait",
-      "description": "Package complet avec images et vidéos abstraites",
-      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(1).jpg",
-      "media": {
-        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract%20(1).jpg",
-        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/abstract-portrait.jpg",
-        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/particles-flow.mp4",
-        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/abstract-motion-portrait.mp4"
-      }
-    },
-    {
-      "id": "gradient-complete-1",
-      "name": "Package Dégradé Complet",
-      "category": "Moderne",
-      "description": "Package complet avec dégradés et effets modernes",
-      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/002.png",
-      "media": {
-        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/002.png",
-        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/blue-gradient-portrait.jpg",
-        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/landscape/gradient-flow.mp4",
-        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/portrait/gradient-vertical.mp4"
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/coiffeur-(17).jpg",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_coiffeur%20(17).png",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(17).mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(17).mp4"
       }
     }
+    
+    
   ]
 }
