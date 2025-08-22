@@ -812,36 +812,10 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {/* Action Icons - 3 icons aligned horizontally */}
+        {/* Action Icons - 2 icons aligned horizontally */}
         {imageResultAI && (
-          <div className="mt-8 flex justify-center items-start gap-8 px-4">
-            {/* 1. Icône Télécharger */}
-            <div className="flex flex-col items-center">
-              <motion.a
-                href={imageResultAI}
-                download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
-                className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
-                style={{
-                  background: '#fff',
-                  color: primaryColor,
-                  border: `3px solid ${primaryColor}`,
-                  boxShadow: `0 4px 16px 0 ${primaryColor}33`,
-                  width: '80px',
-                  height: '80px'
-                }}
-                whileHover={{ scale: 1.1, y: -4 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                title="Télécharger ma photo"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-              </motion.a>
-              <span className="mt-2 text-sm font-medium text-black">Télécharger</span>
-            </div>
-
-            {/* 2. Icône Envoyer ma photo */}
+          <div className="mt-8 flex justify-center items-start gap-12 px-4">
+            {/* 1. Icône Envoyer ma photo */}
             {settings?.enable_qr_codes && (
               <div className="flex flex-col items-center">
                 <motion.button 
@@ -882,7 +856,7 @@ export default function Result({ params }) {
               </div>
             )}
 
-            {/* 3. Icône Recommencer */}
+            {/* 2. Icône Recommencer */}
             <div className="flex flex-col items-center">
               <motion.div
                 whileHover={{ scale: 1.1, y: -4 }}

@@ -258,6 +258,7 @@ export default function CameraCapture({ params }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [resultFaceSwap, setResultFaceSwap] = useState(null);
   const [numProses, setNumProses] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Restore camera error display for better debugging
   const [cameraError, setCameraError] = useState(null);
@@ -295,9 +296,6 @@ export default function CameraCapture({ params }) {
   // Add missing cameraLoaded state
   const [cameraLoaded, setCameraLoaded] = useState(false);
   
-  // Add state for loading progress
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  
   // Add state for retry attempt
   const [retryAttempt, setRetryAttempt] = useState(0);
   
@@ -327,6 +325,7 @@ export default function CameraCapture({ params }) {
     setLoadingProgress(0);
     setIsRedirecting(false);
     setRedirectCountdown(0);
+    setProcessing(false);
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
@@ -892,6 +891,32 @@ export default function CameraCapture({ params }) {
     }
   };
   
+  // Function to redirect safely to result page
+  const redirectToResult = useCallback(async () => {
+    try {
+      setLogs(logs => [...logs, "Préparation de la redirection..."]);
+      
+      // Précharger la page de résultat
+      router.prefetch(`/photobooth-coiffure/${slug}/result`);
+      
+      // Attendre un peu puis rediriger
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setLogs(logs => [...logs, "🚀 Redirection en cours..."]);
+      
+      // Fermer le popup de processing avant la redirection
+      setProcessing(false);
+      
+      // Effectuer la redirection
+      await router.push(`/photobooth-coiffure/${slug}/result`);
+    } catch (error) {
+      console.error("Erreur lors de la redirection:", error);
+      // En cas d'erreur, fermer le popup et forcer la redirection
+      setProcessing(false);
+      window.location.href = `/photobooth-coiffure/${slug}/result`;
+    }
+  }, [router, slug]);
+
   // Initialize state for image processing
   const [imageProcessing, setImageProcessing] = useState(false);
   
@@ -906,6 +931,36 @@ export default function CameraCapture({ params }) {
 
     const start = Date.now();
     let progressTimer;
+    
+    // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
+    progressTimer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        setElapsedTime(elapsed);
+        
+        // Debug: vérifier que les valeurs se mettent à jour
+        console.log(`[DEBUG] Timer update: ${Math.floor(elapsed / 1000)}s, Progress: ${loadingProgress}%`);
+        
+        // Progression continue basée sur le temps écoulé
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        const maxTime = (settings?.max_processing_time || 60) * 1000;
+        let timeBasedProgress;
+        
+        if (elapsedSeconds < 5) {
+          timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
+        } else if (elapsedSeconds < 10) {
+          timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
+        } else if (elapsedSeconds < 15) {
+          timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
+        } else if (elapsedSeconds < 20) {
+          timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
+        } else {
+          timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+        }
+        
+        setLoadingProgress(timeBasedProgress);
+        console.log(`[DEBUG] Continuous progress set to ${timeBasedProgress}%`);
+    }, 500); // Mettre à jour toutes les 500ms pour plus de fluidité
+    
     try {
       // Récupérer le prompt depuis localStorage au lieu d'une image cible
       const stylePrompt = localStorage.getItem('stylePrompt');
@@ -916,7 +971,7 @@ export default function CameraCapture({ params }) {
       }
       
       // Log pour débogage des variables d'entrée
-      console.group("[Replicate] Request Details (generateImageSwap)");
+      console.group("[AI] Request Details (generateImageSwap)");
       console.log('Model:', "black-forest-labs/flux-kontext-pro");
       console.log('Prompt:', stylePrompt);
       console.log('Input image present:', !!imageFile);
@@ -937,30 +992,20 @@ export default function CameraCapture({ params }) {
       // Ajouter un log pour suivre la progression
       setLogs(prevLogs => [...prevLogs, "Initialisation de la requête API..."]);
       
-      // Timer pour simuler la progression (NE PAS STOPPER AVANT LA FIN)
-      progressTimer = setInterval(() => {
-          setElapsedTime(Date.now() - start);
-          
-          // Ajouter des messages de progression pour garder l'utilisateur informé
-          const elapsedSeconds = Math.floor((Date.now() - start) / 1000);
-          if (elapsedSeconds === 5) {
-              setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
-              setLoadingProgress(25);
-          } else if (elapsedSeconds === 10) {
-              setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
-              setLoadingProgress(50);
-          } else if (elapsedSeconds === 15) {
-              setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
-              setLoadingProgress(75);
-          } else {
-              // Update loading progress based on elapsed time
-              const maxTime = (settings?.max_processing_time || 60) * 1000;
-              const timeBasedProgress = Math.min(95, (Date.now() - start) / maxTime * 100);
-              setLoadingProgress(timeBasedProgress);
-          }
-      }, 1000);
+      // Ajouter des messages de progression basés sur le temps écoulé
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+      }, 5000);
       
-      // Utiliser l'API proxy Next.js au lieu d'appeler Replicate directement
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+      }, 10000);
+      
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+      }, 15000);
+      
+      // Utiliser l'API proxy Next.js au lieu d'appeler directement
       setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur..."]);
       
       // Ensure the model parameter is correct and data is well-formatted
@@ -977,16 +1022,16 @@ export default function CameraCapture({ params }) {
       };
       
       // Exposer une version safe du payload pour debug (sans le base64 complet)
-      window.debugReplicatePayload = {
+      window.debugPayload = {
         ...requestBody,
         input: {
           ...requestBody.input,
           input_image: imageFile ? `${imageFile.substring(0, 30)}... (length: ${imageFile.length})` : null
         }
       };
-      console.log('[Replicate] Payload summary:', window.debugReplicatePayload);
+      console.log('[AI] Payload summary:', window.debugPayload);
       
-      console.log('[Replicate] Starting request to /api/replicate...');
+      console.log('[AI] Starting request to /api/replicate...');
       setLogs(prevLogs => [...prevLogs, "Connexion au serveur IA ."]);
       
       const fetchStart = Date.now();
@@ -1000,14 +1045,14 @@ export default function CameraCapture({ params }) {
           body: JSON.stringify(requestBody),
         });
       } catch (networkErr) {
-        console.error('[Replicate] Network error during fetch:', networkErr);
+        console.error('[AI] Network error during fetch:', networkErr);
         setLogs(prevLogs => [...prevLogs, `Erreur réseau: ${networkErr.message}`]);
-        throw new Error(`Erreur réseau Replicate: ${networkErr.message}`);
+        throw new Error(`Erreur réseau: ${networkErr.message}`);
       }
       
       const responseTime = Date.now() - fetchStart;
-      console.log(`[Replicate] Response received after ${responseTime}ms`);
-      console.log(`[Replicate] Status: ${response.status} ${response.statusText}`);
+      console.log(`[AI] Response received after ${responseTime}ms`);
+      console.log(`[AI] Status: ${response.status} ${response.statusText}`);
       
       // Log response headers
       try {
@@ -1015,9 +1060,9 @@ export default function CameraCapture({ params }) {
         response.headers.forEach((value, key) => {
           headers[key] = value;
         });
-        console.log('[Replicate] Response headers:', headers);
+        console.log('[AI] Response headers:', headers);
       } catch (headerErr) {
-        console.warn('[Replicate] Could not log headers:', headerErr);
+        console.warn('[AI] Could not log headers:', headerErr);
       }
       
       // Check if the request was successful
@@ -1026,45 +1071,45 @@ export default function CameraCapture({ params }) {
         try {
           errorText = await response.text();
         } catch (textErr) {
-          console.error('[Replicate] Could not read error text:', textErr);
+          console.error('[AI] Could not read error text:', textErr);
         }
         
-        console.error('[Replicate] HTTP Error Response:', {
+        console.error('[AI] HTTP Error Response:', {
           status: response.status,
           statusText: response.statusText,
           errorText: errorText?.substring(0, 500)
         });
         
         setLogs(prevLogs => [...prevLogs, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
-        throw new Error(`Erreur du serveur Replicate: ${response.status} ${errorText}`);
+        throw new Error(`Erreur du serveur: ${response.status} ${errorText}`);
       }
       
       let data;
       try {
         data = await response.json();
       } catch (parseErr) {
-        console.error('[Replicate] JSON parse error:', parseErr);
+        console.error('[AI] JSON parse error:', parseErr);
         let rawText = '';
         try {
           rawText = await response.text();
         } catch (textErr) {
-          console.error('[Replicate] Could not read response as text:', textErr);
+          console.error('[AI] Could not read response as text:', textErr);
         }
-        console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
-        setLogs(prevLogs => [...prevLogs, 'Réponse invalide du serveur Replicate']);
-        throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
+        console.log('[AI] Raw response:', rawText?.substring(0, 500));
+        setLogs(prevLogs => [...prevLogs, 'Réponse invalide du serveur']);
+        throw new Error(`Réponse invalide du serveur: ${rawText?.substring(0, 200)}`);
       }
       
-      console.log('[Replicate] Successfully parsed JSON response:', data);
+      console.log('[AI] Successfully parsed JSON response:', data);
       
       if (!data.success) {
-        console.error('[Replicate] API indicated failure:', data.error);
+        console.error('[AI] API indicated failure:', data.error);
         setLogs(prevLogs => [...prevLogs, `Erreur API: ${data.error || "Erreur inconnue"}`]);
         throw new Error(data.error || "Erreur lors de la génération de l'image");
       }
       
       const result = data.output;
-      console.log('[Replicate] Output received:', typeof result, result ? 'present' : 'missing');
+      console.log('[AI] Output received:', typeof result, result ? 'present' : 'missing');
       setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
 
       let resultImageUrl = typeof result === 'string' ? result : 
@@ -1072,11 +1117,11 @@ export default function CameraCapture({ params }) {
         result?.url || result?.image || result;
 
       if (!resultImageUrl) {
-        console.error('[Replicate] Missing image URL in response. Full output:', result);
+        console.error('[AI] Missing image URL in response. Full output:', result);
         throw new Error("URL d'image non trouvée dans la réponse");
       }
       
-      console.log('[Replicate] Final image URL:', resultImageUrl);
+      console.log('[AI] Final image URL:', resultImageUrl);
       setLogs(prevLogs => [...prevLogs, "URL d'image reçue avec succès !"]);
 
       // 2. Ajout du layout (watermark) si disponible
@@ -1147,44 +1192,65 @@ export default function CameraCapture({ params }) {
           localStorage.setItem("faceURLResultS3", uploadData.url);
           resultS3Url = uploadData.url;
           setLogs(logs => [...logs, "Image prête à être affichée !"]);
+          
+          // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD S3 RÉUSSI
+          if (progressTimer) {
+            clearInterval(progressTimer);
+            progressTimer = null;
+            console.log('[DEBUG] Timer arrêté après upload S3 réussi');
+          }
         } else {
           throw new Error("Réponse S3 invalide");
         }
       } else {
         setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
         localStorage.setItem("faceURLResult", finalImageUrl);
+        
+        // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD DIRECT
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+          console.log('[DEBUG] Timer arrêté après upload direct');
+        }
       }
 
       // Gestion de la redirection après succès
-      setTimeout(() => {
-        setLogs(logs => [...logs, "Préparation de la redirection vers la page résultat..."]);
-        setIsRedirecting(true);
-        setRedirectCountdown(3);
-        
-        // Compteur de redirection
-        let countdown = 3;
-        const countdownInterval = setInterval(() => {
-          countdown--;
-          setRedirectCountdown(countdown);
-          setLogs(logs => [...logs, `Redirection dans ${countdown} seconde${countdown > 1 ? 's' : ''}...`]);
-          
-          if (countdown <= 0) {
+      setLogs(logs => [...logs, "Préparation de la redirection..."]);
+      setLoadingProgress(100);
+      
+      // Démarrer le countdown de redirection
+      setIsRedirecting(true);
+      setRedirectCountdown(3);
+      
+      // ✅ REDIRECTION DIRECTE AVEC ROUTER.PUSH APRÈS COUNTDOWN
+      const countdownInterval = setInterval(() => {
+        setRedirectCountdown(prev => {
+          if (prev <= 1) {
             clearInterval(countdownInterval);
-            setLogs(logs => [...logs, "🚀 Redirection en cours..."]);
-            
-            // Petit délai pour que l'utilisateur voie le message de redirection
-            setTimeout(() => {
-              router.push(`/photobooth-coiffure/${slug}/result`);
-            }, 500);
+            // Effectuer la redirection immédiatement avec router.push
+            console.log("🚀 Redirection vers /result...");
+            setProcessing(false); // Fermer le popup avant redirection
+            router.push(`/photobooth-coiffure/${slug}/result`);
+            return 0;
           }
-        }, 1000);
+          return prev - 1;
+        });
       }, 1000);
 
     } catch (err) {
+      console.error("Erreur dans generateImageSwap:", err);
       setError(err.message || "Erreur lors de la génération");
       setLogs([err.message]);
-      setIsRedirecting(false);
-      setRedirectCountdown(0);
+      setLoadingProgress(0);
+      setProcessing(false); // Arrêter le processing en cas d'erreur
+      
+      // ✅ ARRÊTER LE TIMER EN CAS D'ERREUR IMMÉDIATEMENT
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+        console.log('[DEBUG] Timer arrêté à cause d\'une erreur');
+      }
+      
       // Enregistre l'échec dans sessions pour garder la cohérence du quota
       try {
         const sessionPayload = {
@@ -1227,9 +1293,13 @@ export default function CameraCapture({ params }) {
         console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
       }
     } finally {
-      if (!isRedirecting) {
-        setProcessing(false);
+      // ✅ SÉCURITÉ : Arrêter le timer s'il n'a pas encore été arrêté
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        console.log('[DEBUG] Timer arrêté en sécurité dans finally');
       }
+      
+      // Mettre à jour le temps final
       setElapsedTime(Date.now() - start);
     }
   };
@@ -1243,6 +1313,35 @@ const generateImageReplicate = async () => {
   setElapsedTime(0);
 
   const start = Date.now();
+  let progressTimer;
+  
+  // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
+  progressTimer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setElapsedTime(elapsed);
+      
+      console.log(`[DEBUG] Timer update (Replicate): ${Math.floor(elapsed / 1000)}s`);
+      
+      // Progression continue basée sur le temps écoulé
+      const elapsedSeconds = Math.floor(elapsed / 1000);
+      const maxTime = (settings?.max_processing_time || 60) * 1000;
+      let timeBasedProgress;
+      
+      if (elapsedSeconds < 5) {
+        timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
+      } else if (elapsedSeconds < 10) {
+        timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
+      } else if (elapsedSeconds < 15) {
+        timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
+      } else if (elapsedSeconds < 20) {
+        timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
+      } else {
+        timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+      }
+      
+      setLoadingProgress(timeBasedProgress);
+  }, 500);
+  
   try {
     console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
 
@@ -1250,7 +1349,7 @@ const generateImageReplicate = async () => {
     const image = imageFile; // base64
 
     // Logs détaillés avant envoi
-    console.group('[Replicate] Request (generateImageReplicate)');
+    console.group('[AI] Request (generateImageReplicate)');
     console.log('Model:', 'black-forest-labs/flux-kontext-pro');
     console.log('Prompt:', prompt);
     console.log('Input image present:', !!image);
@@ -1260,7 +1359,20 @@ const generateImageReplicate = async () => {
     console.log('Image header:', image ? image.substring(0, 50) + '...' : 'N/A');
     console.groupEnd();
 
-    setLogs(["Envoi de la requête à Replicate..."]);
+    setLogs(["Envoi de la requête au serveur IA..."]);
+    
+    // Ajouter des messages de progression basés sur le temps écoulé
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+    }, 5000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+    }, 10000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+    }, 15000);
 
     const reqBody = {
       model: "black-forest-labs/flux-kontext-pro",
@@ -1274,17 +1386,17 @@ const generateImageReplicate = async () => {
     };
 
     // Version sûre pour le debug (sans base64 complet)
-    window.debugReplicatePayload = {
+    window.debugPayload = {
       ...reqBody,
       input: {
         ...reqBody.input,
         input_image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
       }
     };
-    console.log('[Replicate] Payload summary:', window.debugReplicatePayload);
+    console.log('[AI] Payload summary:', window.debugPayload);
 
-    console.log('[Replicate] Starting request to /api/replicate...');
-    setLogs(prev => [...prev, "Connexion au serveur Replicate..."]);
+    console.log('[AI] Starting request to /api/replicate...');
+    setLogs(prev => [...prev, "Connexion au serveur IA..."]);
 
     const fetchStart = Date.now();
     let response;
@@ -1295,14 +1407,14 @@ const generateImageReplicate = async () => {
         body: JSON.stringify(reqBody),
       });
     } catch (networkErr) {
-      console.error('[Replicate] Network error:', networkErr);
+      console.error('[AI] Network error:', networkErr);
       setLogs(prev => [...prev, `Erreur réseau: ${networkErr.message}`]);
-      throw new Error(`Erreur réseau Replicate: ${networkErr.message}`);
+      throw new Error(`Erreur réseau: ${networkErr.message}`);
     }
 
     const responseTime = Date.now() - fetchStart;
-    console.log(`[Replicate] Response received after ${responseTime}ms`);
-    console.log(`[Replicate] Status: ${response.status} ${response.statusText}`);
+    console.log(`[AI] Response received after ${responseTime}ms`);
+    console.log(`[AI] Status: ${response.status} ${response.statusText}`);
     
     // Log response headers
     try {
@@ -1426,12 +1538,26 @@ const generateImageReplicate = async () => {
         localStorage.setItem("faceURLResultS3", uploadData.url);
         resultS3Url = uploadData.url;
         setLogs(logs => [...logs, "Image prête à être affichée !"]);
+        
+        // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD S3 RÉUSSI
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+          console.log('[DEBUG] Timer arrêté après upload S3 réussi (Replicate)');
+        }
       } else {
         throw new Error("Réponse S3 invalide");
       }
     } else {
       setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
       localStorage.setItem("faceURLResult", finalImageUrl);
+      
+      // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD DIRECT
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+        console.log('[DEBUG] Timer arrêté après upload direct (Replicate)');
+      }
     }
 
     // Enregistrement dans la table sessions (identique pour les deux cas)
@@ -1479,28 +1605,27 @@ const generateImageReplicate = async () => {
       console.error("===> [DEBUG] Erreur insertion session (catch):", sessionError);
     }
 
-    setTimeout(() => {
-      setLogs(logs => [...logs, "Préparation de la redirection vers la page résultat..."]);
-      setIsRedirecting(true);
-      setRedirectCountdown(3);
-      
-      // Compteur de redirection
-      let countdown = 3;
-      const countdownInterval = setInterval(() => {
-        countdown--;
-        setRedirectCountdown(countdown);
-        setLogs(logs => [...logs, `Redirection dans ${countdown} seconde${countdown > 1 ? 's' : ''}...`]);
-        
-        if (countdown <= 0) {
+    // Gestion de la redirection après succès
+    setLogs(logs => [...logs, "Préparation de la redirection..."]);
+    setLoadingProgress(100);
+    
+    // Démarrer le countdown de redirection
+    setIsRedirecting(true);
+    setRedirectCountdown(3);
+    
+    // ✅ REDIRECTION DIRECTE AVEC ROUTER.PUSH APRÈS COUNTDOWN
+    const countdownInterval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
           clearInterval(countdownInterval);
-          setLogs(logs => [...logs, "🚀 Redirection en cours..."]);
-          
-          // Petit délai pour que l'utilisateur voie le message de redirection
-          setTimeout(() => {
-            router.push(`/photobooth-coiffure/${slug}/result`);
-          }, 500);
+          // Effectuer la redirection immédiatement avec router.push
+          console.log("🚀 Redirection vers /result...");
+          setProcessing(false); // Fermer le popup avant redirection
+          router.push(`/photobooth-coiffure/${slug}/result`);
+          return 0;
         }
-      }, 1000);
+        return prev - 1;
+      });
     }, 1000);
 
   } catch (err) {
@@ -1508,6 +1633,14 @@ const generateImageReplicate = async () => {
     setLogs([err.message]);
     setIsRedirecting(false);
     setRedirectCountdown(0);
+    setProcessing(false);
+    
+    // ✅ ARRÊTER LE TIMER EN CAS D'ERREUR IMMÉDIATEMENT
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      progressTimer = null;
+      console.log('[DEBUG] Timer arrêté à cause d\'une erreur (Replicate)');
+    }
     // Enregistre l'échec dans sessions pour garder la cohérence du quota
     try {
       const sessionPayload = {
@@ -1550,10 +1683,13 @@ const generateImageReplicate = async () => {
       console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
     }
   } finally {
-    // Ne pas mettre setProcessing(false) ici si on redirige
-    if (!isRedirecting) {
-      setProcessing(false);
+    // ✅ SÉCURITÉ : Arrêter le timer s'il n'a pas encore été arrêté
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      console.log('[DEBUG] Timer arrêté en sécurité dans finally (Replicate)');
     }
+    
+    // Mettre à jour le temps final
     setElapsedTime(Date.now() - start);
   }
 };
@@ -1655,244 +1791,700 @@ const generateImageReplicate = async () => {
     >
       
 
-      {/* Processing Overlay */}
+      {/* Processing Overlay Web 3.0 */}
       <AnimatePresence>
         {processing && (
           <motion.div 
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%)',
+              backdropFilter: 'blur(10px)'
+            }}
           >
+            {/* Container principal du modal */}
             <motion.div 
-              className="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-xl shadow-2xl max-w-md w-full"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-lg mx-auto"
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
+              transition={{ 
+                type: "spring", 
+                damping: 20, 
+                stiffness: 300,
+                duration: 0.6 
+              }}
             >
-              <h2 
-                className="text-2xl font-bold mb-2 text-center"
-                style={{ color: secondaryColor }}
+              {/* Background avec effet glassmorphism */}
+              <div 
+                className="relative overflow-hidden rounded-3xl p-8 shadow-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                }}
               >
-                Création en cours...
-              </h2>
+                {/* Animated background gradient */}
+                <motion.div
+                  className="absolute inset-0 opacity-30"
+                  animate={{
+                    background: [
+                      'linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3))',
+                      'linear-gradient(45deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))',
+                      'linear-gradient(45deg, rgba(16, 185, 129, 0.3), rgba(139, 92, 246, 0.3))'
+                    ]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
 
-              {/* --- Ajout de l'animation de scan visage --- */}
-              <div className="flex flex-col items-center mb-4">
-                <div className="relative w-20 h-24 flex items-center justify-center">
-                  {/* Icône personne (SVG) */}
-                  <svg width="80" height="96" viewBox="0 0 80 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* Tête */}
-                    <circle cx="40" cy="28" r="18" fill="#fff" fillOpacity="0.9" stroke={secondaryColor} strokeWidth="3"/>
-                    {/* Corps */}
-                    <rect x="18" y="50" width="44" height="32" rx="16" fill="#fff" fillOpacity="0.8" stroke={secondaryColor} strokeWidth="3"/>
-                  </svg>
-                  {/* Barre de scan animée */}
+                {/* Particules flottantes */}
+                {[...Array(8)].map((_, i) => (
                   <motion.div
-                    className="absolute left-1 right-1"
+                    key={`particle-${i}`}
+                    className="absolute w-2 h-2 rounded-full bg-white/20"
                     style={{
-                      top: 0,
-                      height: '18px',
-                      borderRadius: '8px',
-                      background: `linear-gradient(90deg, ${secondaryColor} 60%, ${primaryColor} 100%)`,
-                      opacity: 0.7,
-                      boxShadow: `0 0 12px 2px ${secondaryColor}80`
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
                     }}
-                    initial={{ y: 0 }}
-                    animate={{ y: 72 }}
+                    animate={{
+                      y: [0, -20, 0],
+                      opacity: [0.2, 0.8, 0.2],
+                      scale: [1, 1.5, 1],
+                    }}
                     transition={{
-                      duration: 1.5,
+                      duration: 3 + Math.random() * 2,
                       repeat: Infinity,
-                      repeatType: "loop",
-                      ease: "linear"
+                      delay: Math.random() * 2,
+                      ease: "easeInOut"
                     }}
                   />
-                </div>
-                <div className="text-xs text-white/60 mt-2">Scan du visage en cours...</div>
-              </div>
-              {/* --- Fin animation scan --- */}
+                ))}
 
-              <p className="text-white text-center mb-4">
-                Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-              </p>
-              
-              <div className="mb-6">
-                <div className="w-full bg-gray-700 rounded-full h-3">
-                  <motion.div 
-                    className="h-3 rounded-full" 
-                    style={{ 
-                      width: `${loadingProgress}%`,
-                      backgroundColor: secondaryColor
-                    }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${loadingProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  ></motion.div>
-                </div>
-                <div className="mt-1 flex justify-between text-xs text-white/70">
-                  <span>Début</span>
-                  <span>Finalisation</span>
-                </div>
-              </div>
-              
-              <motion.div 
-                className="mt-4 h-32 overflow-y-auto text-sm p-3 rounded bg-black bg-opacity-20 text-white/90"
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                {logs.length > 0 ? (
-                  logs.map((log, index) => (
-                    <motion.div 
-                      key={index}
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="mb-1"
-                    >
-                      {log}
-                    </motion.div>
-                  ))
-                ) : (
-                  <div>Initialisation du processus...</div>
-                )}
-              </motion.div>
-              
-              {/* Message de redirection si en cours */}
-              {isRedirecting && (
-                <motion.div 
-                  className="mt-4 p-4 bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-400 text-green-100 rounded-lg text-center"
-                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.div 
-                    className="flex items-center justify-center gap-3 mb-3"
-                    initial={{ y: -10 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.2 }}
+                {/* Contenu principal */}
+                <div className="relative z-10 text-center">
+                  {/* Logo avec cercles rotatifs et points */}
+                  <motion.div
+                    className="relative mb-6 mx-auto w-32 h-32 flex items-center justify-center"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.8 }}
                   >
+                    {/* Cercle principal central */}
                     <motion.div
+                      className="relative w-20 h-20 rounded-full flex items-center justify-center z-10"
+                      style={{
+                        background: `linear-gradient(135deg, ${primaryColor}90, ${secondaryColor}90)`,
+                        border: '3px solid rgba(255,255,255,0.4)',
+                        boxShadow: `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`
+                      }}
                       animate={{ 
-                        rotate: 360,
-                        scale: [1, 1.2, 1]
+                        scale: [1, 1.1, 1],
+                        boxShadow: [
+                          `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`,
+                          `0 0 60px ${primaryColor}70, inset 0 0 30px rgba(255,255,255,0.3)`,
+                          `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`
+                        ]
                       }}
                       transition={{ 
-                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                        scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
                       }}
-                      className="text-xl"
                     >
-                      ✨
-                    </motion.div>
-                    <span className="font-bold text-lg text-green-200">Image générée avec succès !</span>
-                    <motion.div
-                      animate={{ 
-                        rotate: -360,
-                        scale: [1, 1.2, 1]
-                      }}
-                      transition={{ 
-                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                        scale: { duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
-                      }}
-                      className="text-xl"
-                    >
-                      🎉
-                    </motion.div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="text-sm mb-3 text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <div className="mb-2">
-                      🎯 <strong>Ne fermez pas cette fenêtre !</strong>
-                    </div>
-                    <div>
-                      Redirection automatique vers la page résultat dans{' '}
-                      <motion.span 
-                        className="font-bold text-2xl text-yellow-300 inline-block"
-                        key={redirectCountdown}
-                        initial={{ scale: 1.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
+                      {/* Icône centrale moderne et professionnelle */}
+                      <motion.div
+                        className="text-white flex items-center justify-center"
+                        animate={{ 
+                          rotate: [0, 360],
+                          scale: [1, 1.1, 1]
+                        }}
+                        transition={{ 
+                          rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                          scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+                        }}
                       >
-                        {redirectCountdown}
-                      </motion.span>
-                      {' '}seconde{redirectCountdown > 1 ? 's' : ''}...
-                    </div>
-                  </motion.div>
-                  
-                  <div className="relative">
-                    <motion.div
-                      className="h-2 bg-green-600/30 rounded-full overflow-hidden"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                    >
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 3, ease: "linear" }}
-                      />
+                        {/* Icône géométrique moderne - hexagone avec point central */}
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                          <motion.path
+                            d="M16 4L25.856 9V23L16 28L6.144 23V9L16 4Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="rgba(255,255,255,0.1)"
+                            animate={{
+                              strokeDasharray: ["0 100", "50 100", "100 100"],
+                              strokeDashoffset: [0, -25, -50]
+                            }}
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                          <motion.circle
+                            cx="16"
+                            cy="16"
+                            r="3"
+                            fill="currentColor"
+                            animate={{
+                              scale: [1, 1.3, 1],
+                              opacity: [0.8, 1, 0.8]
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                          <motion.circle
+                            cx="16"
+                            cy="16"
+                            r="6"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            fill="none"
+                            opacity="0.5"
+                            animate={{
+                              scale: [1, 1.2, 1],
+                              opacity: [0.3, 0.7, 0.3]
+                            }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: 0.5
+                            }}
+                          />
+                        </svg>
+                      </motion.div>
                     </motion.div>
-                    
-                    {/* Petites particules flottantes */}
-                    {[...Array(5)].map((_, i) => (
+
+                    {/* Premier cercle externe avec 6 points */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ 
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(6)].map((_, i) => {
+                        const angle = (i * 60) * (Math.PI / 180);
+                        const radius = 55;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`outer-dot-${i}`}
+                            className="absolute w-3 h-3 rounded-full"
+                            style={{
+                              background: `linear-gradient(45deg, ${primaryColor}, ${secondaryColor})`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: `0 0 15px ${primaryColor}80`
+                            }}
+                            animate={{
+                              scale: [0.8, 1.3, 0.8],
+                              opacity: [0.7, 1, 0.7]
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              delay: i * 0.2,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Deuxième cercle externe avec 8 points (rotation inverse) */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [360, 0] }}
+                      transition={{ 
+                        duration: 12,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(8)].map((_, i) => {
+                        const angle = (i * 45) * (Math.PI / 180);
+                        const radius = 42;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`middle-dot-${i}`}
+                            className="absolute w-2 h-2 rounded-full"
+                            style={{
+                              background: `rgba(255,255,255,0.9)`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: '0 0 10px rgba(255,255,255,0.8)'
+                            }}
+                            animate={{
+                              scale: [0.5, 1.2, 0.5],
+                              opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              delay: i * 0.15,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Troisième cercle interne avec 4 points */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ 
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(4)].map((_, i) => {
+                        const angle = (i * 90) * (Math.PI / 180);
+                        const radius = 28;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`inner-dot-${i}`}
+                            className="absolute w-2.5 h-2.5 rounded-full"
+                            style={{
+                              background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: `0 0 12px ${secondaryColor}70`
+                            }}
+                            animate={{
+                              scale: [0.8, 1.4, 0.8],
+                              opacity: [0.8, 1, 0.8],
+                              rotate: [0, 180, 360]
+                            }}
+                            transition={{
+                              duration: 2.5,
+                              repeat: Infinity,
+                              delay: i * 0.3,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Anneaux de pulsation externe */}
+                    {[...Array(2)].map((_, i) => (
                       <motion.div
-                        key={`particle-${i}`}
-                        className="absolute w-1 h-1 bg-yellow-300 rounded-full"
+                        key={`pulse-ring-${i}`}
+                        className="absolute rounded-full border border-white/30"
                         style={{
-                          left: `${10 + i * 20}%`,
-                          top: '-4px'
+                          width: `${140 + i * 20}px`,
+                          height: `${140 + i * 20}px`,
+                          left: '50%',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)'
                         }}
                         animate={{
-                          y: [0, -8, 0],
-                          opacity: [0.7, 1, 0.7],
-                          scale: [0.8, 1.2, 0.8]
+                          scale: [0.8, 1.2, 0.8],
+                          opacity: [0.6, 0.1, 0.6],
                         }}
                         transition={{
-                          duration: 1.5,
+                          duration: 3 + i * 0.5,
                           repeat: Infinity,
-                          delay: i * 0.2,
-                          ease: "easeInOut"
+                          delay: i * 1,
+                          ease: "easeOut"
                         }}
                       />
                     ))}
-                  </div>
-                </motion.div>
-              )}
-              
-              {error && (
-                <motion.div 
-                  className="mt-4 p-3 bg-red-900 bg-opacity-20 border border-red-500 text-red-100 rounded-lg"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  {error}
-                </motion.div>
-              )}
-              
-              <div className="mt-6 flex justify-center">
-                {!isRedirecting && (
-                  <motion.button
-                    onClick={() => {
-                      setProcessing(false);
-                      setIsRedirecting(false);
-                      setRedirectCountdown(0);
-                      router.push(`/photobooth-coiffure/${slug}`);
+                  </motion.div>
+
+                  {/* Titre principal */}
+                  <motion.h2 
+                    className="text-2xl font-bold text-white mb-3"
+                    style={{
+                      background: 'linear-gradient(135deg, #ffffff, #e0e0e0)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      textShadow: '0 0 20px rgba(255,255,255,0.5)'
                     }}
-                    className="px-6 py-2.5 rounded-lg text-sm font-medium"
-                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
-                    whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
-                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
                   >
-                    Annuler
-                  </motion.button>
-                )}
+                    IA en cours de création...
+                  </motion.h2>
+
+                  {/* Sous-titre */}
+                  <motion.p 
+                    className="text-white/80 text-sm mb-6 leading-relaxed"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                  >
+                    Notre intelligence artificielle transforme votre photo
+                    <br />
+                    <span className="text-white/60">Veuillez patienter...</span>
+                  </motion.p>
+
+                  {/* Timer futuriste */}
+                  <motion.div 
+                    className="flex items-center justify-center gap-3 mb-6"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                  >
+                    <div 
+                      className="px-4 py-2 rounded-full text-white font-mono text-lg"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <motion.span
+                        className="inline-flex items-center justify-center"
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >
+                        {/* Icône timer moderne */}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white">
+                          <motion.circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="none"
+                            animate={{
+                              strokeDasharray: ["0 63", "31.5 63", "63 63"],
+                              rotate: [0, 360]
+                            }}
+                            transition={{
+                              strokeDasharray: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                              rotate: { duration: 4, repeat: Infinity, ease: "linear" }
+                            }}
+                          />
+                          <motion.path
+                            d="M12 6V12L16 16"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            animate={{
+                              opacity: [0.7, 1, 0.7]
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        </svg>
+                      </motion.span>
+                      {" "}
+                      <motion.span
+                        key={Math.floor(elapsedTime / 1000)} // Re-render on change
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {Math.floor(elapsedTime / 1000)}s
+                      </motion.span>
+                    </div>
+                  </motion.div>
+
+                  {/* Barre de progression futuriste */}
+                  <motion.div 
+                    className="mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9, duration: 0.6 }}
+                  >
+                    <div 
+                      className="relative w-full h-3 rounded-full overflow-hidden mb-3"
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      <motion.div 
+                        className="h-full rounded-full relative overflow-hidden"
+                        style={{ 
+                          background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
+                          boxShadow: `0 0 10px ${primaryColor}50`,
+                          width: `${loadingProgress}%`
+                        }}
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${loadingProgress}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      >
+                        {/* Effet de brillance */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                      </motion.div>
+                    </div>
+
+                    {/* Pourcentage avec animation */}
+                    <motion.div 
+                      className="text-white/90 font-semibold text-lg"
+                      key={Math.round(loadingProgress)} // Re-render on change
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {Math.round(loadingProgress)}%
+                      <span className="text-white/60 text-sm ml-1">terminé</span>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Logs avec effet de défilement */}
+                  {logs.length > 0 && (
+                    <motion.div 
+                      className="max-h-24 overflow-hidden"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      transition={{ delay: 1.1, duration: 0.6 }}
+                    >
+                      <div className="space-y-2">
+                        {logs.slice(-3).map((log, index) => (
+                          <motion.div 
+                            key={`${index}-${log}`}
+                            className="text-white/70 text-xs px-3 py-1 rounded-full"
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.1)'
+                            }}
+                            initial={{ opacity: 0, x: -30, scale: 0.8 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            transition={{ 
+                              duration: 0.5,
+                              delay: index * 0.1,
+                              type: "spring",
+                              stiffness: 200 
+                            }}
+                          >
+                            {log}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Message de redirection si en cours */}
+                  {isRedirecting && (
+                    <motion.div 
+                      className="mt-6 p-4 bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-400/50 text-green-100 rounded-2xl text-center"
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(34, 197, 94, 0.3)'
+                      }}
+                    >
+                      <motion.div 
+                        className="flex items-center justify-center gap-3 mb-3"
+                        initial={{ y: -10 }}
+                        animate={{ y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <motion.div
+                          className="inline-flex items-center justify-center"
+                          animate={{ 
+                            rotate: 360,
+                            scale: [1, 1.2, 1]
+                          }}
+                          transition={{ 
+                            rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                            scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                          }}
+                        >
+                          {/* Icône succès moderne */}
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-300">
+                            <motion.circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              fill="none"
+                              animate={{
+                                strokeDasharray: ["0 63", "63 63"],
+                                scale: [1, 1.1, 1]
+                              }}
+                              transition={{
+                                strokeDasharray: { duration: 1.5, ease: "easeInOut" },
+                                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                              }}
+                            />
+                            <motion.path
+                              d="M9 12L11 14L15 10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 1, delay: 0.5 }}
+                            />
+                          </svg>
+                        </motion.div>
+                        <span className="font-bold text-lg text-green-200">Image générée avec succès !</span>
+                        <motion.div
+                          className="inline-flex items-center justify-center"
+                          animate={{ 
+                            rotate: -360,
+                            scale: [1, 1.2, 1]
+                          }}
+                          transition={{ 
+                            rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                            scale: { duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
+                          }}
+                        >
+                          {/* Icône célébration moderne */}
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-300">
+                            <motion.path
+                              d="M12 2L13.5 8.5L20 7L14.5 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L9.5 12L4 7L10.5 8.5L12 2Z"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="currentColor"
+                              fillOpacity="0.2"
+                              animate={{
+                                scale: [1, 1.3, 1],
+                                opacity: [0.7, 1, 0.7]
+                              }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            />
+                          </svg>
+                        </motion.div>
+                      </motion.div>
+                      
+                      <motion.div 
+                        className="text-sm mb-3 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <div className="mb-2 flex items-center justify-center gap-2">
+                          {/* Icône attention moderne */}
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-yellow-300">
+                            <motion.circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              fill="none"
+                              animate={{
+                                scale: [1, 1.1, 1]
+                              }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            />
+                            <motion.path
+                              d="M12 8V12"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              animate={{
+                                opacity: [1, 0.5, 1]
+                              }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            />
+                            <circle cx="12" cy="16" r="1" fill="currentColor" />
+                          </svg>
+                          <strong>Ne fermez pas cette fenêtre !</strong>
+                        </div>
+                        <div>
+                          Redirection automatique vers la page résultat dans{' '}
+                          <motion.span 
+                            className="font-bold text-2xl text-yellow-300 inline-block"
+                            key={redirectCountdown}
+                            initial={{ scale: 1.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {redirectCountdown}
+                          </motion.span>
+                          {' '}seconde{redirectCountdown > 1 ? 's' : ''}...
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+
+                  {/* Erreur si présente */}
+                  {error && (
+                    <motion.div 
+                      className="mt-6 p-4 border border-red-500/50 text-red-100 rounded-2xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.1))',
+                        backdropFilter: 'blur(10px)'
+                      }}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+
+                  {/* Bouton d'annulation */}
+                  <div className="mt-6 flex justify-center">
+                    {!isRedirecting && (
+                      <motion.button
+                        onClick={() => {
+                          setProcessing(false);
+                          setIsRedirecting(false);
+                          setRedirectCountdown(0);
+                          router.push(`/photobooth-coiffure/${slug}`);
+                        }}
+                        className="px-6 py-2.5 rounded-xl text-sm font-medium"
+                        style={{ 
+                          background: 'rgba(255,255,255,0.15)', 
+                          color: 'white',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                        whileHover={{ 
+                          backgroundColor: 'rgba(255,255,255,0.25)',
+                          scale: 1.05
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Annuler
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -2317,7 +2909,45 @@ const generateImageReplicate = async () => {
                 {/* Button text - uniquement pour desktop */}
                 {(deviceType !== 'mobile' && deviceType !== 'tablet') && (
                   <span className="relative z-10 flex items-center gap-3">
-                    📸
+                    {/* Icône caméra moderne */}
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-current">
+                      <motion.rect
+                        x="3"
+                        y="6"
+                        width="18"
+                        height="12"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                        animate={{
+                          scale: [1, 1.05, 1]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      <motion.circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                        animate={{
+                          scale: [1, 1.1, 1],
+                          opacity: [0.8, 1, 0.8]
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      <path d="M7 6L9 4H15L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                     {showCountdown
                       ? 'PRISE DE PHOTO...'
                       : cameraLoaded
@@ -2540,9 +3170,58 @@ const generateImageReplicate = async () => {
 
                 {/* Button text with icon */}
                 <span className="relative z-10 flex items-center gap-3">
-                  ✨
+                  {/* Icône création moderne */}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-current">
+                    <motion.path
+                      d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{
+                        scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                        rotate: { duration: 4, repeat: Infinity, ease: "linear" }
+                      }}
+                    />
+                  </svg>
                   GÉNÉRER MON IMAGE
-                  ⚡
+                  {/* Icône IA moderne */}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-current">
+                    <motion.circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.7, 1, 0.7]
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                    <motion.path
+                      d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      animate={{
+                        rotate: [0, 360]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  </svg>
                 </span>
 
                 {/* Enhanced pulse effect */}
@@ -2574,44 +3253,44 @@ const generateImageReplicate = async () => {
                   transition: { duration: 0.3, delay: 0.1 }
                 }}
               >
-                🔄 REPRENDRE
+                <span className="flex items-center gap-2">
+                  {/* Icône reprendre moderne */}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-current">
+                    <motion.path
+                      d="M1 4V10H7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animate={{
+                        opacity: [0.7, 1, 0.7]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                    <motion.path
+                      d="M3.51 15A9 9 0 1 0 6 5.3L1 10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animate={{
+                        rotate: [0, 360]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  </svg>
+                  REPRENDRE
+                </span>
               </motion.button>
             </div>
-          )}
-
-          {/* Message affiché pendant le processing */}
-          {enabled && processing && (
-            <motion.div 
-              className="flex flex-col items-center space-y-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <motion.div 
-                className="text-center p-4 rounded-lg backdrop-blur-md border border-white/20"
-                style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-              >
-                <motion.div
-                  className="text-2xl mb-2"
-                  animate={{ 
-                    rotate: [0, 360],
-                    scale: [1, 1.1, 1]
-                  }}
-                  transition={{ 
-                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  ✨
-                </motion.div>
-                <h3 className="text-white font-bold text-lg mb-2">
-                  Génération en cours...
-                </h3>
-                <p className="text-white/80 text-sm">
-                  Votre image est en cours de traitement par l'Intelligence Artificielle
-                </p>
-              </motion.div>
-            </motion.div>
           )}
           
           {/* Affichage du quota restant ou message quota atteint */}
