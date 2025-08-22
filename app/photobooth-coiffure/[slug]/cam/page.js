@@ -1651,7 +1651,7 @@ const generateImageReplicate = async () => {
 
   return (
     <main 
-      className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
+      className="flex fixed h-full w-full overflow-hidden flex-col items-center justify-center pt-2 pb-4 px-5 relative"
     >
       
 
@@ -1902,7 +1902,7 @@ const generateImageReplicate = async () => {
       <motion.div 
         className={`w-full mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''} ${
           deviceType === 'mobile' || deviceType === 'tablet' 
-            ? 'flex flex-col items-center justify-center min-h-screen px-4' 
+            ? 'flex flex-col items-center justify-center h-full px-2' 
             : 'max-w-6xl'
         }`}
         initial={{ opacity: 0, y: 20 }}
@@ -1927,22 +1927,19 @@ const generateImageReplicate = async () => {
         </div>
         
         {/* Camera viewfinder with responsive dimensions and centering */}
-        <motion.div 
-          className={`relative overflow-hidden rounded-lg shadow-2xl ${
-            deviceType === 'mobile' || deviceType === 'tablet' 
-              ? 'mx-auto' 
-              : 'mx-auto'
-          }`}
-          style={{ 
-            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '95vw' : '100%',
-            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '800px' : '1400px',
-            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
-            border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
-            backgroundColor: 'black',
-            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
-            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
-            margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
-          }}
+        <div className={`${deviceType === 'mobile' ? 'w-full flex justify-center' : ''}`}>
+          <motion.div 
+            className={`relative overflow-hidden rounded-lg shadow-2xl`}
+            style={{ 
+              width: deviceType === 'mobile' ? '82vw' : deviceType === 'tablet' ? '80vw' : '100%',
+              maxWidth: deviceType === 'mobile' ? '320px' : deviceType === 'tablet' ? '600px' : '1400px',
+              aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
+              border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
+              backgroundColor: 'black',
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
+              margin: deviceType === 'mobile' ? '0' : '0 auto'
+            }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
@@ -2099,11 +2096,12 @@ const generateImageReplicate = async () => {
             </div>
           )}
         </motion.div>
+        </div>
 
         {/* Action buttons */}
         <motion.div 
           className={`flex flex-col items-center ${
-            deviceType === 'mobile' || deviceType === 'tablet' ? 'mt-4 mb-8' : 'mt-8'
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mt-4 mb-4' : 'mt-8'
           }`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2618,7 +2616,7 @@ const generateImageReplicate = async () => {
           
           {/* Affichage du quota restant ou message quota atteint */}
           <div className={`text-center ${
-            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-2 mt-4' : 'mb-4'
+            deviceType === 'mobile' || deviceType === 'tablet' ? 'mb-2 mt-2' : 'mb-4'
           }`}>
             {quotaLoading ? (
               <span className="text-white/70 text-sm">Chargement du quota...</span>

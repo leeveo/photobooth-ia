@@ -1571,6 +1571,12 @@
       "name": "VIP 30",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vip%20(30).jpg",
       "category": "VIP"
+    },
+    {
+      "id": "neutre-1",
+      "name": "Neutre 1",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/neutre%20(1).jpg",
+      "category": "Neutre"
     }
   ],
 
@@ -1579,19 +1585,35 @@
 
   
   "horizontal_videos": [
-    
+    {
+      "id": "ocean-waves-h",
+      "name": "Vagues Océan Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/ocean-waves.mp4",
+      "category": "Nature"
+    },
+    {
+      "id": "city-lights-h",
+      "name": "Lumières Ville Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/city-lights.mp4",
+      "category": "Urbain"
+    },
+    {
+      "id": "abstract-motion-h",
+      "name": "Mouvement Abstrait Horizontal",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/videos/abstract-motion.mp4",
+      "category": "Abstrait"
+    },
     {
       "id": "video_coiffeur_horizontal_17",
       "name": "Salon de Coiffure Horizontal 17",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(17).mp4",
       "category": "Coiffeur"
     },
-      {
-      "id": "video_coiffeur_horizontal_17",
-      "name": "Salon de Coiffure Horizontal 17",
-      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(2).mp4",
-
-      "category": "Coiffeur"
+    {
+      "id": "video_neutre_horizontal_01",
+      "name": "Neutre Horizontal 1",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_neutre%20(1).mp4",
+      "category": "Neutre"
     }
   ],
 
@@ -2930,6 +2952,12 @@
       "name": "VIP 30",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_vip%20(30).jpg",
       "category": "VIP"
+    },
+    {
+      "id": "v_neutre-1",
+      "name": "Neutre 1",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_neutre%20(1).jpg",
+      "category": "Neutre"
     }
   ],
 
@@ -2961,6 +2989,12 @@
       "name": "Salon de Coiffure Vertical 17",
       "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(17).mp4",
       "category": "Coiffeur"
+    },
+    {
+      "id": "video_neutre_vertical_01",
+      "name": "Neutre Vertical 1",
+      "url": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_neutre%20(1).mp4",
+      "category": "Neutre"
     }
   ],
 
@@ -2993,6 +3027,19 @@
         "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_coiffeur%20(17).png",
         "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_coiffeur%20(17).mp4",
         "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_coiffeur%20(17).mp4"
+      }
+    },
+    {
+      "id": "neutre-complete-1",
+      "name": "Package Neutre Complet",
+      "category": "Neutre",
+      "description": "Package complet neutre avec images et vidéos professionnelles",
+      "thumbnail": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/neutre%20(1).jpg",
+      "media": {
+        "horizontal_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/neutre%20(1).jpg",
+        "vertical_image": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/vertical_neutre%20(1).jpg",
+        "horizontal_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_horizontal_neutre%20(1).mp4",
+        "vertical_video": "https://gyohqmahwntkmebayeej.supabase.co/storage/v1/object/public/backgrounds/templates/video_vertical_neutre%20(1).mp4"
       }
     }
     
