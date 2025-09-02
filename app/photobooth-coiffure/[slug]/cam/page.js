@@ -84,7 +84,38 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       try {
         console.log("🍎 Tentative spécialisée iPad Safari pour caméra frontale...");
         
-        // D'abord, essayer avec enumerateDevices pour trouver explicitement la caméra frontale
+        // MÉTHODE 1: Forcer directement facingMode user avec exact
+        console.log("🎯 Méthode 1: Forcer facingMode: 'user' avec contrainte exacte");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { exact: "user" }, // EXACT au lieu d'ideal
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
+          });
+          console.log("✅ SUCCÈS Méthode 1: facingMode exact 'user'");
+          return stream;
+        } catch (err1) {
+          console.log("❌ Méthode 1 échouée:", err1.message);
+        }
+        
+        // MÉTHODE 2: Essayer sans contraintes de résolution
+        console.log("🎯 Méthode 2: facingMode user sans contraintes résolution");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user"
+            }
+          });
+          console.log("✅ SUCCÈS Méthode 2: facingMode 'user' simple");
+          return stream;
+        } catch (err2) {
+          console.log("❌ Méthode 2 échouée:", err2.message);
+        }
+        
+        // MÉTHODE 3: Énumération des dispositifs pour forcer par deviceId
+        console.log("🎯 Méthode 3: Énumération des dispositifs");
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         
@@ -94,54 +125,62 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
           kind: d.kind 
         })));
         
-        // Chercher une caméra qui contient des mots-clés indiquant une caméra frontale
-        const frontCamera = videoDevices.find(device => {
-          const label = device.label.toLowerCase();
-          return label.includes('front') || 
-                 label.includes('user') || 
-                 label.includes('facetime') ||
-                 label.includes('selfie') ||
-                 (device.deviceId && device.deviceId.includes('front'));
-        });
-        
-        if (frontCamera) {
-          console.log("🎯 Caméra frontale identifiée:", frontCamera.label || frontCamera.deviceId);
+        // Essayer CHAQUE caméra une par une jusqu'à trouver la frontale
+        for (let i = 0; i < videoDevices.length; i++) {
+          const device = videoDevices[i];
+          console.log(`🔄 Test caméra ${i + 1}/${videoDevices.length}: ${device.label || device.deviceId}`);
           
-          // Essayer avec le deviceId explicite
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: frontCamera.deviceId },
-              width: { ideal: 1600 },
-              height: { ideal: 900 },
-              aspectRatio: { ideal: 16/9 }
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { exact: device.deviceId },
+                facingMode: "user"
+              }
+            });
+            
+            // Tester si c'est la caméra frontale en vérifiant le mirroring
+            console.log(`✅ Caméra ${i + 1} accessible, test si c'est la frontale...`);
+            
+            // Sur iPad, la caméra frontale est généralement la première ou celle avec un label spécifique
+            const label = device.label.toLowerCase();
+            const isFrontCamera = label.includes('front') || 
+                                 label.includes('user') || 
+                                 label.includes('facetime') ||
+                                 label.includes('selfie') ||
+                                 i === 0; // Souvent la première sur iPad
+            
+            if (isFrontCamera) {
+              console.log(`🎯 TROUVÉ! Caméra frontale: ${device.label || device.deviceId}`);
+              return stream;
+            } else {
+              // Fermer cette caméra et essayer la suivante
+              stream.getTracks().forEach(track => track.stop());
+              console.log(`❌ Caméra ${i + 1} semble être arrière, on continue...`);
             }
-          });
-          
-          console.log("✅ Succès avec deviceId explicite pour caméra frontale");
-          return stream;
+          } catch (deviceErr) {
+            console.log(`❌ Impossible d'accéder à la caméra ${i + 1}:`, deviceErr.message);
+          }
         }
         
-        // Si pas de caméra frontale identifiée explicitement, essayer par ordre
-        // (souvent la première caméra est la frontale sur iPad)
+        // MÉTHODE 4: Dernière tentative - prendre la première caméra disponible
         if (videoDevices.length > 0) {
-          console.log("🔄 Tentative avec la première caméra disponible (souvent frontale sur iPad)");
-          
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: videoDevices[0].deviceId },
-              facingMode: "user",
-              width: { ideal: 1600 },
-              height: { ideal: 900 }
-            }
-          });
-          
-          console.log("✅ Succès avec première caméra + facingMode user");
-          return stream;
+          console.log("🎯 Méthode 4: Dernière tentative avec première caméra");
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: videoDevices[0].deviceId
+              }
+            });
+            console.log("✅ SUCCÈS Méthode 4: première caméra disponible");
+            return stream;
+          } catch (err4) {
+            console.log("❌ Méthode 4 échouée:", err4.message);
+          }
         }
         
         return null;
       } catch (err) {
-        console.error("❌ Échec de la méthode spécialisée iPad Safari:", err);
+        console.error("❌ Échec complet de la méthode spécialisée iPad Safari:", err);
         return null;
       }
     };
@@ -178,17 +217,31 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       
       // Si la méthode spécialisée iPad n'a pas fonctionné, utiliser la méthode standard
       if (!stream) {
-        // Configuration options adaptées selon l'appareil
-        const configOptions = isMobile ? [
-          // Mobile: Priorité à la caméra frontale et résolution adaptée
+        console.log("⚠️ Méthode spécialisée iPad Safari échouée, fallback vers méthode standard AGRESSIVE");
+        
+        // Configuration options ULTRA-AGRESSIVES pour forcer la caméra frontale
+        const configOptions = isMobile || isTablet || isIPad ? [
+          // CONFIGURATION 1: facingMode EXACT "user" - la plus stricte
+          { 
+            video: { 
+              facingMode: { exact: "user" }  // EXACT au lieu d'ideal - FORCE la caméra frontale
+            } 
+          },
+          // CONFIGURATION 2: facingMode "user" avec résolution mobile
           { 
             video: { 
               facingMode: "user",
               width: { ideal: 1280 },
-              height: { ideal: 720 },
-              aspectRatio: { ideal: 16/9 }
+              height: { ideal: 720 }
             } 
           },
+          // CONFIGURATION 3: facingMode "user" simple
+          { 
+            video: { 
+              facingMode: "user"
+            } 
+          },
+          // CONFIGURATION 4: facingMode "user" avec résolution minimum
           { 
             video: { 
               facingMode: "user",
@@ -196,35 +249,10 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
               height: { min: 480 }
             } 
           },
-          { video: { facingMode: "user" } },
-          { video: true }
-        ] : isTablet || isIPad ? [
-          // Tablette/iPad: PRIORITÉ ABSOLUE à la caméra frontale (user) pour éviter la caméra arrière
-          { 
-            video: { 
-              facingMode: "user", // ✅ FORCER la caméra frontale en PREMIER
-              width: { ideal: 1600 },
-              height: { ideal: 900 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              facingMode: "user", // ✅ Seconde tentative avec caméra frontale
-              width: { min: 800 },
-              height: { min: 600 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              facingMode: "user" // ✅ Troisième tentative avec caméra frontale uniquement
-            } 
-          },
-          // ✅ Seulement en dernier recours, accepter n'importe quelle caméra
+          // CONFIGURATION 5: Seulement en DERNIER RECOURS - n'importe quelle caméra
           { video: true }
         ] : [
-          // PC: Haute résolution (pas de contrainte facingMode car généralement une seule webcam)
+          // PC: Configuration standard
           { 
             video: { 
               width: { ideal: 1920 },
@@ -250,9 +278,17 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         ];
         
         // Try each configuration option until one works
-        for (const config of configOptions) {
+        for (let i = 0; i < configOptions.length; i++) {
+          const config = configOptions[i];
+          console.log(`🔄 Tentative configuration ${i + 1}/${configOptions.length}:`, config);
+          
           stream = await tryInitCamera(config);
-          if (stream) break;
+          if (stream) {
+            console.log(`✅ SUCCÈS avec configuration ${i + 1}:`, config);
+            break;
+          } else {
+            console.log(`❌ Échec configuration ${i + 1}`);
+          }
         }
       }
       
@@ -260,6 +296,57 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         console.error("❌ Could not access camera after multiple attempts");
         setCameraError("La caméra n'est pas accessible. Vérifiez que vous avez autorisé l'accès.");
         return;
+      }
+      
+      // ✅ VALIDATION FINALE: Vérifier que nous avons bien la caméra frontale sur mobile/tablette
+      if ((isMobile || isTablet || isIPad) && stream) {
+        try {
+          const track = stream.getVideoTracks()[0];
+          const settings = track.getSettings();
+          console.log("📊 Paramètres de la caméra obtenue:", {
+            facingMode: settings.facingMode,
+            deviceId: settings.deviceId,
+            width: settings.width,
+            height: settings.height,
+            label: track.label
+          });
+          
+          // Si nous n'avons pas facingMode "user", essayer de changer de caméra
+          if (settings.facingMode && settings.facingMode !== "user") {
+            console.log("⚠️ ATTENTION: Caméra arrière détectée, tentative de basculement vers frontale...");
+            
+            // Arrêter la caméra actuelle
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Réessayer avec contrainte EXACTE
+            try {
+              const frontStream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                  facingMode: { exact: "user" }
+                }
+              });
+              
+              console.log("✅ BASCULEMENT RÉUSSI vers caméra frontale!");
+              stream = frontStream;
+              
+              // Vérifier à nouveau
+              const newTrack = frontStream.getVideoTracks()[0];
+              const newSettings = newTrack.getSettings();
+              console.log("📊 Nouveaux paramètres après basculement:", {
+                facingMode: newSettings.facingMode,
+                deviceId: newSettings.deviceId,
+                label: newTrack.label
+              });
+            } catch (switchErr) {
+              console.log("❌ Impossible de basculer vers caméra frontale:", switchErr.message);
+              console.log("📱 Utilisation de la caméra disponible (peut être arrière)");
+            }
+          } else {
+            console.log("✅ Caméra frontale confirmée!");
+          }
+        } catch (validationErr) {
+          console.log("⚠️ Impossible de valider le type de caméra:", validationErr.message);
+        }
       }
       
       console.log("✅ Camera stream obtained successfully");
@@ -410,6 +497,10 @@ export default function CameraCapture({ params }) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
 
+  // État pour gérer le basculement de caméra
+  const [currentCameraFacing, setCurrentCameraFacing] = useState("user"); // "user" = frontale, "environment" = arrière
+  const [switchingCamera, setSwitchingCamera] = useState(false);
+
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
@@ -419,6 +510,139 @@ export default function CameraCapture({ params }) {
     setIsRedirecting(false);
     setRedirectCountdown(0);
     setProcessing(false);
+  };
+
+  // ✅ FONCTION POUR BASCULER ENTRE CAMÉRA FRONTALE ET ARRIÈRE
+  const switchCamera = async () => {
+    if (switchingCamera) return; // Éviter les appels multiples
+    
+    setSwitchingCamera(true);
+    console.log(`🔄 Basculement de caméra: ${currentCameraFacing} → ${currentCameraFacing === "user" ? "environment" : "user"}`);
+    
+    try {
+      // Arrêter la caméra actuelle
+      if (streamCam) {
+        streamCam.getTracks().forEach(track => track.stop());
+        streamCam = null;
+        window.localStream = null;
+      }
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      
+      // Nouvelle orientation de caméra
+      const newFacing = currentCameraFacing === "user" ? "environment" : "user";
+      
+      // Essayer avec la nouvelle orientation
+      let newStream = null;
+      
+      // Méthode 1: facingMode exact
+      try {
+        newStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: newFacing }
+          }
+        });
+        console.log(`✅ Basculement réussi vers ${newFacing} (méthode exact)`);
+      } catch (err1) {
+        console.log(`❌ Échec méthode exact pour ${newFacing}:`, err1.message);
+        
+        // Méthode 2: facingMode simple
+        try {
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: newFacing
+            }
+          });
+          console.log(`✅ Basculement réussi vers ${newFacing} (méthode simple)`);
+        } catch (err2) {
+          console.log(`❌ Échec méthode simple pour ${newFacing}:`, err2.message);
+          
+          // Méthode 3: Énumération et sélection par deviceId
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            console.log(`🔍 Recherche caméra ${newFacing} parmi ${videoDevices.length} dispositifs`);
+            
+            for (const device of videoDevices) {
+              try {
+                const testStream = await navigator.mediaDevices.getUserMedia({
+                  video: {
+                    deviceId: { exact: device.deviceId }
+                  }
+                });
+                
+                const track = testStream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                
+                console.log(`🔍 Test caméra: ${device.label || device.deviceId}, facingMode: ${settings.facingMode}`);
+                
+                if (settings.facingMode === newFacing || 
+                    (newFacing === "user" && !settings.facingMode) || // Parfois pas de facingMode sur la frontale
+                    (device.label && device.label.toLowerCase().includes(newFacing === "user" ? "front" : "back"))) {
+                  newStream = testStream;
+                  console.log(`✅ Caméra ${newFacing} trouvée: ${device.label || device.deviceId}`);
+                  break;
+                } else {
+                  testStream.getTracks().forEach(track => track.stop());
+                }
+              } catch (deviceErr) {
+                console.log(`❌ Erreur test caméra ${device.deviceId}:`, deviceErr.message);
+              }
+            }
+          } catch (err3) {
+            console.log(`❌ Échec énumération dispositifs:`, err3.message);
+          }
+        }
+      }
+      
+      if (newStream) {
+        // Appliquer le nouveau stream
+        streamCam = newStream;
+        window.localStream = newStream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+          await videoRef.current.play();
+        }
+        
+        setCurrentCameraFacing(newFacing);
+        setCameraError(null);
+        setCameraLoaded(true);
+        
+        console.log(`✅ Basculement terminé vers caméra ${newFacing}`);
+      } else {
+        throw new Error(`Impossible de basculer vers la caméra ${newFacing}`);
+      }
+      
+    } catch (error) {
+      console.error("❌ Erreur lors du basculement de caméra:", error);
+      setCameraError(`Erreur basculement: ${error.message}`);
+      
+      // En cas d'erreur, réessayer avec n'importe quelle caméra disponible
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        
+        streamCam = fallbackStream;
+        window.localStream = fallbackStream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          await videoRef.current.play();
+        }
+        
+        console.log("🔄 Fallback: Retour à une caméra par défaut");
+      } catch (fallbackError) {
+        console.error("❌ Échec complet du basculement:", fallbackError);
+        setCameraError("Impossible d'accéder à une caméra");
+      }
+    } finally {
+      setSwitchingCamera(false);
+    }
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
@@ -3384,6 +3608,93 @@ const generateImageReplicate = async () => {
                 </span>
               </motion.button>
             </div>
+          )}
+          
+          {/* ✅ BOUTON DE BASCULEMENT DE CAMÉRA pour mobile/tablette */}
+          {(deviceType === 'mobile' || deviceType === 'tablet') && !enabled && cameraLoaded && !processing && (
+            <motion.div 
+              className="flex justify-center mt-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              <motion.button
+                onClick={switchCamera}
+                disabled={switchingCamera}
+                className="px-4 py-2 rounded-full font-medium text-sm backdrop-blur-md border border-white/30 flex items-center gap-2"
+                style={{ 
+                  backgroundColor: switchingCamera ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)', 
+                  color: 'white',
+                  opacity: switchingCamera ? 0.7 : 1
+                }}
+                whileHover={!switchingCamera ? { 
+                  scale: 1.05,
+                  backgroundColor: 'rgba(255,255,255,0.25)'
+                } : {}}
+                whileTap={!switchingCamera ? { scale: 0.95 } : {}}
+              >
+                {switchingCamera ? (
+                  <>
+                    <motion.div
+                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>Basculement...</span>
+                  </>
+                ) : (
+                  <>
+                    <motion.svg 
+                      width="18" 
+                      height="18" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      className="text-current"
+                      animate={{ 
+                        rotateY: [0, 180, 360] 
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <path
+                        d="M15 3H19C20.1046 3 21 3.89543 21 5V9"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M9 21H5C3.89543 21 3 20.1046 3 19V15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M16 8L19 5L16 2"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 16L5 19L8 22"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </motion.svg>
+                    <span>
+                      {currentCameraFacing === "user" ? "📷 Caméra arrière" : "🤳 Caméra frontale"}
+                    </span>
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
           )}
           
           {/* Affichage du quota restant ou message quota atteint */}
