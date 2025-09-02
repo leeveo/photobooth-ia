@@ -450,7 +450,7 @@
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_pompadour.jpg",
         "prompt": "While keeping the same face and same facial expression Make the hair in a voluminous pompadour style style.",
         "variations": 1,
-        "type": "cheveux longs"
+        "type": "cheveux courts"
       },
       {
         "name": "Undercut",
@@ -520,7 +520,7 @@
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
         "prompt": "While keeping the same face and same facial expression Make the hair in a retro mullet with short front, long back style.",
         "variations": 1,
-        "type": "cheveux courts"
+        "type": "cheveux longs"
       },
       {
         "name": "Man bun",
@@ -540,7 +540,7 @@
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
         "prompt": "While keeping the same face and same facial expression Make the hair in a top knot with undercut style.",
         "variations": 1,
-        "type": "cheveux courts"
+        "type": "cheveux longs"
       },
       {
         "name": "French crop",
