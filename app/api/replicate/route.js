@@ -51,16 +51,51 @@ export async function POST(request) {
     }
 
     // Ajout de logs pour les images
+    console.log("input_image:", input.input_image ? input.input_image.substring(0, 30) + "..." : "absent");
+    console.log("image_input:", input.image_input ? 
+      (Array.isArray(input.image_input) ? 
+        `array with ${input.image_input.length} elements` : 
+        input.image_input.substring(0, 30) + "...") : "absent");
     console.log("input_image_1:", input.input_image_1 ? input.input_image_1.substring(0, 30) + "..." : "absent");
     console.log("input_image_2:", input.input_image_2 ? input.input_image_2.substring(0, 30) + "..." : "absent");
 
-    // Pour le modèle black-forest-labs/flux-kontext-pro, ne pas valider input_image_1 ou input_image_2
-    if (model === "black-forest-labs/flux-kontext-pro") {
-      console.log("input_image_1 et input_image_2 ne sont pas requis pour ce modèle.");
+    // Validation selon le modèle utilisé
+    if (model === "google/nano-banana") {
+      // Pour le modèle google/nano-banana, vérifier image_input (doit être un array)
+      if (!input.image_input || !Array.isArray(input.image_input) || input.image_input.length === 0) {
+        console.error("Missing or invalid image_input for google/nano-banana - must be an array");
+        return NextResponse.json({
+          success: false,
+          error: "image_input doit être un tableau avec au moins une image pour google/nano-banana"
+        }, { status: 400 });
+      }
+      
+      // Vérifier que chaque élément du tableau est une image base64 ou URL valide
+      for (let i = 0; i < input.image_input.length; i++) {
+        const img = input.image_input[i];
+        if (!img || (!img.startsWith('data:image') && !img.startsWith('http'))) {
+          console.error(`Invalid image_input[${i}] for google/nano-banana`);
+          return NextResponse.json({
+            success: false,
+            error: `image_input[${i}] doit être une image base64 ou une URL valide`
+          }, { status: 400 });
+        }
+      }
+      console.log("image_input validation passed for google/nano-banana");
+    } else if (model === "black-forest-labs/flux-kontext-pro") {
+      // Pour le modèle black-forest-labs/flux-kontext-pro, vérifier input_image
+      if (!input.input_image || !input.input_image.startsWith('data:image')) {
+        console.error("Missing or invalid input_image for flux-kontext-pro");
+        return NextResponse.json({
+          success: false,
+          error: "Une image d'entrée valide est requise pour input_image (format base64) pour flux-kontext-pro"
+        }, { status: 400 });
+      }
+      console.log("input_image validation passed for flux-kontext-pro");
     } else if (model.includes("flux-kontext-pro")) {
       // Pour les autres variantes de flux-kontext-pro, input_image_1 est requis
       if (!input.input_image_1 || !input.input_image_1.startsWith('data:image')) {
-        console.error("Missing or invalid input_image_1 for flux-kontext-pro");
+        console.error("Missing or invalid input_image_1 for flux-kontext-pro variant");
         return NextResponse.json({
           success: false,
           error: "Une image d'entrée valide est requise pour input_image_1 (format base64) pour flux-kontext-pro"
@@ -111,6 +146,11 @@ export async function POST(request) {
     console.log(`Calling Replicate with model: ${model}`);
     console.log("Input parameters:", JSON.stringify({
       ...input,
+      input_image: input.input_image ? "base64_data_present" : "missing",
+      image_input: input.image_input ? 
+        (Array.isArray(input.image_input) ? 
+          `array_with_${input.image_input.length}_elements` : 
+          "single_value_present") : "missing",
       input_image_1: input.input_image_1 ? "base64_data_present" : "missing",
       input_image_2: input.input_image_2 ? "url_or_base64_present" : "missing"
     }));

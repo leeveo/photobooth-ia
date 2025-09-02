@@ -79,73 +79,6 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       }
     };
     
-    // Fonction spécialisée pour iPad Safari avec énumération des dispositifs
-    const tryIPadSafariFrontCamera = async () => {
-      try {
-        console.log("🍎 Tentative spécialisée iPad Safari pour caméra frontale...");
-        
-        // D'abord, essayer avec enumerateDevices pour trouver explicitement la caméra frontale
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        
-        console.log("📹 Caméras disponibles:", videoDevices.map(d => ({ 
-          deviceId: d.deviceId, 
-          label: d.label,
-          kind: d.kind 
-        })));
-        
-        // Chercher une caméra qui contient des mots-clés indiquant une caméra frontale
-        const frontCamera = videoDevices.find(device => {
-          const label = device.label.toLowerCase();
-          return label.includes('front') || 
-                 label.includes('user') || 
-                 label.includes('facetime') ||
-                 label.includes('selfie') ||
-                 (device.deviceId && device.deviceId.includes('front'));
-        });
-        
-        if (frontCamera) {
-          console.log("🎯 Caméra frontale identifiée:", frontCamera.label || frontCamera.deviceId);
-          
-          // Essayer avec le deviceId explicite
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: frontCamera.deviceId },
-              width: { ideal: 1600 },
-              height: { ideal: 900 },
-              aspectRatio: { ideal: 16/9 }
-            }
-          });
-          
-          console.log("✅ Succès avec deviceId explicite pour caméra frontale");
-          return stream;
-        }
-        
-        // Si pas de caméra frontale identifiée explicitement, essayer par ordre
-        // (souvent la première caméra est la frontale sur iPad)
-        if (videoDevices.length > 0) {
-          console.log("🔄 Tentative avec la première caméra disponible (souvent frontale sur iPad)");
-          
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: videoDevices[0].deviceId },
-              facingMode: "user",
-              width: { ideal: 1600 },
-              height: { ideal: 900 }
-            }
-          });
-          
-          console.log("✅ Succès avec première caméra + facingMode user");
-          return stream;
-        }
-        
-        return null;
-      } catch (err) {
-        console.error("❌ Échec de la méthode spécialisée iPad Safari:", err);
-        return null;
-      }
-    };
-    
     // Main initialization function with fallbacks
     const initializeCamera = async () => {
       console.log("🎥 Initializing camera...");
@@ -157,103 +90,77 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       // Détecter le type d'appareil
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
-      const isIPad = /iPad/i.test(navigator.userAgent);
-      const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
       
-      console.log(`🔍 Device detection: Mobile=${isMobile}, Tablet=${isTablet}, iPad=${isIPad}, Safari=${isSafari}`);
+      // Configuration options adaptées selon l'appareil
+      const configOptions = isMobile ? [
+        // Mobile: Priorité à la caméra frontale et résolution adaptée
+        { 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            facingMode: "user",
+            width: { min: 640 },
+            height: { min: 480 }
+          } 
+        },
+        { video: { facingMode: "user" } },
+        { video: true }
+      ] : isTablet ? [
+        // Tablette: Résolution intermédiaire
+        { 
+          video: { 
+            width: { ideal: 1600 },
+            height: { ideal: 900 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 800 },
+            height: { min: 600 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true },
+        { video: { facingMode: "user" } }
+      ] : [
+        // PC: Haute résolution
+        { 
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 1280 },
+            height: { min: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 640 },
+            height: { min: 360 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true }
+      ];
       
       let stream = null;
       
-      // ✅ MÉTHODE SPÉCIALISÉE POUR IPAD SAFARI
-      if (isIPad && isSafari) {
-        console.log("🍎 Détection iPad + Safari → Utilisation de la méthode spécialisée");
-        stream = await tryIPadSafariFrontCamera();
-        
-        if (stream) {
-          console.log("✅ Succès avec la méthode spécialisée iPad Safari");
-        } else {
-          console.log("⚠️ Méthode spécialisée iPad Safari échouée, fallback vers méthode standard");
-        }
-      }
-      
-      // Si la méthode spécialisée iPad n'a pas fonctionné, utiliser la méthode standard
-      if (!stream) {
-        // Configuration options adaptées selon l'appareil
-        const configOptions = isMobile ? [
-          // Mobile: Priorité à la caméra frontale et résolution adaptée
-          { 
-            video: { 
-              facingMode: "user",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              facingMode: "user",
-              width: { min: 640 },
-              height: { min: 480 }
-            } 
-          },
-          { video: { facingMode: "user" } },
-          { video: true }
-        ] : isTablet || isIPad ? [
-          // Tablette/iPad: PRIORITÉ ABSOLUE à la caméra frontale (user) pour éviter la caméra arrière
-          { 
-            video: { 
-              facingMode: "user", // ✅ FORCER la caméra frontale en PREMIER
-              width: { ideal: 1600 },
-              height: { ideal: 900 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              facingMode: "user", // ✅ Seconde tentative avec caméra frontale
-              width: { min: 800 },
-              height: { min: 600 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              facingMode: "user" // ✅ Troisième tentative avec caméra frontale uniquement
-            } 
-          },
-          // ✅ Seulement en dernier recours, accepter n'importe quelle caméra
-          { video: true }
-        ] : [
-          // PC: Haute résolution (pas de contrainte facingMode car généralement une seule webcam)
-          { 
-            video: { 
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              width: { min: 1280 },
-              height: { min: 720 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              width: { min: 640 },
-              height: { min: 360 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { video: true }
-        ];
-        
-        // Try each configuration option until one works
-        for (const config of configOptions) {
-          stream = await tryInitCamera(config);
-          if (stream) break;
-        }
+      // Try each configuration option until one works
+      for (const config of configOptions) {
+        stream = await tryInitCamera(config);
+        if (stream) break;
       }
       
       if (!stream) {
@@ -1065,7 +972,7 @@ export default function CameraCapture({ params }) {
       
       // Log pour débogage des variables d'entrée
       console.group("[AI] Request Details (generateImageSwap)");
-      console.log('Model:', "black-forest-labs/flux-kontext-pro");
+      console.log('Model:', "google/nano-banana");
       console.log('Prompt:', stylePrompt);
       console.log('Input image present:', !!imageFile);
       console.log('Input image size:', imageFile ? `${imageFile.length.toLocaleString()} chars` : 0);
@@ -1103,10 +1010,10 @@ export default function CameraCapture({ params }) {
       
       // Ensure the model parameter is correct and data is well-formatted
       const requestBody = {
-        model: "black-forest-labs/flux-kontext-pro",
+        model: "google/nano-banana",
         input: {
           prompt: stylePrompt,
-          input_image: imageFile,
+          image_input: [imageFile], // Array avec une seule image
           output_format: "jpg",
           // Add width and height parameters to ensure the generated image has the correct dimensions
           width: 970,
@@ -1119,7 +1026,7 @@ export default function CameraCapture({ params }) {
         ...requestBody,
         input: {
           ...requestBody.input,
-          input_image: imageFile ? `${imageFile.substring(0, 30)}... (length: ${imageFile.length})` : null
+          image_input: imageFile ? [`${imageFile.substring(0, 30)}... (length: ${imageFile.length})`] : null
         }
       };
       console.log('[AI] Payload summary:', window.debugPayload);
@@ -1443,7 +1350,7 @@ const generateImageReplicate = async () => {
 
     // Logs détaillés avant envoi
     console.group('[AI] Request (generateImageReplicate)');
-    console.log('Model:', 'black-forest-labs/flux-kontext-pro');
+    console.log('Model:', 'google/nano-banana');
     console.log('Prompt:', prompt);
     console.log('Input image present:', !!image);
     console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
@@ -1468,10 +1375,10 @@ const generateImageReplicate = async () => {
     }, 15000);
 
     const reqBody = {
-      model: "black-forest-labs/flux-kontext-pro",
+      model: "google/nano-banana",
       input: {
         prompt,
-        input_image: image,
+        image_input: [image], // Array avec une seule image
         output_format: "jpg",
         width: 970,
         height: 651
@@ -1483,7 +1390,7 @@ const generateImageReplicate = async () => {
       ...reqBody,
       input: {
         ...reqBody.input,
-        input_image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
+        image_input: image ? [`${image.substring(0, 30)}... (length: ${image.length})`] : null
       }
     };
     console.log('[AI] Payload summary:', window.debugPayload);
