@@ -55,7 +55,7 @@
       "style_key": "bob_cut_hair_style",
       "description": "Carré classique",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bob_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Bob cut style",
+      "prompt": "While keeping exactly the same face and the same facial expression, transform the hairstyle into a bob cut style, with the hair cut evenly around the head at jaw level, creating a sleek, classic look that frames the face with clean lines.",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -65,7 +65,7 @@
       "style_key": "a_line_bob_hair_style",
       "description": "Carré plongeant (inversé)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/a_line_bob_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a A-line bob / inverted bob style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into an A-line bob style, with the hair cut shorter at the back and gradually longer in the front, creating a sharp angled silhouette that frames the jawline elegantly.",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -75,7 +75,7 @@
       "style_key": "buzz_cut_hair_style",
       "description": "Coupe très courte (tondeuse)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Buzz cut style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a buzz cut style, with the hair clipped very short and evenly across the entire scalp, creating a clean, minimalist look that emphasizes the shape of the head and facial features.",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -85,7 +85,7 @@
       "style_key": "layered_cut_hair_style",
       "description": "Coupe dégradée",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Layered cut style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a layered cut style, with the hair trimmed into multiple layers of varying lengths to add movement, dimension, and natural volume, creating a soft and dynamic look around the face.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -115,7 +115,7 @@
       "style_key": "boy_cut_hair_style",
       "description": "Coupe courte façon boyish",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boy_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Boyish cut / boy cut style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a short boyish cut, with hair cropped close to the head for an androgynous, fresh look.",
       "variations": 1,
       "type": "cheveux courts"
     },
@@ -175,7 +175,7 @@
       "style_key": "wavy_hair_style",
       "description": "Cheveux ondulés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Wavy style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a wavy style, with soft, flowing waves running through the hair to create gentle curves, added texture, and a relaxed, natural look that frames the face gracefully.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -185,7 +185,7 @@
       "style_key": "curly_hair_style",
       "description": "Cheveux bouclés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curly_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Curly style",
+      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into long curly hair, with defined, voluminous curls that flow naturally for a lively and textured look.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -195,7 +195,7 @@
       "style_key": "frizzy_hair_style",
       "description": "Cheveux frisottés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Frizzy style",
+      "prompt": "While keeping exactlythe same face and the same facial expression, transform the hairstyle into frizzy hair, with a full head of tight, slightly unruly strands creating extra volume and a naturally textured, untamed look.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -225,7 +225,7 @@
       "style_key": "middle_part_hair_style",
       "description": "Raie au milieu",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/middle_part_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Middle part style",
+      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a middle part style, with the hair evenly divided down the center, creating perfect symmetry and a clean, balanced frame around the face.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -335,7 +335,7 @@
       "style_key": "mullet_hair_style",
       "description": "Mulet (court devant, long derrière)",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Mullet style",
+      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a mullet style, with the hair cut short at the front and sides while left significantly longer at the back, creating a bold, retro look that emphasizes contrast and attitude.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -375,7 +375,7 @@
       "style_key": "twists_hair_style",
       "description": "Twists définis",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/twists_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Twists style",
+      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a twists style, with sections of hair carefully divided and twisted into rope-like strands, creating a neat, defined, and protective look that adds texture and structure while framing the face naturally.",
       "variations": 1,
       "type": "cheveux longs"
     },
@@ -385,17 +385,37 @@
       "style_key": "tied_hair_style",
       "description": "Cheveux attachés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tied_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Tied hair style",
+      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a tied hair style, with the hair neatly gathered and secured back, creating a clean, polished look that highlights the face and emphasizes its natural features.",
       "variations": 1,
       "type": "cheveux longs"
     },
+    {
+  "name": "Iroquois / Punk",
+  "gender": "femme",
+  "style_key": "iroquois_punk_hair_style",
+  "description": "Coupe iroquois punk, cheveux rasés sur les côtés avec une crête centrale",
+  "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/iroquois_punk_hair_style.jpg",
+  "prompt": "While keeping the same face and the same facial expression, make the hair in an Iroquois / punk style, with the sides shaved and a bold spiky strip of hair running down the center of the head.",
+  "variations": 1,
+  "type": "cheveux courts"
+},
+{
+  "name": "Mohawk with Colors",
+  "gender": "femme",
+  "style_key": "mohawk_colors_hair_style",
+  "description": "Coupe iroquois avec coloration vive",
+  "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mohawk_colors_hair_style.jpg",
+  "prompt": "While keeping the same face and the same facial expression, make the hair in a mohawk punk style, with shaved sides and a tall spiky crest dyed in vibrant colors.",
+  "variations": 1,
+  "type": "cheveux courts"
+},
     {
       "name": "Loose Hair",
       "gender": "femme",
       "style_key": "loose_hair_style",
       "description": "Cheveux lâchés",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/loose_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Loose hair style",
+      "prompt": "While keeping exactly the same face and the same facial expression, transform the hairstyle into a loose hair style, with the hair left free, flowing naturally around the shoulders for a soft and relaxed look.",
       "variations": 1,
       "type": "cheveux longs"
     }
@@ -417,8 +437,8 @@
         "gender": "homme",
         "style_key": "mens_buzz_cut",
         "description": "Coupe très courte à la tondeuse",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_buzz_cut.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a ultra short buzz cut style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_buzz_cut.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into an ultra short buzz cut style, with the hair clipped extremely close to the scalp in a uniform length, creating a sharp, minimalist look that fully emphasizes the natural shape of the head and facial features.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -427,8 +447,8 @@
         "gender": "homme",
         "style_key": "mens_crew_cut",
         "description": "Coupe classique avec côtés courts",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_crew_cut.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a classic crew cut with short sides style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_crew_cut.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a classic crew cut style with short sides, where the hair is cut very short on the sides and back while left slightly longer and neatly trimmed on top, creating a clean, sharp, and timeless look that emphasizes the facial features.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -437,8 +457,8 @@
         "gender": "homme",
         "style_key": "mens_fade_cut",
         "description": "Fondu moderne avec contours nets",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_fade_cut.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a modern fade with sharp edges style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_fade_cut.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a modern fade with sharp edges style, where the hair gradually fades from very short on the sides and back to longer on top, combined with clean, precise lines and sharp edges around the hairline for a bold and well-defined look.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -447,8 +467,8 @@
         "gender": "homme",
         "style_key": "mens_pompadour",
         "description": "Pompadour volumineux",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_pompadour.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a voluminous pompadour style style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_pompadour.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a voluminous pompadour style, with the hair swept upward and backward from the forehead into a high, full shape that adds height and volume, creating a bold, elegant, and vintage-inspired look.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -457,7 +477,7 @@
         "gender": "homme",
         "style_key": "mens_undercut",
         "description": "Undercut avec dessus long et côtés rasés",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_undercut.jpg",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_undercut.jpg",
         "prompt": "While keeping the same face and same facial expression Make the hair in a undercut with long top and shaved sides style.",
         "variations": 1,
         "type": "cheveux longs"
@@ -467,8 +487,8 @@
         "gender": "homme",
         "style_key": "mens_quiff",
         "description": "Banane stylisée avec du volume",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_quiff.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a styled quiff with volume style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_quiff.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a styled quiff with volume, where the hair at the front is lifted upward and swept back with fullness, creating height and texture, while the sides remain shorter for a balanced, polished, and modern look.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -477,8 +497,8 @@
         "gender": "homme",
         "style_key": "mens_slick_back",
         "description": "Cheveux plaqués en arrière avec du gel",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_slick_back.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a hair slicked back with gel style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_slick_back.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a slicked back with gel style, where the hair is combed straight back and held firmly in place with gel, creating a shiny, sleek, and controlled look that emphasizes the shape of the face and jawline.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -487,8 +507,8 @@
         "gender": "homme",
         "style_key": "mens_side_part",
         "description": "Style classique avec raie sur le côté",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_side_part.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a side-parted classic style style.",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_side_part.jpg",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a side-parted classic style, where the hair is neatly parted to one side and combed smoothly, creating a timeless, polished look that emphasizes symmetry, elegance, and refined facial framing.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -498,7 +518,7 @@
         "style_key": "mens_curly_top",
         "description": "Côtés courts avec boucles naturelles sur le dessus",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_curly_top.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a short sides with natural curls on top style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short sides with natural curls on top style.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -562,16 +582,7 @@
         "variations": 1,
         "type": "cheveux longs"
       },
-      {
-        "name": "Afro",
-        "gender": "homme",
-        "style_key": "mens_afro",
-        "description": "Afro complet et arrondi",
-        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_afro.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a full rounded afro style style.",
-        "variations": 1,
-        "type": "cheveux courts"
-      },
+   
       {
         "name": "Cornrows",
         "gender": "homme",
