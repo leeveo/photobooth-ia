@@ -3757,19 +3757,7 @@ const generateImageReplicate = async () => {
             </motion.div>
           )}
 
-          {/* 🔍 DEBUG: Affichage des informations pour diagnostiquer */}
-          {(deviceType === 'mobile' || deviceType === 'tablet') && (
-            <motion.div 
-              className="text-center mt-2 text-xs text-white/60 bg-black/20 rounded p-2 mx-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              <div>Type: {deviceType} | Caméra: {currentCameraFacing} | Chargée: {cameraLoaded ? "✅" : "❌"}</div>
-              <div>Enabled: {enabled ? "✅" : "❌"} | Processing: {processing ? "✅" : "❌"}</div>
-              {cameraError && <div className="text-red-300">Erreur: {cameraError}</div>}
-            </motion.div>
-          )}
+
           
           {/* Affichage du quota restant ou message quota atteint */}
           <div className={`text-center ${

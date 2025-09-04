@@ -528,7 +528,7 @@
         "style_key": "mens_messy_textured",
         "description": "Look décoiffé texturé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_messy_textured.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a textured messy look style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a textured messy look style, where the hair is styled with uneven lengths and tousled layers, creating natural movement and a deliberately unkempt appearance for a casual, modern, and effortlessly stylish look.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -538,7 +538,7 @@
         "style_key": "mens_mullet",
         "description": "Mulet rétro avec devant court et arrière long",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a retro mullet with short front, long back style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a retro mullet with short front and long back style, where the hair is cut short around the front and sides while left noticeably longer at the back, creating a bold, vintage-inspired look with strong contrast that emphasizes attitude and individuality.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -548,7 +548,7 @@
         "style_key": "mens_man_bun",
         "description": "Chignon masculin attaché",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_man_bun.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a tied back man bun style style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a tied back man bun style, where the hair is grown long and pulled back smoothly, then tied into a rounded bun at the back of the head, creating a clean, modern, and stylish look that emphasizes the facial features.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -558,7 +558,7 @@
         "style_key": "mens_top_knot",
         "description": "Chignon haut avec côtés rasés",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a top knot with undercut style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a top knot with undercut style, where the sides and back are shaved or clipped very short while the longer hair on top is gathered and tied into a knot at the crown, creating a bold, modern, and stylish look with strong contrast.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -568,7 +568,7 @@
         "style_key": "mens_french_crop",
         "description": "Coupe courte avec frange",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_french_crop.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a short fringe crop style style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short fringe crop style, where the hair is kept very short on the sides and back with a slightly longer top, finished with a straight, blunt fringe across the forehead, creating a sharp, modern, and edgy look that highlights the eyes and facial structure.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -578,7 +578,7 @@
         "style_key": "mens_long_layered",
         "description": "Cheveux mi-longs en dégradé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_long_layered.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a shoulder-length layered hair style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a shoulder-length layered hair style, where the hair falls to the shoulders and is cut into multiple layers of varying lengths, adding natural movement, volume, and dimension for a soft and dynamic look that frames the face beautifully.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -589,7 +589,7 @@
         "style_key": "mens_cornrows",
         "description": "Tresses collées au cuir chevelu",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_cornrows.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a braided cornrows close to scalp style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into braided cornrows close to the scalp, where the hair is tightly braided in neat, parallel rows lying flat against the head, creating a sleek, defined, and culturally rich look that emphasizes precision and structure.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -599,7 +599,7 @@
         "style_key": "mens_dreadlocks",
         "description": "Dreadlocks longues et épaisses",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_dreadlocks.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a thick long dreadlocks style.",
+        "prompt": "WWhile keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a thick long dreadlocks style, where the hair is sectioned and locked into dense, rope-like strands that flow down over the shoulders, creating a bold, textured, and natural look full of character..",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -609,7 +609,7 @@
         "style_key": "mens_spiky",
         "description": "Cheveux courts coiffés en pics avec du gel",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_spiky.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a short and spiked with gel style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short and spiked with gel style, where the hair is cut short and styled upward into defined spikes using gel, creating a sharp, edgy, and energetic look that highlights the face with bold texture.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -619,7 +619,7 @@
         "style_key": "mens_ivy_league",
         "description": "Coiffure chic style Ivy League",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ivy_league.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a preppy ivy league hairstyle style.",
+        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a preppy Ivy League style, where the hair is kept short on the sides and back while slightly longer on top, neatly combed with a subtle side part, creating a clean, polished, and sophisticated look that emphasizes elegance and refinement.",
         "variations": 1,
         "type": "cheveux courts"
       }
