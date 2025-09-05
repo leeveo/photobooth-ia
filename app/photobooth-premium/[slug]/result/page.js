@@ -65,18 +65,12 @@ const dataURLtoFile = async (dataurl, filename) => {
 };
 
 // Nouvelle fonction pour envoyer l'email via l'API Next.js
-async function sendPhotoByEmail({ to, project, imageUrl, participantData, sessionId }) {
+async function sendPhotoByEmail({ to, project, imageUrl }) {
   if (!to) return;
   const response = await fetch('/api/send-photo-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      to, 
-      project, 
-      imageUrl, 
-      participantData,
-      sessionId // Inclure l'ID de session pour les liens sécurisés
-    }),
+    body: JSON.stringify({ to, project, imageUrl }),
   });
   if (!response.ok) {
     const error = await response.json();
@@ -85,6 +79,33 @@ async function sendPhotoByEmail({ to, project, imageUrl, participantData, sessio
   // Log de succès
   console.log(`[API] Email envoyé avec succès à ${to} pour le projet ${project?.name || project?.id}`);
 }
+
+// Helper to ensure absolute URL for QR code
+const makeAbsoluteUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  
+  // Remove any leading slash to avoid double slash
+  const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  
+  // Use current domain for local development, production domain otherwise
+  if (typeof window !== 'undefined') {
+    const currentDomain = window.location.origin;
+    // Si on est en local (localhost ou 127.0.0.1), utiliser le domaine local
+    if (currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1')) {
+      return `${currentDomain}${path}`;
+    }
+  }
+  
+  // En cas de SSR ou autres cas, essayer de détecter l'environnement
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+    // Utiliser HTTPS localhost par défaut pour le développement
+    return `https://localhost:3000${path}`;
+  }
+  
+  // Fallback to production domain
+  return `https://photobooth.waibooth.app${path}`;
+};
 
 export default function Result({ params }) {
   const slug = params.slug;
@@ -148,7 +169,7 @@ export default function Result({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [slug, supabase]);
+  }, [slug]); // Seulement dépend de slug pour éviter les re-rendus inutiles
   
   useEffect(() => {
     // Load project data and settings from localStorage
@@ -158,7 +179,8 @@ export default function Result({ params }) {
     
     if (cachedProject) {
       try {
-        setProject(JSON.parse(cachedProject));
+        const parsedProject = JSON.parse(cachedProject);
+        setProject(parsedProject);
         setLoading(false);
       } catch (e) {
         console.error("Error parsing cached project data:", e);
@@ -167,7 +189,8 @@ export default function Result({ params }) {
     
     if (cachedSettings) {
       try {
-        setSettings(JSON.parse(cachedSettings));
+        const parsedSettings = JSON.parse(cachedSettings);
+        setSettings(parsedSettings);
       } catch (e) {
         console.error("Error parsing cached settings:", e);
       }
@@ -187,9 +210,6 @@ export default function Result({ params }) {
       }
     }
     
-    // Always fetch fresh data
-    fetchProjectData();
-    
     // Log any available metadata
     const falMetadata = localStorage.getItem('falGenerationMetadata');
     if (falMetadata) {
@@ -199,7 +219,10 @@ export default function Result({ params }) {
         console.error("Error parsing metadata:", e);
       }
     }
-  }, [fetchProjectData]);
+    
+    // Fetch fresh data on mount
+    fetchProjectData();
+  }, [slug]); // Seulement dépend de slug
   
   const handleShare = async () => {
     if (!imageResultAI) {
@@ -289,21 +312,10 @@ export default function Result({ params }) {
           // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
           if (project?.email_enabled && dataCapture.email) {
             try {
-              // Récupérer l'ID de session stocké lors de la génération
-              const currentSessionId = localStorage.getItem('currentSessionId');
-              
               await sendPhotoByEmail({
                 to: dataCapture.email,
                 project,
-                imageUrl: s3Url,
-                participantData: {
-                  name: dataCapture.name,
-                  email: dataCapture.email,
-                  phone: dataCapture.phone,
-                  firstname: dataCapture.name.split(' ')[0] || '', // Extrait le prénom du nom complet
-                  lastname: dataCapture.name.split(' ').slice(1).join(' ') || '' // Extrait le nom de famille
-                },
-                sessionId: currentSessionId // Inclure l'ID de session pour les liens sécurisés
+                imageUrl: s3Url
               });
               // Log déjà fait dans sendPhotoByEmail
             } catch (mailErr) {
@@ -326,6 +338,11 @@ export default function Result({ params }) {
     } finally {
       setSavingDataCapture(false);
     }
+  };
+  
+  // Vérifier si le formulaire de capture de données est valide
+  const isDataCaptureValid = () => {
+    return dataCapture.name.trim() && dataCapture.rgpdAccepted;
   };
   
   const uploadToS3 = async (imageUrl) => {
@@ -629,7 +646,7 @@ export default function Result({ params }) {
                 }}
               >
                 <Canvas
-                  text={linkQR}
+                  text={makeAbsoluteUrl(linkQR)} // Always absolute for QR code
                   options={{
                     errorCorrectionLevel: 'M',
                     margin: 3,
@@ -642,25 +659,48 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
-              {/* Bouton de téléchargement stylisé sous le QR code */}
-              <a
-                href={linkQR}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 mb-4 rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                style={{
-                  background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
-                  color: '#fff',
-                  boxShadow: `0 6px 20px 0 ${primaryColor}44, inset 0 1px 0 rgba(255,255,255,0.2)`,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                  border: `2px solid rgba(255,255,255,0.1)`
-                }}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                <span className="font-extrabold tracking-wide">TÉLÉCHARGER</span>
-              </a>
+              {/* Boutons d'action */}
+              <div className="w-full flex flex-col gap-3 mb-4">
+                {/* Bouton pour aller vers la page d'affichage */}
+                <a
+                  href={linkQR}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
+                  style={{
+                    background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                    color: '#fff',
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    letterSpacing: '0.05em',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Voir ma photo
+                </a>
+                
+                {/* Bouton de téléchargement */}
+                <a
+                  href={imageResultAI}
+                  download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg border-2"
+                  style={{
+                    background: '#fff',
+                    color: primaryColor,
+                    borderColor: primaryColor,
+                    boxShadow: `0 4px 16px 0 ${primaryColor}33`,
+                    letterSpacing: '0.05em',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                  Télécharger ma photo
+                </a>
+              </div>
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo
               </p>
@@ -737,18 +777,19 @@ export default function Result({ params }) {
                 }}
               />
             )}
-            {/* Bouton de téléchargement visible uniquement sur mobile */}
+            {/* Bouton mobile fixe - visible seulement sur mobile */}
             {linkQR && (
               <a
                 href={linkQR}
-                download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold shadow-lg text-base flex items-center gap-2 md:hidden"
                 style={{ maxWidth: '90vw' }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                Télécharger ma photo
+                Voir ma photo
               </a>
             )}
           </div>
@@ -758,69 +799,137 @@ export default function Result({ params }) {
           </div>
         )}
         
-        {/* Action Buttons - Modern redesign with narrower width */}
-        <div className="mt-8 flex flex-col items-center space-y-4">
-          {settings?.enable_qr_codes && imageResultAI && (
-            <motion.button 
-              onClick={handleShare}
-              disabled={loadingUpload}
-              className={`py-5 px-10 rounded-2xl font-extrabold text-2xl text-center flex items-center justify-center gap-3 max-w-[340px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
-              style={{ 
-                backgroundColor: secondaryColor, 
-                color: primaryColor,
-                letterSpacing: '0.05em',
-                boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
-              }}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              {loadingUpload ? (
-                <>
-                  <svg className="animate-spin w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        {/* Modern Action Buttons - Circular design like coiffure page */}
+        {imageResultAI && (
+          <div className="mt-8 flex justify-center items-start gap-12 px-4">
+            {/* Bouton de téléchargement */}
+            <div className="flex flex-col items-center">
+              <motion.a 
+                href={imageResultAI}
+                download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+                className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
+                style={{ 
+                  backgroundColor: primaryColor, 
+                  color: '#fff',
+                  border: `3px solid ${secondaryColor}`,
+                  boxShadow: `0 4px 16px 0 ${primaryColor}55`,
+                  width: '80px',
+                  height: '80px',
+                  textDecoration: 'none'
+                }}
+                whileHover={{ scale: 1.1, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                title="Télécharger ma photo"
+              >
+                <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+              </motion.a>
+              <span className="mt-2 text-sm font-medium text-black">Télécharger</span>
+            </div>
+
+            {/* Bouton email - SEULEMENT si email activé ET capture de données requise */}
+            {settings?.enable_qr_codes && project?.datacapture && project?.email_enabled && (
+              <div className="flex flex-col items-center">
+                <motion.button 
+                  onClick={handleShare}
+                  disabled={loadingUpload}
+                  className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
+                  style={{ 
+                    backgroundColor: secondaryColor, 
+                    color: primaryColor,
+                    border: `3px solid ${primaryColor}`,
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  whileHover={{ scale: loadingUpload ? 1 : 1.1, y: loadingUpload ? 0 : -4 }}
+                  whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  title="Envoyer ma photo"
+                >
+                  {loadingUpload ? (
+                    <svg className="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </motion.button>
+                <span className="mt-2 text-sm font-medium text-black">E-Mail</span>
+              </div>
+            )}
+
+            {/* Bouton partage - SEULEMENT si pas de capture de données OU si email désactivé */}
+            {settings?.enable_qr_codes && (!project?.datacapture || !project?.email_enabled) && (
+              <div className="flex flex-col items-center">
+                <motion.button 
+                  onClick={handleShare}
+                  disabled={loadingUpload}
+                  className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
+                  style={{ 
+                    backgroundColor: secondaryColor, 
+                    color: primaryColor,
+                    border: `3px solid ${primaryColor}`,
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  whileHover={{ scale: loadingUpload ? 1 : 1.1, y: loadingUpload ? 0 : -4 }}
+                  whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  title="Partager ma photo"
+                >
+                  {loadingUpload ? (
+                    <svg className="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  )}
+                </motion.button>
+                <span className="mt-2 text-sm font-medium text-black">Partage</span>
+              </div>
+            )}
+
+            {/* Bouton de recommencer */}
+            <div className="flex flex-col items-center">
+              <motion.div
+                whileHover={{ scale: 1.1, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <Link 
+                  href={`/photobooth-premium/${slug}/`}
+                  onClick={handleStartOver}
+                  className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    color: '#fff',
+                    border: '3px solid rgba(255, 255, 255, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 16px 0 rgba(255, 255, 255, 0.2)',
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  title="Recommencer"
+                >
+                  <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <span>PRÉPARATION...</span>
-                </>
-              ) : project?.datacapture ? (
-                <>
-                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>ENVOYER MA PHOTO</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span>PARTAGER MA PHOTO</span>
-                </>
-              )}
-            </motion.button>
-          )}
-          
-          <motion.div
-            className="w-full max-w-[340px]" // largeur augmentée
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link 
-              href={`/photobooth-premium/${slug}/how`}
-              onClick={handleStartOver}
-              className="py-5 px-10 rounded-2xl font-extrabold text-2xl text-center bg-white bg-opacity-30 hover:bg-opacity-40 text-white transition-all flex items-center justify-center gap-3 w-full backdrop-blur-sm shadow-lg"
-              style={{
-                letterSpacing: '0.05em'
-              }}
-            >
-              <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>RECOMMENCER</span>
-            </Link>
-          </motion.div>
-        </div>
+                </Link>
+              </motion.div>
+              <span className="mt-2 text-sm font-medium text-black">Retour</span>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

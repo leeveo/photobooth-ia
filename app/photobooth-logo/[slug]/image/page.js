@@ -53,61 +53,36 @@ export default function ImagePage({ params }) {
         }
         
         // Vérifier si la galerie publique et le swipe sont activés
-        console.log('🔍 Fetching mosaic settings for project:', project.id);
-        
         // Utiliser l'API avec service role pour contourner RLS
         try {
           const response = await fetch(`/api/get-mosaic-settings?projectId=${project.id}`);
           const result = await response.json();
           
-          console.log('🔍 API Response:', result);
-          
           if (result.success && result.data) {
             const mosaicSettings = result.data;
-            console.log('✅ Mosaic Settings trouvés via API:', mosaicSettings);
             
             if (mosaicSettings.is_public) {
-              console.log('✅ Setting showPublicGallery to true');
               setShowPublicGallery(true);
-            } else {
-              console.log('❌ is_public is false:', mosaicSettings.is_public);
             }
             
             if (mosaicSettings.enable_swipe) {
-              console.log('✅ Setting enableSwipe to true');
               setEnableSwipe(true);
-            } else {
-              console.log('❌ enable_swipe is false:', mosaicSettings.enable_swipe);
             }
-          } else {
-            console.log('❌ Aucun paramètre mosaic trouvé via API');
           }
         } catch (apiError) {
-          console.error('❌ Erreur API get-mosaic-settings:', apiError);
-          
           // Fallback: essayer la méthode directe Supabase
           const { data: mosaicSettings, error: mosaicError } = await supabase
             .from('mosaic_settings')
             .select('*')
             .eq('project_id', project.id)
             .maybeSingle();
-            
-          console.log('🔍 Fallback - Project ID:', project.id);
-          console.log('🔍 Fallback - Mosaic Settings (full):', mosaicSettings);
-          console.log('🔍 Fallback - Mosaic Error:', mosaicError);
           
           if (mosaicSettings?.is_public) {
-            console.log('✅ Fallback - Setting showPublicGallery to true');
             setShowPublicGallery(true);
-          } else {
-            console.log('❌ Fallback - is_public is false or undefined:', mosaicSettings?.is_public);
           }
           
           if (mosaicSettings?.enable_swipe) {
-            console.log('✅ Fallback - Setting enableSwipe to true');
             setEnableSwipe(true);
-          } else {
-            console.log('❌ Fallback - enable_swipe is false or undefined:', mosaicSettings?.enable_swipe);
           }
         }
       }
@@ -169,11 +144,6 @@ export default function ImagePage({ params }) {
         >
           Télécharger
         </a>
-      </div>
-      
-      {/* DEBUG: Affichage temporaire pour vérifier l'état */}
-      <div className="mb-4 p-2 bg-yellow-100 border border-yellow-400 rounded text-xs text-center">
-        DEBUG: showPublicGallery = {showPublicGallery ? 'true' : 'false'} | enableSwipe = {enableSwipe ? 'true' : 'false'}
       </div>
       
       {/* Liens vers les galeries publiques si activées */}

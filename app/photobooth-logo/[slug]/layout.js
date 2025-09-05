@@ -4,89 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-// Debug component - keep as is
-function BackgroundDebugger({ backgroundUrl, projectData, backgroundsData }) {
-  if (process.env.NODE_ENV !== 'development') return null;
-  
-  const testImageLoad = async (url) => {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      return {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText
-      };
-    } catch (error) {
-      return {
-        error: error.message,
-        ok: false
-      };
-    }
-  };
-
-  const checkImage = async () => {
-    if (!backgroundUrl) return;
-    
-    console.log('Testing image URL:', backgroundUrl);
-    const result = await testImageLoad(backgroundUrl);
-    console.log('Image load test result:', result);
-    
-    // Use window.Image to access the global Image constructor
-    const img = new window.Image();
-    img.onload = () => console.log('Test image loaded successfully!', img.width, img.height);
-    img.onerror = (e) => console.error('Test image failed to load:', e);
-    img.src = backgroundUrl;
-  };
-
-  return (
-    <div className="fixed top-0 right-0 z-50 bg-black bg-opacity-80 text-white text-xs p-3 max-w-md max-h-full overflow-auto">
-      <h3 className="font-bold mb-2">Background Debugger</h3>
-      <button 
-        onClick={checkImage} 
-        className="px-2 py-1 bg-blue-700 text-white mb-2 rounded"
-      >
-        Test Image Load
-      </button>
-      <div>
-        <div><strong>Background URL:</strong> {backgroundUrl || 'None'}</div>
-        <div><strong>Project ID:</strong> {projectData?.id}</div>
-        <div><strong>Project Color:</strong> {projectData?.primary_color}</div>
-        <div><strong>Found Backgrounds:</strong> {backgroundsData?.length || 0}</div>
-        {backgroundsData && backgroundsData.length > 0 && (
-          <div>
-            <div className="font-bold mt-2">Background Records:</div>
-            {backgroundsData.map((bg, i) => (
-              <div key={i} className="mt-1 border-t border-gray-700 pt-1">
-                <div>{bg.name}: {bg.image_url}</div>
-                <button 
-                  onClick={() => {
-                    // Try applying this background directly - safer approach
-                    const element = document.getElementById('debug-bg-img');
-                    if (element) {
-                      console.log('Applying background directly:', bg.image_url);
-                      // Make sure URL is wrapped in quotes and use !important
-                      element.style.cssText = `background-image: url('${bg.image_url}') !important; background-size: cover !important; background-position: center !important;`;
-                      
-                      // Also create and preload the image to force browser to load it
-                      const preloadImg = new window.Image();
-                      preloadImg.src = bg.image_url;
-                    } else {
-                      console.error('Background element not found');
-                    }
-                  }}
-                  className="text-xs bg-green-800 px-1 py-0.5 mt-1 rounded"
-                >
-                  Apply directly
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function PremiumPhotoboothLayout({ children, params }) {
   const [background, setBackground] = useState({
     imageUrl: null,
@@ -97,7 +14,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     error: null
   });
   
-  const [debugData, setDebugData] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const slug = params.slug;
@@ -179,11 +95,6 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           
         if (backgroundsError) throw backgroundsError;
         logDebug('Available backgrounds', backgrounds);
-        
-        setDebugData({
-          project,
-          backgrounds
-        });
         
         // 3. Filter animated backgrounds with valid video URLs
         const animatedBackgrounds = backgrounds.filter(bg => {
@@ -289,6 +200,26 @@ export default function PremiumPhotoboothLayout({ children, params }) {
           error: null
         });
         
+        // ENHANCED DEBUG LOGGING
+        console.log('🎬 FINAL BACKGROUND SETTINGS:', {
+          imageUrl,
+          videoUrl,
+          isAnimated,
+          isMobile,
+          isMainPage,
+          orientation: isMobile ? 'portrait/mobile' : 'landscape/desktop',
+          animatedBackgroundsCount: animatedBackgrounds.length,
+          totalBackgroundsCount: backgrounds.length
+        });
+        
+        if (isAnimated && videoUrl) {
+          console.log('✅ VIDEO SHOULD BE DISPLAYED:', videoUrl);
+        } else if (imageUrl) {
+          console.log('📷 IMAGE BACKGROUND:', imageUrl);
+        } else {
+          console.log('❌ NO BACKGROUND AVAILABLE');
+        }
+        
         logDebug('Final background settings (orientation-aware)', {
           imageUrl,
           videoUrl,
@@ -331,6 +262,19 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       };
     }
   }, [background.videoUrl]);
+
+  // CONSOLE LOG CURRENT BACKGROUND STATE
+  console.log('🎯 CURRENT BACKGROUND STATE:', {
+    loading: background.loading,
+    isAnimated: background.isAnimated,
+    hasVideoUrl: !!background.videoUrl,
+    hasImageUrl: !!background.imageUrl,
+    videoUrl: background.videoUrl,
+    imageUrl: background.imageUrl,
+    error: background.error,
+    isMainPage,
+    pathname
+  });
 
   return (
     <>
@@ -387,6 +331,11 @@ export default function PremiumPhotoboothLayout({ children, params }) {
             loop
             muted
             playsInline
+            onLoadStart={() => console.log('🎬 Video loading started:', background.videoUrl)}
+            onCanPlay={() => console.log('✅ Video can play:', background.videoUrl)}
+            onPlaying={() => console.log('▶️ Video is playing:', background.videoUrl)}
+            onError={(e) => console.error('❌ Video error:', e, background.videoUrl)}
+            onLoadedData={() => console.log('📹 Video data loaded:', background.videoUrl)}
             style={{
               width: '100%',
               height: '100%',
@@ -394,6 +343,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
             }}
           >
             <source src={background.videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
           </video>
         </div>
       )}

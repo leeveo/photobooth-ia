@@ -78,6 +78,8 @@ export default function ProjectDetails({ params }) {
   const [showEmailEditor, setShowEmailEditor] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [baseUrl, setBaseUrl] = useState('');
+  const [showTestEmailPopup, setShowTestEmailPopup] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
 
   // Function to get the base URL dynamically
   useEffect(() => {
@@ -150,6 +152,7 @@ export default function ProjectDetails({ params }) {
     setLoading(true);
     try {
       // Fetch project data with security check
+      console.log('🔍 Fetching project data for projectId:', projectId, 'adminId:', currentAdminId);
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('*')
@@ -158,6 +161,7 @@ export default function ProjectDetails({ params }) {
         .single();
 
       if (projectError) {
+        console.error('❌ Project fetch error:', projectError);
         if (projectError.code === 'PGRST116') {
           // Le projet n'existe pas ou n'appartient pas à cet admin
           console.error("Projet non trouvé ou vous n'avez pas les droits d'accès");
@@ -168,6 +172,8 @@ export default function ProjectDetails({ params }) {
         throw projectError;
       }
       
+      console.log('✅ Project data loaded:', projectData);
+      console.log('📧 email_enabled value in DB:', projectData.email_enabled, typeof projectData.email_enabled);
       setProject(projectData);
 
       // Fetch project settings
@@ -236,8 +242,13 @@ export default function ProjectDetails({ params }) {
 
   // Charger la valeur de email_enabled depuis la table projects
   useEffect(() => {
-    if (project && typeof project.email_enabled === 'boolean') {
-      setEmailEnabled(project.email_enabled);
+    if (project) {
+      // Si email_enabled existe dans le projet, l'utiliser, sinon défaut à true
+      const emailEnabledValue = project.email_enabled !== null && project.email_enabled !== undefined 
+        ? project.email_enabled 
+        : true;
+      console.log('Loading email_enabled from project:', project.email_enabled, '-> setting to:', emailEnabledValue);
+      setEmailEnabled(emailEnabledValue);
     }
   }, [project]);
 
@@ -712,16 +723,42 @@ export default function ProjectDetails({ params }) {
 
   // Ajoutez cette fonction juste avant le return du composant
   const handleEmailEnabledChange = async (enabled) => {
+    console.log('handleEmailEnabledChange called with:', enabled);
     setEmailEnabled(enabled);
     try {
-      const { error } = await supabase
+      console.log('Updating project email_enabled to:', enabled, 'for project:', projectId);
+      const { data, error } = await supabase
         .from('projects')
         .update({ email_enabled: enabled })
-        .eq('id', projectId);
-      if (error) throw error;
+        .eq('id', projectId)
+        .select('email_enabled'); // Ajoutons select pour voir le résultat
+        
+      if (error) {
+        console.error('Supabase error updating email_enabled:', error);
+        throw error;
+      }
+      
+      console.log('Update result from Supabase:', data);
+      console.log('Successfully updated email_enabled in database');
       setSuccess(enabled ? "L'envoi d'email a été activé." : "L'envoi d'email a été désactivé.");
       setProject(prev => prev ? { ...prev, email_enabled: enabled } : prev);
+      
+      // Forcer un refresh du projet depuis la DB pour vérifier
+      setTimeout(async () => {
+        console.log('🔄 Refreshing project data to verify update...');
+        const { data: freshProject, error: refreshError } = await supabase
+          .from('projects')
+          .select('email_enabled')
+          .eq('id', projectId)
+          .single();
+          
+        if (!refreshError) {
+          console.log('Fresh data from DB - email_enabled:', freshProject.email_enabled);
+        }
+      }, 1000);
+      
     } catch (err) {
+      console.error('Error in handleEmailEnabledChange:', err);
       setError("Erreur lors de la mise à jour de l'activation email.");
       setEmailEnabled(!enabled);
     }
@@ -729,15 +766,20 @@ export default function ProjectDetails({ params }) {
 
   // Fonction pour tester l'envoi d'email avec le template
   const handleTestEmail = async () => {
-    const testEmail = prompt("Entrez l'adresse email pour recevoir le test :");
-    if (!testEmail || !testEmail.includes('@')) {
-      alert("Veuillez entrer une adresse email valide.");
+    setShowTestEmailPopup(true);
+  };
+
+  // Fonction pour envoyer l'email de test
+  const sendTestEmail = async () => {
+    if (!testEmailAddress || !testEmailAddress.includes('@')) {
+      setEmailTemplateError("Veuillez entrer une adresse email valide.");
       return;
     }
 
     setEmailTemplateLoading(true);
     setEmailTemplateError(null);
     setEmailTemplateSuccess(null);
+    setShowTestEmailPopup(false);
 
     try {
       const response = await fetch('/api/test-email-template', {
@@ -747,7 +789,7 @@ export default function ProjectDetails({ params }) {
         },
         body: JSON.stringify({
           projectId: projectId,
-          testEmail: testEmail
+          testEmail: testEmailAddress
         }),
       });
 
@@ -758,9 +800,9 @@ export default function ProjectDetails({ params }) {
       }
 
       if (result.templateFound) {
-        setEmailTemplateSuccess(`Email de test envoyé avec succès à ${testEmail} avec votre template personnalisé !`);
+        setEmailTemplateSuccess(`Email de test envoyé avec succès à ${testEmailAddress} avec votre template personnalisé !`);
       } else {
-        setEmailTemplateSuccess(`Email de test envoyé à ${testEmail}, mais aucun template personnalisé n'a été trouvé. Créez un template pour personnaliser vos emails.`);
+        setEmailTemplateSuccess(`Email de test envoyé à ${testEmailAddress}, mais aucun template personnalisé n'a été trouvé. Créez un template pour personnaliser vos emails.`);
       }
 
     } catch (err) {
@@ -768,6 +810,7 @@ export default function ProjectDetails({ params }) {
       setEmailTemplateError(`Erreur lors de l'envoi du test : ${err.message}`);
     } finally {
       setEmailTemplateLoading(false);
+      setTestEmailAddress('');
     }
   };
 
@@ -1038,43 +1081,47 @@ export default function ProjectDetails({ params }) {
                     <span className="text-sm text-gray-700">
                       {emailEnabled ? "Envoi d'email activé" : "Envoi d'email désactivé"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowEmailEditor(true)}
-                      className={`ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
-                        ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-blue-700 hover:to-indigo-800'}
-                      `}
-                      disabled={!emailEnabled}
-                    >
-                      <RiShieldLine className="mr-2 h-4 w-4" />
-                      Éditer l'email
-                    </button>
-                    {/* Bouton de test d'email */}
-                    <button
-                      type="button"
-                      onClick={() => handleTestEmail()}
-                      className={`ml-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
-                        ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-green-700 hover:to-green-800'}
-                      `}
-                      disabled={!emailEnabled || emailTemplateLoading}
-                    >
-                      {emailTemplateLoading ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Test en cours...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          Tester l'email
-                        </>
-                      )}
-                    </button>
+                    {emailEnabled && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmailEditor(true)}
+                          className="ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center hover:from-blue-700 hover:to-indigo-800"
+                        >
+                          <RiShieldLine className="mr-2 h-4 w-4" />
+                          Éditer l'email
+                        </button>
+                        {/* Bouton de test d'email */}
+                        <button
+                          type="button"
+                          onClick={() => handleTestEmail()}
+                          className="ml-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center hover:from-green-700 hover:to-green-800"
+                          disabled={emailTemplateLoading}
+                        >
+                          {emailTemplateLoading ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Test en cours...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Tester l'email
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
+                    {!emailEnabled && (
+                      <span className="ml-4 text-sm text-gray-500 italic">
+                        Les boutons d'envoi d'email sont masqués car la fonctionnalité est désactivée
+                      </span>
+                    )}
                   </div>
                   {/* Affichage des messages de succès et erreur pour les templates d'email */}
                   {emailTemplateSuccess && (
@@ -1089,7 +1136,7 @@ export default function ProjectDetails({ params }) {
                   )}
                   
                   {/* Aperçu de l'email sous le switch */}
-                  {emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
+                  {emailEnabled && emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
                     <div className="mt-6 border rounded-md bg-white shadow p-4">
                       <div className="mb-2 text-xs text-gray-400">Aperçu de l'email personnalisé :</div>
                       <div className="mb-2 text-sm font-semibold text-gray-700">Sujet : {emailTemplate.subject}</div>
@@ -1308,6 +1355,80 @@ export default function ProjectDetails({ params }) {
       )}
 
       {/* Success Popup with higher z-index */}
+      
+      {/* Test Email Popup */}
+      {showTestEmailPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full animate-success-popup">
+            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-t-lg">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <svg className="mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Tester l'email
+              </h3>
+              <p className="mt-2 text-green-100 text-sm">
+                Entrez une adresse email pour recevoir un test d'envoi
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <label htmlFor="test-email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse email
+                </label>
+                <input
+                  id="test-email"
+                  type="email"
+                  value={testEmailAddress}
+                  onChange={(e) => setTestEmailAddress(e.target.value)}
+                  placeholder="exemple@email.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      sendTestEmail();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowTestEmailPopup(false);
+                    setTestEmailAddress('');
+                    setEmailTemplateError(null);
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={sendTestEmail}
+                  disabled={!testEmailAddress || emailTemplateLoading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-md hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center justify-center"
+                >
+                  {emailTemplateLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Envoi...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Envoyer le test
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
 
       {/* Add popup animations styles */}

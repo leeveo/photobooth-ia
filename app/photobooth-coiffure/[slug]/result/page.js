@@ -29,6 +29,13 @@ const getS3Client = () => {
 
 // Utility to convert dataURL or HTTP URL to File
 const dataURLtoFile = async (dataurl, filename) => {
+  console.log('📁 dataURLtoFile called with:', { 
+    url: dataurl?.substring(0, 100) + '...', 
+    filename, 
+    isDataURL: dataurl?.startsWith('data:'),
+    isHTTP: dataurl?.startsWith('http')
+  });
+
   // If already a data URL, convert directly
   if (dataurl && dataurl.startsWith('data:')) {
     const arr = dataurl.split(',');
@@ -41,26 +48,81 @@ const dataURLtoFile = async (dataurl, filename) => {
     while (n--) u8arr[n] = bstr.charCodeAt(n);
     return new File([u8arr], filename, { type: mime });
   }
+  
   // If it's an HTTP(S) URL, fetch and convert to dataURL first
   if (dataurl && (dataurl.startsWith('http://') || dataurl.startsWith('https://'))) {
-    const response = await fetch(dataurl);
-    const blob = await response.blob();
-    const mime = blob.type || 'image/jpeg';
-    const reader = new FileReader();
-    return new Promise((resolve, reject) => {
-      reader.onloadend = () => {
-        try {
-          const base64data = reader.result;
-          // Recursively call to handle as dataURL
-          dataURLtoFile(base64data, filename).then(resolve).catch(reject);
-        } catch (e) {
-          reject(e);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    try {
+      console.log('🌐 Attempting to fetch image from URL:', dataurl);
+      const response = await fetch(dataurl, {
+        mode: 'cors', // Explicitement demander CORS
+        credentials: 'omit' // Ne pas envoyer de cookies
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      console.log('✅ Successfully fetched blob:', { size: blob.size, type: blob.type });
+      
+      const mime = blob.type || 'image/jpeg';
+      const reader = new FileReader();
+      return new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+          try {
+            const base64data = reader.result;
+            console.log('📄 Converted to base64, size:', base64data.length);
+            // Recursively call to handle as dataURL
+            dataURLtoFile(base64data, filename).then(resolve).catch(reject);
+          } catch (e) {
+            reject(e);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (fetchError) {
+      console.error('❌ Fetch failed:', fetchError);
+      
+      // Fallback: créer une image temporaire et la convertir via canvas
+      console.log('🔄 Trying fallback method with canvas...');
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // Essayer d'activer CORS
+        
+        img.onload = function() {
+          try {
+            // Créer un canvas pour convertir l'image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // Dessiner l'image sur le canvas
+            ctx.drawImage(img, 0, 0);
+            
+            // Convertir en base64
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            console.log('✅ Canvas fallback successful');
+            
+            // Convertir le base64 en File
+            dataURLtoFile(base64, filename).then(resolve).catch(reject);
+          } catch (canvasError) {
+            console.error('❌ Canvas fallback failed:', canvasError);
+            reject(new Error('Failed to process image: both fetch and canvas methods failed'));
+          }
+        };
+        
+        img.onerror = function(imgError) {
+          console.error('❌ Image load failed:', imgError);
+          reject(new Error('Failed to load image for processing'));
+        };
+        
+        img.src = dataurl;
+      });
+    }
   }
+  
   throw new Error("Unsupported image format for upload");
 };
 
@@ -148,6 +210,12 @@ export default function Result({ params }) {
       
       setProject(projectData);
       
+      // Log pour debug email
+      console.log('🔍 Project loaded - Email settings:');
+      console.log('  - datacapture:', projectData.datacapture);
+      console.log('  - email_enabled:', projectData.email_enabled);
+      console.log('  - Will show email button:', !!(projectData.datacapture && projectData.email_enabled));
+      
       // Fetch project settings
       const { data: settingsData } = await supabase
         .from('project_settings')
@@ -228,8 +296,8 @@ export default function Result({ params }) {
       return;
     }
     
-    // Vérifier si la capture de données est requise
-    if (project?.datacapture && !showDataCapture) {
+    // Vérifier si la capture de données est requise ET si l'email est activé
+    if (project?.datacapture && project?.email_enabled && !showDataCapture) {
       setShowDataCapture(true);
       return;
     }
@@ -815,8 +883,8 @@ export default function Result({ params }) {
         {/* Action Icons - 2 icons aligned horizontally */}
         {imageResultAI && (
           <div className="mt-8 flex justify-center items-start gap-12 px-4">
-            {/* 1. Icône Envoyer ma photo */}
-            {settings?.enable_qr_codes && (
+            {/* 1. Icône Envoyer ma photo - SEULEMENT si email activé ET capture de données requise */}
+            {settings?.enable_qr_codes && project?.datacapture && project?.email_enabled && (
               <div className="flex flex-col items-center">
                 <motion.button 
                   onClick={handleShare}
@@ -833,16 +901,47 @@ export default function Result({ params }) {
                   whileHover={{ scale: loadingUpload ? 1 : 1.1, y: loadingUpload ? 0 : -4 }}
                   whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  title={project?.datacapture ? "Envoyer ma photo" : "Partager ma photo"}
+                  title="Envoyer ma photo"
                 >
                   {loadingUpload ? (
                     <svg className="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                  ) : project?.datacapture ? (
+                  ) : (
                     <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </motion.button>
+                <span className="mt-2 text-sm font-medium text-black">E-Mail</span>
+              </div>
+            )}
+
+            {/* Icône Partage - SEULEMENT si pas de capture de données OU si email désactivé */}
+            {settings?.enable_qr_codes && (!project?.datacapture || !project?.email_enabled) && (
+              <div className="flex flex-col items-center">
+                <motion.button 
+                  onClick={handleShare}
+                  disabled={loadingUpload}
+                  className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
+                  style={{ 
+                    backgroundColor: secondaryColor, 
+                    color: primaryColor,
+                    border: `3px solid ${primaryColor}`,
+                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  whileHover={{ scale: loadingUpload ? 1 : 1.1, y: loadingUpload ? 0 : -4 }}
+                  whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  title="Partager ma photo"
+                >
+                  {loadingUpload ? (
+                    <svg className="animate-spin w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   ) : (
                     <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -850,9 +949,7 @@ export default function Result({ params }) {
                     </svg>
                   )}
                 </motion.button>
-                <span className="mt-2 text-sm font-medium text-black">
-                  {project?.datacapture ? "E-Mail" : "Partage"}
-                </span>
+                <span className="mt-2 text-sm font-medium text-black">Partage</span>
               </div>
             )}
 

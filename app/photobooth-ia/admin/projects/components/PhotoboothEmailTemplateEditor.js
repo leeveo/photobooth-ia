@@ -25,12 +25,6 @@ export default function PhotoboothEmailTemplateEditor({
 
   // Variables disponibles pour insertion rapide
   const availableVariables = [
-    { name: "Nom du projet", code: "{{event_name}}" },
-    { name: "Date", code: "{{event_date}}" },
-    { name: "Lieu", code: "{{event_location}}" },
-    { name: "Prénom", code: "{{participant_firstname}}" },
-    { name: "Nom", code: "{{participant_lastname}}" },
-    { name: "Email", code: "{{participant_email}}" },
     { name: "Lien image", code: "{{ticket_url}}" }
   ];
 

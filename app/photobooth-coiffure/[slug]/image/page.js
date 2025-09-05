@@ -171,11 +171,6 @@ export default function ImagePage({ params }) {
         </a>
       </div>
       
-      {/* DEBUG: Affichage temporaire pour vérifier l'état */}
-      <div className="mb-4 p-2 bg-yellow-100 border border-yellow-400 rounded text-xs text-center">
-        DEBUG: showPublicGallery = {showPublicGallery ? 'true' : 'false'} | enableSwipe = {enableSwipe ? 'true' : 'false'}
-      </div>
-      
       {/* Liens vers les galeries publiques si activées */}
       {(showPublicGallery || enableSwipe) && (
         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center">

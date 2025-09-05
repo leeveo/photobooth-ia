@@ -1719,7 +1719,7 @@ const generateImageReplicate = async () => {
         setTimeout(() => {
           console.log('[AI] ⏱️ TIMEOUT 35s déclenché - Replicate trop lent');
           reject(new Error('Timeout Replicate (35 secondes)'));
-        }, 35000);
+        }, 15000);
       });
       
       // 🚀 REQUÊTE COMPLÈTE REPLICATE (fetch + parsing JSON)

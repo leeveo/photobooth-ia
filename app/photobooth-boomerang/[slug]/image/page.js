@@ -176,7 +176,7 @@ export default function ImagePage({ params }) {
         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center">
           {showPublicGallery && (
             <a
-              href={`/photobooth-premium/${slug}/gallery`}
+              href={`/photobooth-boomerang/${slug}/gallery`}
               className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg transition-all"
             >
               🖼️ Voir toutes les photos de l'événement
@@ -184,7 +184,7 @@ export default function ImagePage({ params }) {
           )}
           {enableSwipe && (
             <a
-              href={`/photobooth-premium/${slug}/swipe`}
+              href={`/photobooth-boomerang/${slug}/swipe`}
               className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold shadow-lg transition-all"
             >
               ❤️ Évaluer les photos (Swipe)

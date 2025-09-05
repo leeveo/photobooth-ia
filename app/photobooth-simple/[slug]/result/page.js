@@ -80,6 +80,33 @@ async function sendPhotoByEmail({ to, project, imageUrl }) {
   console.log(`[API] Email envoyé avec succès à ${to} pour le projet ${project?.name || project?.id}`);
 }
 
+// Helper to ensure absolute URL for QR code
+const makeAbsoluteUrl = (pathOrUrl) => {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl;
+  
+  // Remove any leading slash to avoid double slash
+  const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
+  
+  // Use current domain for local development, production domain otherwise
+  if (typeof window !== 'undefined') {
+    const currentDomain = window.location.origin;
+    // Si on est en local (localhost ou 127.0.0.1), utiliser le domaine local
+    if (currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1')) {
+      return `${currentDomain}${path}`;
+    }
+  }
+  
+  // En cas de SSR ou autres cas, essayer de détecter l'environnement
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+    // Utiliser HTTPS localhost par défaut pour le développement
+    return `https://localhost:3000${path}`;
+  }
+  
+  // Fallback to production domain
+  return `https://photobooth.waibooth.app${path}`;
+};
+
 export default function Result({ params }) {
   const slug = params.slug;
   const supabase = createClientComponentClient();
@@ -103,6 +130,7 @@ export default function Result({ params }) {
     rgpdAccepted: false
   });
   const [savingDataCapture, setSavingDataCapture] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const fetchProjectData = useCallback(async () => {
     try {
@@ -142,7 +170,7 @@ export default function Result({ params }) {
     } finally {
       setLoading(false);
     }
-  }, [slug, supabase]);
+  }, [slug]); // Seulement dépend de slug pour éviter les re-rendus inutiles
   
   useEffect(() => {
     // Load project data and settings from localStorage
@@ -152,7 +180,8 @@ export default function Result({ params }) {
     
     if (cachedProject) {
       try {
-        setProject(JSON.parse(cachedProject));
+        const parsedProject = JSON.parse(cachedProject);
+        setProject(parsedProject);
         setLoading(false);
       } catch (e) {
         console.error("Error parsing cached project data:", e);
@@ -161,7 +190,8 @@ export default function Result({ params }) {
     
     if (cachedSettings) {
       try {
-        setSettings(JSON.parse(cachedSettings));
+        const parsedSettings = JSON.parse(cachedSettings);
+        setSettings(parsedSettings);
       } catch (e) {
         console.error("Error parsing cached settings:", e);
       }
@@ -181,9 +211,6 @@ export default function Result({ params }) {
       }
     }
     
-    // Always fetch fresh data
-    fetchProjectData();
-    
     // Log any available metadata
     const falMetadata = localStorage.getItem('falGenerationMetadata');
     if (falMetadata) {
@@ -193,7 +220,10 @@ export default function Result({ params }) {
         console.error("Error parsing metadata:", e);
       }
     }
-  }, [fetchProjectData]);
+    
+    // Fetch fresh data on mount
+    fetchProjectData();
+  }, [slug]); // Seulement dépend de slug
   
   const handleShare = async () => {
     if (!imageResultAI) {
@@ -403,6 +433,44 @@ export default function Result({ params }) {
     // Scroll to top on mount
     window.scrollTo(0, 0);
   }, []);
+  
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Main data loading effect
+  useEffect(() => {
+    
+    // Check URL params for direct sharing links
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const imageUrl = urlParams.get('imageUrl');
+      if (imageUrl) {
+        setLinkQR(imageUrl);
+        setGenerateQR(true);
+      }
+    }
+    
+    // Log any available metadata
+    const falMetadata = localStorage.getItem('falGenerationMetadata');
+    if (falMetadata) {
+      try {
+        logWithTimestamp('fal.ai generation metadata:', JSON.parse(falMetadata));
+      } catch (e) {
+        console.error("Error parsing metadata:", e);
+      }
+    }
+    
+    // Fetch fresh data on mount
+    fetchProjectData();
+  }, [slug]); // Seulement dépend de slug
   
   const handleStartOver = () => {
     // Clear result data
@@ -621,7 +689,7 @@ export default function Result({ params }) {
         </div>
       )}
 
-      {/* QR Code Sharing Overlay */}
+      {/* QR Code Sharing Overlay - Enhanced Version */}
       {generateQR && (
         <div className="fixed inset-0 z-40 flex items-center justify-center flex-col bg-black/40 backdrop-blur-md">
           <div
@@ -664,6 +732,56 @@ export default function Result({ params }) {
                   }}
                 />
               </div>
+              
+              {/* Action Buttons for QR Code */}
+              <div className="flex flex-col gap-3 w-full mb-4">
+                {/* Download Button */}
+                <motion.a
+                  href={linkQR}
+                  download
+                  className="py-3 px-6 rounded-xl font-bold text-center flex items-center justify-center gap-3 transition-all"
+                  style={{
+                    backgroundColor: secondaryColor,
+                    color: primaryColor,
+                    boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
+                  }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                  <span>TÉLÉCHARGER</span>
+                </motion.a>
+                
+                {/* Share Button (Web Share API) */}
+                {navigator.share && (
+                  <motion.button
+                    onClick={async () => {
+                      try {
+                        await navigator.share({
+                          title: 'Mon PhotoBooth IA',
+                          text: 'Découvrez ma création PhotoBooth IA !',
+                          url: linkQR
+                        });
+                      } catch (err) {
+                        console.log('Sharing cancelled or failed:', err);
+                      }
+                    }}
+                    className="py-3 px-6 rounded-xl font-bold text-center flex items-center justify-center gap-3 bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    <span>PARTAGER</span>
+                  </motion.button>
+                )}
+              </div>
+              
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre photo
               </p>
@@ -675,7 +793,7 @@ export default function Result({ params }) {
                   </>
                 )}
               </div>
-              <button
+              <motion.button
                 onClick={() => setGenerateQR(false)}
                 className="w-full py-8 text-center font-extrabold rounded-3xl mt-6 text-3xl tracking-wider uppercase transition-all"
                 style={{
@@ -684,9 +802,11 @@ export default function Result({ params }) {
                   boxShadow: `0 8px 32px 0 ${secondaryColor}cc`,
                   letterSpacing: '0.1em'
                 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Fermer
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -763,7 +883,8 @@ export default function Result({ params }) {
         
         {/* Action Buttons - Modern redesign with narrower width */}
         <div className="mt-8 flex flex-col items-center space-y-4">
-          {settings?.enable_qr_codes && imageResultAI && (
+          {/* Bouton Email - SEULEMENT si email activé ET capture de données requise */}
+          {settings?.enable_qr_codes && imageResultAI && project?.datacapture && project?.email_enabled && (
             <motion.button 
               onClick={handleShare}
               disabled={loadingUpload}
@@ -785,12 +906,39 @@ export default function Result({ params }) {
                   </svg>
                   <span>PRÉPARATION...</span>
                 </>
-              ) : project?.datacapture ? (
+              ) : (
                 <>
                   <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <span>ENVOYER MA PHOTO</span>
+                </>
+              )}
+            </motion.button>
+          )}
+
+          {/* Bouton Partage - SEULEMENT si pas de capture de données OU si email désactivé */}
+          {settings?.enable_qr_codes && imageResultAI && (!project?.datacapture || !project?.email_enabled) && (
+            <motion.button 
+              onClick={handleShare}
+              disabled={loadingUpload}
+              className={`py-3 px-8 rounded-xl font-bold text-center flex items-center justify-center gap-2 max-w-[240px] w-full shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
+              style={{ 
+                backgroundColor: secondaryColor, 
+                color: primaryColor,
+                boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
+              }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              {loadingUpload ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>PRÉPARATION...</span>
                 </>
               ) : (
                 <>
@@ -821,6 +969,74 @@ export default function Result({ params }) {
           </motion.div>
         </div>
       </div>
+
+      {/* Fixed Mobile Action Buttons */}
+      {isMobile && imageResultAI && !generateQR && !showDataCapture && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex gap-3 z-50">
+          {/* Download Button */}
+          {linkQR && (
+            <motion.a
+              href={linkQR}
+              download
+              className="flex-1 py-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 shadow-lg"
+              style={{
+                backgroundColor: secondaryColor,
+                color: primaryColor,
+                boxShadow: `0 4px 14px rgba(${parseInt(secondaryColor.slice(1, 3), 16)}, ${parseInt(secondaryColor.slice(3, 5), 16)}, ${parseInt(secondaryColor.slice(5, 7), 16)}, 0.3)`
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+              </svg>
+              <span className="font-bold">TÉLÉCHARGER</span>
+            </motion.a>
+          )}
+
+          {/* Share/Email Button */}
+          {settings?.enable_qr_codes && (
+            <motion.button
+              onClick={handleShare}
+              disabled={loadingUpload}
+              className={`flex-1 py-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 shadow-lg ${loadingUpload ? 'opacity-70' : ''}`}
+              style={{
+                background: `linear-gradient(45deg, ${primaryColor}, ${secondaryColor})`,
+                color: '#fff',
+                boxShadow: `0 4px 14px rgba(${parseInt(primaryColor.slice(1, 3), 16)}, ${parseInt(primaryColor.slice(3, 5), 16)}, ${parseInt(primaryColor.slice(5, 7), 16)}, 0.3)`
+              }}
+              whileHover={{ scale: loadingUpload ? 1 : 1.02 }}
+              whileTap={{ scale: loadingUpload ? 1 : 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              {loadingUpload ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="font-bold">ENVOI...</span>
+                </>
+              ) : project?.datacapture ? (
+                <>
+                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className="font-bold">ENVOYER</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span className="font-bold">PARTAGER</span>
+                </>
+              )}
+            </motion.button>
+          )}
+        </div>
+      )}
     </main>
   );
 }
