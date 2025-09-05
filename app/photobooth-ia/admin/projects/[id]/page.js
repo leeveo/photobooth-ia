@@ -727,6 +727,50 @@ export default function ProjectDetails({ params }) {
     }
   };
 
+  // Fonction pour tester l'envoi d'email avec le template
+  const handleTestEmail = async () => {
+    const testEmail = prompt("Entrez l'adresse email pour recevoir le test :");
+    if (!testEmail || !testEmail.includes('@')) {
+      alert("Veuillez entrer une adresse email valide.");
+      return;
+    }
+
+    setEmailTemplateLoading(true);
+    setEmailTemplateError(null);
+    setEmailTemplateSuccess(null);
+
+    try {
+      const response = await fetch('/api/test-email-template', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectId: projectId,
+          testEmail: testEmail
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du test');
+      }
+
+      if (result.templateFound) {
+        setEmailTemplateSuccess(`Email de test envoyé avec succès à ${testEmail} avec votre template personnalisé !`);
+      } else {
+        setEmailTemplateSuccess(`Email de test envoyé à ${testEmail}, mais aucun template personnalisé n'a été trouvé. Créez un template pour personnaliser vos emails.`);
+      }
+
+    } catch (err) {
+      console.error('Erreur test email:', err);
+      setEmailTemplateError(`Erreur lors de l'envoi du test : ${err.message}`);
+    } finally {
+      setEmailTemplateLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -1005,7 +1049,45 @@ export default function ProjectDetails({ params }) {
                       <RiShieldLine className="mr-2 h-4 w-4" />
                       Éditer l'email
                     </button>
+                    {/* Bouton de test d'email */}
+                    <button
+                      type="button"
+                      onClick={() => handleTestEmail()}
+                      className={`ml-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center
+                        ${!emailEnabled ? 'opacity-50 cursor-not-allowed bg-gray-300 from-gray-400 to-gray-500' : 'hover:from-green-700 hover:to-green-800'}
+                      `}
+                      disabled={!emailEnabled || emailTemplateLoading}
+                    >
+                      {emailTemplateLoading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Test en cours...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          Tester l'email
+                        </>
+                      )}
+                    </button>
                   </div>
+                  {/* Affichage des messages de succès et erreur pour les templates d'email */}
+                  {emailTemplateSuccess && (
+                    <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                      {emailTemplateSuccess}
+                    </div>
+                  )}
+                  {emailTemplateError && (
+                    <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                      {emailTemplateError}
+                    </div>
+                  )}
+                  
                   {/* Aperçu de l'email sous le switch */}
                   {emailTemplate && emailTemplate.subject && emailTemplate.html_content && (
                     <div className="mt-6 border rounded-md bg-white shadow p-4">

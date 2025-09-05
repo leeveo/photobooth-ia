@@ -298,6 +298,13 @@ export default function Result({ params }) {
                 to: dataCapture.email,
                 project,
                 imageUrl: s3Url,
+                participantData: {
+                  name: dataCapture.name,
+                  email: dataCapture.email,
+                  phone: dataCapture.phone,
+                  firstname: dataCapture.name.split(' ')[0] || '', // Extrait le prénom du nom complet
+                  lastname: dataCapture.name.split(' ').slice(1).join(' ') || '' // Extrait le nom de famille
+                }
               });
               // Log déjà fait dans sendPhotoByEmail
             } catch (mailErr) {

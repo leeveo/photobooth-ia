@@ -1,14 +1,31 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 
-export default function SimpleRichTextEditor({ 
+const SimpleRichTextEditor = forwardRef(({ 
   value, 
   onChange, 
   className = '', 
   height = '400px' 
-}) {
+}, ref) => {
   const editorRef = useRef(null)
+  
+  // Expose the editor ref to parent components
+  useImperativeHandle(ref, () => ({
+    editorRef: editorRef,
+    focus: () => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+      }
+    },
+    insertText: (text) => {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        document.execCommand('insertText', false, text);
+        handleInput();
+      }
+    }
+  }));
   
   // Initialize the editor with the content
   useEffect(() => {
@@ -135,5 +152,9 @@ export default function SimpleRichTextEditor({
       ></div>
     </div>
   )
-}
+})
+
+SimpleRichTextEditor.displayName = 'SimpleRichTextEditor'
+
+export default SimpleRichTextEditor
       

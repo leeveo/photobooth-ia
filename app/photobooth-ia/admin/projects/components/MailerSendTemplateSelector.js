@@ -70,7 +70,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
           <p>Bonjour {{participant_firstname}} {{participant_lastname}},</p>
           <p>Merci d'avoir participé à notre photobooth lors de l'événement "{{event_name}}" qui s'est déroulé le {{event_date}} à {{event_location}}.</p>
           <div style="margin: 24px 0; text-align: center;">
-            <a href="{{photo_url}}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="{{image_url}}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Télécharger ma photo
             </a>
           </div>
@@ -91,7 +91,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
             <p style="font-size: 16px; color: #111827; margin-top: 0;">Cher(e) <strong>{{participant_firstname}} {{participant_lastname}}</strong>,</p>
             <p style="font-size: 16px; color: #111827; margin-bottom: 20px;">Nous espérons que vous avez passé un excellent moment avec notre photobooth lors de "{{event_name}}".</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="{{photo_url}}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: background-color 0.3s;">
+              <a href="{{image_url}}" style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px; transition: background-color 0.3s;">
                 Télécharger ma photo
               </a>
             </div>
@@ -112,7 +112,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
           <p>{{participant_firstname}},</p>
           <p>Vos photos du photobooth sont maintenant disponibles.</p>
           <div style="margin: 20px 0; text-align: center;">
-            <a href="{{photo_url}}" style="background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-size: 14px;">
+            <a href="{{image_url}}" style="background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-size: 14px;">
               Télécharger ma photo
             </a>
           </div>
@@ -132,7 +132,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
             <p style="font-size: 16px; color: #333;">Bonjour {{participant_firstname}},</p>
             <p style="font-size: 16px; color: #333;">Merci d'avoir utilisé notre photobooth le <strong style="color: #ec4899;">{{event_date}}</strong> à <strong style="color: #8b5cf6;">{{event_location}}</strong>.</p>
             <div style="margin: 25px 0; text-align: center;">
-              <a href="{{photo_url}}" style="background: linear-gradient(to right, #ec4899, #8b5cf6); color: white; padding: 12px 25px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(236, 72, 153, 0.25);">
+              <a href="{{image_url}}" style="background: linear-gradient(to right, #ec4899, #8b5cf6); color: white; padding: 12px 25px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(236, 72, 153, 0.25);">
                 Télécharger ma photo
               </a>
             </div>
@@ -162,7 +162,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
               <strong>Lieu:</strong> {{event_location}}
             </p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="{{photo_url}}" style="background-color: #8b5cf6; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
+              <a href="{{image_url}}" style="background-color: #8b5cf6; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
                 Télécharger ma photo
               </a>
             </div>
@@ -187,7 +187,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
               Merci d'avoir participé à notre photobooth lors de l'événement "{{event_name}}". Vos souvenirs photos sont maintenant disponibles!
             </p>
             <div style="text-align: center; margin: 30px 0; background-color: #fef3c7; padding: 15px; border-radius: 8px;">
-              <a href="{{photo_url}}" style="background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
+              <a href="{{image_url}}" style="background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
                 Télécharger ma photo
               </a>
               <p style="margin-top: 10px; font-size: 14px; color: #92400e;">
@@ -210,7 +210,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
           <p>Bonjour {{participant_firstname}} {{participant_lastname}},</p>
           <p>Vos photos prises lors de l'événement "{{event_name}}" le {{event_date}} à {{event_location}} sont maintenant disponibles.</p>
           <div style="margin: 24px 0; text-align: center;">
-            <a href="{{photo_url}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="{{image_url}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Télécharger ma photo
             </a>
           </div>

@@ -98,23 +98,29 @@ export default function ResultPage({ params }) {
     setEmailLoading(true);
     
     try {
-      // Call your email API
-      const response = await fetch('/api/send-image-email', {
+      // Call the send-photo-email API with participant data
+      const response = await fetch('/api/send-photo-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email,
+          to: email,
+          project: project,
           imageUrl: resultImage,
-          projectName: project?.name || 'Photobooth Avatar'
+          participantData: {
+            email: email,
+            name: '', // Pas de nom fourni dans cette interface
+            firstname: '',
+            lastname: ''
+          }
         }),
       });
       
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.message || 'Erreur lors de l\'envoi de l\'email');
+        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
       }
       
       // Log email to database

@@ -441,7 +441,14 @@ export default function Result({ params }) {
           await sendPhotoByEmail({
             to: dataCapture.email,
             project: project,
-            imageUrl: linkQR
+            imageUrl: linkQR,
+            participantData: {
+              name: dataCapture.name,
+              email: dataCapture.email,
+              phone: dataCapture.phone,
+              firstname: dataCapture.name.split(' ')[0] || '', // Extrait le prénom du nom complet
+              lastname: dataCapture.name.split(' ').slice(1).join(' ') || '' // Extrait le nom de famille
+            }
           });
         } catch (emailError) {
           console.error("Erreur envoi email:", emailError);

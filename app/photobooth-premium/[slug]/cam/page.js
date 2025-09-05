@@ -1301,6 +1301,12 @@ const generateImageReplicate = async () => {
       } else {
         setLogs(logs => [...logs, "Session enregistrée dans la base."]);
         console.log("===> [DEBUG] Insertion sessions réussie:", sessionInsertData);
+        
+        // Stocker l'ID de session pour l'utiliser dans l'envoi d'email
+        if (sessionInsertData && sessionInsertData[0] && sessionInsertData[0].id) {
+          localStorage.setItem('currentSessionId', sessionInsertData[0].id);
+          console.log("===> [DEBUG] Session ID stocké:", sessionInsertData[0].id);
+        }
       }
     } catch (sessionError) {
       setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);

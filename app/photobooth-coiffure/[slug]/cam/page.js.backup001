@@ -1347,7 +1347,7 @@ export default function CameraCapture({ params }) {
       }
       
       // Log pour débogage des variables d'entrée
-      console.group("[AI] Request Details (generateImageSwap)");
+      console.group("[AI] Request Details (generateImageSwap with Azure Fallback)");
       console.log('Model:', "black-forest-labs/flux-kontext-pro");
       console.log('Prompt:', stylePrompt);
       console.log('Input image present:', !!imageFile);
@@ -1381,17 +1381,13 @@ export default function CameraCapture({ params }) {
         setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
       }, 15000);
       
-      // Utiliser l'API proxy Next.js au lieu d'appeler directement
-      setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur..."]);
-      
-      // Ensure the model parameter is correct and data is well-formatted
+      // Prepare request body
       const requestBody = {
         model: "black-forest-labs/flux-kontext-pro",
         input: {
           prompt: stylePrompt,
           input_image: imageFile,
           output_format: "jpg",
-          // Add width and height parameters to ensure the generated image has the correct dimensions
           width: 970,
           height: 651
         }
@@ -1410,17 +1406,59 @@ export default function CameraCapture({ params }) {
       let resultImageUrl = null;
       let aiSource = 'replicate'; // Track which AI service was used
       
-      // ✅ TEST MODE: Force Azure fallback by simulating Replicate failure
-      console.log('[AI] TEST MODE: Simulation échec Replicate pour tester Azure...');
-      setLogs(prevLogs => [...prevLogs, "🧪 TEST MODE: Simulation échec Replicate..."]);
+      // ✅ FALLBACK SYSTEM: Try Replicate first with 5-second timeout, then Azure
+      console.log('[AI] Tentative avec Replicate (timeout 5s)...');
+      setLogs(prevLogs => [...prevLogs, "Connexion au serveur IA principal..."]);
       
       try {
-        // Simulate immediate Replicate failure for testing
-        throw new Error('TEST MODE: Replicate forcé en échec pour tester Azure');
+        // Create timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout Replicate (5 secondes)')), 5000);
+        });
+        
+        // Create Replicate request promise
+        const replicatePromise = fetch('/api/replicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+        
+        // Race between timeout and actual request
+        const response = await Promise.race([replicatePromise, timeoutPromise]);
+        
+        const responseTime = Date.now() - start;
+        console.log(`[AI] Replicate response received after ${responseTime}ms`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[AI] Replicate response parsed successfully:', data);
+          
+          if (data.success) {
+            const result = data.output;
+            resultImageUrl = typeof result === 'string' ? result : 
+              Array.isArray(result) ? result[0] : 
+              result?.url || result?.image || result;
+            
+            if (resultImageUrl) {
+              console.log('[AI] ✅ Replicate successful - Image URL:', resultImageUrl);
+              setLogs(prevLogs => [...prevLogs, "Image générée par Replicate!"]);
+              aiSource = 'replicate';
+            } else {
+              throw new Error("Aucune URL d'image dans la réponse Replicate");
+            }
+          } else {
+            throw new Error(data.error || "Erreur Replicate");
+          }
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Erreur HTTP Replicate: ${response.status} ${errorText}`);
+        }
         
       } catch (replicateError) {
-        console.log('[AI] ❌ Replicate failed (TEST MODE):', replicateError.message);
-        setLogs(prevLogs => [...prevLogs, `Replicate échoué (TEST): ${replicateError.message}`]);
+        console.log('[AI] ❌ Replicate failed:', replicateError.message);
+        setLogs(prevLogs => [...prevLogs, `Replicate échoué: ${replicateError.message}`]);
         setLogs(prevLogs => [...prevLogs, "🔄 Basculement vers Azure AI..."]);
         
         // ✅ FALLBACK TO AZURE AI
@@ -1566,6 +1604,42 @@ export default function CameraCapture({ params }) {
         }
       }
 
+      // Store session info with AI source
+      try {
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: finalImageUrl,
+          result_s3_url: resultS3Url,
+          processing_time_ms: Date.now() - start,
+          is_success: true,
+          error_message: null,
+          project_id: project?.id,
+          created_by: null,
+          has_watermark: hasWatermark,
+          moderation: null,
+          ai_source: aiSource, // Add AI source to session
+          created_at: new Date().toISOString()
+        };
+
+        console.log("===> [DEBUG] Session payload with AI source:", sessionPayload);
+
+        const { data: sessionInsertData, error: sessionInsertError } = await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+
+        if (sessionInsertError) {
+          console.error("===> [DEBUG] Session insertion error:", sessionInsertError);
+        } else {
+          console.log("===> [DEBUG] Session inserted successfully:", sessionInsertData);
+        }
+      } catch (sessionError) {
+        console.error("===> [DEBUG] Session error:", sessionError);
+      }
+
       // Gestion de la redirection après succès
       setLogs(logs => [...logs, "Préparation de la redirection..."]);
       setLoadingProgress(100);
@@ -1658,7 +1732,7 @@ export default function CameraCapture({ params }) {
   };
   
 
-// ✅ FONCTION AVEC FALLBACK AZURE - TEST MODE
+// Remplace la fonction generateImageReplicate par la version suivante avec logs détaillés
 const generateImageReplicate = async () => {
   setProcessing(true);
   setError(null);
@@ -1696,158 +1770,138 @@ const generateImageReplicate = async () => {
   }, 500);
   
   try {
-    console.log("===> [DEBUG] Démarrage génération avec fallback Replicate → Azure");
+    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
 
-    const stylePrompt = localStorage.getItem('stylePrompt') || "portrait photo";
-    const inputImage = imageFile; // Image de la camera
+    const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+    const image = imageFile; // base64
 
-    console.log('[AI] Variables:');
-    console.log('- stylePrompt:', stylePrompt);
-    console.log('- inputImage présent:', !!inputImage);
-    console.log('- inputImage length:', inputImage ? inputImage.length : 0);
+    // Logs détaillés avant envoi
+    console.group('[AI] Request (generateImageReplicate)');
+    console.log('Model:', 'black-forest-labs/flux-kontext-pro');
+    console.log('Prompt:', prompt);
+    console.log('Input image present:', !!image);
+    console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
+    console.log('Project ID:', project?.id);
+    console.log('Slug:', slug);
+    console.log('Image header:', image ? image.substring(0, 50) + '...' : 'N/A');
+    console.groupEnd();
 
-    let resultImageUrl = null;
-    let aiSource = 'replicate'; // Par défaut, on essaie Replicate
+    setLogs(["Envoi de la requête au serveur IA..."]);
     
-    // ✅ SYSTÈME DE FALLBACK: Replicate avec timeout 35s, puis Azure
-    console.log('[AI] 🚀 Tentative Replicate avec timeout 35 secondes...');
-    setLogs(["🚀 Connexion au serveur IA principal (Replicate)..."]);
+    // Ajouter des messages de progression basés sur le temps écoulé
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+    }, 5000);
     
-    try {
-      // ⏱️ TIMEOUT COMPLET : 35 secondes pour toute l'opération Replicate (fetch + json parsing)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          console.log('[AI] ⏱️ TIMEOUT 35s déclenché - Replicate trop lent');
-          reject(new Error('Timeout Replicate (35 secondes)'));
-        }, 35000);
-      });
-      
-      // 🚀 REQUÊTE COMPLÈTE REPLICATE (fetch + parsing JSON)
-      const replicateCompletePromise = (async () => {
-        console.log('[AI] 📡 Démarrage appel Replicate...');
-        
-        const fetchStart = Date.now();
-        const response = await fetch('/api/replicate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: "black-forest-labs/flux-kontext-pro",
-            input: {
-              prompt: stylePrompt,
-              input_image: inputImage,
-              output_format: "jpg",
-              width: 970,
-              height: 651
-            }
-          }),
-        });
-        
-        const fetchTime = Date.now() - fetchStart;
-        console.log(`[AI] 📡 Replicate fetch terminé après ${fetchTime}ms`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur HTTP Replicate: ${response.status} ${errorText}`);
-        }
-        
-        console.log('[AI] 📄 Parsing JSON Replicate...');
-        const data = await response.json();
-        const totalTime = Date.now() - fetchStart;
-        console.log(`[AI] ✅ Replicate complet après ${totalTime}ms`);
-        
-        return { response, data, totalTime };
-      })();
-      
-      // 🏁 COURSE ENTRE TIMEOUT ET REPLICATE COMPLET
-      const result = await Promise.race([replicateCompletePromise, timeoutPromise]);
-      
-      // Si on arrive ici, c'est que Replicate a gagné la course (< 8s)
-      const { data, totalTime } = result;
-      console.log(`[AI] 🏆 Replicate a gagné la course en ${totalTime}ms`);
-      
-      if (data.success) {
-        const output = data.output;
-        resultImageUrl = typeof output === 'string' ? output : 
-          Array.isArray(output) ? output[0] : 
-          output?.url || output?.image || output;
-        
-        if (resultImageUrl) {
-          console.log('[AI] ✅ Replicate succès - URL image:', resultImageUrl);
-          setLogs(prevLogs => [...prevLogs, `✅ Image générée par Replicate (${totalTime}ms)!`]);
-          aiSource = 'replicate';
-        } else {
-          throw new Error("Pas d'URL d'image dans la réponse Replicate");
-        }
-      } else {
-        throw new Error(data.error || "Erreur Replicate");
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+    }, 10000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+    }, 15000);
+
+    const reqBody = {
+      model: "black-forest-labs/flux-kontext-pro",
+      input: {
+        prompt,
+        input_image: image,
+        output_format: "jpg",
+        width: 970,
+        height: 651
       }
-      
-    } catch (replicateError) {
-      console.log('[AI] ❌ Replicate échoué:', replicateError.message);
-          setLogs(prevLogs => [...prevLogs, `❌ Replicate: ${replicateError.message}`]);
-          setLogs(prevLogs => [...prevLogs, "🔄 Basculement vers Azure AI..."]);
-        
-        // ✅ FALLBACK VERS AZURE AI
-        console.log('[AI] 🔄 Fallback vers Azure AI...');
-        
-        try {
-          const azureResponse = await fetch('/api/azure-ai', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              input: {
-                prompt: stylePrompt,
-                input_image: inputImage
-              }
-            }),
-          });
-          
-          const azureResponseTime = Date.now() - start;
-          console.log(`[AI] ✅ Azure réponse reçue après ${azureResponseTime}ms`);
-          
-          if (!azureResponse.ok) {
-            const azureErrorText = await azureResponse.text();
-            throw new Error(`Erreur Azure AI: ${azureResponse.status} ${azureErrorText}`);
-          }
-          
-          const azureData = await azureResponse.json();
-          console.log('[AI] Azure données parsées:', azureData);
-          
-          if (azureData.success && azureData.output) {
-            resultImageUrl = azureData.output;
-            console.log('[AI] ✅ Azure AI succès - Image:', resultImageUrl?.substring(0, 50) + "...");
-            setLogs(prevLogs => [...prevLogs, "✅ Image générée par Azure AI!"]);
-            aiSource = 'azure';
-          } else {
-            throw new Error(azureData.error || "Erreur Azure AI");
-          }
-          
-        } catch (azureError) {
-          console.error('[AI] ❌ Azure fallback échoué:', azureError.message);
-          setLogs(prevLogs => [...prevLogs, `❌ Azure AI: ${azureError.message}`]);
-          throw new Error(`Tous les services IA échoués. Replicate: ${replicateError.message}. Azure: ${azureError.message}`);
-        }
+    };
+
+    // Version sûre pour le debug (sans base64 complet)
+    window.debugPayload = {
+      ...reqBody,
+      input: {
+        ...reqBody.input,
+        input_image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
+      }
+    };
+    console.log('[AI] Payload summary:', window.debugPayload);
+
+    console.log('[AI] Starting request to /api/replicate...');
+    setLogs(prev => [...prev, "Connexion au serveur IA..."]);
+
+    const fetchStart = Date.now();
+    let response;
+    try {
+      response = await fetch('/api/replicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody),
+      });
+    } catch (networkErr) {
+      console.error('[AI] Network error:', networkErr);
+      setLogs(prev => [...prev, `Erreur réseau: ${networkErr.message}`]);
+      throw new Error(`Erreur réseau: ${networkErr.message}`);
     }
+
+    const responseTime = Date.now() - fetchStart;
+    console.log(`[AI] Response received after ${responseTime}ms`);
+    console.log(`[AI] Status: ${response.status} ${response.statusText}`);
     
-    if (!resultImageUrl) {
-      throw new Error("Aucune image générée par les services IA");
+    // Log response headers
+    try {
+      const headers = {};
+      response.headers.forEach((value, key) => { headers[key] = value; });
+      console.log('[Replicate] Response headers:', headers);
+    } catch {}
+
+    if (!response.ok) {
+      let errorText = '';
+      try { errorText = await response.text(); } catch {}
+      console.error('[Replicate] HTTP Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText?.substring(0, 500)
+      });
+      setLogs(prev => [...prev, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
+      throw new Error(errorText || "Erreur Replicate");
     }
-    
-    console.log(`[AI] 🎉 Image finale de ${aiSource.toUpperCase()}:`, resultImageUrl?.substring(0, 50) + "...");
-    setLogs(prevLogs => [...prevLogs, `🎉 Image reçue de ${aiSource.toUpperCase()}`]);
-    localStorage.setItem("faceURLResult", resultImageUrl);
-    let finalImageUrl = resultImageUrl;
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      console.error('[Replicate] JSON parse error:', parseErr);
+      let rawText = '';
+      try { rawText = await response.text(); } catch {}
+      console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
+      setLogs(prev => [...prev, 'Réponse invalide du serveur Replicate']);
+      throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
+    }
+
+    console.log('[Replicate] Successfully parsed JSON response:', data);
+
+    if (!data.success) {
+      console.error('[Replicate] API indicated failure:', data.error);
+      setLogs(prev => [...prev, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+      throw new Error(data.error || "Erreur Replicate");
+    }
+
+    let resultUrl = typeof data.output === 'string'
+      ? data.output
+      : Array.isArray(data.output)
+        ? data.output[0]
+        : data.output?.url || data.output?.image || data.output;
+
+    if (!resultUrl) {
+      console.error('[Replicate] Missing image URL. Full output:', data.output);
+      throw new Error("Aucune image générée");
+    }
+
+    console.log('[Replicate] Final image URL:', resultUrl);
+    setLogs(["Image générée avec succès !"]);
+    localStorage.setItem("faceURLResult", resultUrl);
 
     // 2. Ajout du layout (watermark) si disponible
     setLogs(logs => [...logs, "Récupération du layout du projet..."]);
     const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
 
-    // Réutilisation de finalImageUrl déjà déclarée
-    finalImageUrl = resultImageUrl; // Utilise l'image d'Azure
+    let finalImageUrl = resultUrl;
     let hasWatermark = false;
 
     if (thumbnailUrl) {
@@ -1857,11 +1911,11 @@ const generateImageReplicate = async () => {
         : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
       try {
         const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
-          resultImageUrl, 
+          resultUrl, 
           thumbnailUrl, 
           orientationData
         );
-        if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
+        if (combinedImageDataUrl && combinedImageDataUrl !== resultUrl) {
           finalImageUrl = combinedImageDataUrl;
           hasWatermark = true;
           setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
@@ -1949,7 +2003,6 @@ const generateImageReplicate = async () => {
         created_by: null,
         has_watermark: hasWatermark,
         moderation: null,
-        ai_source: aiSource, // Replicate ou Azure selon le service utilisé
         created_at: new Date().toISOString()
       };
 
@@ -2031,7 +2084,6 @@ const generateImageReplicate = async () => {
         created_by: null,
         has_watermark: false,
         moderation: null,
-        ai_source: aiSource || 'error', // Indique quel service était tenté
         created_at: new Date().toISOString()
       };
 

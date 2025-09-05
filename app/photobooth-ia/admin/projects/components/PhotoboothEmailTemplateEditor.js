@@ -21,6 +21,7 @@ export default function PhotoboothEmailTemplateEditor({
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const textareaRef = useRef(null);
+  const richEditorRef = useRef(null);
 
   // Variables disponibles pour insertion rapide
   const availableVariables = [
@@ -74,7 +75,18 @@ export default function PhotoboothEmailTemplateEditor({
     if (editorMode === 'html') {
       insertVariable(variable);
     } else {
-      setHtmlContent(prev => prev + ' ' + variable);
+      // Pour l'éditeur WYSIWYG, utiliser la méthode exposée
+      if (richEditorRef.current && richEditorRef.current.insertText) {
+        richEditorRef.current.insertText(variable);
+      } else {
+        // Fallback : ajouter à la fin du contenu
+        setHtmlContent(prev => {
+          if (!prev.trim()) {
+            return `<p>${variable}</p>`;
+          }
+          return prev + ` ${variable}`;
+        });
+      }
     }
   };
 
@@ -190,6 +202,7 @@ export default function PhotoboothEmailTemplateEditor({
               </label>
               {editorMode === 'wysiwyg' ? (
                 <SimpleRichTextEditor
+                  ref={richEditorRef}
                   value={htmlContent}
                   onChange={setHtmlContent}
                   height="400px"

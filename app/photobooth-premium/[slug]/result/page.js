@@ -65,12 +65,18 @@ const dataURLtoFile = async (dataurl, filename) => {
 };
 
 // Nouvelle fonction pour envoyer l'email via l'API Next.js
-async function sendPhotoByEmail({ to, project, imageUrl }) {
+async function sendPhotoByEmail({ to, project, imageUrl, participantData, sessionId }) {
   if (!to) return;
   const response = await fetch('/api/send-photo-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to, project, imageUrl }),
+    body: JSON.stringify({ 
+      to, 
+      project, 
+      imageUrl, 
+      participantData,
+      sessionId // Inclure l'ID de session pour les liens sécurisés
+    }),
   });
   if (!response.ok) {
     const error = await response.json();
@@ -283,10 +289,21 @@ export default function Result({ params }) {
           // ENVOI EMAIL SI ACTIVÉ ET EMAIL RENSEIGNÉ
           if (project?.email_enabled && dataCapture.email) {
             try {
+              // Récupérer l'ID de session stocké lors de la génération
+              const currentSessionId = localStorage.getItem('currentSessionId');
+              
               await sendPhotoByEmail({
                 to: dataCapture.email,
                 project,
                 imageUrl: s3Url,
+                participantData: {
+                  name: dataCapture.name,
+                  email: dataCapture.email,
+                  phone: dataCapture.phone,
+                  firstname: dataCapture.name.split(' ')[0] || '', // Extrait le prénom du nom complet
+                  lastname: dataCapture.name.split(' ').slice(1).join(' ') || '' // Extrait le nom de famille
+                },
+                sessionId: currentSessionId // Inclure l'ID de session pour les liens sécurisés
               });
               // Log déjà fait dans sendPhotoByEmail
             } catch (mailErr) {
@@ -309,11 +326,6 @@ export default function Result({ params }) {
     } finally {
       setSavingDataCapture(false);
     }
-  };
-  
-  // Vérifier si le formulaire de capture de données est valide
-  const isDataCaptureValid = () => {
-    return dataCapture.name.trim() && dataCapture.rgpdAccepted;
   };
   
   const uploadToS3 = async (imageUrl) => {

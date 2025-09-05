@@ -1,0 +1,64 @@
+✅ SYSTÈME DE FALLBACK AZURE AI IMPLÉMENTÉ AVEC SUCCÈS
+
+==================== RÉSUMÉ DES MODIFICATIONS ====================
+
+1. 📁 NOUVEAU FICHIER API AZURE AI
+   - Fichier: /app/api/azure-ai/route.js
+   - Endpoint Azure: https://photoboothia-resource.services.ai.azure.com/openai/deployments/FLUX.1-Kontext-pro/images/generations?api-version=2025-04-01-preview
+   - Clé API: 84Lv7flCqhVehC79RpaLlZ18KpMd5I6HqDkKmJANsNPRDz3t8dAiJQQJ99BIAC5T7U2XJ3w3AAAAACOGsZ92
+   - Modèle: FLUX.1-Kontext-pro
+
+2. 🔄 MODIFICATION DU FICHIER PRINCIPAL
+   - Fichier: /app/photobooth-coiffure/[slug]/cam/page.js
+   - Fonction modifiée: generateImageSwap()
+   - Timeout Replicate: 5 secondes
+   - Fallback automatique vers Azure si Replicate échoue
+
+3. 🗄️ MIGRATION BASE DE DONNÉES
+   - Fichier: /supabase/migrations/add_ai_source_to_sessions.sql
+   - Nouvelle colonne: sessions.ai_source VARCHAR(50)
+   - Valeurs: 'replicate', 'azure', 'error'
+   - Index créé pour les performances
+
+4. 🧪 UTILITAIRES DE TEST
+   - Fichier: /app/utils/test-ai-fallback.js
+   - Tests disponibles dans la console navigateur
+   - Documentation: AZURE_FALLBACK_README.md
+
+==================== COMMENT TESTER ====================
+
+1. Ouvrez la page photobooth-coiffure/[slug]/cam
+2. Ouvrez la console du navigateur (F12)
+3. Tapez: await window.testAI.testFallbackSystem()
+4. Surveillez les logs
+
+==================== LOGS À SURVEILLER ====================
+
+✅ REPLICATE RÉUSSI:
+   - "[AI] ✅ Replicate successful - Image URL:"
+   - "Image générée par Replicate!"
+
+❌ REPLICATE ÉCHOUÉ → AZURE:
+   - "[AI] ❌ Replicate failed: Timeout Replicate (5 secondes)"
+   - "🔄 Basculement vers Azure AI..."
+   - "[AI] ✅ Azure AI successful - Image URL:"
+   - "Image générée par Azure AI!"
+
+==================== AVANTAGES DU SYSTÈME ====================
+
+• HAUTE DISPONIBILITÉ: Si Replicate tombe, Azure prend le relais
+• PERFORMANCE: Timeout rapide (5s) pour ne pas faire attendre l'utilisateur
+• TRANSPARENCE: Messages informatifs pour l'utilisateur
+• TRAÇABILITÉ: Source AI enregistrée en base de données
+• COMPATIBILITÉ: Même format de sortie pour les deux services
+
+==================== LE SYSTÈME EST PRÊT ! ====================
+
+Le fallback Azure AI est maintenant actif. En cas de problème avec Replicate 
+(timeout, erreur, panne), le système basculera automatiquement vers Azure AI 
+pour assurer la continuité du service.
+
+La source de l'IA utilisée sera stockée dans:
+- localStorage.aiSource (navigateur)
+- sessions.ai_source (base de données)
+- Nom de fichier S3 (result_timestamp_project_aiSource.jpg)

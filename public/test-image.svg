@@ -1,0 +1,38 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrière-plan dégradé -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Arrière-plan -->
+  <rect width="400" height="300" fill="url(#grad1)" rx="15"/>
+  
+  <!-- Cercle décoratif -->
+  <circle cx="200" cy="100" r="50" fill="rgba(255,255,255,0.2)"/>
+  
+  <!-- Texte principal -->
+  <text x="200" y="150" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="white">
+    TEST
+  </text>
+  
+  <!-- Sous-titre -->
+  <text x="200" y="180" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="rgba(255,255,255,0.8)">
+    Image de démonstration
+  </text>
+  
+  <!-- Icône appareil photo -->
+  <g transform="translate(175, 220)">
+    <rect x="0" y="10" width="50" height="35" rx="5" fill="rgba(255,255,255,0.3)"/>
+    <rect x="5" y="0" width="40" height="15" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="25" cy="27" r="8" fill="rgba(255,255,255,0.5)"/>
+    <circle cx="25" cy="27" r="5" fill="rgba(255,255,255,0.7)"/>
+  </g>
+  
+  <!-- Information en bas -->
+  <text x="200" y="280" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="rgba(255,255,255,0.6)">
+    Cette image sera remplacée par la photo réelle du participant
+  </text>
+</svg>
