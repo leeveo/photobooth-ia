@@ -2242,7 +2242,8 @@ export default function CameraCapture({ params }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          {!enabled ? (
+          {/* Affiche le bouton uniquement si quota non atteint */}
+          {!enabled && !quotaAtteint ? (
             <motion.button
               onClick={captureVideo}
               className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
@@ -2333,7 +2334,10 @@ export default function CameraCapture({ params }) {
                 ></motion.span>
               )}
             </motion.button>
-          ) : enabled && !processing ? (
+          ) : null}
+
+          {/* Affiche les boutons de partage et téléchargement si vidéo capturée */}
+          {enabled && !processing ? (
             <div className="flex flex-wrap gap-4 justify-center">
               {/* Bouton Partager amélioré */}
               <motion.button

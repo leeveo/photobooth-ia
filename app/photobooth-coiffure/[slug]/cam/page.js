@@ -79,142 +79,6 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       }
     };
     
-    // Fonction spécialisée pour iPad Safari avec énumération des dispositifs
-    const tryIPadSafariFrontCamera = async () => {
-      try {
-        console.log("🍎 Tentative spécialisée iPad Safari pour caméra frontale...");
-        
-        // ✅ MÉTHODE ULTRA-AGRESSIVE: Essayer TOUTES les combinaisons possibles
-        const frontCameraConfigs = [
-          // Configuration 1: Exact user
-          { video: { facingMode: { exact: "user" } } },
-          // Configuration 2: Ideal user
-          { video: { facingMode: { ideal: "user" } } },
-          // Configuration 3: Simple user
-          { video: { facingMode: "user" } },
-          // Configuration 4: User avec résolution iPad optimisée
-          { video: { facingMode: "user", width: 1280, height: 720 } },
-          // Configuration 5: User sans contraintes supplémentaires
-          { video: { facingMode: "user", width: { min: 320 }, height: { min: 240 } } },
-        ];
-        
-        // Essayer chaque configuration une par une
-        for (let i = 0; i < frontCameraConfigs.length; i++) {
-          const config = frontCameraConfigs[i];
-          console.log(`🎯 Tentative ${i + 1}/${frontCameraConfigs.length}:`, config);
-          
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia(config);
-            console.log(`✅ SUCCÈS Méthode ${i + 1}: Configuration fonctionnelle trouvée!`);
-            
-            // Vérifier que c'est bien la caméra frontale
-            const track = stream.getVideoTracks()[0];
-            const settings = track.getSettings();
-            console.log("📊 Paramètres de la caméra:", settings);
-            
-            // Si c'est la caméra frontale ou si on n'a pas d'info facingMode (souvent le cas sur iPad)
-            if (!settings.facingMode || settings.facingMode === "user") {
-              console.log("✅ Caméra frontale confirmée ou probable");
-              return stream;
-            } else if (settings.facingMode === "environment") {
-              console.log("❌ C'est la caméra arrière, on ferme et continue");
-              stream.getTracks().forEach(track => track.stop());
-            }
-          } catch (err) {
-            console.log(`❌ Méthode ${i + 1} échouée:`, err.message);
-          }
-        }
-        
-        // ✅ MÉTHODE ÉNUMÉRATION EXHAUSTIVE: Tester chaque caméra disponible
-        console.log("🎯 Méthode énumération exhaustive des caméras...");
-        
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(device => device.kind === 'videoinput');
-          
-          console.log(`📹 ${videoDevices.length} caméras détectées:`, 
-            videoDevices.map(d => ({ 
-              deviceId: d.deviceId.substring(0, 20) + "...", 
-              label: d.label || "Caméra sans nom"
-            }))
-          );
-          
-          // Essayer CHAQUE caméra une par une
-          for (let i = 0; i < videoDevices.length; i++) {
-            const device = videoDevices[i];
-            const deviceLabel = device.label || `Caméra ${i + 1}`;
-            
-            console.log(`🔄 Test caméra ${i + 1}/${videoDevices.length}: ${deviceLabel}`);
-            
-            try {
-              // Essayer avec différentes configurations pour cette caméra
-              const deviceConfigs = [
-                { video: { deviceId: { exact: device.deviceId }, facingMode: "user" } },
-                { video: { deviceId: { exact: device.deviceId } } },
-                { video: { deviceId: device.deviceId, facingMode: "user" } },
-                { video: { deviceId: device.deviceId } }
-              ];
-              
-              for (const config of deviceConfigs) {
-                try {
-                  const stream = await navigator.mediaDevices.getUserMedia(config);
-                  console.log(`✅ Caméra ${i + 1} accessible avec config:`, config);
-                  
-                  // Sur iPad, souvent la première caméra est la frontale
-                  // Ou si le label contient des mots-clés de caméra frontale
-                  const isProbablyFront = i === 0 || 
-                    deviceLabel.toLowerCase().includes('front') ||
-                    deviceLabel.toLowerCase().includes('user') ||
-                    deviceLabel.toLowerCase().includes('facetime') ||
-                    deviceLabel.toLowerCase().includes('selfie');
-                  
-                  if (isProbablyFront) {
-                    console.log(`🎯 TROUVÉ! Caméra frontale probable: ${deviceLabel}`);
-                    return stream;
-                  } else {
-                    // Tester si on peut identifier le type de caméra
-                    const track = stream.getVideoTracks()[0];
-                    const settings = track.getSettings();
-                    
-                    if (!settings.facingMode || settings.facingMode === "user") {
-                      console.log(`🎯 TROUVÉ! Caméra sans facingMode (probable frontale): ${deviceLabel}`);
-                      return stream;
-                    } else {
-                      console.log(`❌ Caméra ${i + 1} semble être arrière (${settings.facingMode}), fermeture`);
-                      stream.getTracks().forEach(track => track.stop());
-                    }
-                  }
-                  break; // Une config a marché, passer à la caméra suivante
-                } catch (configErr) {
-                  // Cette config n'a pas marché, essayer la suivante
-                  continue;
-                }
-              }
-            } catch (deviceErr) {
-              console.log(`❌ Impossible d'accéder à la caméra ${i + 1}:`, deviceErr.message);
-            }
-          }
-        } catch (enumErr) {
-          console.log("❌ Échec énumération des dispositifs:", enumErr.message);
-        }
-        
-        // ✅ MÉTHODE DE DERNIER RECOURS: Première caméra disponible
-        console.log("🎯 Dernier recours: première caméra disponible");
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          console.log("✅ Caméra par défaut obtenue (dernier recours)");
-          return stream;
-        } catch (lastErr) {
-          console.log("❌ Même la méthode de dernier recours a échoué:", lastErr.message);
-        }
-        
-        return null;
-      } catch (err) {
-        console.error("❌ Échec complet de la méthode spécialisée iPad Safari:", err);
-        return null;
-      }
-    };
-    
     // Main initialization function with fallbacks
     const initializeCamera = async () => {
       console.log("🎥 Initializing camera...");
@@ -223,189 +87,86 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         return;
       }
       
-      // Détecter le type d'appareil avec plus de précision
+      // Détecter le type d'appareil
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
-      const isIPad = /iPad/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
-      console.log(`🔍 Device detection DÉTAILLÉE:`);
-      console.log(`📱 Mobile: ${isMobile}`);
-      console.log(`📲 Tablet: ${isTablet}`);
-      console.log(`🍎 iPad: ${isIPad}`);
-      console.log(`🌐 Safari: ${isSafari}`);
-      console.log(`📱 iOS: ${isIOS}`);
-      console.log(`🖥️ Platform: ${navigator.platform}`);
-      console.log(`👆 MaxTouchPoints: ${navigator.maxTouchPoints}`);
-      console.log(`🌍 UserAgent: ${navigator.userAgent}`);
+      // Configuration options adaptées selon l'appareil
+      const configOptions = isMobile ? [
+        // Mobile: Priorité à la caméra frontale et résolution adaptée
+        { 
+          video: { 
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            facingMode: "user",
+            width: { min: 640 },
+            height: { min: 480 }
+          } 
+        },
+        { video: { facingMode: "user" } },
+        { video: true }
+      ] : isTablet ? [
+        // Tablette: Résolution intermédiaire
+        { 
+          video: { 
+            width: { ideal: 1600 },
+            height: { ideal: 900 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 800 },
+            height: { min: 600 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true },
+        { video: { facingMode: "user" } }
+      ] : [
+        // PC: Haute résolution
+        { 
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 1280 },
+            height: { min: 720 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { 
+          video: { 
+            width: { min: 640 },
+            height: { min: 360 },
+            aspectRatio: { ideal: 16/9 }
+          } 
+        },
+        { video: true }
+      ];
       
       let stream = null;
       
-      // ✅ PRIORITÉ ABSOLUE: Si c'est un iPad/iOS avec Safari, utiliser la méthode spécialisée EN PREMIER
-      if ((isIPad || isIOS) && isSafari) {
-        console.log("🍎 DÉTECTION iPad/iOS + Safari → Méthode spécialisée PRIORITAIRE");
-        stream = await tryIPadSafariFrontCamera();
-        
-        if (stream) {
-          console.log("✅ SUCCÈS méthode spécialisée iPad/iOS Safari!");
-          
-          // Vérifier et confirmer le type de caméra
-          try {
-            const track = stream.getVideoTracks()[0];
-            const settings = track.getSettings();
-            console.log("📊 Paramètres finaux de la caméra:", {
-              facingMode: settings.facingMode || "non spécifié",
-              deviceId: settings.deviceId ? settings.deviceId.substring(0, 20) + "..." : "non spécifié",
-              width: settings.width,
-              height: settings.height,
-              label: track.label
-            });
-            
-            // Sur iPad, mettre à jour l'état en supposant que c'est la frontale
-            setCurrentCameraFacing("user");
-          } catch (settingsErr) {
-            console.log("⚠️ Impossible de lire les paramètres de la caméra:", settingsErr);
-          }
-        } else {
-          console.log("❌ Méthode spécialisée iPad/iOS Safari échouée, fallback vers méthode standard");
-        }
-      } else {
-        console.log("📱 Appareil non-iPad ou non-Safari, utilisation méthode standard");
-      }
-      
-      // Si la méthode spécialisée iPad n'a pas fonctionné, utiliser la méthode standard
-      if (!stream) {
-        console.log("⚠️ Méthode spécialisée iPad Safari échouée, fallback vers méthode standard AGRESSIVE");
-        
-        // Configuration options ULTRA-AGRESSIVES pour forcer la caméra frontale
-        const configOptions = isMobile || isTablet || isIPad ? [
-          // CONFIGURATION 1: facingMode EXACT "user" - la plus stricte
-          { 
-            video: { 
-              facingMode: { exact: "user" }  // EXACT au lieu d'ideal - FORCE la caméra frontale
-            } 
-          },
-          // CONFIGURATION 2: facingMode "user" avec résolution mobile
-          { 
-            video: { 
-              facingMode: "user",
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            } 
-          },
-          // CONFIGURATION 3: facingMode "user" simple
-          { 
-            video: { 
-              facingMode: "user"
-            } 
-          },
-          // CONFIGURATION 4: facingMode "user" avec résolution minimum
-          { 
-            video: { 
-              facingMode: "user",
-              width: { min: 640 },
-              height: { min: 480 }
-            } 
-          },
-          // CONFIGURATION 5: Seulement en DERNIER RECOURS - n'importe quelle caméra
-          { video: true }
-        ] : [
-          // PC: Configuration standard
-          { 
-            video: { 
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              width: { min: 1280 },
-              height: { min: 720 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { 
-            video: { 
-              width: { min: 640 },
-              height: { min: 360 },
-              aspectRatio: { ideal: 16/9 }
-            } 
-          },
-          { video: true }
-        ];
-        
-        // Try each configuration option until one works
-        for (let i = 0; i < configOptions.length; i++) {
-          const config = configOptions[i];
-          console.log(`🔄 Tentative configuration ${i + 1}/${configOptions.length}:`, config);
-          
-          stream = await tryInitCamera(config);
-          if (stream) {
-            console.log(`✅ SUCCÈS avec configuration ${i + 1}:`, config);
-            break;
-          } else {
-            console.log(`❌ Échec configuration ${i + 1}`);
-          }
-        }
+      // Try each configuration option until one works
+      for (const config of configOptions) {
+        stream = await tryInitCamera(config);
+        if (stream) break;
       }
       
       if (!stream) {
         console.error("❌ Could not access camera after multiple attempts");
         setCameraError("La caméra n'est pas accessible. Vérifiez que vous avez autorisé l'accès.");
         return;
-      }
-      
-      // ✅ VALIDATION FINALE: Vérifier que nous avons bien la caméra frontale sur mobile/tablette
-      if ((isMobile || isTablet || isIPad) && stream) {
-        try {
-          const track = stream.getVideoTracks()[0];
-          const settings = track.getSettings();
-          console.log("📊 Paramètres de la caméra obtenue:", {
-            facingMode: settings.facingMode,
-            deviceId: settings.deviceId,
-            width: settings.width,
-            height: settings.height,
-            label: track.label
-          });
-          
-          // Si nous n'avons pas facingMode "user", essayer de changer de caméra
-          if (settings.facingMode && settings.facingMode !== "user") {
-            console.log("⚠️ ATTENTION: Caméra arrière détectée, tentative de basculement vers frontale...");
-            
-            // Arrêter la caméra actuelle
-            stream.getTracks().forEach(track => track.stop());
-            
-            // Réessayer avec contrainte EXACTE
-            try {
-              const frontStream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                  facingMode: { exact: "user" }
-                }
-              });
-              
-              console.log("✅ BASCULEMENT RÉUSSI vers caméra frontale!");
-              stream = frontStream;
-              
-              // Vérifier à nouveau
-              const newTrack = frontStream.getVideoTracks()[0];
-              const newSettings = newTrack.getSettings();
-              console.log("📊 Nouveaux paramètres après basculement:", {
-                facingMode: newSettings.facingMode,
-                deviceId: newSettings.deviceId,
-                label: newTrack.label
-              });
-            } catch (switchErr) {
-              console.log("❌ Impossible de basculer vers caméra frontale:", switchErr.message);
-              console.log("📱 Utilisation de la caméra disponible (peut être arrière)");
-            }
-          } else {
-            console.log("✅ Caméra frontale confirmée!");
-          }
-        } catch (validationErr) {
-          console.log("⚠️ Impossible de valider le type de caméra:", validationErr.message);
-        }
       }
       
       console.log("✅ Camera stream obtained successfully");
@@ -556,10 +317,6 @@ export default function CameraCapture({ params }) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
 
-  // État pour gérer le basculement de caméra
-  const [currentCameraFacing, setCurrentCameraFacing] = useState("user"); // "user" = frontale, "environment" = arrière
-  const [switchingCamera, setSwitchingCamera] = useState(false);
-
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
@@ -569,139 +326,6 @@ export default function CameraCapture({ params }) {
     setIsRedirecting(false);
     setRedirectCountdown(0);
     setProcessing(false);
-  };
-
-  // ✅ FONCTION POUR BASCULER ENTRE CAMÉRA FRONTALE ET ARRIÈRE
-  const switchCamera = async () => {
-    if (switchingCamera) return; // Éviter les appels multiples
-    
-    setSwitchingCamera(true);
-    console.log(`🔄 Basculement de caméra: ${currentCameraFacing} → ${currentCameraFacing === "user" ? "environment" : "user"}`);
-    
-    try {
-      // Arrêter la caméra actuelle
-      if (streamCam) {
-        streamCam.getTracks().forEach(track => track.stop());
-        streamCam = null;
-        window.localStream = null;
-      }
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-      
-      // Nouvelle orientation de caméra
-      const newFacing = currentCameraFacing === "user" ? "environment" : "user";
-      
-      // Essayer avec la nouvelle orientation
-      let newStream = null;
-      
-      // Méthode 1: facingMode exact
-      try {
-        newStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { exact: newFacing }
-          }
-        });
-        console.log(`✅ Basculement réussi vers ${newFacing} (méthode exact)`);
-      } catch (err1) {
-        console.log(`❌ Échec méthode exact pour ${newFacing}:`, err1.message);
-        
-        // Méthode 2: facingMode simple
-        try {
-          newStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: newFacing
-            }
-          });
-          console.log(`✅ Basculement réussi vers ${newFacing} (méthode simple)`);
-        } catch (err2) {
-          console.log(`❌ Échec méthode simple pour ${newFacing}:`, err2.message);
-          
-          // Méthode 3: Énumération et sélection par deviceId
-          try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            
-            console.log(`🔍 Recherche caméra ${newFacing} parmi ${videoDevices.length} dispositifs`);
-            
-            for (const device of videoDevices) {
-              try {
-                const testStream = await navigator.mediaDevices.getUserMedia({
-                  video: {
-                    deviceId: { exact: device.deviceId }
-                  }
-                });
-                
-                const track = testStream.getVideoTracks()[0];
-                const settings = track.getSettings();
-                
-                console.log(`🔍 Test caméra: ${device.label || device.deviceId}, facingMode: ${settings.facingMode}`);
-                
-                if (settings.facingMode === newFacing || 
-                    (newFacing === "user" && !settings.facingMode) || // Parfois pas de facingMode sur la frontale
-                    (device.label && device.label.toLowerCase().includes(newFacing === "user" ? "front" : "back"))) {
-                  newStream = testStream;
-                  console.log(`✅ Caméra ${newFacing} trouvée: ${device.label || device.deviceId}`);
-                  break;
-                } else {
-                  testStream.getTracks().forEach(track => track.stop());
-                }
-              } catch (deviceErr) {
-                console.log(`❌ Erreur test caméra ${device.deviceId}:`, deviceErr.message);
-              }
-            }
-          } catch (err3) {
-            console.log(`❌ Échec énumération dispositifs:`, err3.message);
-          }
-        }
-      }
-      
-      if (newStream) {
-        // Appliquer le nouveau stream
-        streamCam = newStream;
-        window.localStream = newStream;
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = newStream;
-          await videoRef.current.play();
-        }
-        
-        setCurrentCameraFacing(newFacing);
-        setCameraError(null);
-        setCameraLoaded(true);
-        
-        console.log(`✅ Basculement terminé vers caméra ${newFacing}`);
-      } else {
-        throw new Error(`Impossible de basculer vers la caméra ${newFacing}`);
-      }
-      
-    } catch (error) {
-      console.error("❌ Erreur lors du basculement de caméra:", error);
-      setCameraError(`Erreur basculement: ${error.message}`);
-      
-      // En cas d'erreur, réessayer avec n'importe quelle caméra disponible
-      try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({
-          video: true
-        });
-        
-        streamCam = fallbackStream;
-        window.localStream = fallbackStream;
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = fallbackStream;
-          await videoRef.current.play();
-        }
-        
-        console.log("🔄 Fallback: Retour à une caméra par défaut");
-      } catch (fallbackError) {
-        console.error("❌ Échec complet du basculement:", fallbackError);
-        setCameraError("Impossible d'accéder à une caméra");
-      }
-    } finally {
-      setSwitchingCamera(false);
-    }
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
@@ -1348,7 +972,7 @@ export default function CameraCapture({ params }) {
       
       // Log pour débogage des variables d'entrée
       console.group("[AI] Request Details (generateImageSwap)");
-      console.log('Model:', "black-forest-labs/flux-kontext-pro");
+      console.log('Model:', "google/nano-banana");
       console.log('Prompt:', stylePrompt);
       console.log('Input image present:', !!imageFile);
       console.log('Input image size:', imageFile ? `${imageFile.length.toLocaleString()} chars` : 0);
@@ -1386,10 +1010,10 @@ export default function CameraCapture({ params }) {
       
       // Ensure the model parameter is correct and data is well-formatted
       const requestBody = {
-        model: "black-forest-labs/flux-kontext-pro",
+        model: "google/nano-banana",
         input: {
           prompt: stylePrompt,
-          input_image: imageFile,
+          image_input: [imageFile], // Array avec une seule image
           output_format: "jpg",
           // Add width and height parameters to ensure the generated image has the correct dimensions
           width: 970,
@@ -1402,77 +1026,103 @@ export default function CameraCapture({ params }) {
         ...requestBody,
         input: {
           ...requestBody.input,
-          input_image: imageFile ? `${imageFile.substring(0, 30)}... (length: ${imageFile.length})` : null
+          image_input: imageFile ? [`${imageFile.substring(0, 30)}... (length: ${imageFile.length})`] : null
         }
       };
       console.log('[AI] Payload summary:', window.debugPayload);
       
-      let resultImageUrl = null;
-      let aiSource = 'replicate'; // Track which AI service was used
+      console.log('[AI] Starting request to /api/replicate...');
+      setLogs(prevLogs => [...prevLogs, "Connexion au serveur IA ."]);
       
-      // ✅ TEST MODE: Force Azure fallback by simulating Replicate failure
-      console.log('[AI] TEST MODE: Simulation échec Replicate pour tester Azure...');
-      setLogs(prevLogs => [...prevLogs, "🧪 TEST MODE: Simulation échec Replicate..."]);
-      
+      const fetchStart = Date.now();
+      let response;
       try {
-        // Simulate immediate Replicate failure for testing
-        throw new Error('TEST MODE: Replicate forcé en échec pour tester Azure');
-        
-      } catch (replicateError) {
-        console.log('[AI] ❌ Replicate failed (TEST MODE):', replicateError.message);
-        setLogs(prevLogs => [...prevLogs, `Replicate échoué (TEST): ${replicateError.message}`]);
-        setLogs(prevLogs => [...prevLogs, "🔄 Basculement vers Azure AI..."]);
-        
-        // ✅ FALLBACK TO AZURE AI
-        console.log('[AI] 🔄 Fallback to Azure AI...');
-        
+        response = await fetch('/api/replicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } catch (networkErr) {
+        console.error('[AI] Network error during fetch:', networkErr);
+        setLogs(prevLogs => [...prevLogs, `Erreur réseau: ${networkErr.message}`]);
+        throw new Error(`Erreur réseau: ${networkErr.message}`);
+      }
+      
+      const responseTime = Date.now() - fetchStart;
+      console.log(`[AI] Response received after ${responseTime}ms`);
+      console.log(`[AI] Status: ${response.status} ${response.statusText}`);
+      
+      // Log response headers
+      try {
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log('[AI] Response headers:', headers);
+      } catch (headerErr) {
+        console.warn('[AI] Could not log headers:', headerErr);
+      }
+      
+      // Check if the request was successful
+      if (!response.ok) {
+        let errorText = '';
         try {
-          const azureResponse = await fetch('/api/azure-ai', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              input: {
-                prompt: stylePrompt,
-                input_image: imageFile
-              }
-            }),
-          });
-          
-          const azureResponseTime = Date.now() - start;
-          console.log(`[AI] Azure response received after ${azureResponseTime}ms`);
-          
-          if (!azureResponse.ok) {
-            const azureErrorText = await azureResponse.text();
-            throw new Error(`Erreur Azure AI: ${azureResponse.status} ${azureErrorText}`);
-          }
-          
-          const azureData = await azureResponse.json();
-          console.log('[AI] Azure response parsed successfully:', azureData);
-          
-          if (azureData.success && azureData.output) {
-            resultImageUrl = azureData.output;
-            console.log('[AI] ✅ Azure AI successful - Image URL:', resultImageUrl);
-            setLogs(prevLogs => [...prevLogs, "Image générée par Azure AI!"]);
-            aiSource = 'azure';
-          } else {
-            throw new Error(azureData.error || "Erreur Azure AI");
-          }
-          
-        } catch (azureError) {
-          console.error('[AI] ❌ Azure fallback also failed:', azureError.message);
-          setLogs(prevLogs => [...prevLogs, `Azure AI échoué: ${azureError.message}`]);
-          throw new Error(`Tous les services IA ont échoué. Replicate: ${replicateError.message}. Azure: ${azureError.message}`);
+          errorText = await response.text();
+        } catch (textErr) {
+          console.error('[AI] Could not read error text:', textErr);
         }
+        
+        console.error('[AI] HTTP Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText?.substring(0, 500)
+        });
+        
+        setLogs(prevLogs => [...prevLogs, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
+        throw new Error(`Erreur du serveur: ${response.status} ${errorText}`);
       }
       
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[AI] JSON parse error:', parseErr);
+        let rawText = '';
+        try {
+          rawText = await response.text();
+        } catch (textErr) {
+          console.error('[AI] Could not read response as text:', textErr);
+        }
+        console.log('[AI] Raw response:', rawText?.substring(0, 500));
+        setLogs(prevLogs => [...prevLogs, 'Réponse invalide du serveur']);
+        throw new Error(`Réponse invalide du serveur: ${rawText?.substring(0, 200)}`);
+      }
+      
+      console.log('[AI] Successfully parsed JSON response:', data);
+      
+      if (!data.success) {
+        console.error('[AI] API indicated failure:', data.error);
+        setLogs(prevLogs => [...prevLogs, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+        throw new Error(data.error || "Erreur lors de la génération de l'image");
+      }
+      
+      const result = data.output;
+      console.log('[AI] Output received:', typeof result, result ? 'present' : 'missing');
+      setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
+
+      let resultImageUrl = typeof result === 'string' ? result : 
+        Array.isArray(result) ? result[0] : 
+        result?.url || result?.image || result;
+
       if (!resultImageUrl) {
-        throw new Error("Aucune image générée par les services IA");
+        console.error('[AI] Missing image URL in response. Full output:', result);
+        throw new Error("URL d'image non trouvée dans la réponse");
       }
       
-      console.log(`[AI] Final image URL from ${aiSource}:`, resultImageUrl);
-      setLogs(prevLogs => [...prevLogs, `URL d'image reçue avec succès depuis ${aiSource.toUpperCase()}!`]);
+      console.log('[AI] Final image URL:', resultImageUrl);
+      setLogs(prevLogs => [...prevLogs, "URL d'image reçue avec succès !"]);
 
       // 2. Ajout du layout (watermark) si disponible
       setLogs(logs => [...logs, "Récupération du layout du projet..."]);
@@ -1520,7 +1170,7 @@ export default function CameraCapture({ params }) {
 
       if (uploadableImage && uploadableImage.startsWith('data:')) {
         setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
-        const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}_${aiSource}.jpg`;
+        const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
         const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
         const formData = new FormData();
         formData.append('file', uploadFile);
@@ -1540,7 +1190,6 @@ export default function CameraCapture({ params }) {
           setLogs(logs => [...logs, "Image stockée dans le cloud !"]);
           localStorage.setItem("faceURLResult", uploadData.url);
           localStorage.setItem("faceURLResultS3", uploadData.url);
-          localStorage.setItem("aiSource", aiSource); // Store which AI was used
           resultS3Url = uploadData.url;
           setLogs(logs => [...logs, "Image prête à être affichée !"]);
           
@@ -1556,7 +1205,6 @@ export default function CameraCapture({ params }) {
       } else {
         setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
         localStorage.setItem("faceURLResult", finalImageUrl);
-        localStorage.setItem("aiSource", aiSource); // Store which AI was used
         
         // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD DIRECT
         if (progressTimer) {
@@ -1619,7 +1267,6 @@ export default function CameraCapture({ params }) {
           created_by: null,
           has_watermark: false,
           moderation: null,
-          ai_source: 'error', // Indicate error occurred
           created_at: new Date().toISOString()
         };
 
@@ -1658,7 +1305,7 @@ export default function CameraCapture({ params }) {
   };
   
 
-// ✅ FONCTION AVEC FALLBACK AZURE - TEST MODE
+// Fonction avec fallback Azure - délai de 3 secondes
 const generateImageReplicate = async () => {
   setProcessing(true);
   setError(null);
@@ -1696,158 +1343,284 @@ const generateImageReplicate = async () => {
   }, 500);
   
   try {
-    console.log("===> [DEBUG] Démarrage génération avec fallback Replicate → Azure");
+    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
 
-    const stylePrompt = localStorage.getItem('stylePrompt') || "portrait photo";
-    const inputImage = imageFile; // Image de la camera
+    const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+    const image = imageFile; // base64
 
-    console.log('[AI] Variables:');
-    console.log('- stylePrompt:', stylePrompt);
-    console.log('- inputImage présent:', !!inputImage);
-    console.log('- inputImage length:', inputImage ? inputImage.length : 0);
+    // Logs détaillés avant envoi
+    console.group('[AI] Request (generateImageReplicate)');
+    console.log('Model:', 'google/nano-banana');
+    console.log('Prompt:', prompt);
+    console.log('Input image present:', !!image);
+    console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
+    console.log('Project ID:', project?.id);
+    console.log('Slug:', slug);
+    console.log('Image header:', image ? image.substring(0, 50) + '...' : 'N/A');
+    console.groupEnd();
 
-    let resultImageUrl = null;
-    let aiSource = 'replicate'; // Par défaut, on essaie Replicate
+    setLogs(["Envoi de la requête au serveur IA..."]);
     
-    // ✅ SYSTÈME DE FALLBACK: Replicate avec timeout 35s, puis Azure
-    console.log('[AI] 🚀 Tentative Replicate avec timeout 35 secondes...');
-    setLogs(["🚀 Connexion au serveur IA principal (Replicate)..."]);
+    // Ajouter des messages de progression basés sur le temps écoulé
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+    }, 5000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+    }, 10000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+    }, 15000);
+
+    const reqBody = {
+      model: "google/nano-banana",
+      input: {
+        prompt,
+        image_input: [image], // Array avec une seule image
+        output_format: "jpg",
+        width: 970,
+        height: 651
+      }
+    };
+
+    // Version sûre pour le debug (sans base64 complet)
+    window.debugPayload = {
+      ...reqBody,
+      input: {
+        ...reqBody.input,
+        image_input: image ? [`${image.substring(0, 30)}... (length: ${image.length})`] : null
+      }
+    };
+    console.log('[AI] Payload summary:', window.debugPayload);
+
+    let resultUrl = null;
+    let aiSource = 'replicate'; // Track which AI service was used
+    
+    console.log('[AI] Starting request to /api/replicate...');
+    setLogs(prev => [...prev, "Connexion au serveur IA..."]);
+
+    const fetchStart = Date.now();
+    let response;
     
     try {
-      // ⏱️ TIMEOUT COMPLET : 35 secondes pour toute l'opération Replicate (fetch + json parsing)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          console.log('[AI] ⏱️ TIMEOUT 35s déclenché - Replicate trop lent');
-          reject(new Error('Timeout Replicate (35 secondes)'));
-        }, 15000);
+      // ✅ FALLBACK AZURE AVEC TIMEOUT DE 30 SECONDES
+      const replicatePromise = fetch('/api/replicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody),
       });
       
-      // 🚀 REQUÊTE COMPLÈTE REPLICATE (fetch + parsing JSON)
-      const replicateCompletePromise = (async () => {
-        console.log('[AI] 📡 Démarrage appel Replicate...');
-        
-        const fetchStart = Date.now();
-        const response = await fetch('/api/replicate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: "black-forest-labs/flux-kontext-pro",
-            input: {
-              prompt: stylePrompt,
-              input_image: inputImage,
-              output_format: "jpg",
-              width: 970,
-              height: 651
-            }
-          }),
-        });
-        
-        const fetchTime = Date.now() - fetchStart;
-        console.log(`[AI] 📡 Replicate fetch terminé après ${fetchTime}ms`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erreur HTTP Replicate: ${response.status} ${errorText}`);
-        }
-        
-        console.log('[AI] 📄 Parsing JSON Replicate...');
-        const data = await response.json();
-        const totalTime = Date.now() - fetchStart;
-        console.log(`[AI] ✅ Replicate complet après ${totalTime}ms`);
-        
-        return { response, data, totalTime };
-      })();
+      // Timeout de 30 secondes pour déclencher le fallback Azure
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout après 30 secondes')), 30000)
+      );
       
-      // 🏁 COURSE ENTRE TIMEOUT ET REPLICATE COMPLET
-      const result = await Promise.race([replicateCompletePromise, timeoutPromise]);
-      
-      // Si on arrive ici, c'est que Replicate a gagné la course (< 8s)
-      const { data, totalTime } = result;
-      console.log(`[AI] 🏆 Replicate a gagné la course en ${totalTime}ms`);
-      
-      if (data.success) {
-        const output = data.output;
-        resultImageUrl = typeof output === 'string' ? output : 
-          Array.isArray(output) ? output[0] : 
-          output?.url || output?.image || output;
-        
-        if (resultImageUrl) {
-          console.log('[AI] ✅ Replicate succès - URL image:', resultImageUrl);
-          setLogs(prevLogs => [...prevLogs, `✅ Image générée par Replicate (${totalTime}ms)!`]);
-          aiSource = 'replicate';
-        } else {
-          throw new Error("Pas d'URL d'image dans la réponse Replicate");
-        }
-      } else {
-        throw new Error(data.error || "Erreur Replicate");
-      }
+      response = await Promise.race([replicatePromise, timeoutPromise]);
       
     } catch (replicateError) {
-      console.log('[AI] ❌ Replicate échoué:', replicateError.message);
-          setLogs(prevLogs => [...prevLogs, `❌ Replicate: ${replicateError.message}`]);
-          setLogs(prevLogs => [...prevLogs, "🔄 Basculement vers Azure AI..."]);
-        
-        // ✅ FALLBACK VERS AZURE AI
-        console.log('[AI] 🔄 Fallback vers Azure AI...');
+      console.log('[AI] ❌ Replicate failed or timeout:', replicateError.message);
+      setLogs(prev => [...prev, `Replicate timeout/échec: ${replicateError.message}`]);
+      setLogs(prev => [...prev, "🔄 Basculement vers Azure AI..."]);
+      
+      // ✅ FALLBACK TO AZURE AI avec retry
+      console.log('[AI] 🔄 Fallback to Azure AI...');
+      
+      let azureSuccess = false;
+      let azureAttempts = 0;
+      const maxAzureRetries = 2;
+      
+      while (!azureSuccess && azureAttempts < maxAzureRetries) {
+        azureAttempts++;
         
         try {
-          const azureResponse = await fetch('/api/azure-ai', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              input: {
-                prompt: stylePrompt,
-                input_image: inputImage
-              }
-            }),
-          });
+          console.log(`[AI] Azure tentative ${azureAttempts}/${maxAzureRetries}...`);
+          setLogs(prev => [...prev, `Tentative Azure AI ${azureAttempts}/${maxAzureRetries}...`]);
           
-          const azureResponseTime = Date.now() - start;
-          console.log(`[AI] ✅ Azure réponse reçue après ${azureResponseTime}ms`);
+          const azureResponse = await Promise.race([
+            fetch('/api/azure-ai', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                input: {
+                  prompt: prompt,
+                  input_image: image
+                }
+              }),
+            }),
+            // Timeout de 10 secondes pour Azure
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout Azure après 10 secondes')), 10000)
+            )
+          ]);
+          
+          const azureResponseTime = Date.now() - fetchStart;
+          console.log(`[AI] Azure response received after ${azureResponseTime}ms (attempt ${azureAttempts})`);
           
           if (!azureResponse.ok) {
             const azureErrorText = await azureResponse.text();
+            console.error(`[AI] Azure HTTP error (attempt ${azureAttempts}):`, azureResponse.status, azureErrorText);
+            
+            // Si c'est une erreur 400 ou 500, on peut retry
+            if (azureResponse.status >= 500 || azureResponse.status === 400) {
+              if (azureAttempts < maxAzureRetries) {
+                console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
+                setLogs(prev => [...prev, `Erreur Azure (${azureResponse.status}), retry dans 2s...`]);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                continue;
+              }
+            }
+            
             throw new Error(`Erreur Azure AI: ${azureResponse.status} ${azureErrorText}`);
           }
           
           const azureData = await azureResponse.json();
-          console.log('[AI] Azure données parsées:', azureData);
+          console.log('[AI] Azure response parsed successfully:', azureData);
           
           if (azureData.success && azureData.output) {
-            resultImageUrl = azureData.output;
-            console.log('[AI] ✅ Azure AI succès - Image:', resultImageUrl?.substring(0, 50) + "...");
-            setLogs(prevLogs => [...prevLogs, "✅ Image générée par Azure AI!"]);
+            resultUrl = azureData.output;
+            console.log('[AI] ✅ Azure AI successful - Image URL:', resultUrl);
+            setLogs(prev => [...prev, `Image générée par Azure AI! (tentative ${azureAttempts})`]);
             aiSource = 'azure';
+            azureSuccess = true;
           } else {
-            throw new Error(azureData.error || "Erreur Azure AI");
+            throw new Error(azureData.error || "Erreur Azure AI - pas de résultat");
           }
           
         } catch (azureError) {
-          console.error('[AI] ❌ Azure fallback échoué:', azureError.message);
-          setLogs(prevLogs => [...prevLogs, `❌ Azure AI: ${azureError.message}`]);
-          throw new Error(`Tous les services IA échoués. Replicate: ${replicateError.message}. Azure: ${azureError.message}`);
+          console.error(`[AI] ❌ Azure attempt ${azureAttempts} failed:`, azureError.message);
+          
+          if (azureAttempts >= maxAzureRetries) {
+            setLogs(prev => [...prev, `Azure échoué après ${maxAzureRetries} tentatives`]);
+            
+            // ✅ FALLBACK FINAL - Utiliser une image de fallback ou message d'erreur spécifique
+            console.log('[AI] 🔄 Tentative de fallback final avec Replicate (retry unique)...');
+            setLogs(prev => [...prev, "🔄 Retry final Replicate..."]);
+            
+            try {
+              const finalReplicateResponse = await Promise.race([
+                fetch('/api/replicate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(reqBody),
+                }),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('Timeout final après 5 secondes')), 5000)
+                )
+              ]);
+              
+              if (finalReplicateResponse.ok) {
+                const finalData = await finalReplicateResponse.json();
+                if (finalData.success && finalData.output) {
+                  const finalUrl = typeof finalData.output === 'string'
+                    ? finalData.output
+                    : Array.isArray(finalData.output)
+                      ? finalData.output[0]
+                      : finalData.output?.url || finalData.output?.image || finalData.output;
+                  
+                  if (finalUrl) {
+                    resultUrl = finalUrl;
+                    aiSource = 'replicate-retry';
+                    console.log('[AI] ✅ Final Replicate retry successful:', resultUrl);
+                    setLogs(prev => [...prev, "Image générée par Replicate (retry final)!"]);
+                    azureSuccess = true; // Pour sortir de la boucle
+                    break;
+                  }
+                }
+              }
+            } catch (finalError) {
+              console.error('[AI] Final retry also failed:', finalError.message);
+            }
+            
+            if (!azureSuccess) {
+              throw new Error(`Tous les services IA ont échoué après plusieurs tentatives. Replicate: ${replicateError.message}. Azure: ${azureError.message}`);
+            }
+          } else if (azureAttempts < maxAzureRetries) {
+            console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
+            setLogs(prev => [...prev, `Erreur Azure, retry dans 2s... (${azureAttempts}/${maxAzureRetries})`]);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
         }
+      }
+    }
+
+    // Si Replicate a réussi, traiter la réponse
+    if (!resultUrl && response) {
+      const responseTime = Date.now() - fetchStart;
+      console.log(`[AI] Replicate response received after ${responseTime}ms`);
+      console.log(`[AI] Status: ${response.status} ${response.statusText}`);
+      
+      // Log response headers
+      try {
+        const headers = {};
+        response.headers.forEach((value, key) => { headers[key] = value; });
+        console.log('[Replicate] Response headers:', headers);
+      } catch {}
+
+      if (!response.ok) {
+        let errorText = '';
+        try { errorText = await response.text(); } catch {}
+        console.error('[Replicate] HTTP Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText?.substring(0, 500)
+        });
+        setLogs(prev => [...prev, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
+        throw new Error(errorText || "Erreur Replicate");
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[Replicate] JSON parse error:', parseErr);
+        let rawText = '';
+        try { rawText = await response.text(); } catch {}
+        console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
+        setLogs(prev => [...prev, 'Réponse invalide du serveur Replicate']);
+        throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
+      }
+
+      console.log('[Replicate] Successfully parsed JSON response:', data);
+
+      if (!data.success) {
+        console.error('[Replicate] API indicated failure:', data.error);
+        setLogs(prev => [...prev, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+        throw new Error(data.error || "Erreur Replicate");
+      }
+
+      resultUrl = typeof data.output === 'string'
+        ? data.output
+        : Array.isArray(data.output)
+          ? data.output[0]
+          : data.output?.url || data.output?.image || data.output;
+
+      if (!resultUrl) {
+        console.error('[Replicate] Missing image URL. Full output:', data.output);
+        throw new Error("Aucune image générée");
+      }
+
+      console.log('[Replicate] Final image URL:', resultUrl);
+      setLogs(["Image générée par Replicate avec succès !"]);
     }
     
-    if (!resultImageUrl) {
+    if (!resultUrl) {
       throw new Error("Aucune image générée par les services IA");
     }
     
-    console.log(`[AI] 🎉 Image finale de ${aiSource.toUpperCase()}:`, resultImageUrl?.substring(0, 50) + "...");
-    setLogs(prevLogs => [...prevLogs, `🎉 Image reçue de ${aiSource.toUpperCase()}`]);
-    localStorage.setItem("faceURLResult", resultImageUrl);
-    let finalImageUrl = resultImageUrl;
+    console.log(`[AI] Final image URL from ${aiSource}:`, resultUrl);
+    setLogs(prev => [...prev, `URL d'image reçue avec succès depuis ${aiSource.toUpperCase()}!`]);
+    localStorage.setItem("faceURLResult", resultUrl);
+    localStorage.setItem("aiSource", aiSource); // Store which AI was used
 
     // 2. Ajout du layout (watermark) si disponible
     setLogs(logs => [...logs, "Récupération du layout du projet..."]);
     const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
 
-    // Réutilisation de finalImageUrl déjà déclarée
-    finalImageUrl = resultImageUrl; // Utilise l'image d'Azure
+    let finalImageUrl = resultUrl;
     let hasWatermark = false;
 
     if (thumbnailUrl) {
@@ -1857,11 +1630,11 @@ const generateImageReplicate = async () => {
         : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
       try {
         const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
-          resultImageUrl, 
+          resultUrl, 
           thumbnailUrl, 
           orientationData
         );
-        if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
+        if (combinedImageDataUrl && combinedImageDataUrl !== resultUrl) {
           finalImageUrl = combinedImageDataUrl;
           hasWatermark = true;
           setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
@@ -1949,7 +1722,6 @@ const generateImageReplicate = async () => {
         created_by: null,
         has_watermark: hasWatermark,
         moderation: null,
-        ai_source: aiSource, // Replicate ou Azure selon le service utilisé
         created_at: new Date().toISOString()
       };
 
@@ -2031,7 +1803,6 @@ const generateImageReplicate = async () => {
         created_by: null,
         has_watermark: false,
         moderation: null,
-        ai_source: aiSource || 'error', // Indique quel service était tenté
         created_at: new Date().toISOString()
       };
 
@@ -3667,96 +3438,6 @@ const generateImageReplicate = async () => {
               </motion.button>
             </div>
           )}
-          
-          {/* ✅ BOUTON DE BASCULEMENT DE CAMÉRA - TOUJOURS VISIBLE sur mobile/tablette */}
-          {(deviceType === 'mobile' || deviceType === 'tablet') && !processing && (
-            <motion.div 
-              className="flex justify-center mt-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <motion.button
-                onClick={switchCamera}
-                disabled={switchingCamera}
-                className="px-6 py-3 rounded-full font-medium text-base backdrop-blur-md border-2 border-white/50 flex items-center gap-3 shadow-lg"
-                style={{ 
-                  backgroundColor: switchingCamera ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', 
-                  color: 'white',
-                  opacity: switchingCamera ? 0.7 : 1,
-                  minWidth: '200px'
-                }}
-                whileHover={!switchingCamera ? { 
-                  scale: 1.05,
-                  backgroundColor: 'rgba(255,255,255,0.3)'
-                } : {}}
-                whileTap={!switchingCamera ? { scale: 0.95 } : {}}
-              >
-                {switchingCamera ? (
-                  <>
-                    <motion.div
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <span>Basculement...</span>
-                  </>
-                ) : (
-                  <>
-                    <motion.svg 
-                      width="24" 
-                      height="24" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      className="text-current"
-                      animate={{ 
-                        rotateY: [0, 180, 360] 
-                      }}
-                      transition={{ 
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <path
-                        d="M15 3H19C20.1046 3 21 3.89543 21 5V9"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M9 21H5C3.89543 21 3 20.1046 3 19V15"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M16 8L19 5L16 2"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8 16L5 19L8 22"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </motion.svg>
-                    <span className="font-bold">
-                      {currentCameraFacing === "user" ? "� CAMÉRA ARRIÈRE" : "🔄 CAMÉRA FRONTALE"}
-                    </span>
-                  </>
-                )}
-              </motion.button>
-            </motion.div>
-          )}
-
-
           
           {/* Affichage du quota restant ou message quota atteint */}
           <div className={`text-center ${
