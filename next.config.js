@@ -116,6 +116,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_GIF_GENERATION_ENABLED: process.env.NODE_ENV !== 'production',
     REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
+    GEMINI: process.env.GEMINI,
   },
   
   // Configuration pour réduire la taille des bundles sur Vercel

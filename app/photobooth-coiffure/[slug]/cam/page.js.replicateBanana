@@ -1306,7 +1306,7 @@ export default function CameraCapture({ params }) {
   
 
 // Fonction avec fallback Azure - délai de 3 secondes
-const generateImageGemini = async () => {
+const generateImageReplicate = async () => {
   setProcessing(true);
   setError(null);
   setLogs([]);
@@ -1320,7 +1320,7 @@ const generateImageGemini = async () => {
       const elapsed = Date.now() - start;
       setElapsedTime(elapsed);
       
-      console.log(`[DEBUG] Timer update (Gemini): ${Math.floor(elapsed / 1000)}s`);
+      console.log(`[DEBUG] Timer update (Replicate): ${Math.floor(elapsed / 1000)}s`);
       
       // Progression continue basée sur le temps écoulé
       const elapsedSeconds = Math.floor(elapsed / 1000);
@@ -1343,14 +1343,14 @@ const generateImageGemini = async () => {
   }, 500);
   
   try {
-    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageGemini");
+    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageReplicate");
 
     const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
     const image = imageFile; // base64
 
     // Logs détaillés avant envoi
-    console.group('[AI] Request (generateImageGemini)');
-    console.log('Model:', 'gemini-2.5-flash-image-preview');
+    console.group('[AI] Request (generateImageReplicate)');
+    console.log('Model:', 'google/nano-banana');
     console.log('Prompt:', prompt);
     console.log('Input image present:', !!image);
     console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
@@ -1375,45 +1375,54 @@ const generateImageGemini = async () => {
     }, 15000);
 
     const reqBody = {
-      prompt,
-      image
+      model: "google/nano-banana",
+      input: {
+        prompt,
+        image_input: [image], // Array avec une seule image
+        output_format: "jpg",
+        width: 970,
+        height: 651
+      }
     };
 
     // Version sûre pour le debug (sans base64 complet)
     window.debugPayload = {
-      prompt,
-      image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
+      ...reqBody,
+      input: {
+        ...reqBody.input,
+        image_input: image ? [`${image.substring(0, 30)}... (length: ${image.length})`] : null
+      }
     };
     console.log('[AI] Payload summary:', window.debugPayload);
 
     let resultUrl = null;
-    let aiSource = 'gemini'; // Track which AI service was used
+    let aiSource = 'replicate'; // Track which AI service was used
     
-    console.log('[AI] Starting request to /api/gemini...');
+    console.log('[AI] Starting request to /api/replicate...');
     setLogs(prev => [...prev, "Connexion au serveur IA..."]);
 
     const fetchStart = Date.now();
     let response;
     
     try {
-      // ✅ ESSAI AVEC GEMINI AVEC TIMEOUT DE 30 SECONDES
-      const geminiPromise = fetch('/api/gemini', {
+      // ✅ FALLBACK AZURE AVEC TIMEOUT DE 30 SECONDES
+      const replicatePromise = fetch('/api/replicate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reqBody),
       });
       
-      // Timeout de 30 secondes pour déclencher le fallback
+      // Timeout de 30 secondes pour déclencher le fallback Azure
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout après 30 secondes')), 30000)
       );
       
-      response = await Promise.race([geminiPromise, timeoutPromise]);
+      response = await Promise.race([replicatePromise, timeoutPromise]);
       
-    } catch (geminiError) {
-      console.log('[AI] ❌ Gemini failed or timeout:', geminiError.message);
-      setLogs(prev => [...prev, `Service principal indisponible: ${geminiError.message}`]);
-      setLogs(prev => [...prev, "🔄 Basculement vers service alternatif..."]);
+    } catch (replicateError) {
+      console.log('[AI] ❌ Replicate failed or timeout:', replicateError.message);
+      setLogs(prev => [...prev, `Replicate timeout/échec: ${replicateError.message}`]);
+      setLogs(prev => [...prev, "🔄 Basculement vers Azure AI..."]);
       
       // ✅ FALLBACK TO AZURE AI avec retry
       console.log('[AI] 🔄 Fallback to Azure AI...');
@@ -1427,7 +1436,7 @@ const generateImageGemini = async () => {
         
         try {
           console.log(`[AI] Azure tentative ${azureAttempts}/${maxAzureRetries}...`);
-          setLogs(prev => [...prev, `Tentative service alternatif ${azureAttempts}/${maxAzureRetries}...`]);
+          setLogs(prev => [...prev, `Tentative Azure AI ${azureAttempts}/${maxAzureRetries}...`]);
           
           const azureResponse = await Promise.race([
             fetch('/api/azure-ai', {
@@ -1459,7 +1468,7 @@ const generateImageGemini = async () => {
             if (azureResponse.status >= 500 || azureResponse.status === 400) {
               if (azureAttempts < maxAzureRetries) {
                 console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
-                setLogs(prev => [...prev, `Erreur service (${azureResponse.status}), retry dans 2s...`]);
+                setLogs(prev => [...prev, `Erreur Azure (${azureResponse.status}), retry dans 2s...`]);
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 continue;
               }
@@ -1474,7 +1483,7 @@ const generateImageGemini = async () => {
           if (azureData.success && azureData.output) {
             resultUrl = azureData.output;
             console.log('[AI] ✅ Azure AI successful - Image URL:', resultUrl);
-            setLogs(prev => [...prev, `Image générée avec succès! (tentative ${azureAttempts})`]);
+            setLogs(prev => [...prev, `Image générée par Azure AI! (tentative ${azureAttempts})`]);
             aiSource = 'azure';
             azureSuccess = true;
           } else {
@@ -1485,62 +1494,102 @@ const generateImageGemini = async () => {
           console.error(`[AI] ❌ Azure attempt ${azureAttempts} failed:`, azureError.message);
           
           if (azureAttempts >= maxAzureRetries) {
-            setLogs(prev => [...prev, `Service alternatif échoué après ${maxAzureRetries} tentatives`]);
+            setLogs(prev => [...prev, `Azure échoué après ${maxAzureRetries} tentatives`]);
             
-            // Plus de fallback - échec final
-            throw new Error(`Tous les services IA ont échoué après plusieurs tentatives. Gemini: ${geminiError.message}. Azure: ${azureError.message}`);
+            // ✅ FALLBACK FINAL - Utiliser une image de fallback ou message d'erreur spécifique
+            console.log('[AI] 🔄 Tentative de fallback final avec Replicate (retry unique)...');
+            setLogs(prev => [...prev, "🔄 Retry final Replicate..."]);
+            
+            try {
+              const finalReplicateResponse = await Promise.race([
+                fetch('/api/replicate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(reqBody),
+                }),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('Timeout final après 5 secondes')), 5000)
+                )
+              ]);
+              
+              if (finalReplicateResponse.ok) {
+                const finalData = await finalReplicateResponse.json();
+                if (finalData.success && finalData.output) {
+                  const finalUrl = typeof finalData.output === 'string'
+                    ? finalData.output
+                    : Array.isArray(finalData.output)
+                      ? finalData.output[0]
+                      : finalData.output?.url || finalData.output?.image || finalData.output;
+                  
+                  if (finalUrl) {
+                    resultUrl = finalUrl;
+                    aiSource = 'replicate-retry';
+                    console.log('[AI] ✅ Final Replicate retry successful:', resultUrl);
+                    setLogs(prev => [...prev, "Image générée par Replicate (retry final)!"]);
+                    azureSuccess = true; // Pour sortir de la boucle
+                    break;
+                  }
+                }
+              }
+            } catch (finalError) {
+              console.error('[AI] Final retry also failed:', finalError.message);
+            }
+            
+            if (!azureSuccess) {
+              throw new Error(`Tous les services IA ont échoué après plusieurs tentatives. Replicate: ${replicateError.message}. Azure: ${azureError.message}`);
+            }
           } else if (azureAttempts < maxAzureRetries) {
             console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
-            setLogs(prev => [...prev, `Erreur service, retry dans 2s... (${azureAttempts}/${maxAzureRetries})`]);
+            setLogs(prev => [...prev, `Erreur Azure, retry dans 2s... (${azureAttempts}/${maxAzureRetries})`]);
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
       }
     }
 
-    // Si Gemini a réussi, traiter la réponse
+    // Si Replicate a réussi, traiter la réponse
     if (!resultUrl && response) {
       const responseTime = Date.now() - fetchStart;
-      console.log(`[AI] Gemini response received after ${responseTime}ms`);
+      console.log(`[AI] Replicate response received after ${responseTime}ms`);
       console.log(`[AI] Status: ${response.status} ${response.statusText}`);
       
       // Log response headers
       try {
         const headers = {};
         response.headers.forEach((value, key) => { headers[key] = value; });
-        console.log('[Gemini] Response headers:', headers);
+        console.log('[Replicate] Response headers:', headers);
       } catch {}
 
       if (!response.ok) {
         let errorText = '';
         try { errorText = await response.text(); } catch {}
-        console.error('[Gemini] HTTP Error:', {
+        console.error('[Replicate] HTTP Error:', {
           status: response.status,
           statusText: response.statusText,
           errorText: errorText?.substring(0, 500)
         });
         setLogs(prev => [...prev, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
-        throw new Error(errorText || "Erreur Gemini");
+        throw new Error(errorText || "Erreur Replicate");
       }
 
       let data;
       try {
         data = await response.json();
       } catch (parseErr) {
-        console.error('[Gemini] JSON parse error:', parseErr);
+        console.error('[Replicate] JSON parse error:', parseErr);
         let rawText = '';
         try { rawText = await response.text(); } catch {}
-        console.log('[Gemini] Raw response:', rawText?.substring(0, 500));
-        setLogs(prev => [...prev, 'Réponse invalide du serveur Gemini']);
-        throw new Error(`Réponse invalide de Gemini: ${rawText?.substring(0, 200)}`);
+        console.log('[Replicate] Raw response:', rawText?.substring(0, 500));
+        setLogs(prev => [...prev, 'Réponse invalide du serveur Replicate']);
+        throw new Error(`Réponse invalide de Replicate: ${rawText?.substring(0, 200)}`);
       }
 
-      console.log('[Gemini] Successfully parsed JSON response:', data);
+      console.log('[Replicate] Successfully parsed JSON response:', data);
 
       if (!data.success) {
-        console.error('[Gemini] API indicated failure:', data.error);
+        console.error('[Replicate] API indicated failure:', data.error);
         setLogs(prev => [...prev, `Erreur API: ${data.error || "Erreur inconnue"}`]);
-        throw new Error(data.error || "Erreur Gemini");
+        throw new Error(data.error || "Erreur Replicate");
       }
 
       resultUrl = typeof data.output === 'string'
@@ -1550,12 +1599,12 @@ const generateImageGemini = async () => {
           : data.output?.url || data.output?.image || data.output;
 
       if (!resultUrl) {
-        console.error('[Gemini] Missing image URL. Full output:', data.output);
+        console.error('[Replicate] Missing image URL. Full output:', data.output);
         throw new Error("Aucune image générée");
       }
 
-      console.log('[Gemini] Final image URL:', resultUrl);
-      setLogs(["Image générée avec succès !"]);
+      console.log('[Replicate] Final image URL:', resultUrl);
+      setLogs(["Image générée par Replicate avec succès !"]);
     }
     
     if (!resultUrl) {
@@ -1563,7 +1612,7 @@ const generateImageGemini = async () => {
     }
     
     console.log(`[AI] Final image URL from ${aiSource}:`, resultUrl);
-    setLogs(prev => [...prev, `URL d'image reçue avec succès!`]);
+    setLogs(prev => [...prev, `URL d'image reçue avec succès depuis ${aiSource.toUpperCase()}!`]);
     localStorage.setItem("faceURLResult", resultUrl);
     localStorage.setItem("aiSource", aiSource); // Store which AI was used
 
@@ -3076,7 +3125,7 @@ const generateImageGemini = async () => {
             <div className="flex flex-col space-y-4 items-center">
               {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
               <motion.button 
-                onClick={generateImageGemini}
+                onClick={generateImageReplicate}
                 className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
