@@ -21,6 +21,10 @@ export default function ProjectMosaic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date()); // Pour suivre le dernier rafraîchissement
+  const [displayLimit, setDisplayLimit] = useState(50); // Limite d'affichage par défaut
+  const [hasMoreImages, setHasMoreImages] = useState(false); // Indique s'il y a plus d'images à charger
+  const [lastKnownCount, setLastKnownCount] = useState(0); // Cache du nombre total d'images
+  const [loadingMore, setLoadingMore] = useState(false); // État pour le chargement de plus d'images
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -145,21 +149,43 @@ export default function ProjectMosaic() {
   }, [projectId, supabase]);
   
   // Fonction pour charger les images (extraite pour réutilisation)
-  const loadSessionImages = async () => {
+  const loadSessionImages = async (limit = displayLimit, skipCountCheck = false) => {
     if (!projectId) return;
     
     setLoading(true);
     try {
+      // Vérifier d'abord s'il y a de nouvelles images (optimisation)
+      let count = lastKnownCount;
+      if (!skipCountCheck) {
+        const { count: currentCount } = await supabase
+          .from('sessions')
+          .select('*', { count: 'exact', head: true })
+          .eq('project_id', projectId)
+          .is('moderation', null);
+        
+        count = currentCount || 0;
+        setLastKnownCount(count);
+        
+        // Si le nombre d'images n'a pas changé et qu'on ne charge pas plus d'images, ne pas recharger
+        if (count === lastKnownCount && limit === displayLimit && projectImages.length > 0) {
+          console.log('Aucune nouvelle image détectée, pas de rechargement nécessaire');
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('id, result_s3_url, result_image_url, created_at, moderation')
         .eq('project_id', projectId)
         .is('moderation', null)  // Ne sélectionner que les images non modérées
-        .order('created_at', { ascending: false }); // Tri décroissant pour avoir les plus récentes en premier
+        .order('created_at', { ascending: false }) // Tri décroissant pour avoir les plus récentes en premier
+        .limit(limit); // Limiter le nombre d'images chargées
 
       if (sessionsError) {
         console.error('Erreur lors du chargement des images:', sessionsError);
         setProjectImages([]);
+        setHasMoreImages(false);
       } else {
         const images = (sessionsData || [])
           .map(session => ({
@@ -174,12 +200,14 @@ export default function ProjectMosaic() {
           .filter(img => img.image_url); // Vérifier que l'image a une URL valide
       
         setProjectImages(images);
+        setHasMoreImages(count > limit);
         setLastRefresh(new Date());
-        console.log(`Rafraîchissement: ${images.length} images chargées pour la mosaïque`);
+        console.log(`Rafraîchissement: ${images.length} images chargées pour la mosaïque (total: ${count})`);
       }
     } catch (err) {
       console.error('Erreur de chargement des images:', err);
       setProjectImages([]);
+      setHasMoreImages(false);
     } finally {
       setLoading(false);
     }
@@ -192,11 +220,11 @@ export default function ProjectMosaic() {
     // Chargement initial
     loadSessionImages();
 
-    // Configurer le rafraîchissement automatique toutes les 30 secondes
+    // Configurer le rafraîchissement automatique toutes les 60 secondes (au lieu de 30)
     refreshInterval.current = setInterval(() => {
       console.log('Rafraîchissement automatique de la mosaïque...');
-      loadSessionImages();
-    }, 30000); // 30 secondes
+      loadSessionImages(displayLimit);
+    }, 60000); // 60 secondes
 
     // Nettoyage lors du démontage du composant
     return () => {
@@ -276,6 +304,15 @@ export default function ProjectMosaic() {
     }
     
     return items;
+  };
+
+  // Fonction pour charger plus d'images
+  const loadMoreImages = async () => {
+    setLoadingMore(true);
+    const newLimit = displayLimit + 50;
+    setDisplayLimit(newLimit);
+    await loadSessionImages(newLimit, true); // Skip count check car on veut forcer le chargement
+    setLoadingMore(false);
   };
 
   // Gérer le mode plein écran
@@ -403,7 +440,7 @@ export default function ProjectMosaic() {
         </motion.div>
       )}
 
-      {/* Indicateur de dernier rafraîchissement */}
+      {/* Indicateur de dernier rafraîchissement et nombre d'images */}
       {!loading && projectImages.length > 0 && (
         <motion.div
           className="fixed bottom-4 left-4 bg-black bg-opacity-50 text-white text-xs px-3 py-1 rounded-full z-30"
@@ -411,7 +448,10 @@ export default function ProjectMosaic() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
         >
-          Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
+          <div>Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}</div>
+          <div className="text-center">
+            {projectImages.length} images affichées{hasMoreImages && ' (plus disponibles)'}
+          </div>
         </motion.div>
       )}
 
@@ -447,8 +487,135 @@ export default function ProjectMosaic() {
       )}
     
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        <div className="flex flex-col items-center justify-center py-16">
+          {/* Loader principal avec animation sophistiquée */}
+          <div className="relative">
+            {/* Cercles concentriques animés */}
+            <motion.div
+              className="absolute rounded-full border-4 border-blue-400/30"
+              style={{ width: 80, height: 80 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute rounded-full border-4 border-purple-400/50"
+              style={{ width: 60, height: 60, top: 10, left: 10 }}
+              animate={{ rotate: -360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute rounded-full border-4 border-pink-400/70"
+              style={{ width: 40, height: 40, top: 20, left: 20 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+            
+            {/* Centre pulsant avec icône */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full flex items-center justify-center"
+              style={{ width: 20, height: 20 }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+              </svg>
+            </motion.div>
+          </div>
+          
+          {/* Texte de chargement avec animation */}
+          <motion.div
+            className="mt-8 text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.h3
+              className="text-white text-xl font-medium mb-3"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              Chargement de la mosaïque...
+            </motion.h3>
+            
+            {/* Points de chargement animés */}
+            <div className="flex space-x-2 justify-center">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-3 h-3 bg-white rounded-full"
+                  animate={{
+                    y: [0, -10, 0],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    repeat: Infinity,
+                    delay: i * 0.2
+                  }}
+                />
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Grille de simulation de mosaïque */}
+          <motion.div
+            className="mt-8 grid grid-cols-6 gap-2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            {Array.from({ length: 18 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="w-8 h-8 rounded-lg"
+                style={{
+                  background: `linear-gradient(45deg, 
+                    ${i % 3 === 0 ? 'rgb(59, 130, 246)' : i % 3 === 1 ? 'rgb(147, 51, 234)' : 'rgb(236, 72, 153)'}, 
+                    rgba(255, 255, 255, 0.1))`
+                }}
+                animate={{
+                  opacity: [0.3, 1, 0.3],
+                  scale: [0.8, 1, 0.8]
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  delay: (i * 0.1) % 1.5
+                }}
+              />
+            ))}
+          </motion.div>
+
+          {/* Barre de progression stylée */}
+          <motion.div
+            className="mt-6 w-64 h-2 bg-white/20 rounded-full overflow-hidden"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 256 }}
+            transition={{ delay: 1 }}
+          >
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 rounded-full"
+              animate={{
+                x: ['-100%', '100%'],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
+
+          {/* Message informatif */}
+          <motion.p
+            className="text-white/80 text-sm mt-4 max-w-md text-center leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            Récupération des {displayLimit} dernières photos du projet...
+          </motion.p>
         </div>
       ) : projectImages.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-sm shadow rounded-lg p-12 text-center text-white max-w-4xl mx-auto">
@@ -534,8 +701,11 @@ export default function ProjectMosaic() {
                       src={item.image_url}
                       alt={item.metadata?.fileName || 'Image du projet'}
                       fill
-                      sizes="(max-width: 768px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                       className="object-cover transition-transform duration-300 hover:scale-110"
+                      loading="lazy" // Lazy loading natif
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = '/placeholder-image.png';
@@ -561,6 +731,43 @@ export default function ProjectMosaic() {
               </motion.div>
             ))}
           </motion.div>
+
+          {/* Bouton "Charger plus" si il y a plus d'images disponibles */}
+          {hasMoreImages && !loading && (
+            <motion.div
+              className="flex justify-center mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <button
+                onClick={loadMoreImages}
+                disabled={loadingMore}
+                className={`px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-3 ${
+                  loadingMore ? 'opacity-75 cursor-not-allowed' : 'hover:shadow-xl'
+                }`}
+              >
+                {loadingMore ? (
+                  <>
+                    {/* Mini loader pour le bouton */}
+                    <motion.div
+                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>Chargement...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Charger plus d'images</span>
+                  </>
+                )}
+              </button>
+            </motion.div>
+          )}
         </div>
       )}
     </div>

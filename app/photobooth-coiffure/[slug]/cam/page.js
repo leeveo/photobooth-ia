@@ -53,7 +53,7 @@ const dataURLtoFile = (dataurl, filename) => {
 
 // Hook webcam with improved error handling and retries
 let streamCam = null;
-const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
+const useWebcam = ({ videoRef, setCameraError, setCameraLoaded, selectedCameraId = null }) => {
   useEffect(() => {
     let isMounted = true;
     let retryCount = 0;
@@ -91,69 +91,97 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isTablet = /(iPad|Android(?!.*Mobile))/i.test(navigator.userAgent);
       
-      // Configuration options adaptées selon l'appareil
-      const configOptions = isMobile ? [
-        // Mobile: Priorité à la caméra frontale et résolution adaptée
-        { 
-          video: { 
-            facingMode: "user",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { 
-          video: { 
-            facingMode: "user",
-            width: { min: 640 },
-            height: { min: 480 }
-          } 
-        },
-        { video: { facingMode: "user" } },
-        { video: true }
-      ] : isTablet ? [
-        // Tablette: Résolution intermédiaire
-        { 
-          video: { 
-            width: { ideal: 1600 },
-            height: { ideal: 900 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { 
-          video: { 
-            width: { min: 800 },
-            height: { min: 600 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { video: true },
-        { video: { facingMode: "user" } }
-      ] : [
-        // PC: Haute résolution
-        { 
-          video: { 
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { 
-          video: { 
-            width: { min: 1280 },
-            height: { min: 720 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { 
-          video: { 
-            width: { min: 640 },
-            height: { min: 360 },
-            aspectRatio: { ideal: 16/9 }
-          } 
-        },
-        { video: true }
-      ];
+      // Si on a un deviceId spécifique (pour iPad), l'utiliser en priorité
+      let configOptions;
+      if (selectedCameraId) {
+        console.log("Using specific camera deviceId:", selectedCameraId);
+        configOptions = [
+          { 
+            video: { 
+              deviceId: { exact: selectedCameraId },
+              width: { ideal: 1600 },
+              height: { ideal: 900 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { 
+            video: { 
+              deviceId: { exact: selectedCameraId },
+              width: { min: 800 },
+              height: { min: 600 }
+            } 
+          },
+          { 
+            video: { 
+              deviceId: { exact: selectedCameraId }
+            } 
+          }
+        ];
+      } else {
+        // Configuration options adaptées selon l'appareil (code original)
+        configOptions = isMobile ? [
+          // Mobile: Priorité à la caméra frontale et résolution adaptée
+          { 
+            video: { 
+              facingMode: "user",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { 
+            video: { 
+              facingMode: "user",
+              width: { min: 640 },
+              height: { min: 480 }
+            } 
+          },
+          { video: { facingMode: "user" } },
+          { video: true }
+        ] : isTablet ? [
+          // Tablette: Résolution intermédiaire
+          { 
+            video: { 
+              width: { ideal: 1600 },
+              height: { ideal: 900 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { 
+            video: { 
+              width: { min: 800 },
+              height: { min: 600 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { video: true },
+          { video: { facingMode: "user" } }
+        ] : [
+          // PC: Haute résolution
+          { 
+            video: { 
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { 
+            video: { 
+              width: { min: 1280 },
+              height: { min: 720 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { 
+            video: { 
+              width: { min: 640 },
+              height: { min: 360 },
+              aspectRatio: { ideal: 16/9 }
+            } 
+          },
+          { video: true }
+        ];
+      }
       
       let stream = null;
       
@@ -232,7 +260,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         }
       }
     };
-  }, [videoRef, setCameraError, setCameraLoaded]);
+  }, [videoRef, setCameraError, setCameraLoaded, selectedCameraId]);
 };
 
 export default function CameraCapture({ params }) {
@@ -293,6 +321,44 @@ export default function CameraCapture({ params }) {
     return () => window.removeEventListener('resize', detectDevice);
   }, []);
 
+  // Detect iPad and enumerate cameras
+  useEffect(() => {
+    const detectIpadAndCameras = async () => {
+      // Detect if it's an iPad
+      const isIpadDevice = /(iPad)/i.test(navigator.userAgent);
+      setIsIpad(isIpadDevice);
+      
+      // If it's an iPad, enumerate available cameras
+      if (isIpadDevice) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          console.log("Available cameras on iPad:", videoDevices);
+          setAvailableCameras(videoDevices);
+          
+          // Set default camera (preferably front camera)
+          const frontCamera = videoDevices.find(device => 
+            device.label.toLowerCase().includes('front') || 
+            device.label.toLowerCase().includes('user') ||
+            device.label.toLowerCase().includes('facetime')
+          );
+          
+          if (frontCamera) {
+            setSelectedCameraId(frontCamera.deviceId);
+            console.log("Front camera selected:", frontCamera.label);
+          } else if (videoDevices.length > 0) {
+            setSelectedCameraId(videoDevices[0].deviceId);
+            console.log("Default camera selected:", videoDevices[0].label);
+          }
+        } catch (error) {
+          console.error("Error enumerating cameras:", error);
+        }
+      }
+    };
+    
+    detectIpadAndCameras();
+  }, []);
+
   // Add missing cameraLoaded state
   const [cameraLoaded, setCameraLoaded] = useState(false);
   
@@ -317,6 +383,11 @@ export default function CameraCapture({ params }) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
 
+  // States for camera selection (iPad)
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState(null);
+  const [isIpad, setIsIpad] = useState(false);
+
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
@@ -329,7 +400,7 @@ export default function CameraCapture({ params }) {
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
-  useWebcam({ videoRef, setCameraError, setCameraLoaded });
+  useWebcam({ videoRef, setCameraError, setCameraLoaded, selectedCameraId });
   
   // Replace the current captureVideo function with a direct implementation
   // This version directly implements the functionality without relying on other functions
@@ -534,6 +605,47 @@ export default function CameraCapture({ params }) {
     // Increment retry counter to trigger useEffect
     setRetryAttempt(prev => prev + 1);
   }, []); // No dependencies needed for this function
+  
+  // Function to switch camera (iPad only)
+  const switchCamera = useCallback(() => {
+    if (!isIpad || availableCameras.length <= 1) {
+      console.log("Switch camera not available - not iPad or less than 2 cameras");
+      return;
+    }
+    
+    // Find current camera index
+    const currentIndex = availableCameras.findIndex(camera => camera.deviceId === selectedCameraId);
+    
+    // Get next camera (loop back to 0 if at end)
+    const nextIndex = (currentIndex + 1) % availableCameras.length;
+    const nextCamera = availableCameras[nextIndex];
+    
+    console.log(`Switching from camera ${currentIndex} to camera ${nextIndex}:`, nextCamera.label);
+    
+    // Clear any existing errors
+    setCameraError(null);
+    setCameraLoaded(false);
+    
+    // Stop current stream
+    if (streamCam) {
+      try {
+        streamCam.getTracks().forEach(track => track.stop());
+        streamCam = null;
+      } catch (e) {
+        console.error("Error stopping camera tracks during switch:", e);
+      }
+    }
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    
+    // Set new camera ID - this will trigger useWebcam to reinitialize
+    setSelectedCameraId(nextCamera.deviceId);
+    
+    // Increment retry counter to ensure clean restart
+    setRetryAttempt(prev => prev + 1);
+  }, [isIpad, availableCameras, selectedCameraId]);
   
   // Fix the fetchProjectData function to avoid the 406 error
   const fetchProjectData = useCallback(async () => {
@@ -2796,6 +2908,78 @@ const generateImageGemini = async () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
+          {/* Camera switch button - only for iPad with multiple cameras */}
+          {isIpad && availableCameras.length > 1 && !enabled && (
+            <motion.button
+              onClick={switchCamera}
+              className="mb-4 px-6 py-3 rounded-lg font-medium text-sm backdrop-blur-md border border-white/30 flex items-center gap-2"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+              whileHover={{ 
+                scale: 1.05,
+                backgroundColor: 'rgba(255,255,255,0.25)'
+              }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              {/* Icône de changement de caméra */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-current">
+                <motion.path
+                  d="M2 6C2 4.89543 2.89543 4 4 4H7L9 2H15L17 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <motion.circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <motion.path
+                  d="M16 8L18 6M8 8L6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  animate={{
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </svg>
+              
+              <span>
+                Changer caméra ({availableCameras.findIndex(camera => camera.deviceId === selectedCameraId) + 1}/{availableCameras.length})
+              </span>
+              
+              {/* Icône de rotation */}
+              <motion.svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                className="text-current"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <path
+                  d="M1 4V10H7M23 20V14H17M20.49 9A9 9 0 0 0 5.64 5.64L1 10M3.51 15A9 9 0 0 0 18.36 18.36L23 14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </motion.svg>
+            </motion.button>
+          )}
+
           {/* Affiche le bouton uniquement si quota non atteint */}
           {!enabled && !quotaAtteint ? (
             <>

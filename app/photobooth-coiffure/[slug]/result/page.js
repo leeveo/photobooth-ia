@@ -745,8 +745,6 @@ export default function Result({ params }) {
                 {/* Bouton pour aller vers la page d'affichage */}
                 <a
                   href={linkQR}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
                   style={{
                     background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
@@ -862,8 +860,6 @@ export default function Result({ params }) {
             {linkQR && (
               <a
                 href={linkQR}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold shadow-lg text-base flex items-center gap-2 md:hidden"
                 style={{ maxWidth: '90vw' }}
               >
