@@ -195,11 +195,34 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
     let retryCount = 0;
     const maxRetries = 3;
     
+    // Function to check camera permissions first
+    const checkCameraPermission = async () => {
+      try {
+        if (navigator.permissions) {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          console.log("📹 Camera permission status:", permission.state);
+          return permission.state;
+        }
+        console.log("⚠️ Navigator.permissions not available");
+        return 'unknown';
+      } catch (err) {
+        console.log("⚠️ Could not check camera permission:", err.message);
+        return 'unknown';
+      }
+    };
+
     // Function to attempt camera initialization with different constraints
     const tryInitCamera = async (constraints) => {
       try {
-        console.log("Requesting camera with constraints:", constraints);
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log("📹 Requesting camera with constraints:", JSON.stringify(constraints, null, 2));
+        
+        // Add timeout to prevent hanging
+        const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Camera access timeout after 10 seconds')), 10000)
+        );
+        
+        const stream = await Promise.race([streamPromise, timeoutPromise]);
         
         if (!isMounted) {
           // Component unmounted during async call, clean up
@@ -207,10 +230,27 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
           return null;
         }
         
-        console.log("Camera access granted with constraints:", constraints);
+        // Log camera details
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings();
+          console.log("✅ Camera access granted! Settings:", {
+            deviceId: settings.deviceId,
+            facingMode: settings.facingMode,
+            width: settings.width,
+            height: settings.height,
+            label: videoTrack.label
+          });
+        }
+        
         return stream;
       } catch (err) {
-        console.error(`Camera access failed with constraints:`, constraints, err);
+        console.error(`❌ Camera access failed with constraints:`, JSON.stringify(constraints, null, 2));
+        console.error(`Error details:`, {
+          name: err.name,
+          message: err.message,
+          constraint: err.constraint || 'unknown'
+        });
         return null;
       }
     };
@@ -222,6 +262,53 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         setCameraError("Votre navigateur ne prend pas en charge l'accès à la caméra");
         return;
       }
+      
+      // Check camera permission first
+      const permissionStatus = await checkCameraPermission();
+      console.log("🔐 Camera permission check result:", permissionStatus);
+      
+      if (permissionStatus === 'denied') {
+        setCameraError("L'accès à la caméra a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.");
+        return;
+      }
+      
+      // Diagnostic: List all available cameras
+      const listAvailableCameras = async () => {
+        try {
+          console.log("📋 Listing all available media devices...");
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          
+          console.log(`📹 Found ${videoDevices.length} video devices:`);
+          videoDevices.forEach((device, index) => {
+            console.log(`  Camera ${index + 1}: ${device.label || 'Unknown'} (ID: ${device.deviceId})`);
+          });
+          
+          // Test basic camera access capability
+          if (videoDevices.length > 0) {
+            console.log("🧪 Testing basic camera access...");
+            try {
+              const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              const videoTrack = testStream.getVideoTracks()[0];
+              if (videoTrack) {
+                const settings = videoTrack.getSettings();
+                console.log("✅ Basic camera access works! Current settings:", settings);
+                
+                // ⭐ IMPORTANT: Si l'accès basique fonctionne, l'utiliser directement !
+                console.log("🎯 Using basic camera access since it works perfectly!");
+                return testStream;
+              }
+            } catch (testErr) {
+              console.error("❌ Basic camera access failed:", testErr);
+            }
+          }
+          
+          return videoDevices;
+        } catch (err) {
+          console.error("❌ Failed to enumerate devices:", err);
+          return null; // Retourner null au lieu de []
+        }
+      };
       
       // ✅ DÉTECTION ULTRA-PRÉCISE DU TYPE D'APPAREIL
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -254,65 +341,68 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         }
       } else {
         console.log("📱 Appareil non-iPad ou non-Safari, utilisation méthode standard");
+        
+        // ⭐ Pour non-iPad : tester d'abord l'accès basique via le diagnostic
+        console.log("🧪 Test de l'accès basique avant configurations complexes...");
+        const basicStream = await listAvailableCameras();
+        if (basicStream) {
+          console.log("✅ Diagnostic réussi - utilisation du stream basique!");
+          stream = basicStream;
+        }
       }
       
       // Si la méthode spécialisée iPad n'a pas fonctionné, utiliser la méthode standard AGRESSIVE
       if (!stream) {
         console.log("⚠️ Méthode spécialisée iPad Safari échouée, fallback vers méthode standard AGRESSIVE");
         
-        // Configuration options ULTRA-AGRESSIVES pour forcer la caméra frontale
+        // Configuration options DOUCES pour éviter NotReadableError sur iPad
         const configOptions = isMobile || isTablet || isIPad ? [
-          // CONFIGURATION 1: facingMode EXACT "user" - la plus stricte
+          // CONFIGURATION 1: La plus simple possible
+          { video: true },
+          
+          // CONFIGURATION 2: facingMode "user" simple (pas exact)
           { 
             video: { 
-              facingMode: { exact: "user" }  // EXACT au lieu d'ideal - FORCE la caméra frontale
+              facingMode: "user"  // ideal au lieu d'exact - plus tolérant
             } 
           },
-          // CONFIGURATION 2: facingMode "user" avec résolution mobile
-          { 
-            video: { 
-              facingMode: "user",
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            } 
-          },
-          // CONFIGURATION 3: facingMode "user" simple
-          { 
-            video: { 
-              facingMode: "user"
-            } 
-          },
-          // CONFIGURATION 4: facingMode "user" avec résolution minimum
+          
+          // CONFIGURATION 3: facingMode "user" avec petite résolution
           { 
             video: { 
               facingMode: "user",
-              width: { min: 640 },
-              height: { min: 480 }
+              width: { ideal: 640 },
+              height: { ideal: 480 }
             } 
           },
-          // CONFIGURATION 5: Seulement en DERNIER RECOURS - n'importe quelle caméra
-          { video: true }
+          
+          // CONFIGURATION 4: facingMode EXACT seulement si les autres échouent
+          { 
+            video: { 
+              facingMode: { exact: "user" }
+            } 
+          }
         ] : [
-          // PC: Configuration standard
+          // Configuration pour desktop
           { 
             video: { 
               width: { ideal: 1920 },
               height: { ideal: 1080 },
-              aspectRatio: { ideal: 16/9 }
+              aspectRatio: { ideal: 1.7777777777777777 }
             } 
           },
           { 
             video: { 
               width: { min: 1280 },
               height: { min: 720 },
-              aspectRatio: { ideal: 16/9 }
+              aspectRatio: { ideal: 1.7777777777777777 }
             } 
           },
           { 
             video: { 
               width: { min: 640 },
               height: { min: 360 },
-              aspectRatio: { ideal: 16/9 }
+              aspectRatio: { ideal: 1.7777777777777777 }
             } 
           },
           { video: true }
@@ -335,7 +425,43 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       
       if (!stream) {
         console.error("❌ Could not access camera after multiple attempts");
-        setCameraError("La caméra n'est pas accessible. Vérifiez que vous avez autorisé l'accès.");
+        
+        // Try to get more detailed error information
+        console.log("🔍 Attempting basic camera access for error diagnosis...");
+        try {
+          const basicStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          basicStream.getTracks().forEach(track => track.stop());
+          setCameraError("La caméra est disponible mais les configurations spécifiques échouent. Essayez de rafraîchir la page.");
+        } catch (basicErr) {
+          console.error("❌ Even basic camera access failed:", basicErr);
+          
+          let errorMessage = "La caméra n'est pas accessible. ";
+          if (basicErr.name === 'NotAllowedError') {
+            errorMessage += "Veuillez autoriser l'accès à la caméra dans votre navigateur.";
+          } else if (basicErr.name === 'NotFoundError') {
+            errorMessage += "Aucune caméra détectée sur cet appareil.";
+          } else if (basicErr.name === 'NotReadableError') {
+            errorMessage += "La caméra est bloquée ou utilisée par une autre application. SOLUTIONS:\n• Fermez toutes les autres apps utilisant la caméra (FaceTime, Zoom, etc.)\n• Redémarrez Safari\n• Redémarrez votre iPad\n• Essayez de changer d'onglet puis revenir\nTentative de retry automatique dans 3 secondes...";
+            
+            // Retry automatique pour NotReadableError
+            setTimeout(async () => {
+              console.log("🔄 Retry automatique après NotReadableError...");
+              retryCount++;
+              if (retryCount < maxRetries) {
+                await initializeCamera();
+              } else {
+                setCameraError("Impossible d'accéder à la caméra après plusieurs tentatives. Veuillez redémarrer votre iPad ou fermer les autres applications utilisant la caméra.");
+              }
+            }, 3000);
+            return;
+          } else if (basicErr.name === 'OverconstrainedError') {
+            errorMessage += "Les paramètres de caméra demandés ne sont pas supportés.";
+          } else {
+            errorMessage += `Erreur: ${basicErr.message}`;
+          }
+          
+          setCameraError(errorMessage);
+        }
         return;
       }
       
@@ -396,35 +522,52 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       streamCam = stream;
       window.localStream = stream;
       
-      // Apply the stream to video element
-      if (videoRef.current) {
-        console.log("📹 Attaching stream to video element");
-        videoRef.current.srcObject = stream;
-        
-        // Make sure the video element is visible
-        videoRef.current.style.display = 'block';
-        videoRef.current.style.visibility = 'visible';
-        
-        // Play video with error handling
-        try {
-          await videoRef.current.play();
-          console.log("▶️ Camera stream playing successfully");
+      // Apply the stream to video element with retry logic
+      const attachStreamToVideo = async (retryCount = 0) => {
+        if (videoRef.current) {
+          console.log("📹 Attaching stream to video element");
+          videoRef.current.srcObject = stream;
           
-          // Set a timeout to allow the video to initialize before marking as loaded
-          setTimeout(() => {
-            if (isMounted) {
-              setCameraLoaded(true);
-              console.log("✅ Camera marked as loaded");
-            }
-          }, 1000);
+          // Make sure the video element is visible
+          videoRef.current.style.display = 'block';
+          videoRef.current.style.visibility = 'visible';
           
-        } catch (playError) {
-          console.error("❌ Error playing video stream:", playError);
-          setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
+          // Play video with error handling
+          try {
+            await videoRef.current.play();
+            console.log("▶️ Camera stream playing successfully");
+            
+            // Set a timeout to allow the video to initialize before marking as loaded
+            setTimeout(() => {
+              if (isMounted) {
+                setCameraLoaded(true);
+                console.log("✅ Camera marked as loaded");
+              }
+            }, 1000);
+            
+          } catch (playError) {
+            console.error("❌ Error playing video stream:", playError);
+            setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
+          }
+        } else {
+          console.warn("❌ Video element not found when trying to initialize camera");
+          
+          // Retry logic - video element might not be mounted yet
+          if (retryCount < 5) {
+            console.log(`🔄 Retrying to find video element... (attempt ${retryCount + 1}/5)`);
+            setTimeout(() => {
+              if (isMounted) {
+                attachStreamToVideo(retryCount + 1);
+              }
+            }, 100); // Wait 100ms before retry
+          } else {
+            console.error("❌ Failed to find video element after 5 attempts");
+            setCameraError("Impossible de trouver l'élément vidéo");
+          }
         }
-      } else {
-        console.warn("❌ Video element not found when trying to initialize camera");
-      }
+      };
+      
+      await attachStreamToVideo();
     };
     
     // Start the initialization process
@@ -453,7 +596,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         }
       }
     };
-  }, [videoRef, setCameraError, setCameraLoaded, selectedCameraId]);
+  }, [videoRef, setCameraError, setCameraLoaded]);
 };
 
 export default function CameraCapture({ params }) {
@@ -496,9 +639,27 @@ export default function CameraCapture({ params }) {
     return 'desktop';
   });
   
+  // Détection spécifique iPad/iOS tablette
+  const [isIPadDevice, setIsIPadDevice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const maxTouchPoints = navigator.maxTouchPoints;
+      
+      // Détection iPad spécifique
+      return /iPad/i.test(userAgent) || 
+             (platform === 'MacIntel' && maxTouchPoints > 1) ||
+             (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)); // Android tablets
+    }
+    return false;
+  });
+  
   useEffect(() => {
     const detectDevice = () => {
       const screenWidth = window.innerWidth;
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const maxTouchPoints = navigator.maxTouchPoints;
       
       if (screenWidth <= 768) {
         setDeviceType('mobile');   // Format smartphone/mobile
@@ -507,6 +668,12 @@ export default function CameraCapture({ params }) {
       } else {
         setDeviceType('desktop');  // Format desktop
       }
+      
+      // Mise à jour détection iPad
+      const isIPad = /iPad/i.test(userAgent) || 
+                     (platform === 'MacIntel' && maxTouchPoints > 1) ||
+                     (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent));
+      setIsIPadDevice(isIPad);
     };
     
     detectDevice();
@@ -514,46 +681,14 @@ export default function CameraCapture({ params }) {
     return () => window.removeEventListener('resize', detectDevice);
   }, []);
 
-  // Detect iPad and enumerate cameras
-  useEffect(() => {
-    const detectIpadAndCameras = async () => {
-      // Detect if it's an iPad
-      const isIpadDevice = /(iPad)/i.test(navigator.userAgent);
-      setIsIpad(isIpadDevice);
-      
-      // If it's an iPad, enumerate available cameras
-      if (isIpadDevice) {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(device => device.kind === 'videoinput');
-          console.log("Available cameras on iPad:", videoDevices);
-          setAvailableCameras(videoDevices);
-          
-          // Set default camera (preferably front camera)
-          const frontCamera = videoDevices.find(device => 
-            device.label.toLowerCase().includes('front') || 
-            device.label.toLowerCase().includes('user') ||
-            device.label.toLowerCase().includes('facetime')
-          );
-          
-          if (frontCamera) {
-            setSelectedCameraId(frontCamera.deviceId);
-            console.log("Front camera selected:", frontCamera.label);
-          } else if (videoDevices.length > 0) {
-            setSelectedCameraId(videoDevices[0].deviceId);
-            console.log("Default camera selected:", videoDevices[0].label);
-          }
-        } catch (error) {
-          console.error("Error enumerating cameras:", error);
-        }
-      }
-    };
-    
-    detectIpadAndCameras();
-  }, []);
-
   // Add missing cameraLoaded state
   const [cameraLoaded, setCameraLoaded] = useState(false);
+  
+  // Add state for current camera facing mode
+  const [currentCameraFacing, setCurrentCameraFacing] = useState("user");
+  
+  // Add state for camera switching
+  const [switchingCamera, setSwitchingCamera] = useState(false);
   
   // Add state for retry attempt
   const [retryAttempt, setRetryAttempt] = useState(0);
@@ -575,11 +710,6 @@ export default function CameraCapture({ params }) {
   // Add state for redirection handling
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
-
-  // States for camera selection (iPad)
-  const [availableCameras, setAvailableCameras] = useState([]);
-  const [selectedCameraId, setSelectedCameraId] = useState(null);
-  const [isIpad, setIsIpad] = useState(false);
 
   // Function to reset state when retrying
   const reset2 = () => {
@@ -3193,8 +3323,8 @@ const generateImageGemini = async () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          {/* Camera switch button - only for iPad with multiple cameras */}
-          {isIpad && availableCameras.length > 1 && !enabled && (
+          {/* Camera switch button - only for iPad/tablets with multiple cameras */}
+          {!enabled && isIPadDevice && (deviceType === 'tablet' || deviceType === 'mobile') && (
             <motion.button
               onClick={switchCamera}
               className="mb-4 px-6 py-3 rounded-lg font-medium text-sm backdrop-blur-md border border-white/30 flex items-center gap-2"
@@ -3240,8 +3370,8 @@ const generateImageGemini = async () => {
                 />
               </svg>
               
-              <span>
-                Changer caméra ({availableCameras.findIndex(camera => camera.deviceId === selectedCameraId) + 1}/{availableCameras.length})
+              <span className="font-bold">
+                {currentCameraFacing === "user" ? "🔄 CAMÉRA ARRIÈRE" : "🔄 CAMÉRA FRONTALE"}
               </span>
               
               {/* Icône de rotation */}
