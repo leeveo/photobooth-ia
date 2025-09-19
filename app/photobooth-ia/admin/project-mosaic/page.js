@@ -21,7 +21,7 @@ export default function ProjectMosaic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date()); // Pour suivre le dernier rafraîchissement
-  const [displayLimit, setDisplayLimit] = useState(50); // Limite d'affichage par défaut
+  const [displayLimit, setDisplayLimit] = useState(20); // Limite d'affichage réduite pour éviter les timeouts
   const [hasMoreImages, setHasMoreImages] = useState(false); // Indique s'il y a plus d'images à charger
   const [lastKnownCount, setLastKnownCount] = useState(0); // Cache du nombre total d'images
   const [loadingMore, setLoadingMore] = useState(false); // État pour le chargement de plus d'images
@@ -153,39 +153,103 @@ export default function ProjectMosaic() {
     if (!projectId) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
-      // Vérifier d'abord s'il y a de nouvelles images (optimisation)
+      // Skip count check pour les gros projets ou si explicitement demandé
       let count = lastKnownCount;
       if (!skipCountCheck) {
-        const { count: currentCount } = await supabase
-          .from('sessions')
-          .select('*', { count: 'exact', head: true })
-          .eq('project_id', projectId)
-          .is('moderation', null);
+        try {
+          // Timeout sur le comptage pour éviter les blocages
+          const { count: currentCount, error: countError } = await Promise.race([
+            supabase
+              .from('sessions')
+              .select('*', { count: 'exact', head: true })
+              .eq('project_id', projectId)
+              .is('moderation', null),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('COUNT_TIMEOUT')), 5000)
+            )
+          ]);
         
-        count = currentCount || 0;
-        setLastKnownCount(count);
+          if (countError) {
+            console.warn('Erreur lors du comptage, on continue sans comptage:', countError.message);
+          } else {
+            count = currentCount || 0;
+            setLastKnownCount(count);
+          }
+        } catch (timeoutError) {
+          console.warn('Timeout sur le comptage, on continue avec un chargement direct');
+          skipCountCheck = true; // Forcer le chargement direct
+        }
         
         // Si le nombre d'images n'a pas changé et qu'on ne charge pas plus d'images, ne pas recharger
-        if (count === lastKnownCount && limit === displayLimit && projectImages.length > 0) {
+        if (count === lastKnownCount && limit === displayLimit && projectImages.length > 0 && !skipCountCheck) {
           console.log('Aucune nouvelle image détectée, pas de rechargement nécessaire');
           setLoading(false);
           return;
         }
       }
 
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('sessions')
-        .select('id, result_s3_url, result_image_url, created_at, moderation')
-        .eq('project_id', projectId)
-        .is('moderation', null)  // Ne sélectionner que les images non modérées
-        .order('created_at', { ascending: false }) // Tri décroissant pour avoir les plus récentes en premier
-        .limit(limit); // Limiter le nombre d'images chargées
+      // Chargement avec timeout et limite adaptative
+      const adaptiveLimit = Math.min(limit, 15); // Limite maximale de sécurité
+      console.log(`Chargement de ${adaptiveLimit} images (limite demandée: ${limit})`);
+
+      const { data: sessionsData, error: sessionsError } = await Promise.race([
+        supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at, moderation')
+          .eq('project_id', projectId)
+          .is('moderation', null)  // Ne sélectionner que les images non modérées
+          .order('created_at', { ascending: false }) // Tri décroissant pour avoir les plus récentes en premier
+          .limit(adaptiveLimit), // Utiliser la limite adaptative
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('QUERY_TIMEOUT')), 10000)
+        )
+      ]);
 
       if (sessionsError) {
-        console.error('Erreur lors du chargement des images:', sessionsError);
-        setProjectImages([]);
-        setHasMoreImages(false);
+        // Gestion spéciale des timeouts
+        if (sessionsError.message === 'QUERY_TIMEOUT') {
+          console.warn('Timeout sur la requête principale, essai avec une limite encore plus faible');
+          // Retry avec une limite très faible
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('sessions')
+            .select('id, result_s3_url, result_image_url, created_at, moderation')
+            .eq('project_id', projectId)
+            .is('moderation', null)
+            .order('created_at', { ascending: false })
+            .limit(5); // Limite de sécurité extrême
+          
+          if (fallbackError) {
+            console.error('Erreur même avec limite de sécurité:', fallbackError);
+            setError(`Projet trop volumineux. Essayez de rafraîchir la page ou contactez l'administrateur.`);
+            setProjectImages([]);
+            setHasMoreImages(false);
+          } else {
+            console.log('Succès avec limite de sécurité, 5 images chargées');
+            const images = (fallbackData || [])
+              .map(session => ({
+                id: session.id,
+                image_url: session.result_s3_url || session.result_image_url,
+                created_at: session.created_at,
+                metadata: {
+                  fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
+                  size: null
+                }
+              }))
+              .filter(img => img.image_url);
+            
+            setProjectImages(images);
+            setHasMoreImages(true); // Probablement plus d'images disponibles
+            setLastRefresh(new Date());
+          }
+        } else {
+          console.error('Erreur lors du chargement des images:', sessionsError);
+          setError(`Erreur de base de données: ${sessionsError.message}`);
+          setProjectImages([]);
+          setHasMoreImages(false);
+        }
       } else {
         const images = (sessionsData || [])
           .map(session => ({
