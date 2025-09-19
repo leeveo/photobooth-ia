@@ -971,7 +971,7 @@ export default function Result({ params }) {
       </div>
 
       {/* Fixed Mobile Action Buttons */}
-      {isMobile && imageResultAI && !generateQR && !showDataCapture && (
+      {!project?.grand_public && isMobile && imageResultAI && !generateQR && !showDataCapture && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex gap-3 z-50">
           {/* Download Button */}
           {linkQR && (

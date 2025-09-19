@@ -51,6 +51,125 @@ const dataURLtoFile = (dataurl, filename) => {
   }
 };
 
+// ✅ FONCTION SPÉCIALISÉE POUR IPAD SAFARI AVEC ÉNUMÉRATION DES DISPOSITIFS
+const tryIPadSafariFrontCamera = async () => {
+  try {
+    console.log("🍎 Tentative spécialisée iPad Safari pour caméra frontale...");
+    
+    // ✅ MÉTHODE ULTRA-AGRESSIVE: Essayer TOUTES les combinaisons possibles
+    const frontCameraConfigs = [
+      // Configuration 1: Exact user
+      { video: { facingMode: { exact: "user" } } },
+      // Configuration 2: Ideal user
+      { video: { facingMode: { ideal: "user" } } },
+      // Configuration 3: Simple user
+      { video: { facingMode: "user" } },
+      // Configuration 4: User avec résolution iPad optimisée
+      { video: { facingMode: "user", width: 1280, height: 720 } },
+      // Configuration 5: User sans contraintes supplémentaires
+      { video: { facingMode: "user", width: { min: 320 }, height: { min: 240 } } },
+    ];
+    
+    // Essayer chaque configuration une par une
+    for (let i = 0; i < frontCameraConfigs.length; i++) {
+      const config = frontCameraConfigs[i];
+      console.log(`🎯 Tentative ${i + 1}/${frontCameraConfigs.length}:`, config);
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(config);
+        console.log(`✅ SUCCÈS Méthode ${i + 1}: Configuration fonctionnelle trouvée!`);
+        
+        // Vérifier que c'est bien la caméra frontale
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+        console.log("📊 Paramètres de la caméra:", settings);
+        
+        // Si c'est la caméra frontale ou si on n'a pas d'info facingMode (souvent le cas sur iPad)
+        if (!settings.facingMode || settings.facingMode === "user") {
+          console.log("✅ Caméra frontale confirmée ou probable");
+          return stream;
+        } else if (settings.facingMode === "environment") {
+          console.log("❌ C'est la caméra arrière, on ferme et continue");
+          stream.getTracks().forEach(track => track.stop());
+        }
+      } catch (err) {
+        console.log(`❌ Méthode ${i + 1} échouée:`, err.message);
+      }
+    }
+    
+    // ✅ MÉTHODE ÉNUMÉRATION EXHAUSTIVE: Tester chaque caméra disponible
+    console.log("🎯 Méthode énumération exhaustive des caméras...");
+    
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      console.log(`📹 ${videoDevices.length} caméras détectées:`, 
+        videoDevices.map(d => ({ 
+          deviceId: d.deviceId.substring(0, 20) + "...", 
+          label: d.label || "Caméra sans nom"
+        }))
+      );
+      
+      // Essayer CHAQUE caméra une par une
+      for (let i = 0; i < videoDevices.length; i++) {
+        const device = videoDevices[i];
+        const deviceLabel = device.label || `Caméra ${i + 1}`;
+        
+        console.log(`🔄 Test caméra ${i + 1}/${videoDevices.length}: ${deviceLabel}`);
+        
+        try {
+          // Essayer avec différentes configurations pour cette caméra
+          const deviceConfigs = [
+            { video: { deviceId: { exact: device.deviceId }, facingMode: "user" } },
+            { video: { deviceId: { exact: device.deviceId } } },
+            { video: { deviceId: device.deviceId, facingMode: "user" } },
+            { video: { deviceId: device.deviceId } }
+          ];
+          
+          for (const config of deviceConfigs) {
+            try {
+              console.log(`  🔄 Config:`, config);
+              const stream = await navigator.mediaDevices.getUserMedia(config);
+              
+              const track = stream.getVideoTracks()[0];
+              const settings = track.getSettings();
+              
+              console.log(`  📊 Résultat: facingMode=${settings.facingMode}, deviceId=${settings.deviceId?.substring(0, 20)}...`);
+              
+              // Préférer les caméras frontales ou celles sans facingMode déclaré
+              if (!settings.facingMode || settings.facingMode === "user" || 
+                  deviceLabel.toLowerCase().includes("front") || 
+                  deviceLabel.toLowerCase().includes("face")) {
+                console.log(`✅ SUCCÈS! Caméra frontale trouvée: ${deviceLabel}`);
+                return stream;
+              } else {
+                console.log(`❌ Caméra arrière détectée: ${deviceLabel}`);
+                stream.getTracks().forEach(track => track.stop());
+              }
+            } catch (configErr) {
+              console.log(`  ❌ Config échouée:`, configErr.message);
+            }
+          }
+        } catch (deviceErr) {
+          console.log(`❌ Échec dispositif ${deviceLabel}:`, deviceErr.message);
+        }
+      }
+      
+      console.log("❌ Aucune caméra frontale trouvée via énumération");
+      return null;
+      
+    } catch (enumerateErr) {
+      console.error("❌ Échec énumération des dispositifs:", enumerateErr);
+      return null;
+    }
+    
+  } catch (err) {
+    console.error("❌ Erreur dans tryIPadSafariFrontCamera:", err);
+    return null;
+  }
+};
+
 // Hook webcam with improved error handling and retries
 let streamCam = null;
 const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
@@ -156,10 +275,28 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       
       let stream = null;
       
-      // Try each configuration option until one works
-      for (const config of configOptions) {
-        stream = await tryInitCamera(config);
-        if (stream) break;
+      // ✅ SPÉCIAL IPAD SAFARI: Tentative méthode spécialisée d'abord
+      const isIPadDevice = /iPad/i.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                          (/Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent));
+      
+      if (isIPadDevice) {
+        console.log("🍎 Dispositif iPad détecté, utilisation de la méthode spécialisée...");
+        stream = await tryIPadSafariFrontCamera();
+        
+        if (stream) {
+          console.log("✅ SUCCÈS: Caméra iPad initialisée via méthode spécialisée!");
+        } else {
+          console.log("⚠️ Méthode iPad échouée, tentative des méthodes standards...");
+        }
+      }
+      
+      // Try each configuration option until one works (if iPad method failed or not iPad)
+      if (!stream) {
+        for (const config of configOptions) {
+          stream = await tryInitCamera(config);
+          if (stream) break;
+        }
       }
       
       if (!stream) {
@@ -280,6 +417,27 @@ export default function CameraCapture({ params }) {
   // Device detection state
   const [deviceType, setDeviceType] = useState('desktop');
   
+  // iPad device detection state  
+  const [isIPadDevice, setIsIPadDevice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const maxTouchPoints = navigator.maxTouchPoints;
+      
+      // Détection iPad spécifique
+      return /iPad/i.test(userAgent) || 
+             (platform === 'MacIntel' && maxTouchPoints > 1) ||
+             (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)); // Android tablets
+    }
+    return false;
+  });
+  
+  // Add state for current camera facing mode
+  const [currentCameraFacing, setCurrentCameraFacing] = useState("user");
+  
+  // Add state for camera switching
+  const [switchingCamera, setSwitchingCamera] = useState(false);
+  
   // Quota states
   const [quota, setQuota] = useState(null);
   const [quotaUsed, setQuotaUsed] = useState(null);
@@ -301,20 +459,191 @@ export default function CameraCapture({ params }) {
   // Device detection effect
   useEffect(() => {
     const detectDevice = () => {
+      const screenWidth = window.innerWidth;
       const userAgent = navigator.userAgent;
-      if (/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
-        setDeviceType('mobile');
-      } else if (/(iPad|Android(?!.*Mobile))/i.test(userAgent)) {
-        setDeviceType('tablet');
+      const platform = navigator.platform;
+      const maxTouchPoints = navigator.maxTouchPoints;
+      
+      if (screenWidth <= 768) {
+        setDeviceType('mobile');   // Format smartphone/mobile
+      } else if (screenWidth <= 1024) {
+        setDeviceType('tablet');   // Format tablette
       } else {
-        setDeviceType('desktop');
+        setDeviceType('desktop');  // Format desktop
       }
+      
+      // Mise à jour détection iPad
+      const isIPad = /iPad/i.test(userAgent) || 
+                     (platform === 'MacIntel' && maxTouchPoints > 1) ||
+                     (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent));
+      setIsIPadDevice(isIPad);
     };
     
     detectDevice();
     window.addEventListener('resize', detectDevice);
     return () => window.removeEventListener('resize', detectDevice);
   }, []);
+  
+  // ✅ FONCTION POUR BASCULER ENTRE CAMÉRA FRONTALE ET ARRIÈRE AVEC MÉTHODES AVANCÉES
+  const switchCamera = async () => {
+    if (switchingCamera) return; // Éviter les appels multiples
+    
+    setSwitchingCamera(true);
+    console.log(`🔄 Basculement de caméra: ${currentCameraFacing} → ${currentCameraFacing === "user" ? "environment" : "user"}`);
+    
+    try {
+      // Arrêter la caméra actuelle
+      if (streamCam) {
+        streamCam.getTracks().forEach(track => track.stop());
+        streamCam = null;
+        window.localStream = null;
+      }
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      
+      // Nouvelle orientation de caméra
+      const newFacing = currentCameraFacing === "user" ? "environment" : "user";
+      
+      // Essayer avec la nouvelle orientation
+      let newStream = null;
+      
+      // ✅ MÉTHODE 1: facingMode exact
+      try {
+        newStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: newFacing }
+          }
+        });
+        console.log(`✅ Basculement réussi vers ${newFacing} (méthode exact)`);
+      } catch (err1) {
+        console.log(`❌ Échec méthode exact pour ${newFacing}:`, err1.message);
+        
+        // ✅ MÉTHODE 2: facingMode simple
+        try {
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: newFacing
+            }
+          });
+          console.log(`✅ Basculement réussi vers ${newFacing} (méthode simple)`);
+        } catch (err2) {
+          console.log(`❌ Échec méthode simple pour ${newFacing}:`, err2.message);
+          
+          // ✅ MÉTHODE 3: Énumération et sélection par deviceId
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            console.log(`🔍 Recherche caméra ${newFacing} parmi ${videoDevices.length} dispositifs`);
+            
+            for (const device of videoDevices) {
+              try {
+                const testStream = await navigator.mediaDevices.getUserMedia({
+                  video: {
+                    deviceId: { exact: device.deviceId }
+                  }
+                });
+                
+                const track = testStream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                
+                console.log(`🔍 Test caméra: ${device.label || device.deviceId}, facingMode: ${settings.facingMode}`);
+                
+                if (settings.facingMode === newFacing || 
+                    (newFacing === "user" && !settings.facingMode) || // Parfois pas de facingMode sur la frontale
+                    (device.label && device.label.toLowerCase().includes(newFacing === "user" ? "front" : "back"))) {
+                  newStream = testStream;
+                  console.log(`✅ Caméra ${newFacing} trouvée: ${device.label || device.deviceId}`);
+                  break;
+                } else {
+                  testStream.getTracks().forEach(track => track.stop());
+                }
+              } catch (deviceErr) {
+                console.log(`❌ Erreur test caméra ${device.label}:`, deviceErr.message);
+              }
+            }
+            
+            if (!newStream) {
+              console.log(`❌ Aucune caméra ${newFacing} trouvée par énumération`);
+            }
+          } catch (enumerateErr) {
+            console.log(`❌ Erreur énumération dispositifs:`, enumerateErr.message);
+          }
+        }
+      }
+      
+      if (newStream) {
+        // Appliquer le nouveau stream
+        streamCam = newStream;
+        window.localStream = newStream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+          
+          // Attendre que la vidéo soit prête avec retry
+          let retryCount = 0;
+          const maxRetries = 10;
+          
+          const waitForVideo = async () => {
+            try {
+              await videoRef.current.play();
+              console.log("✅ Nouveau stream appliqué avec succès");
+              
+              // Mettre à jour l'état de la caméra
+              setCurrentCameraFacing(newFacing);
+              setCameraError(null);
+              setCameraLoaded(true);
+              
+            } catch (playErr) {
+              retryCount++;
+              if (retryCount < maxRetries) {
+                console.log(`🔄 Retry ${retryCount}/${maxRetries} pour la lecture vidéo...`);
+                setTimeout(waitForVideo, 500);
+              } else {
+                console.error("❌ Impossible de lire la nouvelle caméra après plusieurs tentatives");
+                setCameraError("Erreur lors du basculement de caméra");
+              }
+            }
+          };
+          
+          setTimeout(waitForVideo, 100);
+        }
+        
+        console.log(`✅ Basculement terminé vers caméra ${newFacing}`);
+      } else {
+        throw new Error(`Impossible de basculer vers la caméra ${newFacing}`);
+      }
+      
+    } catch (error) {
+      console.error("❌ Erreur lors du basculement de caméra:", error);
+      setCameraError(`Erreur basculement: ${error.message}`);
+      
+      // En cas d'erreur, réessayer avec n'importe quelle caméra disponible
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+        
+        streamCam = fallbackStream;
+        window.localStream = fallbackStream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          await videoRef.current.play();
+        }
+        
+        console.log("🔄 Fallback: Retour à une caméra par défaut");
+      } catch (fallbackError) {
+        console.error("❌ Erreur fallback:", fallbackError);
+        setCameraError("Impossible d'accéder à une caméra");
+      }
+      
+    } finally {
+      setSwitchingCamera(false);
+    }
+  };
   
   // Replace the current captureVideo function with a direct implementation
   // This version directly implements the functionality without relying on other functions
@@ -1274,8 +1603,10 @@ const generateImageReplicate = async () => {
       const adminUserId = projectData?.created_by;
 
       // Récupérer le dernier paiement pour le quota et la date de reset
-      let quotaValue = 0;
+      let quotaValue = 3; // Quota gratuit par défaut
       let quotaResetAt = null;
+      let isFreePlan = true; // Nouveau flag pour identifier les utilisateurs gratuits
+      
       if (adminUserId) {
         const { data: lastPayment } = await supabase
           .from('admin_payments')
@@ -1284,27 +1615,65 @@ const generateImageReplicate = async () => {
           .order('photo_quota_reset_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+        
         if (lastPayment) {
+          // Utilisateur payant
           quotaValue = lastPayment.photo_quota || 0;
           quotaResetAt = lastPayment.photo_quota_reset_at;
+          isFreePlan = false;
+        } else {
+          // Utilisateur gratuit - quota de 3 photos depuis la création du compte
+          try {
+            const { data: adminData } = await supabase
+              .from('admin_users')
+              .select('created_at')
+              .eq('id', adminUserId)
+              .single();
+            
+            if (adminData) {
+              quotaResetAt = adminData.created_at; // Reset basé sur la création du compte
+            }
+          } catch (err) {
+            console.warn("Erreur récupération date création admin:", err);
+          }
         }
       }
 
-      // Compter les sessions pour ce projet depuis le reset
+      // Compter les sessions pour TOUS les projets de cet admin depuis le reset
       let used = 0;
       if (quotaResetAt) {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id)
-          .gte('created_at', quotaResetAt);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds)
+            .gte('created_at', quotaResetAt);
+          used = count || 0;
+        }
       } else {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds);
+          used = count || 0;
+        }
       }
 
       setQuota(quotaValue);
@@ -1549,6 +1918,78 @@ const generateImageReplicate = async () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
+          {/* Camera switch button - only for iPad/tablets with multiple cameras */}
+          {!enabled && isIPadDevice && (deviceType === 'tablet' || deviceType === 'mobile') && (
+            <motion.button
+              onClick={switchCamera}
+              className="mb-4 px-6 py-3 rounded-lg font-medium text-sm backdrop-blur-md border border-white/30 flex items-center gap-2"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+              whileHover={{ 
+                scale: 1.05,
+                backgroundColor: 'rgba(255,255,255,0.25)'
+              }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              {/* Icône de changement de caméra */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-current">
+                <motion.path
+                  d="M2 6C2 4.89543 2.89543 4 4 4H7L9 2H15L17 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <motion.circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <motion.path
+                  d="M16 8L18 6M8 8L6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  animate={{
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </svg>
+              
+              <span className="font-bold">
+                {currentCameraFacing === "user" ? "🔄 CAMÉRA ARRIÈRE" : "🔄 CAMÉRA FRONTALE"}
+              </span>
+              
+              {/* Icône de rotation */}
+              <motion.svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                className="text-current"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <path
+                  d="M1 4V10H7M23 20V14H17M20.49 9A9 9 0 0 0 5.64 5.64L1 10M22.99 14A9 9 0 0 1 18.36 18.36L23 14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </motion.svg>
+            </motion.button>
+          )}
+
           {/* Affiche le bouton uniquement si quota non atteint */}
           {!enabled && !quotaAtteint ? (
             <>

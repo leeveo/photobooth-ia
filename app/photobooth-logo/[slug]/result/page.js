@@ -673,45 +673,47 @@ export default function Result({ params }) {
                 />
               </div>
               {/* Boutons d'action */}
-              <div className="w-full flex flex-col gap-3 mb-4">
-                {/* Bouton pour aller vers la page d'affichage */}
-                <a
-                  href={linkQR}
-                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
-                  style={{
-                    background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
-                    color: '#fff',
-                    boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
-                    letterSpacing: '0.05em',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Voir mon logo
-                </a>
-                
-                {/* Bouton de téléchargement */}
-                <a
-                  href={imageResultAI}
-                  download={`logo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
-                  className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg border-2"
-                  style={{
-                    background: '#fff',
-                    color: primaryColor,
-                    borderColor: primaryColor,
-                    boxShadow: `0 4px 16px 0 ${primaryColor}33`,
-                    letterSpacing: '0.05em',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                  </svg>
-                  Télécharger mon logo
-                </a>
-              </div>
+              {!project?.grand_public && (
+                <div className="w-full flex flex-col gap-3 mb-4">
+                  {/* Bouton pour aller vers la page d'affichage */}
+                  <a
+                    href={linkQR}
+                    className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg"
+                    style={{
+                      background: `linear-gradient(90deg, ${secondaryColor} 0%, ${primaryColor} 100%)`,
+                      color: '#fff',
+                      boxShadow: `0 4px 16px 0 ${secondaryColor}55`,
+                      letterSpacing: '0.05em',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Voir mon logo
+                  </a>
+                  
+                  {/* Bouton de téléchargement */}
+                  <a
+                    href={imageResultAI}
+                    download={`logo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
+                    className="w-full flex items-center justify-center py-4 px-8 rounded-xl font-bold text-xl transition-all shadow-lg border-2"
+                    style={{
+                      background: '#fff',
+                      color: primaryColor,
+                      borderColor: primaryColor,
+                      boxShadow: `0 4px 16px 0 ${primaryColor}33`,
+                      letterSpacing: '0.05em',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    Télécharger mon logo
+                  </a>
+                </div>
+              )}
               <p className="text-base text-white/90 mb-6 text-center">
                 Utilisez votre téléphone pour scanner ce code et récupérer votre logo
               </p>

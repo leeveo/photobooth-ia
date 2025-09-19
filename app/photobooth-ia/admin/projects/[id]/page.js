@@ -80,6 +80,7 @@ export default function ProjectDetails({ params }) {
   const [baseUrl, setBaseUrl] = useState('');
   const [showTestEmailPopup, setShowTestEmailPopup] = useState(false);
   const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [grandPublic, setGrandPublic] = useState(false);
 
   // Function to get the base URL dynamically
   useEffect(() => {
@@ -249,6 +250,13 @@ export default function ProjectDetails({ params }) {
         : true;
       console.log('Loading email_enabled from project:', project.email_enabled, '-> setting to:', emailEnabledValue);
       setEmailEnabled(emailEnabledValue);
+      
+      // Charger la valeur de grand_public depuis la table projects
+      const grandPublicValue = project.grand_public !== null && project.grand_public !== undefined 
+        ? project.grand_public 
+        : false;
+      console.log('Loading grand_public from project:', project.grand_public, '-> setting to:', grandPublicValue);
+      setGrandPublic(grandPublicValue);
     }
   }, [project]);
 
@@ -633,6 +641,24 @@ export default function ProjectDetails({ params }) {
     );
   }
 
+  // Switch pour le mode grand public
+  function GrandPublicSwitch({ checked, onChange }) {
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-orange-600' : 'bg-gray-300'}`}
+      >
+        <span className="sr-only">Activer le mode grand public</span>
+        <span
+          className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+      </button>
+    );
+  }
+
   // Ajoute une fonction pour gérer la sauvegarde depuis l'éditeur popup
   const handleSaveEmailTemplateFromEditor = async ({ subject, html_content }) => {
     setEmailTemplateLoading(true);
@@ -761,6 +787,49 @@ export default function ProjectDetails({ params }) {
       console.error('Error in handleEmailEnabledChange:', err);
       setError("Erreur lors de la mise à jour de l'activation email.");
       setEmailEnabled(!enabled);
+    }
+  };
+
+  // Fonction pour gérer le changement du mode grand public
+  const handleGrandPublicChange = async (enabled) => {
+    console.log('handleGrandPublicChange called with:', enabled);
+    setGrandPublic(enabled);
+    try {
+      console.log('Updating project grand_public to:', enabled, 'for project:', projectId);
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ grand_public: enabled })
+        .eq('id', projectId)
+        .select('grand_public');
+        
+      if (error) {
+        console.error('Supabase error updating grand_public:', error);
+        throw error;
+      }
+      
+      console.log('Update result from Supabase:', data);
+      console.log('Successfully updated grand_public in database');
+      setSuccess(enabled ? "Le mode grand public a été activé." : "Le mode grand public a été désactivé.");
+      setProject(prev => prev ? { ...prev, grand_public: enabled } : prev);
+      
+      // Forcer un refresh du projet depuis la DB pour vérifier
+      setTimeout(async () => {
+        console.log('🔄 Refreshing project data to verify grand_public update...');
+        const { data: freshProject, error: refreshError } = await supabase
+          .from('projects')
+          .select('grand_public')
+          .eq('id', projectId)
+          .single();
+          
+        if (!refreshError) {
+          console.log('Fresh data from DB - grand_public:', freshProject.grand_public);
+        }
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Error in handleGrandPublicChange:', err);
+      setError("Erreur lors de la mise à jour du mode grand public.");
+      setGrandPublic(!enabled);
     }
   };
 
@@ -1069,6 +1138,31 @@ export default function ProjectDetails({ params }) {
                   </div>
                 </div>
               )}
+              {/* Encart Mode Grand Public */}
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold mb-1">Support photobooth grand public</h3>
+                  <p className="text-gray-500 text-sm mb-2">
+                    Activez ce mode pour masquer les boutons de redirection dans la popup QR (Voir ma photo, Télécharger). Idéal pour les événements grand public où vous ne souhaitez pas rediriger vers des pages spécifiques.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <GrandPublicSwitch checked={grandPublic} onChange={handleGrandPublicChange} />
+                    <span className="text-sm text-gray-700">
+                      {grandPublic ? "Mode grand public activé" : "Mode grand public désactivé"}
+                    </span>
+                    {grandPublic && (
+                      <span className="ml-4 text-sm text-orange-600 italic font-medium">
+                        ⚠️ Les boutons de redirection sont masqués dans la popup QR
+                      </span>
+                    )}
+                    {!grandPublic && (
+                      <span className="ml-4 text-sm text-gray-500 italic">
+                        Les boutons "Voir ma photo" et "Télécharger" sont affichés normalement
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
               {/* Encart Email Template Editor avec switch et bouton édition */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="w-full">

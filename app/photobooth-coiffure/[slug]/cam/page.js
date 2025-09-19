@@ -706,6 +706,10 @@ export default function CameraCapture({ params }) {
   const [quotaLoading, setQuotaLoading] = useState(true);
   const [quotaAtteint, setQuotaAtteint] = useState(false);
   const [quotaRestant, setQuotaRestant] = useState(null);
+  
+  // États pour le système freemium
+  const [isFreePlan, setIsFreePlan] = useState(true);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Add state for redirection handling
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -1448,6 +1452,20 @@ export default function CameraCapture({ params }) {
   const [imageProcessing, setImageProcessing] = useState(false);
   
   const generateImageSwap = async () => {
+    // ✅ VÉRIFICATION DU QUOTA AVANT GÉNÉRATION
+    if (quotaAtteint) {
+      if (isFreePlan) {
+        // Redirection directe vers la page des plans pour les utilisateurs gratuits
+        alert("🎉 Vos 3 photos gratuites sont épuisées ! Choisissez un plan pour continuer.");
+        window.location.href = '/photobooth-ia/admin/choose-plan';
+        return;
+      } else {
+        // Message pour les utilisateurs payants
+        alert("Quota atteint. Veuillez renouveler votre abonnement.");
+        return;
+      }
+    }
+
     setNumProses(2);
     reset2();
     setProcessing(true);
@@ -2339,8 +2357,10 @@ const generateImageGemini = async () => {
       const adminUserId = projectData?.created_by;
 
       // Récupérer le dernier paiement pour le quota et la date de reset
-      let quotaValue = 0;
+      let quotaValue = 3; // Quota gratuit par défaut
       let quotaResetAt = null;
+      let isFreePlan = true; // Nouveau flag pour identifier les utilisateurs gratuits
+      
       if (adminUserId) {
         const { data: lastPayment } = await supabase
           .from('admin_payments')
@@ -2349,33 +2369,79 @@ const generateImageGemini = async () => {
           .order('photo_quota_reset_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+        
         if (lastPayment) {
+          // Utilisateur payant
           quotaValue = lastPayment.photo_quota || 0;
           quotaResetAt = lastPayment.photo_quota_reset_at;
+          isFreePlan = false;
+        } else {
+          // Utilisateur gratuit - quota de 3 photos depuis la création du compte
+          try {
+            const { data: adminData } = await supabase
+              .from('admin_users')
+              .select('created_at')
+              .eq('id', adminUserId)
+              .single();
+            
+            if (adminData) {
+              quotaResetAt = adminData.created_at; // Reset basé sur la création du compte
+            }
+          } catch (err) {
+            console.warn("Erreur récupération date création admin:", err);
+          }
         }
       }
 
-      // Compter les sessions pour ce projet depuis le reset
+      // Compter les sessions pour TOUS les projets de cet admin depuis le reset
       let used = 0;
       if (quotaResetAt) {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id)
-          .gte('created_at', quotaResetAt);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds)
+            .gte('created_at', quotaResetAt);
+          used = count || 0;
+        }
       } else {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds);
+          used = count || 0;
+        }
       }
 
       setQuota(quotaValue);
       setQuotaUsed(used);
       setQuotaRestant(quotaValue !== null ? Math.max(0, quotaValue - used) : null);
       setQuotaAtteint(quotaValue !== null && used >= quotaValue);
+      setIsFreePlan(isFreePlan);
+      
+      // Afficher le prompt d'upgrade si le quota gratuit est atteint
+      if (isFreePlan && quotaValue !== null && used >= quotaValue) {
+        setShowUpgradePrompt(true);
+      } else {
+        setShowUpgradePrompt(false);
+      }
     } catch (e) {
       setQuota(null);
       setQuotaUsed(null);
@@ -3996,11 +4062,41 @@ const generateImageGemini = async () => {
             {quotaLoading ? (
               <span className="text-white/70 text-sm">Chargement du quota...</span>
             ) : quotaAtteint ? (
-              <span className="text-red-400 font-bold text-lg">Quota Atteint, veuillez recharger.</span>
+              isFreePlan ? (
+                <div className="text-center">
+                  <span className="text-red-400 font-bold text-lg">✨ Quota gratuit épuisé !</span>
+                  <div className="mt-2">
+                    <button 
+                      onClick={() => window.location.href = '/photobooth-ia/admin/choose-plan'}
+                      className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all"
+                    >
+                      🚀 Débloquer plus de photos
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <span className="text-red-400 font-bold text-lg">Quota Atteint, veuillez recharger.</span>
+              )
             ) : quotaRestant !== null ? (
-              <span className="text-white/80 text-sm">
-                Quota restant : {quotaRestant} / {quota}
-              </span>
+              <div className="text-center">
+                <span className="text-white/80 text-sm">
+                  {isFreePlan ? (
+                    <>Essai gratuit : {quotaRestant} / {quota} photos restantes</>
+                  ) : (
+                    <>Quota restant : {quotaRestant} / {quota}</>
+                  )}
+                </span>
+                {isFreePlan && quotaRestant <= 1 && (
+                  <div className="mt-1">
+                    <button 
+                      onClick={() => window.location.href = '/photobooth-ia/admin/choose-plan'}
+                      className="px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-medium rounded-full shadow hover:shadow-lg transition-all"
+                    >
+                      ⭐ Upgrade pour plus de photos
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : null}
           </div>
         </motion.div>

@@ -69,6 +69,125 @@ const toDataURL = url => fetch(url)
     reader.readAsDataURL(blob)
   }));
 
+// ✅ FONCTION SPÉCIALISÉE POUR IPAD SAFARI AVEC ÉNUMÉRATION DES DISPOSITIFS
+const tryIPadSafariFrontCamera = async () => {
+  try {
+    console.log("🍎 Tentative spécialisée iPad Safari pour caméra frontale...");
+    
+    // ✅ MÉTHODE ULTRA-AGRESSIVE: Essayer TOUTES les combinaisons possibles
+    const frontCameraConfigs = [
+      // Configuration 1: Exact user
+      { video: { facingMode: { exact: "user" } } },
+      // Configuration 2: Ideal user
+      { video: { facingMode: { ideal: "user" } } },
+      // Configuration 3: Simple user
+      { video: { facingMode: "user" } },
+      // Configuration 4: User avec résolution iPad optimisée
+      { video: { facingMode: "user", width: 1280, height: 720 } },
+      // Configuration 5: User sans contraintes supplémentaires
+      { video: { facingMode: "user", width: { min: 320 }, height: { min: 240 } } },
+    ];
+    
+    // Essayer chaque configuration une par une
+    for (let i = 0; i < frontCameraConfigs.length; i++) {
+      const config = frontCameraConfigs[i];
+      console.log(`🎯 Tentative ${i + 1}/${frontCameraConfigs.length}:`, config);
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(config);
+        console.log(`✅ SUCCÈS Méthode ${i + 1}: Configuration fonctionnelle trouvée!`);
+        
+        // Vérifier que c'est bien la caméra frontale
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+        console.log("📊 Paramètres de la caméra:", settings);
+        
+        // Si c'est la caméra frontale ou si on n'a pas d'info facingMode (souvent le cas sur iPad)
+        if (!settings.facingMode || settings.facingMode === "user") {
+          console.log("✅ Caméra frontale confirmée ou probable");
+          return stream;
+        } else if (settings.facingMode === "environment") {
+          console.log("❌ C'est la caméra arrière, on ferme et continue");
+          stream.getTracks().forEach(track => track.stop());
+        }
+      } catch (err) {
+        console.log(`❌ Méthode ${i + 1} échouée:`, err.message);
+      }
+    }
+    
+    // ✅ MÉTHODE ÉNUMÉRATION EXHAUSTIVE: Tester chaque caméra disponible
+    console.log("🎯 Méthode énumération exhaustive des caméras...");
+    
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      console.log(`📹 ${videoDevices.length} caméras détectées:`, 
+        videoDevices.map(d => ({ 
+          deviceId: d.deviceId.substring(0, 20) + "...", 
+          label: d.label || "Caméra sans nom"
+        }))
+      );
+      
+      // Essayer CHAQUE caméra une par une
+      for (let i = 0; i < videoDevices.length; i++) {
+        const device = videoDevices[i];
+        const deviceLabel = device.label || `Caméra ${i + 1}`;
+        
+        console.log(`🔄 Test caméra ${i + 1}/${videoDevices.length}: ${deviceLabel}`);
+        
+        try {
+          // Essayer avec différentes configurations pour cette caméra
+          const deviceConfigs = [
+            { video: { deviceId: { exact: device.deviceId }, facingMode: "user" } },
+            { video: { deviceId: { exact: device.deviceId } } },
+            { video: { deviceId: device.deviceId, facingMode: "user" } },
+            { video: { deviceId: device.deviceId } }
+          ];
+          
+          for (const config of deviceConfigs) {
+            try {
+              console.log(`  🔄 Config:`, config);
+              const stream = await navigator.mediaDevices.getUserMedia(config);
+              
+              const track = stream.getVideoTracks()[0];
+              const settings = track.getSettings();
+              
+              console.log(`  📊 Résultat: facingMode=${settings.facingMode}, deviceId=${settings.deviceId?.substring(0, 20)}...`);
+              
+              // Préférer les caméras frontales ou celles sans facingMode déclaré
+              if (!settings.facingMode || settings.facingMode === "user" || 
+                  deviceLabel.toLowerCase().includes("front") || 
+                  deviceLabel.toLowerCase().includes("face")) {
+                console.log(`✅ SUCCÈS! Caméra frontale trouvée: ${deviceLabel}`);
+                return stream;
+              } else {
+                console.log(`❌ Caméra arrière détectée: ${deviceLabel}`);
+                stream.getTracks().forEach(track => track.stop());
+              }
+            } catch (configErr) {
+              console.log(`  ❌ Config échouée:`, configErr.message);
+            }
+          }
+        } catch (deviceErr) {
+          console.log(`❌ Échec dispositif ${deviceLabel}:`, deviceErr.message);
+        }
+      }
+      
+      console.log("❌ Aucune caméra frontale trouvée via énumération");
+      return null;
+      
+    } catch (enumerateErr) {
+      console.error("❌ Échec énumération des dispositifs:", enumerateErr);
+      return null;
+    }
+    
+  } catch (err) {
+    console.error("❌ Erreur dans tryIPadSafariFrontCamera:", err);
+    return null;
+  }
+};
+
 // Variable globale pour stocker le flux de la caméra
 let streamCam = null;
 
@@ -1836,8 +1955,10 @@ export default function CameraCapture({ params }) {
       const adminUserId = projectData?.created_by;
 
       // Récupérer le dernier paiement pour le quota et la date de reset
-      let quotaValue = 0;
+      let quotaValue = 3; // Quota gratuit par défaut
       let quotaResetAt = null;
+      let isFreePlan = true; // Nouveau flag pour identifier les utilisateurs gratuits
+      
       if (adminUserId) {
         const { data: lastPayment } = await supabase
           .from('admin_payments')
@@ -1846,27 +1967,65 @@ export default function CameraCapture({ params }) {
           .order('photo_quota_reset_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+        
         if (lastPayment) {
+          // Utilisateur payant
           quotaValue = lastPayment.photo_quota || 0;
           quotaResetAt = lastPayment.photo_quota_reset_at;
+          isFreePlan = false;
+        } else {
+          // Utilisateur gratuit - quota de 3 photos depuis la création du compte
+          try {
+            const { data: adminData } = await supabase
+              .from('admin_users')
+              .select('created_at')
+              .eq('id', adminUserId)
+              .single();
+            
+            if (adminData) {
+              quotaResetAt = adminData.created_at; // Reset basé sur la création du compte
+            }
+          } catch (err) {
+            console.warn("Erreur récupération date création admin:", err);
+          }
         }
       }
 
-      // Compter les sessions pour ce projet depuis le reset
+      // Compter les sessions pour TOUS les projets de cet admin depuis le reset
       let used = 0;
       if (quotaResetAt) {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id)
-          .gte('created_at', quotaResetAt);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds)
+            .gte('created_at', quotaResetAt);
+          used = count || 0;
+        }
       } else {
-        const { count } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('project_id', project.id);
-        used = count || 0;
+        // Récupérer tous les projets de cet admin
+        const { data: adminProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminUserId);
+        
+        const adminProjectIds = adminProjects?.map(p => p.id) || [];
+        
+        if (adminProjectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', adminProjectIds);
+          used = count || 0;
+        }
       }
 
       setQuota(quotaValue);

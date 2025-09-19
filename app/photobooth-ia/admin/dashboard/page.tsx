@@ -270,44 +270,39 @@ export default function Dashboard() {
       if (!currentAdminId) return;
 
       // 1. Récupérer le quota et la date de reset du dernier paiement
-      // Modification pour éviter d'utiliser plan_type
       const { data: lastPayment, error: paymentError } = await supabase
         .from('admin_payments')
         .select('photo_quota, photo_quota_reset_at')
         .eq('admin_user_id', currentAdminId)
-        .order('created_at', { ascending: false })  // Utilisez created_at au lieu de photo_quota_reset_at
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (paymentError || !lastPayment) {
-        setQuotaInfo({ quota: 0, used: 0, resetAt: null });
-        setPhotosThisPeriod(0);
-        return;
+      let quota = 3; // Quota gratuit par défaut
+      let resetAt = null;
+
+      if (!paymentError && lastPayment) {
+        // Utilisateur payant
+        quota = lastPayment.photo_quota || 0;
+        resetAt = lastPayment.photo_quota_reset_at;
+      } else {
+        // Utilisateur gratuit - récupérer la date de création du compte
+        try {
+          const { data: adminData } = await supabase
+            .from('admin_users')
+            .select('created_at')
+            .eq('id', currentAdminId)
+            .single();
+          
+          if (adminData) {
+            resetAt = adminData.created_at;
+          }
+        } catch (err) {
+          console.warn("Erreur récupération date création admin:", err);
+        }
       }
 
-      const quota = lastPayment.photo_quota || 0;
-      const resetAt = lastPayment.photo_quota_reset_at;
-
-      // 2. Utilise une requête SQL personnalisée pour compter les photos prises depuis le reset
-      const { data, error } = await supabase.rpc('photos_count_for_admin', {
-        admin_id: currentAdminId
-      });
-
-      // Si tu n'as pas de fonction SQL côté Supabase, tu peux utiliser la requête SQL brute :
-      // const { data, error } = await supabase
-      //   .rpc('execute_sql', {
-      //     sql: `
-      //       SELECT COUNT(s.id) AS photos_count
-      //       FROM sessions s
-      //       JOIN projects p ON s.project_id = p.id
-      //       JOIN admin_users u ON p.created_by = u.id
-      //       WHERE u.id = '${currentAdminId}'
-      //         AND s.created_at >= '${resetAt}'
-      //     `
-      //   });
-
-      // Si tu ne peux pas utiliser de RPC, tu peux faire le décompte côté JS :
-      // 1. Récupère tous les projets de l'admin
+      // 2. Compter les sessions de tous les projets de l'admin depuis le reset
       const { data: projects } = await supabase
         .from('projects')
         .select('id')
@@ -315,7 +310,6 @@ export default function Dashboard() {
 
       const projectIds = projects?.map(p => p.id) || [];
 
-      // 2. Compte les sessions pour ces projets depuis le reset
       const { count, error: countError } = await supabase
         .from('sessions')
         .select('id', { count: 'exact', head: true })
@@ -411,7 +405,9 @@ export default function Dashboard() {
               <RiPieChart2Line className="h-10 w-10 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white text-opacity-80">Quota photos</p>
+              <p className="text-sm font-medium text-white text-opacity-80">
+                {quotaInfo.quota === 3 ? 'Quota Gratuit' : 'Quota Payant'}
+              </p>
               <div className="flex items-center">
                 <span className="text-4xl font-bold">
                   {quotaInfo.quota - quotaInfo.used >= 0 ? quotaInfo.quota - quotaInfo.used : 0}
@@ -420,6 +416,11 @@ export default function Dashboard() {
                   / {quotaInfo.quota} restantes
                 </span>
               </div>
+              {quotaInfo.quota === 3 && (
+                <div className="text-xs text-white text-opacity-80 mt-1 bg-white bg-opacity-20 rounded px-2 py-1 inline-block">
+                  Plan gratuit • 3 photos offertes
+                </div>
+              )}
               <div className="text-xs text-white text-opacity-70 mt-1">
                 {quotaInfo.resetAt && (
                   <>Reset le {new Date(quotaInfo.resetAt).toLocaleDateString()}</>
