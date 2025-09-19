@@ -131,8 +131,6 @@ export default function ImagePage({ params }) {
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <a
           href={imgUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-block px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg text-lg transition-all"
         >
           Voir en grand

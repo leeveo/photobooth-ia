@@ -22,7 +22,7 @@ const PhotoboothTypeManager = ({
       case 'bommerang':
         return 'Boomerang';
       case 'logo':
-        return 'Logo Fusion';
+        return 'Fusion d\'Image';
       case 'coiffure': // <-- changé ici
         return 'Coiffure';
       default:
@@ -157,21 +157,21 @@ const PhotoboothTypeManager = ({
         return (
           <>
             <p className="mb-2">
-              Le <span className="font-semibold text-indigo-700">Photobooth Logo Fusion</span> permet d'intégrer votre logo de manière créative&nbsp;:
+              Le <span className="font-semibold text-indigo-700">Photobooth Fusion d'Image</span> permet d'ajouter des éléments virtuels avec l'intelligence artificielle&nbsp;:
             </p>
             <ul className="list-disc ml-5 text-sm space-y-1">
               <li>
-                <span className="font-semibold">Intégration de logo</span> : Fusionnez votre logo avec des images pour un branding unique.
+                <span className="font-semibold">Ajout d'objets virtuels</span> : Intégrez lunettes, sacs à main, pulls et autres accessoires sur vos portraits.
               </li>
               <li>
-                <span className="font-semibold">Personnalisation avancée</span> : Ajustez la taille, la position et les effets de votre logo.
+                <span className="font-semibold">Intelligence artificielle avancée</span> : Fusion naturelle et réaliste des éléments ajoutés.
               </li>
               <li>
-                <span className="font-semibold">Aperçu en temps réel</span> : Visualisez instantanément le rendu de votre logo sur les photos.
+                <span className="font-semibold">Personnalisation produits</span> : Testez et présentez vos produits directement sur les photos.
               </li>
             </ul>
             <div className="mt-3 text-xs text-indigo-600 italic">
-              Idéal pour les marques, les entreprises et les événements souhaitant une forte identité visuelle.
+              Idéal pour le marketing, la promotion de produits et les expériences de réalité augmentée.
             </div>
           </>
         );
@@ -617,7 +617,7 @@ const PhotoboothTypeManager = ({
                 <div className="aspect-[4/3] bg-gray-900 relative overflow-hidden rounded-t-2xl border-b border-indigo-700/40">
                   <div 
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
-                    style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/logo_fusion_sample.jpg')"}}
+                    style={{backgroundImage: "url('https://leeveostockage.s3.eu-west-3.amazonaws.com/style/logo_fusion_sample.png')"}}
                   ></div>
                   <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 via-gray-900/60 to-gray-900/90"></div>
                   
@@ -642,28 +642,31 @@ const PhotoboothTypeManager = ({
                       font-bold text-white mb-2 text-lg
                       transform transition-all duration-300 group-hover:text-red-300
                       ${project.photobooth_type === 'logo' ? 'text-red-300' : ''}
-                    `}>Logo Fusion</h5>
+                    `}>Fusion d'Image</h5>
                     
                     {/* Description détaillée */}
                     <div className="text-gray-300 text-xs mb-4 space-y-2">
-                      <p className="font-medium text-red-200">Le Photobooth Logo Fusion permet d'intégrer votre logo de manière créative :</p>
+                      <p className="font-medium text-red-200">Le Photobooth Fusion d'Image permet d'ajouter des éléments virtuels avec l'intelligence artificielle :</p>
                       <ul className="list-disc ml-4 space-y-1">
-                        <li><span className="font-medium">Intégration de logo</span> : Fusionnez votre logo avec des images pour un branding unique.</li>
-                        <li><span className="font-medium">Personnalisation avancée</span> : Ajustez la taille, la position et les effets de votre logo.</li>
-                        <li><span className="font-medium">Aperçu en temps réel</span> : Visualisez instantanément le rendu de votre logo sur les photos.</li>
+                        <li><span className="font-medium">Ajout d'objets virtuels</span> : Intégrez lunettes, sacs à main, pulls et autres accessoires sur vos portraits.</li>
+                        <li><span className="font-medium">Intelligence artificielle avancée</span> : Fusion naturelle et réaliste des éléments ajoutés.</li>
+                        <li><span className="font-medium">Personnalisation produits</span> : Testez et présentez vos produits directement sur les photos.</li>
                       </ul>
                       <div className="text-[10px] text-red-300 italic mt-2 border-l-2 border-red-400 pl-2">
-                        Idéal pour les marques, les entreprises et les événements souhaitant une forte identité visuelle.
+                        Idéal pour le marketing, la promotion de produits et les expériences de réalité augmentée.
                       </div>
                     </div>
                     
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1 mb-3">
                       <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/20 text-red-200 border border-red-400/40">
-                        logo
+                        IA
                       </span>
                       <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-orange-500/20 text-orange-200 border border-orange-400/40">
-                        branding
+                        marketing
+                      </span>
+                      <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/40">
+                        produits
                       </span>
                     </div>
                   </div>
