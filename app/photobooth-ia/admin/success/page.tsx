@@ -33,12 +33,36 @@ export default function AddonSuccessPage() {
         const packName = searchParams?.get('pack_name') || 'Pack de photos';
         
         // 1. Récupérer l'utilisateur admin actuel
-        const adminData = JSON.parse(localStorage.getItem('currentAdminId') || 'null');
+        let adminData = null;
+        try {
+          // Essayer d'abord avec admin_session (nouveau système)
+          const adminSession = localStorage.getItem('admin_session');
+          if (adminSession) {
+            console.log('Found admin_session, attempting to decode as base64');
+            const decodedSession = atob(adminSession);
+            console.log('Decoded session:', decodedSession);
+            const sessionData = JSON.parse(decodedSession);
+            console.log('Parsed session data:', sessionData);
+            adminData = sessionData.userId || sessionData.user_id;
+          }
+          
+          // Fallback vers currentAdminId (ancien système)
+          if (!adminData) {
+            console.log('No admin_session found, trying currentAdminId');
+            adminData = JSON.parse(localStorage.getItem('currentAdminId') || 'null');
+          }
+        } catch (error) {
+          console.error('Error parsing admin session:', error);
+          adminData = JSON.parse(localStorage.getItem('currentAdminId') || 'null');
+        }
+        
         if (!adminData) {
-          setError('Utilisateur non identifié');
+          setError('Utilisateur non identifié. Veuillez vous reconnecter.');
           setLoading(false);
           return;
         }
+        
+        console.log('Using admin ID:', adminData);
 
         // 2. Vérifier le quota actuel
         const { data: adminUser, error: adminError } = await supabase
