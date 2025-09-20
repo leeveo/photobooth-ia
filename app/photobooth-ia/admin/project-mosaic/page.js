@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import Image from 'next/image';
+import { useEffect, useState, useRef } from 'react';
+import Image from "next/image";
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useQRCode } from 'next-qrcode';
 
@@ -14,17 +14,20 @@ export default function ProjectMosaic() {
   const wantsFullscreen = searchParams.get('fullscreen') === 'true';
   const { Canvas } = useQRCode();
   
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showFullscreenButton, setShowFullscreenButton] = useState(false);
-  const [projectDetails, setProjectDetails] = useState(null);
+  // États existants du slider
   const [projectImages, setProjectImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastRefresh, setLastRefresh] = useState(new Date()); // Pour suivre le dernier rafraîchissement
-  const [displayLimit, setDisplayLimit] = useState(20); // Limite d'affichage réduite pour éviter les timeouts
-  const [hasMoreImages, setHasMoreImages] = useState(false); // Indique s'il y a plus d'images à charger
-  const [lastKnownCount, setLastKnownCount] = useState(0); // Cache du nombre total d'images
-  const [loadingMore, setLoadingMore] = useState(false); // État pour le chargement de plus d'images
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0); // Pour le slider
+  const [singleImage, setSingleImage] = useState(null); // Pour le mode slider
+  const [autoPlay, setAutoPlay] = useState(false); // Pour l'auto-play du slider
+
+  // Nouveaux états pour les fonctionnalités avancées
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFullscreenButton, setShowFullscreenButton] = useState(false);
+  const [projectDetails, setProjectDetails] = useState(null);
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -35,33 +38,153 @@ export default function ProjectMosaic() {
     qr_description: 'Retrouvez toutes les photos ici',
     qr_position: 'center'
   });
-  
+
   const supabase = createClientComponentClient();
   const realtimeChannel = useRef(null);
-  const refreshInterval = useRef(null); // Référence pour l'intervalle de rafraîchissement
-  
-  // Add this to display the mosaic URL
+  const IMAGES_PER_PAGE = 18; // 6 colonnes x 3 lignes = 18 images
+  const HUGE_PROJECT_LIMIT = 6; // Pour le gros projet, seulement 6 images
+
+  // URL de la mosaïque pour le QR code
   const mosaicUrl = typeof window !== 'undefined' ? 
     `${window.location.origin}/photobooth-ia/admin/project-mosaic?projectId=${projectId}` : '';
   
-  // Background style based on settings (utilise bg_image_url ou bg_color de mosaic_settings)
+  // Style de fond basé sur les paramètres
   const getBackgroundStyle = () => {
     if (mosaicSettings.bg_image_url) {
       return {
         backgroundImage: `url(${mosaicSettings.bg_image_url})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundColor: mosaicSettings.bg_color // fallback si image non chargée
+        backgroundColor: mosaicSettings.bg_color // Fallback color
       };
     }
     return { backgroundColor: mosaicSettings.bg_color };
   };
 
-  // Charger les détails du projet et les paramètres de mosaïque à chaque affichage
+  const loadSessionImages = async (page = 1, retryCount = 0) => {
+    if (!projectId) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log(`Chargement page ${page} pour projet:`, projectId, retryCount > 0 ? `(tentative ${retryCount + 1})` : '');
+
+      const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
+      
+      if (isHugeProject) {
+        // Mode slider : charger une seule image à la fois
+        const result = await supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at')
+          .eq('project_id', projectId)
+          .is('moderation', null)
+          .not('result_s3_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .range(currentImageIndex, currentImageIndex)
+          .single();
+
+        if (result.error) throw result.error;
+
+        if (result.data) {
+          const image = {
+            id: result.data.id,
+            image_url: result.data.result_s3_url || result.data.result_image_url,
+            created_at: result.data.created_at
+          };
+          setSingleImage(image);
+          console.log(`Image ${currentImageIndex + 1} chargée pour gros projet`);
+        }
+        
+      } else {
+        // Mode normal : grille 6x3
+        const limit = 18;
+        const offset = (page - 1) * limit;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        const result = await supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at')
+          .eq('project_id', projectId)
+          .is('moderation', null)
+          .not('result_s3_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1)
+          .abortSignal(controller.signal);
+
+        clearTimeout(timeoutId);
+
+        if (result.error) throw result.error;
+
+        const sessions = result.data || [];
+        const images = sessions.map(session => ({
+          id: session.id,
+          image_url: session.result_s3_url || session.result_image_url,
+          created_at: session.created_at
+        }));
+
+        setProjectImages(images);
+        setCurrentPage(page);
+        
+        const hasMore = sessions.length === limit;
+        setTotalPages(hasMore ? page + 1 : page);
+        
+        console.log(`Page ${page} chargée: ${images.length} images (limite: ${limit})`);
+      }
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      
+      const maxRetries = isHugeProject ? 3 : 2;
+      if (retryCount < maxRetries && (error.message.includes('500') || error.message.includes('timeout') || error.name === 'AbortError')) {
+        const retryDelay = isHugeProject ? 5000 : 2000;
+        console.log(`Retry dans ${retryDelay}ms... (tentative ${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          loadSessionImages(page, retryCount + 1);
+        }, retryDelay);
+        return;
+      }
+      
+      setError(`Erreur de chargement: ${error.message}${retryCount > 0 ? ` (après ${retryCount + 1} tentatives)` : ''}`);
+      if (isHugeProject) {
+        setSingleImage(null);
+      } else {
+        setProjectImages([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1) {
+      loadSessionImages(newPage);
+    }
+  };
+
+  // Navigation pour le mode slider
+  const goToPreviousImage = () => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(prev => prev - 1);
+    }
+  };
+
+  const goToNextImage = () => {
+    setCurrentImageIndex(prev => prev + 1);
+  };
+
+  // Basculer l'auto-play
+  const toggleAutoPlay = () => {
+    setAutoPlay(prev => !prev);
+  };
+
+  // Charger les détails du projet et les paramètres de mosaïque
   useEffect(() => {
     if (!projectId) return;
-
-    async function loadProjectDataAndSettings() {
+    
+    async function loadProjectData() {
       try {
         // Fetch project details
         const { data: projectData, error: projectError } = await supabase
@@ -69,22 +192,20 @@ export default function ProjectMosaic() {
           .select('id, name, slug, description')
           .eq('id', projectId)
           .single();
-
+          
         if (projectError) throw projectError;
+        
         setProjectDetails(projectData);
-
-        // Fetch mosaic settings à chaque affichage (toujours frais)
+        
+        // Fetch mosaic settings
         const { data: settingsData, error: settingsError } = await supabase
           .from('mosaic_settings')
           .select('*')
           .eq('project_id', projectId)
-          .maybeSingle();
-
-        if (settingsError) {
-          console.error('Erreur lors du chargement des paramètres de mosaïque:', settingsError);
-        }
-
-        if (settingsData) {
+          .single();
+          
+        if (!settingsError && settingsData) {
+          console.log("Loaded mosaic settings:", settingsData);
           setMosaicSettings({
             bg_color: settingsData.bg_color || '#000000',
             bg_image_url: settingsData.bg_image_url || '',
@@ -96,315 +217,22 @@ export default function ProjectMosaic() {
             qr_position: settingsData.qr_position || 'center'
           });
         } else {
+          // Use project name as default title if no settings found
           setMosaicSettings(prev => ({
             ...prev,
             title: projectData.name || ''
           }));
         }
       } catch (err) {
-        console.error('Erreur lors du chargement du projet ou des paramètres:', err);
+        console.error('Erreur lors du chargement du projet:', err);
         setError('Impossible de charger les détails du projet');
       }
     }
-
-    loadProjectDataAndSettings();
-  }, [projectId, supabase, /* Ajoute un trigger sur reload si besoin */]);
-  
-  // Charger les paramètres de mosaïque à chaque changement de projectId
-  useEffect(() => {
-    if (!projectId) return;
-
-    async function loadMosaicSettingsAndProject() {
-      try {
-        // Charger les paramètres de mosaïque
-        const { data: settingsData } = await supabase
-          .from('mosaic_settings')
-          .select('*')
-          .eq('project_id', projectId)
-          .maybeSingle();
-
-        // Charger les infos projet (pour fallback du titre)
-        const { data: projectData } = await supabase
-          .from('projects')
-          .select('id, name, slug, description')
-          .eq('id', projectId)
-          .single();
-
-        setMosaicSettings({
-          bg_color: settingsData?.bg_color || '#000000',
-          bg_image_url: settingsData?.bg_image_url || '',
-          title: settingsData?.title || projectData?.name || '',
-          description: settingsData?.description || '',
-          show_qr_code: settingsData?.show_qr_code || false,
-          qr_title: settingsData?.qr_title || 'Scannez-moi',
-          qr_description: settingsData?.qr_description || 'Retrouvez toutes les photos ici',
-          qr_position: settingsData?.qr_position || 'center'
-        });
-      } catch (err) {
-        setError('Impossible de charger les paramètres de la mosaïque');
-      }
-    }
-
-    loadMosaicSettingsAndProject();
+    
+    loadProjectData();
   }, [projectId, supabase]);
-  
-  // Fonction pour charger les images (extraite pour réutilisation)
-  const loadSessionImages = async (limit = displayLimit, skipCountCheck = false) => {
-    if (!projectId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Skip count check pour les gros projets ou si explicitement demandé
-      let count = lastKnownCount;
-      if (!skipCountCheck) {
-        try {
-          // Timeout sur le comptage pour éviter les blocages
-          const { count: currentCount, error: countError } = await Promise.race([
-            supabase
-              .from('sessions')
-              .select('*', { count: 'exact', head: true })
-              .eq('project_id', projectId)
-              .is('moderation', null),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('COUNT_TIMEOUT')), 5000)
-            )
-          ]);
-        
-          if (countError) {
-            console.warn('Erreur lors du comptage, on continue sans comptage:', countError.message);
-          } else {
-            count = currentCount || 0;
-            setLastKnownCount(count);
-          }
-        } catch (timeoutError) {
-          console.warn('Timeout sur le comptage, on continue avec un chargement direct');
-          skipCountCheck = true; // Forcer le chargement direct
-        }
-        
-        // Si le nombre d'images n'a pas changé et qu'on ne charge pas plus d'images, ne pas recharger
-        if (count === lastKnownCount && limit === displayLimit && projectImages.length > 0 && !skipCountCheck) {
-          console.log('Aucune nouvelle image détectée, pas de rechargement nécessaire');
-          setLoading(false);
-          return;
-        }
-      }
 
-      // Chargement avec timeout et limite adaptative
-      const adaptiveLimit = Math.min(limit, 15); // Limite maximale de sécurité
-      console.log(`Chargement de ${adaptiveLimit} images (limite demandée: ${limit})`);
-
-      const { data: sessionsData, error: sessionsError } = await Promise.race([
-        supabase
-          .from('sessions')
-          .select('id, result_s3_url, result_image_url, created_at, moderation')
-          .eq('project_id', projectId)
-          .is('moderation', null)  // Ne sélectionner que les images non modérées
-          .order('created_at', { ascending: false }) // Tri décroissant pour avoir les plus récentes en premier
-          .limit(adaptiveLimit), // Utiliser la limite adaptative
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('QUERY_TIMEOUT')), 10000)
-        )
-      ]);
-
-      if (sessionsError) {
-        // Gestion spéciale des timeouts
-        if (sessionsError.message === 'QUERY_TIMEOUT') {
-          console.warn('Timeout sur la requête principale, essai avec une limite encore plus faible');
-          // Retry avec une limite très faible
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('sessions')
-            .select('id, result_s3_url, result_image_url, created_at, moderation')
-            .eq('project_id', projectId)
-            .is('moderation', null)
-            .order('created_at', { ascending: false })
-            .limit(5); // Limite de sécurité extrême
-          
-          if (fallbackError) {
-            console.error('Erreur même avec limite de sécurité:', fallbackError);
-            setError(`Projet trop volumineux. Essayez de rafraîchir la page ou contactez l'administrateur.`);
-            setProjectImages([]);
-            setHasMoreImages(false);
-          } else {
-            console.log('Succès avec limite de sécurité, 5 images chargées');
-            const images = (fallbackData || [])
-              .map(session => ({
-                id: session.id,
-                image_url: session.result_s3_url || session.result_image_url,
-                created_at: session.created_at,
-                metadata: {
-                  fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-                  size: null
-                }
-              }))
-              .filter(img => img.image_url);
-            
-            setProjectImages(images);
-            setHasMoreImages(true); // Probablement plus d'images disponibles
-            setLastRefresh(new Date());
-          }
-        } else {
-          console.error('Erreur lors du chargement des images:', sessionsError);
-          setError(`Erreur de base de données: ${sessionsError.message}`);
-          setProjectImages([]);
-          setHasMoreImages(false);
-        }
-      } else {
-        const images = (sessionsData || [])
-          .map(session => ({
-            id: session.id,
-            image_url: session.result_s3_url || session.result_image_url,
-            created_at: session.created_at,
-            metadata: {
-              fileName: session.result_s3_url ? session.result_s3_url.split('/').pop() : '',
-              size: null
-            }
-          }))
-          .filter(img => img.image_url); // Vérifier que l'image a une URL valide
-      
-        setProjectImages(images);
-        setHasMoreImages(count > limit);
-        setLastRefresh(new Date());
-        console.log(`Rafraîchissement: ${images.length} images chargées pour la mosaïque (total: ${count})`);
-      }
-    } catch (err) {
-      console.error('Erreur de chargement des images:', err);
-      setProjectImages([]);
-      setHasMoreImages(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Charger les images du projet initialement et configurer le rafraîchissement automatique
-  useEffect(() => {
-    if (!projectId) return;
-
-    // Chargement initial
-    loadSessionImages();
-
-    // Configurer le rafraîchissement automatique toutes les 60 secondes (au lieu de 30)
-    refreshInterval.current = setInterval(() => {
-      console.log('Rafraîchissement automatique de la mosaïque...');
-      loadSessionImages(displayLimit);
-    }, 60000); // 60 secondes
-
-    // Nettoyage lors du démontage du composant
-    return () => {
-      if (refreshInterval.current) {
-        clearInterval(refreshInterval.current);
-      }
-    };
-  }, [projectId, supabase]);
-  
-  // Animation variants avec effet image par image amélioré
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1, // Délai entre chaque image
-        delayChildren: 0.2    // Délai avant de commencer l'animation
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { 
-      opacity: 0, 
-      scale: 0.8,
-      y: 30,
-      rotateY: -15 
-    },
-    show: { 
-      opacity: 1, 
-      scale: 1,
-      y: 0,
-      rotateY: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-        duration: 0.6
-      }
-    }
-  };
-  
-  // Function to determine QR code position in the grid
-  const getQRCodePosition = () => {
-    const position = mosaicSettings.qr_position || 'center';
-    
-    // Default grid position is center (translate to grid index)
-    switch (position) {
-      case 'center': return Math.floor(projectImages.length / 2); // Middle of images
-      case 'top-left': return 0; // First position
-      case 'top-right': return 4; // Top right corner (assuming grid width of ~5)
-      case 'bottom-left': return Math.max(0, projectImages.length - 10); // Near bottom left
-      case 'bottom-right': return Math.max(0, projectImages.length - 1); // Last position
-      default: return Math.floor(projectImages.length / 2);
-    }
-  };
-  
-  // Create mosaic grid items including the QR code at the specified position
-  const createMosaicItems = () => {
-    if (!projectImages.length) return [];
-    
-    const items = [...projectImages];
-    
-    // If QR code is enabled, insert it at the specified position
-    if (mosaicSettings.show_qr_code) {
-      const position = getQRCodePosition();
-      
-      // Creating a QR "image" object that will render differently
-      const qrCodeItem = {
-        id: 'qr-code',
-        isQRCode: true,
-        metadata: { fileName: 'QR Code' }
-      };
-      
-      // Insert QR code at the determined position
-      items.splice(position, 0, qrCodeItem);
-    }
-    
-    return items;
-  };
-
-  // Fonction pour charger plus d'images
-  const loadMoreImages = async () => {
-    setLoadingMore(true);
-    const newLimit = displayLimit + 50;
-    setDisplayLimit(newLimit);
-    await loadSessionImages(newLimit, true); // Skip count check car on veut forcer le chargement
-    setLoadingMore(false);
-  };
-
-  // Gérer le mode plein écran
-  useEffect(() => {
-    if (wantsFullscreen) {
-      // We'll create a button to prompt the user
-      setShowFullscreenButton(true);
-      
-      // Don't try to auto-enter fullscreen mode, 
-      // as browsers require a user gesture
-      console.log("Fullscreen mode requested via URL, showing button");
-    }
-  }, [wantsFullscreen]);
-
-  // Ajouter une détection de la touche Échap pour quitter le plein écran
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && document.fullscreenElement) {
-        console.log("Touche Échap détectée - quitter le plein écran");
-        // Ne rien faire, laisser le navigateur gérer la sortie du mode plein écran
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Update the fullscreen toggle function to handle layout properly
+  // Gestion du mode plein écran
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       // Find the best element to make fullscreen
@@ -424,8 +252,28 @@ export default function ProjectMosaic() {
       }
     }
   };
-  
-  // Check if fullscreen is wanted and browser supports it
+
+  // Gérer le mode plein écran
+  useEffect(() => {
+    if (wantsFullscreen) {
+      setShowFullscreenButton(true);
+      console.log("Fullscreen mode requested via URL, showing button");
+    }
+  }, [wantsFullscreen]);
+
+  // Détection de la touche Échap pour quitter le plein écran
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        console.log("Touche Échap détectée - quitter le plein écran");
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Check if fullscreen is supported and listen for changes
   useEffect(() => {
     const fullscreenSupported = document.documentElement.requestFullscreen || 
                                document.documentElement.mozRequestFullScreen || 
@@ -442,20 +290,121 @@ export default function ProjectMosaic() {
     document.addEventListener('fullscreenchange', onFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
-  
-  // Show a prominent fullscreen button if requested
-  useEffect(() => {
-    if (wantsFullscreen) {
-      // Highlight the fullscreen button if it was requested via URL parameter
-      setShowFullscreenButton(true);
+
+  // Fonction pour déterminer la position du QR code dans la grille
+  const getQRCodePosition = () => {
+    const position = mosaicSettings.qr_position || 'center';
+    
+    switch (position) {
+      case 'center': return Math.floor(projectImages.length / 2);
+      case 'top-left': return 0;
+      case 'top-right': return 4;
+      case 'bottom-left': return Math.max(0, projectImages.length - 10);
+      case 'bottom-right': return Math.max(0, projectImages.length - 1);
+      default: return Math.floor(projectImages.length / 2);
     }
-  }, [wantsFullscreen]);
+  };
+  
+  // Créer les éléments de la mosaïque incluant le QR code
+  const createMosaicItems = () => {
+    if (!projectImages.length) return [];
+    
+    const items = [...projectImages];
+    
+    // Si le QR code est activé et qu'on n'est pas en mode gros projet, l'insérer
+    if (mosaicSettings.show_qr_code && projectId !== 'b492a7b4-de73-4401-aa53-d98be285d07b') {
+      const position = getQRCodePosition();
+      
+      const qrCodeItem = {
+        id: 'qr-code',
+        isQRCode: true,
+        metadata: { fileName: 'QR Code' }
+      };
+      
+      items.splice(position, 0, qrCodeItem);
+    }
+    
+    return items;
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      setCurrentImageIndex(0);
+      setSingleImage(null);
+      setProjectImages([]);
+      setCurrentPage(1);
+      setTotalPages(1);
+      setAutoPlay(false); // Réinitialiser l'auto-play
+      loadSessionImages();
+    }
+  }, [projectId]);
+
+  // Charger la nouvelle image quand l'index change (mode slider)
+  useEffect(() => {
+    const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
+    if (isHugeProject && projectId && currentImageIndex >= 0) {
+      loadSessionImages();
+    }
+  }, [currentImageIndex]);
+
+  // Auto-play pour le slider (10 secondes)
+  useEffect(() => {
+    const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
+    
+    if (isHugeProject && autoPlay && !loading) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex(prev => prev + 1);
+      }, 10000); // 10 secondes
+
+      return () => clearInterval(interval);
+    }
+  }, [autoPlay, loading, projectId]);
+
+  if (loading) {
+    const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
+    return (
+      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center bg-white/10 backdrop-blur-sm rounded-lg p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white text-lg">
+              {isHugeProject ? 'Chargement optimisé...' : 'Chargement...'}
+            </p>
+            {isHugeProject && (
+              <p className="text-sm text-white/80 mt-2">
+                Mode slider détecté - Patience recommandée
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center max-w-md mx-auto p-6 bg-white/10 backdrop-blur-sm rounded-lg">
+            <h2 className="text-xl font-semibold text-white mb-2">Erreur</h2>
+            <p className="text-white/90 mb-4">{error}</p>
+            <button 
+              onClick={() => loadSessionImages(currentPage)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              Reessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
 
   return (
     <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
-      {/* Affichage des informations de la mosaïque */}
-  
-      {/* Fullscreen Button - Always visible when supported */}
+      {/* Bouton plein écran - Toujours visible quand supporté */}
       {showFullscreenButton && (
         <motion.button
           onClick={toggleFullscreen}
@@ -486,7 +435,7 @@ export default function ProjectMosaic() {
         </motion.button>
       )}
       
-      {/* Si l'utilisateur vient via "fullscreen=true", montrer un message d'aide */}
+      {/* Message d'aide pour le mode plein écran */}
       {wantsFullscreen && !isFullscreen && (
         <motion.div
           className="fixed top-16 inset-x-0 flex justify-center z-30"
@@ -504,336 +453,235 @@ export default function ProjectMosaic() {
         </motion.div>
       )}
 
-      {/* Indicateur de dernier rafraîchissement et nombre d'images */}
-      {!loading && projectImages.length > 0 && (
-        <motion.div
-          className="fixed bottom-4 left-4 bg-black bg-opacity-50 text-white text-xs px-3 py-1 rounded-full z-30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          <div>Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}</div>
-          <div className="text-center">
-            {projectImages.length} images affichées{hasMoreImages && ' (plus disponibles)'}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Affichage du QR code de la mosaïque si activé dans mosaic_settings */}
-    
-      {/* Title and description */}
+      {/* Titre et description personnalisés */}
       {(mosaicSettings.title || mosaicSettings.description) && (
         <div className="max-w-4xl mx-auto mb-8 text-center">
           {mosaicSettings.title && (
-            <motion.h1 
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow"
-              key={lastRefresh.getTime()} // Force re-animation lors du rafraîchissement
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
               {mosaicSettings.title}
-            </motion.h1>
+            </h1>
           )}
           
           {mosaicSettings.description && (
-            <p className="text-base sm:text-lg text-white/90 drop-shadow">
+            <p className="text-base sm:text-lg text-white/90">
               {mosaicSettings.description}
             </p>
           )}
         </div>
       )}
 
-      {error && (
-        <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-4xl mx-auto">
+      {/* En-tête admin pour les gros projets */}
+      {isHugeProject && (
+        <div className="bg-white/10 backdrop-blur-sm shadow-sm border-b mb-6 rounded-lg">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-white">Mode slider optimisé</h1>
+                <p className="text-sm text-white/80 mt-1">
+                  Image ${currentImageIndex + 1} - Navigation une par une${autoPlay ? ' - Auto-play activé' : ''}
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={toggleAutoPlay}
+                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                    autoPlay 
+                      ? 'bg-green-500 text-white hover:bg-green-600' 
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {autoPlay ? '⏸️ Pause' : '▶️ Auto-play (10s)'}
+                </button>
+                <button
+                  onClick={() => loadSessionImages()}
+                  disabled={loading}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                >
+                  Actualiser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gestion des erreurs avec style personnalisé */}
+      {error && !loading && (
+        <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 bg-opacity-90 rounded-lg max-w-4xl mx-auto">
           {error}
         </div>
       )}
-    
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-16">
-          {/* Loader principal avec animation sophistiquée */}
-          <div className="relative">
-            {/* Cercles concentriques animés */}
-            <motion.div
-              className="absolute rounded-full border-4 border-blue-400/30"
-              style={{ width: 80, height: 80 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              className="absolute rounded-full border-4 border-purple-400/50"
-              style={{ width: 60, height: 60, top: 10, left: 10 }}
-              animate={{ rotate: -360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              className="absolute rounded-full border-4 border-pink-400/70"
-              style={{ width: 40, height: 40, top: 20, left: 20 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            />
-            
-            {/* Centre pulsant avec icône */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-full flex items-center justify-center"
-              style={{ width: 20, height: 20 }}
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-              </svg>
-            </motion.div>
-          </div>
-          
-          {/* Texte de chargement avec animation */}
-          <motion.div
-            className="mt-8 text-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <motion.h3
-              className="text-white text-xl font-medium mb-3"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              Chargement de la mosaïque...
-            </motion.h3>
-            
-            {/* Points de chargement animés */}
-            <div className="flex space-x-2 justify-center">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-3 h-3 bg-white rounded-full"
-                  animate={{
-                    y: [0, -10, 0],
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    duration: 0.8,
-                    repeat: Infinity,
-                    delay: i * 0.2
-                  }}
-                />
-              ))}
-            </div>
-          </motion.div>
 
-          {/* Grille de simulation de mosaïque */}
-          <motion.div
-            className="mt-8 grid grid-cols-6 gap-2"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            {Array.from({ length: 18 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="w-8 h-8 rounded-lg"
-                style={{
-                  background: `linear-gradient(45deg, 
-                    ${i % 3 === 0 ? 'rgb(59, 130, 246)' : i % 3 === 1 ? 'rgb(147, 51, 234)' : 'rgb(236, 72, 153)'}, 
-                    rgba(255, 255, 255, 0.1))`
-                }}
-                animate={{
-                  opacity: [0.3, 1, 0.3],
-                  scale: [0.8, 1, 0.8]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: (i * 0.1) % 1.5
-                }}
-              />
-            ))}
-          </motion.div>
-
-          {/* Barre de progression stylée */}
-          <motion.div
-            className="mt-6 w-64 h-2 bg-white/20 rounded-full overflow-hidden"
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 256 }}
-            transition={{ delay: 1 }}
-          >
-            <motion.div
-              className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 rounded-full"
-              animate={{
-                x: ['-100%', '100%'],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.div>
-
-          {/* Message informatif */}
-          <motion.p
-            className="text-white/80 text-sm mt-4 max-w-md text-center leading-relaxed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-          >
-            Récupération des {displayLimit} dernières photos du projet...
-          </motion.p>
-        </div>
-      ) : projectImages.length === 0 ? (
-        <div className="bg-white/10 backdrop-blur-sm shadow rounded-lg p-12 text-center text-white max-w-4xl mx-auto">
-          Aucune image trouvée pour ce projet
-        </div>
-      ) : (
-        <div className="mx-auto max-w-8xl">
-          <motion.div 
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            key={lastRefresh.getTime()} // Force re-animation lors du rafraîchissement
-          >
-            {createMosaicItems().map((item, index) => (
-              <motion.div
-                key={item.id || `mosaic-item-${index}`}
-                className="aspect-square w-full"
-                variants={itemVariants}
-                whileHover={{ 
-                  scale: 1.05,
-                  transition: { duration: 0.2 }
-                }}
-                style={{
-                  perspective: "1000px"
-                }}
+      {/* Contenu principal */}
+      <div className="max-w-8xl mx-auto">
+        {isHugeProject ? (
+          // Mode slider pour gros projets
+          <div className="flex flex-col items-center">
+            {singleImage ? (
+              <motion.div 
+                className="relative max-w-2xl w-full"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
               >
-                {item.isQRCode ? (
-                  // Render QR code avec animation d'entrée
-                  <motion.div 
-                    className="w-full h-full bg-white flex flex-col items-center justify-center p-4 rounded-lg shadow-lg"
-                    initial={{ rotateY: 180, opacity: 0 }}
-                    animate={{ rotateY: 0, opacity: 1 }}
-                    transition={{ 
-                      delay: index * 0.1,
-                      duration: 0.8,
-                      type: "spring"
+                <div className="aspect-square relative bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden">
+                  <Image
+                    src={singleImage.image_url}
+                    alt={`Photo ${currentImageIndex + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 90vw, 600px"
+                  />
+                </div>
+                
+                {/* Navigation slider avec style adapté */}
+                <div className="flex justify-between items-center mt-6">
+                  <button
+                    onClick={goToPreviousImage}
+                    disabled={currentImageIndex <= 0 || loading}
+                    className="flex items-center px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm transition-all"
+                  >
+                    ← Précédente
+                  </button>
+                  
+                  <div className="flex items-center space-x-4">
+                    <span className="px-4 py-2 bg-blue-500 text-white rounded-lg backdrop-blur-sm">
+                      Image {currentImageIndex + 1}
+                    </span>
+                    {autoPlay && (
+                      <div className="flex items-center text-green-400 text-sm bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                        Auto-play
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={goToNextImage}
+                    disabled={loading}
+                    className="flex items-center px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 disabled:opacity-50 backdrop-blur-sm transition-all"
+                  >
+                    Suivante →
+                  </button>
+                </div>
+                
+                <p className="text-center text-sm text-white/80 mt-4 bg-black/20 backdrop-blur-sm rounded-lg p-3">
+                  Mode optimisé pour gros projet - Une image à la fois
+                  {autoPlay && <span className="block text-green-400 mt-1">⏰ Changement automatique toutes les 10 secondes</span>}
+                </p>
+              </motion.div>
+            ) : (
+              <div className="text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg">
+                <h3 className="text-xl font-semibold text-white mb-2">Aucune image trouvée</h3>
+                <p className="text-white/80">Ce projet ne contient pas d'images ou l'index est incorrect.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          // Mode grille normal avec QR code intégré
+          <>
+            {projectImages.length === 0 ? (
+              <div className="bg-white/10 backdrop-blur-sm shadow rounded-lg p-12 text-center text-white max-w-4xl mx-auto">
+                Aucune image trouvée pour ce projet
+              </div>
+            ) : (
+              <motion.div 
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: { 
+                    opacity: 1,
+                    transition: { staggerChildren: 0.05 }
+                  }
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {createMosaicItems().map((item, index) => (
+                  <motion.div
+                    key={item.id || `mosaic-item-${index}`}
+                    className="aspect-square w-full"
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.95 },
+                      show: { opacity: 1, scale: 1 }
                     }}
                   >
-                    <h3 className="text-lg font-medium text-gray-900 mb-2 text-center">
-                      {mosaicSettings.qr_title}
-                    </h3>
-                    <div className="flex justify-center mb-2">
-                      <Canvas
-                        text={mosaicUrl}
-                        options={{
-                          level: 'M',
-                          margin: 3,
-                          scale: 4,
-                          width: 150,
-                          color: {
-                            dark: '#000000',
-                            light: '#ffffff',
-                          },
-                        }}
-                      />
-                    </div>
-                    <div className="text-xs text-gray-500 mb-1 text-center truncate w-full px-2">
-                      {mosaicUrl.split('//')[1]?.substring(0, 30)}...
-                    </div>
-                    <div className="text-sm text-gray-700 text-center px-2">
-                      {mosaicSettings.qr_description}
-                    </div>
-                  </motion.div>
-                ) : (
-                  // Render image avec effet de flip et glow
-                  <motion.div 
-                    className="relative w-full h-full rounded-lg overflow-hidden shadow-lg"
-                    initial={{ rotateY: 90, opacity: 0 }}
-                    animate={{ rotateY: 0, opacity: 1 }}
-                    transition={{ 
-                      delay: index * 0.1,
-                      duration: 0.6,
-                      type: "spring",
-                      stiffness: 100
-                    }}
-                    whileHover={{
-                      boxShadow: "0 0 25px rgba(255, 255, 255, 0.3)",
-                      transition: { duration: 0.3 }
-                    }}
-                  >
-                    <Image
-                      src={item.image_url}
-                      alt={item.metadata?.fileName || 'Image du projet'}
-                      fill
-                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                      className="object-cover transition-transform duration-300 hover:scale-110"
-                      loading="lazy" // Lazy loading natif
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/placeholder-image.png';
-                      }}
-                    />
-                    {/* Overlay avec effet de nouveauté pour les premières images */}
-                    {index < 3 && (
-                      <motion.div
-                        className="absolute top-2 right-2 bg-gradient-to-r from-green-400 to-blue-500 text-white text-xs px-2 py-1 rounded-full shadow-lg"
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ 
-                          delay: (index * 0.1) + 0.5,
-                          type: "spring",
-                          stiffness: 200
-                        }}
-                      >
-                        Nouveau
-                      </motion.div>
+                    {item.isQRCode ? (
+                      // Rendu du QR code
+                      <div className="w-full h-full bg-white flex flex-col items-center justify-center p-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2 text-center">
+                          {mosaicSettings.qr_title}
+                        </h3>
+                        <div className="flex justify-center mb-2">
+                          <Canvas
+                            text={mosaicUrl}
+                            options={{
+                              level: 'M',
+                              margin: 3,
+                              scale: 4,
+                              width: 150,
+                              color: {
+                                dark: '#000000',
+                                light: '#ffffff',
+                              },
+                            }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mb-1 text-center truncate w-full px-2">
+                          {mosaicUrl.split('//')[1]?.substring(0, 30)}...
+                        </div>
+                        <div className="text-sm text-gray-700 text-center px-2">
+                          {mosaicSettings.qr_description}
+                        </div>
+                      </div>
+                    ) : (
+                      // Rendu d'image
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={item.image_url}
+                          alt={item.metadata?.fileName || 'Image du projet'}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/placeholder-image.png';
+                          }}
+                        />
+                      </div>
                     )}
                   </motion.div>
-                )}
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
+            )}
 
-          {/* Bouton "Charger plus" si il y a plus d'images disponibles */}
-          {hasMoreImages && !loading && (
-            <motion.div
-              className="flex justify-center mt-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <button
-                onClick={loadMoreImages}
-                disabled={loadingMore}
-                className={`px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-3 ${
-                  loadingMore ? 'opacity-75 cursor-not-allowed' : 'hover:shadow-xl'
-                }`}
-              >
-                {loadingMore ? (
-                  <>
-                    {/* Mini loader pour le bouton */}
-                    <motion.div
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <span>Chargement...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Charger plus d'images</span>
-                  </>
-                )}
-              </button>
-            </motion.div>
-          )}
-        </div>
-      )}
+            {/* Navigation pagination stylisée pour projets normaux */}
+            {projectImages.length > 0 && !isHugeProject && (
+              <div className="flex justify-center items-center mt-8 space-x-4">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="px-4 py-2 bg-white/20 text-white rounded hover:bg-white/30 disabled:opacity-50 backdrop-blur-sm transition-all"
+                >
+                  ← Précédent
+                </button>
+                
+                <span className="px-4 py-2 bg-blue-500 text-white rounded backdrop-blur-sm">
+                  Page {currentPage}
+                </span>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={projectImages.length < IMAGES_PER_PAGE}
+                  className="px-4 py-2 bg-white/20 text-white rounded hover:bg-white/30 disabled:opacity-50 backdrop-blur-sm transition-all"
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

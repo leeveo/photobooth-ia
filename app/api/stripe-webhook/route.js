@@ -16,15 +16,26 @@ function getQuotaFromPriceId(priceId) {
 
 export async function POST(request) {
   console.log('[WEBHOOK] Stripe webhook endpoint called');
-  const sig = request.headers.get('stripe-signature');
-  const buf = Buffer.from(await request.arrayBuffer());
-
+  
+  // Pour développement local : bypasser la vérification de signature
+  const isLocal = process.env.NODE_ENV === 'development';
+  
   let event;
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    console.log('[WEBHOOK] Event received:', event.type);
+    if (isLocal) {
+      // Mode développement : parse directement le JSON
+      const body = await request.text();
+      event = JSON.parse(body);
+      console.log('[WEBHOOK] Event received (dev mode):', event.type);
+    } else {
+      // Mode production : vérification de signature normale
+      const sig = request.headers.get('stripe-signature');
+      const buf = Buffer.from(await request.arrayBuffer());
+      event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      console.log('[WEBHOOK] Event received (prod mode):', event.type);
+    }
   } catch (err) {
-    console.error('[WEBHOOK] Signature verification failed:', err.message);
+    console.error('[WEBHOOK] Error processing event:', err.message);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -32,6 +43,68 @@ export async function POST(request) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const email = session.customer_email || (session.customer_details && session.customer_details.email);
+    
+    // Vérifier si c'est un achat d'addon
+    if (session.metadata && session.metadata.purchase_type === 'addon') {
+      console.log('[WEBHOOK] Processing addon purchase for email:', email);
+      
+      const adminUserId = session.metadata.admin_user_id;
+      const addonType = session.metadata.addon_type;
+      const addonValue = parseInt(session.metadata.addon_value);
+      const addonName = session.metadata.addon_name;
+      const pricePaid = (session.amount_total || 0) / 100; // Convertir centimes en euros
+      
+      // Insérer l'achat d'addon
+      const { error: addonError } = await supabase
+        .from('addon_purchases')
+        .insert([{
+          admin_user_id: adminUserId,
+          stripe_session_id: session.id,
+          stripe_payment_intent_id: session.payment_intent,
+          addon_type: addonType,
+          addon_value: addonValue,
+          addon_name: addonName,
+          price_paid: pricePaid,
+          stripe_price_id: session.metadata.stripe_price_id || '',
+          status: 'completed'
+        }]);
+
+      if (addonError) {
+        console.error('[WEBHOOK] Error inserting addon purchase:', addonError);
+        return new Response('Error inserting addon purchase', { status: 500 });
+      }
+
+      // Mettre à jour le quota de l'utilisateur (ajouter les photos au quota existant)
+      const { data: currentPayment, error: currentPaymentError } = await supabase
+        .from('admin_payments')
+        .select('photo_quota')
+        .eq('admin_user_id', adminUserId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!currentPaymentError && currentPayment) {
+        const newQuota = (currentPayment.photo_quota || 0) + addonValue;
+        
+        const { error: updateQuotaError } = await supabase
+          .from('admin_payments')
+          .update({ photo_quota: newQuota })
+          .eq('admin_user_id', adminUserId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (updateQuotaError) {
+          console.error('[WEBHOOK] Error updating quota with addon:', updateQuotaError);
+        } else {
+          console.log('[WEBHOOK] Quota updated successfully:', newQuota, 'photos for user:', adminUserId);
+        }
+      }
+
+      console.log('[WEBHOOK] Addon purchase processed successfully:', addonName, 'for user:', adminUserId);
+      return new Response(JSON.stringify({ received: true }), { status: 200 });
+    }
+
+    // Traitement normal des abonnements
     const subscriptionId = session.subscription;
     console.log('[WEBHOOK] checkout.session.completed for email:', email, 'subscription:', subscriptionId);
 

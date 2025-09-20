@@ -1,10 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 
 // Remise de 20% sur l'annuel
 const DISCOUNT = 0.2;
+
+// Packs d'images supplémentaires
+const ADDON_PACKS = [
+	{
+		id: 'addon-100',
+		name: 'Pack +100 Photos',
+		photos: 100,
+		price: 9.90,
+		priceId: 'price_1S9K5gIgKYOzHnxE8pKcberV', // À créer dans Stripe
+		description: 'Ajoutez 100 photos supplémentaires à votre quota actuel',
+		popular: false,
+		icon: '📸'
+	},
+	{
+		id: 'addon-500', 
+		name: 'Pack +500 Photos',
+		photos: 500,
+		price: 39.90,
+		priceId: 'price_1S9K9SIgKYOzHnxE8IozRMRi', // À créer dans Stripe
+		description: 'Ajoutez 500 photos supplémentaires à votre quota actuel',
+		popular: true,
+		icon: '🚀'
+	},
+	{
+		id: 'addon-1000',
+		name: 'Pack +1000 Photos', 
+		photos: 1000,
+		price: 79.90,
+		priceId: 'price_1S9KAqIgKYOzHnxE9IA5m0fJ', // À créer dans Stripe
+		description: 'Ajoutez 1000 photos supplémentaires à votre quota actuel',
+		popular: false,
+		icon: '💎'
+	}
+];
 
 const PLANS = [
 	{
@@ -81,6 +115,31 @@ export default function ChoosePlanPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const [billing, setBilling] = useState('monthly'); // 'monthly' ou 'yearly'
+	const [showAddonPacks, setShowAddonPacks] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+	const [showTestSection, setShowTestSection] = useState(false);
+
+	// Vérifier les paramètres URL pour les messages
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.get('addon_success') === 'true') {
+				setSuccessMessage('🎉 Pack de photos acheté avec succès ! Votre quota a été mis à jour.');
+				setShowAddonPacks(true); // Ouvrir la section des packs
+				// Nettoyer l'URL après un délai
+				setTimeout(() => {
+					window.history.replaceState({}, '', window.location.pathname);
+				}, 3000);
+			} else if (urlParams.get('addon_canceled') === 'true') {
+				setError('Achat annulé. Vous pouvez essayer à nouveau si vous le souhaitez.');
+				setShowAddonPacks(true);
+				setTimeout(() => {
+					window.history.replaceState({}, '', window.location.pathname);
+					setError(null);
+				}, 5000);
+			}
+		}
+	}, []);
 
 	const handleSubscribe = async (priceId) => {
 		setLoading(true);
@@ -98,6 +157,138 @@ export default function ChoosePlanPage() {
 			await stripe.redirectToCheckout({ sessionId: data.sessionId });
 		} catch (err) {
 			setError(err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddonPurchase = async (pack) => {
+		console.log('🛒 Tentative d\'achat pack:', pack);
+		setLoading(true);
+		setError(null);
+		try {
+			console.log('📤 Envoi requête API avec:', {
+				priceId: pack.priceId,
+				addonType: 'photo_pack',
+				addonValue: pack.photos,
+				addonName: pack.name
+			});
+
+			const res = await fetch('/api/create-addon-checkout-session', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					priceId: pack.priceId,
+					addonType: 'photo_pack',
+					addonValue: pack.photos,
+					addonName: pack.name
+				}),
+			});
+
+			console.log('📥 Réponse API status:', res.status);
+
+			const data = await res.json();
+			console.log('📄 Données de réponse:', data);
+
+			if (!res.ok) {
+				throw new Error(data.error || 'Erreur lors de la création de la session Stripe');
+			}
+
+			console.log('🔄 Redirection vers Stripe avec sessionId:', data.sessionId);
+			const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+			
+			if (!stripe) {
+				throw new Error('Stripe n\'a pas pu être chargé');
+			}
+
+			const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+			
+			if (result.error) {
+				throw new Error(result.error.message);
+			}
+
+		} catch (err) {
+			console.error('❌ Erreur handleAddonPurchase:', err);
+			setError(err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Fonction de test pour ajouter du quota manuellement
+	const handleTestQuota = async () => {
+		// Debug: afficher tout le localStorage
+		console.log('🔍 Contenu localStorage:', Object.keys(localStorage));
+
+		// Essayer différentes clés possibles
+		let adminUserId = localStorage.getItem('currentAdminId') 
+			|| localStorage.getItem('adminUserId')
+			|| localStorage.getItem('admin_user_id')
+			|| localStorage.getItem('userId')
+			|| localStorage.getItem('user_id');
+
+		// Essayer de décoder admin_session
+		if (!adminUserId) {
+			const adminSession = localStorage.getItem('admin_session');
+			if (adminSession) {
+				try {
+					// Décoder le base64
+					const decodedSession = JSON.parse(atob(adminSession));
+					console.log('🔍 Session décodée:', decodedSession);
+					adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+				} catch (e) {
+					console.log('Erreur décodage admin_session:', e);
+				}
+			}
+		}
+
+		// Si toujours pas trouvé, essayer de parser d'autres objets JSON
+		if (!adminUserId) {
+			const adminData = localStorage.getItem('adminData') || localStorage.getItem('user');
+			if (adminData) {
+				try {
+					const parsed = JSON.parse(adminData);
+					adminUserId = parsed.id || parsed.user_id || parsed.admin_id;
+				} catch (e) {
+					console.log('Erreur parsing adminData:', e);
+				}
+			}
+		}
+
+		console.log('🆔 Admin User ID trouvé:', adminUserId);
+
+		// Si toujours pas trouvé, utiliser l'ID de la session décodée manuellement
+		if (!adminUserId) {
+			adminUserId = 'bb70d283-b02e-4e22-9d06-a705952b366b'; // ID from decoded admin_session
+			console.log('🆔 Utilisation ID fixe:', adminUserId);
+		}
+
+		if (!adminUserId) {
+			setError('Admin User ID non trouvé. ID from session: bb70d283-b02e-4e22-9d06-a705952b366b (voir console pour debug)');
+			return;
+		}
+
+		setLoading(true);
+		try {
+			const res = await fetch('/api/test-add-quota', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					adminUserId,
+					addonValue: 100,
+					packName: 'Pack +100 Photos (Test Local)'
+				})
+			});
+
+			const data = await res.json();
+			
+			if (res.ok) {
+				setSuccessMessage('🧪 Test réussi ! +100 photos ajoutées à votre quota.');
+			} else {
+				setError(`Erreur test: ${data.error || 'Erreur inconnue'}`);
+			}
+		} catch (err) {
+			setError(`Erreur test: ${err.message}`);
 		} finally {
 			setLoading(false);
 		}
@@ -145,6 +336,62 @@ export default function ChoosePlanPage() {
 			</div>
 
 			{error && <div className="mb-4 text-red-600 text-center">{error}</div>}
+			{successMessage && (
+				<div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
+					{successMessage}
+				</div>
+			)}
+
+			{/* Section de test pour environnement local */}
+			{process.env.NODE_ENV === 'development' && (
+				<div className="mb-8 max-w-2xl mx-auto">
+					<div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+						<div className="flex items-center justify-between mb-2">
+							<h3 className="font-semibold text-yellow-800">🧪 Mode Développement</h3>
+							<button
+								onClick={() => setShowTestSection(!showTestSection)}
+								className="text-yellow-600 hover:text-yellow-800"
+							>
+								{showTestSection ? 'Masquer' : 'Afficher'} les tests
+							</button>
+						</div>
+						
+						{showTestSection && (
+							<div className="mt-4 space-y-3">
+								<p className="text-sm text-yellow-700">
+									Votre serveur localhost a des problèmes de connexion. 
+									Utilisez ce bouton pour tester l'ajout de quota manuellement :
+								</p>
+								
+								<div className="flex gap-2">
+									<button
+										onClick={() => {
+											console.clear();
+											console.log('🔍 Debug localStorage:');
+											for (let i = 0; i < localStorage.length; i++) {
+												const key = localStorage.key(i);
+												console.log(`${key}:`, localStorage.getItem(key));
+											}
+											alert('Informations affichées dans la console (F12)');
+										}}
+										className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-gray-700"
+									>
+										🔍 Debug localStorage
+									</button>
+									
+									<button
+										onClick={handleTestQuota}
+										disabled={loading}
+										className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-yellow-700 disabled:opacity-50"
+									>
+										{loading ? 'Test en cours...' : '🧪 +100 photos test'}
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
 				{PLANS.map((plan, idx) => (
@@ -273,7 +520,92 @@ export default function ChoosePlanPage() {
 				</table>
 			</div>
 
-			{/* Encart Discord */}
+			{/* Section Packs Supplémentaires */}
+			<div id="addon-packs" className="max-w-6xl mx-auto mt-16 mb-16">
+				<div className="text-center mb-12">
+					<h2 className="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-4">
+						Besoin de plus de photos ? 📸
+					</h2>
+					<p className="text-lg text-gray-600 mb-6">
+						Vous avez déjà un plan mais besoin de photos supplémentaires ? Achetez des packs d'images ponctuels !
+					</p>
+					<button
+						onClick={() => setShowAddonPacks(!showAddonPacks)}
+						className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-purple-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
+					>
+						{showAddonPacks ? 'Masquer les packs' : 'Voir les packs supplémentaires'} 
+						<span className="ml-2">{showAddonPacks ? '🔼' : '🔽'}</span>
+					</button>
+				</div>
+
+				{showAddonPacks && (
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+						{ADDON_PACKS.map((pack, idx) => (
+							<div
+								key={pack.id}
+								className={`relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg p-6 border-2 transition-all hover:shadow-xl hover:scale-105 ${
+									pack.popular 
+										? 'border-purple-400 ring-2 ring-purple-200' 
+										: 'border-gray-200'
+								}`}
+							>
+								{pack.popular && (
+									<span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs px-4 py-1 rounded-full shadow">
+										Populaire
+									</span>
+								)}
+								
+								<div className="text-center">
+									<div className="text-4xl mb-3">{pack.icon}</div>
+									<h3 className="text-xl font-bold text-gray-800 mb-2">{pack.name}</h3>
+									<div className="flex items-center justify-center mb-3">
+										<span className="text-3xl font-extrabold text-purple-600">{pack.price}€</span>
+										<span className="ml-2 text-gray-500">une seule fois</span>
+									</div>
+									<p className="text-gray-600 text-sm mb-4">{pack.description}</p>
+									
+									<div className="bg-purple-50 rounded-lg p-3 mb-4">
+										<div className="text-purple-700 font-semibold">
+											+{pack.photos} photos
+										</div>
+										<div className="text-purple-600 text-sm">
+											Ajoutées à votre quota actuel
+										</div>
+									</div>
+
+									<button
+										onClick={() => handleAddonPurchase(pack)}
+										disabled={loading}
+										className={`w-full py-3 rounded-xl font-bold text-lg transition ${
+											pack.popular
+												? 'bg-purple-600 text-white hover:bg-purple-700'
+												: 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+										} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+									>
+										{loading ? 'Redirection...' : 'Acheter maintenant'}
+									</button>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+
+				{showAddonPacks && (
+					<div className="mt-8 text-center">
+						<div className="bg-blue-50 rounded-xl p-6 max-w-2xl mx-auto">
+							<h4 className="text-lg font-semibold text-blue-800 mb-2">💡 Comment ça marche ?</h4>
+							<ul className="text-blue-700 text-sm space-y-1">
+								<li>• Les photos achetées s'ajoutent à votre quota mensuel existant</li>
+								<li>• Elles ne sont pas perdues à la fin du mois</li>
+								<li>• Parfait pour les événements exceptionnels ou les pics d'activité</li>
+								<li>• Achat ponctuel, aucun engagement supplémentaire</li>
+							</ul>
+						</div>
+					</div>
+				)}
+			</div>
+
+			{/* Encart Discord - Déplacé en bas */}
 			<div className="flex justify-center mb-10">
 				<div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center max-w-xl w-full">
 					<img

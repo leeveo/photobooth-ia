@@ -3,7 +3,7 @@ export default function manifest() {
       name: 'WAIBOOTH',
       short_name: 'WAIBOOTH',
       description: 'WAIBOOTH',
-      start_url: 'https://waibooth.app',
+      start_url: '/',
       display: 'standalone',
       background_color: '#fff',
       theme_color: '#fff',

@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [addonSuccessMessage, setAddonSuccessMessage] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProjects: 0,
     activeProjects: 0,
@@ -42,7 +43,14 @@ export default function Dashboard() {
   // État pour le modal de détails des styles
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [quotaInfo, setQuotaInfo] = useState<{ quota: number, used: number, resetAt: string | null }>({ quota: 0, used: 0, resetAt: null });
+  const [quotaInfo, setQuotaInfo] = useState<{ 
+    quota: number, 
+    used: number, 
+    resetAt: string | null,
+    addonPurchases?: any[],
+    baseQuota?: number,
+    addonPhotos?: number
+  }>({ quota: 0, used: 0, resetAt: null });
   
   // Ajoute un nouvel état pour le nombre de photos prises sur la période de quota
   const [photosThisPeriod, setPhotosThisPeriod] = useState(0);
@@ -57,6 +65,24 @@ export default function Dashboard() {
       setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
     }
   }, []);
+
+  // Vérifier les paramètres URL pour les messages de succès
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('addon_success') === 'true') {
+        setAddonSuccessMessage('🎉 Pack de photos acheté avec succès ! Votre quota a été mis à jour.');
+        // Nettoyer l'URL
+        window.history.replaceState({}, '', window.location.pathname);
+        // Recharger les données de quota après un petit délai
+        setTimeout(() => {
+          if (currentAdminId) {
+            fetchQuotaAndPhotos();
+          }
+        }, 1000);
+      }
+    }
+  }, [currentAdminId]);
 
   // Construction de l'URL du photobooth à partir du baseUrl, du type et du slug du projet
   const getPhotoboothUrl = (project: any) => {
@@ -316,10 +342,29 @@ export default function Dashboard() {
         .in('project_id', projectIds)
         .gte('created_at', resetAt);
 
+      // 3. Récupérer les achats de packs addon pour affichage et calcul du quota total
+      const { data: addonPurchases } = await supabase
+        .from('addon_purchases')
+        .select('addon_name, addon_value, price_paid, created_at, status')
+        .eq('admin_user_id', currentAdminId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
+
+      // Calculer le total des photos addon
+      const totalAddonPhotos = addonPurchases?.reduce((total, purchase) => {
+        return total + (purchase.addon_value || 0);
+      }, 0) || 0;
+
+      // Quota total = quota de base + photos addon
+      const totalQuota = quota + totalAddonPhotos;
+
       setQuotaInfo({
-        quota,
+        quota: totalQuota,
         used: count || 0,
-        resetAt
+        resetAt,
+        addonPurchases: addonPurchases?.slice(0, 5) || [], // Limite l'affichage à 5 pour l'interface
+        baseQuota: quota, // Garder le quota de base pour info
+        addonPhotos: totalAddonPhotos // Garder le total addon pour info
       });
       setPhotosThisPeriod(count || 0);
     }
@@ -359,6 +404,24 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Message de succès addon */}
+      {addonSuccessMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span>{addonSuccessMessage}</span>
+          </div>
+          <button 
+            onClick={() => setAddonSuccessMessage(null)}
+            className="text-green-600 hover:text-green-800"
+          >
+            <RiCloseLine className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Header Stats Card */}
       <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white">
         <h3 className="text-xl font-medium mb-6">Statistiques Globales</h3>
@@ -437,6 +500,32 @@ export default function Dashboard() {
                   Augmenter mon quota / Changer de plan
                 </Link>
               </div>
+
+              {/* Section Packs Addon récents */}
+              {quotaInfo.addonPurchases && quotaInfo.addonPurchases.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-white/20">
+                  <h4 className="text-sm font-medium text-white/80 mb-3">📦 Packs récents</h4>
+                  <div className="space-y-2">
+                    {quotaInfo.addonPurchases.slice(0, 3).map((addon, index) => (
+                      <div key={index} className="bg-white/10 rounded-lg p-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">{addon.addon_name}</span>
+                          <span className="text-white/80">+{addon.addon_value} photos</span>
+                        </div>
+                        <div className="text-white/60 text-xs mt-1">
+                          {new Date(addon.created_at).toLocaleDateString('fr-FR')} • {addon.price_paid}€
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Link
+                    href="/photobooth-ia/admin/choose-plan#addon-packs"
+                    className="inline-block mt-3 text-white/80 hover:text-white text-sm underline"
+                  >
+                    Acheter d'autres packs →
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

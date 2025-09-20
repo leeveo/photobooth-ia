@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achat réussi - PhotoboothIA</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1f2937;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            width: 250px;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">🎉</div>
+        <h1>Achat réussi !</h1>
+        <p>Votre pack de photos a été acheté avec succès !<br>Votre quota a été mis à jour.</p>
+        
+        <div>
+            <a href="/photobooth-ia/admin/dashboard" class="btn btn-primary">
+                ← Retour au tableau de bord
+            </a>
+            <br>
+            <a href="/photobooth-ia/admin/choose-plan" class="btn btn-secondary">
+                Acheter d'autres packs
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Redirection automatique après 8 secondes
+        setTimeout(function() {
+            window.location.href = '/photobooth-ia/admin/dashboard';
+        }, 8000);
+    </script>
+</body>
+</html>
