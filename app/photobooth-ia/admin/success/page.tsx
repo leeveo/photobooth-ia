@@ -64,21 +64,50 @@ export default function AddonSuccessPage() {
         
         console.log('Using admin ID:', adminData);
 
-        // 2. Vérifier le quota actuel
-        const { data: adminUser, error: adminError } = await supabase
-          .from('admin_users')
-          .select('quota_used, quota_limit, created_at')
-          .eq('id', adminData)
-          .single();
+        // 2. Vérifier le quota actuel depuis admin_payments (pas admin_users)
+        const { data: lastPayment, error: paymentError } = await supabase
+          .from('admin_payments')
+          .select('photo_quota, photo_quota_reset_at')
+          .eq('admin_user_id', adminData)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-        if (adminError) {
-          console.error('Erreur récupération admin:', adminError);
-          setError('Erreur lors de la vérification du quota');
-          setLoading(false);
-          return;
+        let baseQuota = 3; // Quota gratuit par défaut
+        let resetAt = null;
+
+        if (!paymentError && lastPayment) {
+          // Utilisateur payant
+          baseQuota = lastPayment.photo_quota || 0;
+          resetAt = lastPayment.photo_quota_reset_at;
+        } else {
+          // Utilisateur gratuit - récupérer la date de création du compte
+          const { data: adminData_info } = await supabase
+            .from('admin_users')
+            .select('created_at')
+            .eq('id', adminData)
+            .single();
+          
+          if (adminData_info) {
+            resetAt = adminData_info.created_at;
+          }
         }
 
-        // 3. Récupérer les achats d'addon récents (dernières 24h)
+        // 3. Compter les sessions utilisées depuis le reset (comme dans le dashboard)
+        const { data: projects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('created_by', adminData);
+
+        const projectIds = projects?.map(p => p.id) || [];
+
+        const { count: sessionsUsed, error: countError } = await supabase
+          .from('sessions')
+          .select('id', { count: 'exact', head: true })
+          .in('project_id', projectIds)
+          .gte('created_at', resetAt);
+
+        // 4. Récupérer les achats d'addon récents (dernières 24h)
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { data: recentPurchases, error: purchaseError } = await supabase
           .from('addon_purchases')
@@ -91,19 +120,25 @@ export default function AddonSuccessPage() {
           console.error('Erreur récupération achats:', purchaseError);
         }
 
-        // 4. Calculer le quota total avec les addons
-        let totalAddonPhotos = 0;
-        if (recentPurchases && recentPurchases.length > 0) {
-          totalAddonPhotos = recentPurchases.reduce((sum, purchase) => {
-            return sum + (purchase.addon_value || 0);
-          }, 0);
-        }
+        // 5. Calculer le total des photos addon (tous les achats, pas seulement 24h)
+        const { data: allAddonPurchases } = await supabase
+          .from('addon_purchases')
+          .select('addon_value')
+          .eq('admin_user_id', adminData)
+          .eq('status', 'completed');
+
+        const totalAddonPhotos = allAddonPurchases?.reduce((sum, purchase) => {
+          return sum + (purchase.addon_value || 0);
+        }, 0) || 0;
+
+        // Quota total = quota de base + photos addon
+        const totalQuota = baseQuota + totalAddonPhotos;
 
         setQuotaInfo({
-          quotaUsed: adminUser.quota_used || 0,
-          quotaLimit: adminUser.quota_limit || 100,
+          quotaUsed: sessionsUsed || 0,
+          quotaLimit: baseQuota,
           addonPhotos: totalAddonPhotos,
-          totalAvailable: (adminUser.quota_limit || 100) + totalAddonPhotos
+          totalAvailable: totalQuota
         });
 
         setPurchaseInfo({
