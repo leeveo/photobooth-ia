@@ -343,7 +343,7 @@ export default function Dashboard() {
         .gte('created_at', resetAt);
 
       // 3. Récupérer les achats de packs addon pour affichage et calcul du quota total
-      const { data: addonPurchases } = await supabase
+      const { data: addonPurchases, error: addonError } = await supabase
         .from('addon_purchases')
         .select('addon_name, addon_value, price_paid, created_at, status')
         .eq('admin_user_id', currentAdminId)
@@ -489,45 +489,46 @@ export default function Dashboard() {
                   <>Reset le {new Date(quotaInfo.resetAt).toLocaleDateString()}</>
                 )}
               </div>
-              {/* Bouton d'accès à la page de plans */}
-              <div className="mt-4 flex justify-center">
-                <Link
-                  href="/photobooth-ia/admin/choose-plan"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 via-indigo-600 to-purple-600 text-white font-bold text-base shadow-lg hover:from-pink-600 hover:to-purple-700 transition-all border-4 border-white"
-                  style={{ boxShadow: '0 4px 24px 0 rgba(99,102,241,0.25)' }}
-                >
-                  <RiArrowRightSLine className="w-6 h-6" />
-                  Augmenter mon quota / Changer de plan
-                </Link>
-              </div>
-
-              {/* Section Packs Addon récents */}
-              {quotaInfo.addonPurchases && quotaInfo.addonPurchases.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-white/20">
-                  <h4 className="text-sm font-medium text-white/80 mb-3">📦 Packs récents</h4>
-                  <div className="space-y-2">
-                    {quotaInfo.addonPurchases.slice(0, 3).map((addon, index) => (
-                      <div key={index} className="bg-white/10 rounded-lg p-3 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">{addon.addon_name}</span>
-                          <span className="text-white/80">+{addon.addon_value} photos</span>
-                        </div>
-                        <div className="text-white/60 text-xs mt-1">
-                          {new Date(addon.created_at).toLocaleDateString('fr-FR')} • {addon.price_paid}€
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Link
-                    href="/photobooth-ia/admin/choose-plan#addon-packs"
-                    className="inline-block mt-3 text-white/80 hover:text-white text-sm underline"
-                  >
-                    Acheter d'autres packs →
-                  </Link>
-                </div>
-              )}
             </div>
           </div>
+        </div>
+        
+        {/* Bouton centré sous toutes les statistiques */}
+        <div className="mt-8 flex items-center justify-center w-full">
+          <Link
+            href="/photobooth-ia/admin/choose-plan"
+            className="group relative inline-flex items-center gap-4 px-8 py-5 rounded-3xl bg-gradient-to-r from-white/20 via-white/10 to-white/5 backdrop-blur-xl border border-white/30 shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.05] transition-all duration-500 overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%)',
+              boxShadow: '0 25px 45px -10px rgba(139, 92, 246, 0.3), 0 8px 25px -5px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+            }}
+          >
+            {/* Effet de brillance animée */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+            
+            {/* Contenu */}
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400/40 to-blue-500/40 backdrop-blur-sm border border-white/40 flex items-center justify-center shadow-inner">
+                <svg className="w-6 h-6 text-white drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-xl drop-shadow-sm">Augmenter mon quota</span>
+                <span className="text-white/80 text-sm font-medium">Débloquez plus de photos</span>
+              </div>
+            </div>
+            
+            {/* Flèche animée */}
+            <div className="relative z-10 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:translate-x-2 group-hover:bg-white/30 transition-all duration-300 shadow-lg">
+              <RiArrowRightSLine className="w-5 h-5 text-white drop-shadow-sm" />
+            </div>
+            
+            {/* Particules flottantes */}
+            <div className="absolute top-2 right-4 w-2 h-2 bg-white/40 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-3 left-6 w-1.5 h-1.5 bg-purple-300/60 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute top-1/2 right-8 w-1 h-1 bg-blue-300/50 rounded-full animate-pulse delay-700"></div>
+          </Link>
         </div>
       </div>
 
