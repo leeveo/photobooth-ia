@@ -16,9 +16,12 @@ function getQuotaFromPriceId(priceId) {
 
 export async function POST(request) {
   console.log('[WEBHOOK] Stripe webhook endpoint called');
+  console.log('[WEBHOOK] Environment:', process.env.NODE_ENV);
+  console.log('[WEBHOOK] Request headers:', Object.fromEntries(request.headers.entries()));
   
   // Pour développement local : bypasser la vérification de signature
   const isLocal = process.env.NODE_ENV === 'development';
+  console.log('[WEBHOOK] Is local environment:', isLocal);
   
   let event;
   try {
@@ -30,12 +33,15 @@ export async function POST(request) {
     } else {
       // Mode production : vérification de signature normale
       const sig = request.headers.get('stripe-signature');
+      console.log('[WEBHOOK] Stripe signature present:', !!sig);
       const buf = Buffer.from(await request.arrayBuffer());
+      console.log('[WEBHOOK] Body length:', buf.length);
       event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      console.log('[WEBHOOK] Event received (prod mode):', event.type);
+      console.log('[WEBHOOK] Event received (prod mode):', event.type, 'Event ID:', event.id);
     }
   } catch (err) {
     console.error('[WEBHOOK] Error processing event:', err.message);
+    console.error('[WEBHOOK] Error stack:', err.stack);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -46,7 +52,8 @@ export async function POST(request) {
     
     // Vérifier si c'est un achat d'addon
     if (session.metadata && session.metadata.purchase_type === 'addon') {
-      console.log('[WEBHOOK] Processing addon purchase for email:', email);
+      console.log('[WEBHOOK] Processing addon purchase for session:', session.id);
+      console.log('[WEBHOOK] Session metadata:', session.metadata);
       
       const adminUserId = session.metadata.admin_user_id;
       const addonType = session.metadata.addon_type;
@@ -54,8 +61,22 @@ export async function POST(request) {
       const addonName = session.metadata.addon_name;
       const pricePaid = (session.amount_total || 0) / 100; // Convertir centimes en euros
       
+      console.log('[WEBHOOK] Addon details:', {
+        adminUserId,
+        addonType,
+        addonValue,
+        addonName,
+        pricePaid
+      });
+
+      if (!adminUserId) {
+        console.error('[WEBHOOK] Missing admin_user_id in metadata');
+        return new Response('Missing admin_user_id in metadata', { status: 400 });
+      }
+
       // Insérer l'achat d'addon
-      const { error: addonError } = await supabase
+      console.log('[WEBHOOK] Inserting addon purchase into database...');
+      const { data: insertData, error: addonError } = await supabase
         .from('addon_purchases')
         .insert([{
           admin_user_id: adminUserId,
@@ -67,16 +88,18 @@ export async function POST(request) {
           price_paid: pricePaid,
           stripe_price_id: session.metadata.stripe_price_id || '',
           status: 'completed'
-        }]);
+        }])
+        .select(); // Ajouter select() pour récupérer les données insérées
 
       if (addonError) {
         console.error('[WEBHOOK] Error inserting addon purchase:', addonError);
-        return new Response('Error inserting addon purchase', { status: 500 });
+        return new Response(`Error inserting addon purchase: ${addonError.message}`, { status: 500 });
       }
 
-      console.log('[WEBHOOK] Addon purchase processed successfully:', addonName, 'for user:', adminUserId);
+      console.log('[WEBHOOK] Addon purchase inserted successfully:', insertData);
+      console.log('[WEBHOOK] Pack:', addonName, 'for user:', adminUserId, 'photos:', addonValue);
       console.log('[WEBHOOK] Note: Quota will be calculated dynamically by dashboard (base + addons)');
-      return new Response(JSON.stringify({ received: true }), { status: 200 });
+      return new Response(JSON.stringify({ received: true, addon_inserted: insertData }), { status: 200 });
     }
 
     // Traitement normal des abonnements

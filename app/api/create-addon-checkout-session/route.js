@@ -14,10 +14,10 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { priceId, addonType, addonValue, addonName } = body;
-    console.log('📝 Paramètres reçus:', { priceId, addonType, addonValue, addonName });
+    const { priceId, addonType, addonValue, addonName, adminId } = body;
+    console.log('📝 Paramètres reçus:', { priceId, addonType, addonValue, addonName, adminId });
 
-    if (!priceId || !addonType || !addonValue || !addonName) {
+    if (!priceId || !addonType || !addonValue || !addonName || !adminId) {
       console.error('❌ Paramètres manquants');
       return NextResponse.json(
         { error: 'Paramètres manquants pour l\'achat d\'addon' },
@@ -38,12 +38,13 @@ export async function POST(req) {
             quantity: 1,
           },
         ],
-        success_url: `https://photobooth.waibooth.app/photobooth-ia/admin/success?pack_name=${encodeURIComponent(addonName)}`,
-        cancel_url: `https://photobooth.waibooth.app/photobooth-ia/admin/choose-plan?addon_canceled=true`,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://photobooth.waibooth.app'}/photobooth-ia/admin/success?pack_name=${encodeURIComponent(addonName)}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://photobooth.waibooth.app'}/photobooth-ia/admin/choose-plan?addon_canceled=true`,
         metadata: {
           addon_type: addonType,
           addon_value: addonValue.toString(),
           addon_name: addonName,
+          admin_user_id: adminId,
           purchase_type: 'addon' // Pour différencier des abonnements classiques
         },
       });

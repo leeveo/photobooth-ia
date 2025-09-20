@@ -166,12 +166,41 @@ export default function ChoosePlanPage() {
 		console.log('🛒 Tentative d\'achat pack:', pack);
 		setLoading(true);
 		setError(null);
+		
 		try {
+			// Récupérer l'admin_user_id exactement comme dans handleTestQuota
+			let adminUserId = localStorage.getItem('currentAdminId') 
+				|| localStorage.getItem('adminUserId')
+				|| localStorage.getItem('admin_user_id')
+				|| localStorage.getItem('userId')
+				|| localStorage.getItem('user_id');
+
+			// Essayer de décoder admin_session
+			if (!adminUserId) {
+				const adminSession = localStorage.getItem('admin_session');
+				if (adminSession) {
+					try {
+						const decodedSession = JSON.parse(atob(adminSession));
+						console.log('🔍 Session décodée pour addon:', decodedSession);
+						adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+					} catch (e) {
+						console.log('Erreur décodage admin_session:', e);
+					}
+				}
+			}
+
+			if (!adminUserId) {
+				throw new Error('Impossible de récupérer l\'ID administrateur. Veuillez vous reconnecter.');
+			}
+
+			console.log('🔑 Admin ID récupéré:', adminUserId);
+
 			console.log('📤 Envoi requête API avec:', {
 				priceId: pack.priceId,
 				addonType: 'photo_pack',
 				addonValue: pack.photos,
-				addonName: pack.name
+				addonName: pack.name,
+				adminId: adminUserId
 			});
 
 			const res = await fetch('/api/create-addon-checkout-session', {
@@ -181,7 +210,8 @@ export default function ChoosePlanPage() {
 					priceId: pack.priceId,
 					addonType: 'photo_pack',
 					addonValue: pack.photos,
-					addonName: pack.name
+					addonName: pack.name,
+					adminId: adminUserId
 				}),
 			});
 
