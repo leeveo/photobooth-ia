@@ -9,6 +9,7 @@ export default function ParametrePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
+  const [addonPurchases, setAddonPurchases] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
@@ -51,25 +52,46 @@ export default function ParametrePage() {
     async function fetchPayments() {
       if (!user?.id) {
         setPayments([]);
+        setAddonPurchases([]);
         setPaymentsLoading(false);
         return;
       }
       setPaymentsLoading(true);
       // Debug log
       console.log('[ParametrePage] Fetching payments for admin_user_id:', user.id);
-      const { data, error } = await supabase
+      
+      // Récupérer les abonnements
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from('admin_payments')
         .select('*')
         .eq('admin_user_id', user.id)
         .order('created_at', { ascending: false });
-      if (error) {
-        setError("Erreur lors du chargement des paiements : " + error.message);
+      
+      // Récupérer les achats d'addon
+      const { data: addonData, error: addonError } = await supabase
+        .from('addon_purchases')
+        .select('*')
+        .eq('admin_user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (paymentsError) {
+        setError("Erreur lors du chargement des paiements : " + paymentsError.message);
         setPayments([]);
-        console.error("Erreur Supabase admin_payments:", error);
+        console.error("Erreur Supabase admin_payments:", paymentsError);
       } else {
-        setPayments(data || []);
-        console.log('[ParametrePage] Payments loaded:', data);
+        setPayments(paymentsData || []);
+        console.log('[ParametrePage] Payments loaded:', paymentsData);
       }
+      
+      if (addonError) {
+        setError("Erreur lors du chargement des achats addon : " + addonError.message);
+        setAddonPurchases([]);
+        console.error("Erreur Supabase addon_purchases:", addonError);
+      } else {
+        setAddonPurchases(addonData || []);
+        console.log('[ParametrePage] Addon purchases loaded:', addonData);
+      }
+      
       setPaymentsLoading(false);
     }
     if (user && user.id) {
@@ -94,8 +116,30 @@ export default function ParametrePage() {
           <div className="flex-1">
             <div><strong>Email :</strong> {user.email}</div>
             {/* Affiche le dernier plan payé */}
-            <div><strong>Plan :</strong> {payments[0]?.plan || 'Aucun'}</div>
-            <div><strong>Quota photos :</strong> {payments[0]?.photo_quota || 0}</div>
+            <div><strong>Plan :</strong> {payments[0]?.plan || 'Gratuit (3 photos)'}</div>
+            
+            {/* Calcul du quota total */}
+            {(() => {
+              const baseQuota = payments[0]?.photo_quota || 3;
+              const addonPhotos = addonPurchases.reduce((total, addon) => {
+                return total + (addon.addon_value || 0);
+              }, 0);
+              const totalQuota = baseQuota + addonPhotos;
+              
+              return (
+                <div className="space-y-1">
+                  <div><strong>Quota photos total :</strong> {totalQuota}</div>
+                  {addonPhotos > 0 && (
+                    <div className="text-sm text-gray-600 ml-4">
+                      → Quota de base : {baseQuota}
+                      <br />
+                      → Photos addon : +{addonPhotos}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            
             <div><strong>Prochain reset quota :</strong> {payments[0]?.photo_quota_reset_at ? new Date(payments[0].photo_quota_reset_at).toLocaleDateString() : '-'}</div>
           </div>
           <div className="flex flex-col gap-2 text-xs">
@@ -262,6 +306,78 @@ export default function ParametrePage() {
           </>
         )}
         {error && <div className="p-4 text-red-600">{error}</div>}
+      </div>
+
+      {/* Achats de packs addon */}
+      <div className="bg-white shadow-md rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <RiMoneyEuroCircleLine className="w-6 h-6 text-purple-600" />
+            <h3 className="text-lg font-medium text-gray-900">Achats de packs photo</h3>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow hover:from-purple-600 hover:to-purple-700 transition-all text-xs"
+            title="Rafraîchir"
+          >
+            <RiRefreshLine className="w-4 h-4" />
+            Actualiser
+          </button>
+        </div>
+        {paymentsLoading ? (
+          <div className="p-6 text-center text-gray-500">Chargement des achats...</div>
+        ) : addonPurchases.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            <p>Aucun pack photo acheté.</p>
+            <a 
+              href="/photobooth-ia/admin/choose-plan"
+              className="mt-2 inline-block text-sm font-medium px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100"
+            >
+              Acheter des packs photo
+            </a>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Pack</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Photos</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Prix</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {addonPurchases.map(addon => (
+                  <tr key={addon.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="px-4 py-2">{new Date(addon.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">{addon.addon_name || 'Pack photos'}</td>
+                    <td className="px-4 py-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                        +{addon.addon_value} photos
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">{addon.price_paid}€</td>
+                    <td className="px-4 py-2">
+                      {addon.status === 'completed' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                          <RiCheckLine className="w-4 h-4 mr-1" /> Confirmé
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                          {addon.status}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-gray-600">{addon.stripe_session_id?.slice(0, 20)}...</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

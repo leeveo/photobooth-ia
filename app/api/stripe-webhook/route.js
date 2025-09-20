@@ -74,33 +74,8 @@ export async function POST(request) {
         return new Response('Error inserting addon purchase', { status: 500 });
       }
 
-      // Mettre à jour le quota de l'utilisateur (ajouter les photos au quota existant)
-      const { data: currentPayment, error: currentPaymentError } = await supabase
-        .from('admin_payments')
-        .select('photo_quota')
-        .eq('admin_user_id', adminUserId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!currentPaymentError && currentPayment) {
-        const newQuota = (currentPayment.photo_quota || 0) + addonValue;
-        
-        const { error: updateQuotaError } = await supabase
-          .from('admin_payments')
-          .update({ photo_quota: newQuota })
-          .eq('admin_user_id', adminUserId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (updateQuotaError) {
-          console.error('[WEBHOOK] Error updating quota with addon:', updateQuotaError);
-        } else {
-          console.log('[WEBHOOK] Quota updated successfully:', newQuota, 'photos for user:', adminUserId);
-        }
-      }
-
       console.log('[WEBHOOK] Addon purchase processed successfully:', addonName, 'for user:', adminUserId);
+      console.log('[WEBHOOK] Note: Quota will be calculated dynamically by dashboard (base + addons)');
       return new Response(JSON.stringify({ received: true }), { status: 200 });
     }
 
