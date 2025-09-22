@@ -8,7 +8,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import QuotaManager from '../../../lib/quota-manager';
+import QuotaManager from '../../../../lib/quota-manager';
 
 // Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
 const dataURLtoFile = (dataurl, filename) => {
