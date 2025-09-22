@@ -21,7 +21,28 @@ export default function AdminLoginPage() {
       setEmail(lastEmail);
       sessionStorage.removeItem('last_registered_email'); // Nettoyer après utilisation
     }
-  }, []);
+
+    // Vérifier si l'utilisateur est déjà connecté
+    const checkExistingSession = () => {
+      const sessionData = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+      if (sessionData) {
+        try {
+          const decodedSession = JSON.parse(atob(sessionData));
+          if (decodedSession.logged_in) {
+            console.log("Session existante détectée, redirection vers dashboard");
+            router.push('/photobooth-ia/admin/dashboard');
+            return;
+          }
+        } catch (error) {
+          console.log("Session invalide détectée, nettoyage");
+          localStorage.removeItem('admin_session');
+          sessionStorage.removeItem('admin_session');
+        }
+      }
+    };
+
+    checkExistingSession();
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
