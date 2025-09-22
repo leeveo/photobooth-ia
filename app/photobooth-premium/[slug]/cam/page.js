@@ -1833,99 +1833,587 @@ const generateImageReplicate = async () => {
     >
       
 
-      {/* Processing Overlay */}
+      {/* Processing Overlay - Design Web 3.0 Premium avec animations ultra-sophistiquées */}
       <AnimatePresence>
         {processing && (
           <motion.div 
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            style={{
+              background: `
+                radial-gradient(circle at 15% 85%, rgba(147, 51, 234, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 85% 15%, rgba(236, 72, 153, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 45% 35%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 65% 75%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(0, 0, 0, 0.92) 0%, rgba(20, 20, 30, 0.96) 100%)
+              `
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
           >
+            {/* Particules premium animées en arrière-plan */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(30)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full"
+                  style={{
+                    width: `${2 + Math.random() * 4}px`,
+                    height: `${2 + Math.random() * 4}px`,
+                    backgroundColor: i % 3 === 0 ? secondaryColor : 
+                                   i % 3 === 1 ? '#8B5CF6' : '#EC4899',
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    opacity: 0.4,
+                  }}
+                  animate={{
+                    y: [0, -40, 0],
+                    x: [0, Math.random() * 30 - 15, 0],
+                    opacity: [0.4, 0.8, 0.4],
+                    scale: [1, 1.8, 1],
+                  }}
+                  transition={{
+                    duration: 4 + Math.random() * 3,
+                    repeat: Infinity,
+                    delay: Math.random() * 3,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Vagues d'énergie animées */}
+            <div className="absolute inset-0">
+              {[...Array(4)].map((_, i) => (
+                <motion.div
+                  key={`wave-${i}`}
+                  className="absolute inset-0 rounded-full border border-white/10"
+                  style={{
+                    width: `${200 + i * 150}px`,
+                    height: `${200 + i * 150}px`,
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  animate={{
+                    scale: [0.8, 1.2, 0.8],
+                    opacity: [0.1, 0.3, 0.1],
+                  }}
+                  transition={{
+                    duration: 3 + i * 0.5,
+                    repeat: Infinity,
+                    delay: i * 0.8,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
             <motion.div 
-              className="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-xl shadow-2xl max-w-md w-full"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25 }}
+              className="relative max-w-lg w-full mx-4 p-10 rounded-3xl shadow-2xl border border-white/25"
+              style={{
+                background: `
+                  linear-gradient(135deg, 
+                    rgba(255, 255, 255, 0.15) 0%, 
+                    rgba(255, 255, 255, 0.08) 50%,
+                    rgba(255, 255, 255, 0.03) 100%
+                  )
+                `,
+                backdropFilter: 'blur(25px)',
+                WebkitBackdropFilter: 'blur(25px)',
+                boxShadow: `
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                  0 25px 50px rgba(0, 0, 0, 0.5),
+                  0 0 100px rgba(147, 51, 234, 0.3)
+                `,
+              }}
+              initial={{ scale: 0.7, opacity: 0, y: 80, rotateX: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
+              exit={{ scale: 0.7, opacity: 0, y: 80, rotateX: 15 }}
+              transition={{ 
+                type: "spring", 
+                damping: 18, 
+                stiffness: 280,
+                duration: 0.8 
+              }}
             >
-              <h2 
-                className="text-2xl font-bold mb-2 text-center"
-                style={{ color: secondaryColor }}
-              >
-                Création en cours...
-              </h2>
-              
-              <p className="text-white text-center mb-4">
-                Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-              </p>
-              
-              <div className="mb-6">
-                <div className="w-full bg-gray-700 rounded-full h-3">
-                  <motion.div 
-                    className="h-3 rounded-full" 
-                    style={{ 
-                      width: `${loadingProgress}%`,
-                      backgroundColor: secondaryColor
+              {/* Logo premium rotatif au centre avec 4 couches d'animations */}
+              <div className="flex justify-center mb-8">
+                <div className="relative">
+                  {/* Couche 1: Cercle externe avec gradient rotatif */}
+                  <motion.div
+                    className="absolute inset-0 w-24 h-24 rounded-full"
+                    style={{
+                      background: `conic-gradient(from 0deg, ${secondaryColor}, #8B5CF6, #EC4899, ${secondaryColor})`,
                     }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${loadingProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  ></motion.div>
-                </div>
-                <div className="mt-1 flex justify-between text-xs text-white/70">
-                  <span>Début</span>
-                  <span>Finalisation</span>
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div className="absolute inset-1 rounded-full bg-black/80 backdrop-blur-sm" />
+                  </motion.div>
+                  
+                  {/* Couche 2: Hexagone externe rotatif */}
+                  <motion.div
+                    className="absolute inset-0 w-24 h-24"
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div 
+                      className="w-full h-full border-2 border-opacity-50"
+                      style={{ 
+                        borderColor: secondaryColor,
+                        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                        filter: `drop-shadow(0 0 20px ${secondaryColor}40)`
+                      }}
+                    />
+                  </motion.div>
+                  
+                  {/* Couche 3: Points orbitaux animés */}
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: i % 2 === 0 ? secondaryColor : '#8B5CF6',
+                        left: '50%',
+                        top: '50%',
+                        transformOrigin: '0 0',
+                        filter: `drop-shadow(0 0 8px ${i % 2 === 0 ? secondaryColor : '#8B5CF6'}80)`
+                      }}
+                      animate={{
+                        rotate: [0, 360],
+                        scale: [0.8, 1.4, 0.8],
+                        x: [30, 30, 30],
+                        y: [-1.5, -1.5, -1.5],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        delay: i * 0.5,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  ))}
+                  
+                  {/* Couche 4: Logo central avec pulsation premium */}
+                  <motion.div
+                    className="relative w-24 h-24 flex items-center justify-center text-5xl"
+                    animate={{ 
+                      scale: [1, 1.15, 1],
+                      opacity: [0.9, 1, 0.9],
+                      filter: [`drop-shadow(0 0 15px ${secondaryColor}60)`, `drop-shadow(0 0 25px ${secondaryColor}80)`, `drop-shadow(0 0 15px ${secondaryColor}60)`]
+                    }}
+                    transition={{ 
+                      duration: 2.5, 
+                      repeat: Infinity,
+                      ease: "easeInOut" 
+                    }}
+                  >
+                    💎
+                  </motion.div>
                 </div>
               </div>
-              
-              <motion.div 
-                className="mt-4 h-32 overflow-y-auto text-sm p-3 rounded bg-black bg-opacity-20 text-white/90"
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
+
+              {/* Titre premium avec gradient ultra-animé */}
+              <motion.h2 
+                className="text-4xl font-black mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r leading-tight"
+                style={{
+                  backgroundImage: `linear-gradient(45deg, ${secondaryColor}, #8B5CF6, #EC4899, #ffffff, ${secondaryColor})`,
+                  backgroundSize: '300% 300%',
+                  textShadow: `0 0 30px ${secondaryColor}40`,
+                }}
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                initial={{ opacity: 0, y: -30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
               >
-                {logs.length > 0 ? (
-                  logs.map((log, index) => (
-                    <motion.div 
-                      key={index}
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="mb-1"
-                    >
-                      {log}
-                    </motion.div>
-                  ))
-                ) : (
-                  <div>Initialisation du processus...</div>
-                )}
+                ✨ Création Premium ✨
+              </motion.h2>
+              
+              {/* Temps écoulé avec animation premium */}
+              <motion.p 
+                className="text-white/95 text-center mb-8 text-xl font-semibold"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+              >
+                <motion.span
+                  className="inline-flex items-center gap-2"
+                  animate={{ 
+                    opacity: [0.6, 1, 0.6],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  ⏱️ {(elapsedTime / 1000).toFixed(1)}s
+                  <motion.span
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="inline-block"
+                  >
+                    ⚡
+                  </motion.span>
+                </motion.span>
+              </motion.p>
+              
+              {/* Barre de progression ultra-sophistiquée */}
+              <motion.div 
+                className="mb-10"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.8 }}
+              >
+                <div className="relative w-full h-5 rounded-full overflow-hidden border border-white/25">
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800"
+                  />
+                  
+                  {/* Couche de base avec pattern animé */}
+                  <motion.div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      background: `repeating-linear-gradient(
+                        90deg,
+                        transparent,
+                        transparent 8px,
+                        ${secondaryColor}30 8px,
+                        ${secondaryColor}30 16px
+                      )`
+                    }}
+                    animate={{
+                      backgroundPosition: ['0px', '32px'],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                  />
+                  
+                  {/* Barre de progression principale */}
+                  <motion.div 
+                    className="absolute inset-0 rounded-full shadow-lg overflow-hidden"
+                    style={{ 
+                      background: `linear-gradient(90deg, 
+                        ${secondaryColor} 0%, 
+                        #8B5CF6 25%,
+                        #EC4899 50%,
+                        #ffffff 75%,
+                        ${secondaryColor} 100%
+                      )`,
+                      width: `${loadingProgress}%`,
+                      backgroundSize: '400% 100%',
+                    }}
+                    animate={{
+                      backgroundPosition: ['0% 0%', '400% 0%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                    initial={{ width: "0%" }}
+                  >
+                    {/* Multiple effets de brillance */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                    />
+                  </motion.div>
+                  
+                  {/* Particules qui suivent la progression */}
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={`progress-particle-${i}`}
+                      className="absolute top-1 w-1 h-3 rounded-full opacity-80"
+                      style={{
+                        backgroundColor: '#ffffff',
+                        left: `${Math.min(loadingProgress - 2 + i * 0.5, 98)}%`,
+                        filter: 'drop-shadow(0 0 4px #ffffff80)'
+                      }}
+                      animate={{
+                        y: [0, -8, 0],
+                        opacity: [0.8, 1, 0.8],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                <div className="mt-3 flex justify-between text-sm text-white/70 font-semibold">
+                  <span className="flex items-center gap-1">
+                    🚀 <span>Démarrage</span>
+                  </span>
+                  <motion.span 
+                    className="text-lg font-bold"
+                    style={{ color: secondaryColor }}
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    {loadingProgress.toFixed(0)}%
+                  </motion.span>
+                  <span className="flex items-center gap-1">
+                    🎯 <span>Finalisation</span>
+                  </span>
+                </div>
               </motion.div>
               
+              {/* Zone de logs ultra-stylisée */}
+              <motion.div 
+                className="mb-8 h-36 overflow-y-auto rounded-3xl border border-white/15 p-5"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(0, 0, 0, 0.4) 0%, 
+                      rgba(30, 30, 40, 0.6) 50%,
+                      rgba(0, 0, 0, 0.4) 100%
+                    )
+                  `,
+                  backdropFilter: 'blur(15px)',
+                  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.8 }}
+              >
+                <div className="space-y-3">
+                  {logs.length > 0 ? (
+                    logs.map((log, index) => (
+                      <motion.div 
+                        key={index}
+                        className="flex items-center space-x-4 text-white/95 text-sm"
+                        initial={{ opacity: 0, x: -30, scale: 0.9 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        transition={{ 
+                          delay: index * 0.15, 
+                          duration: 0.5,
+                          type: "spring",
+                          damping: 20
+                        }}
+                      >
+                        {/* Indicateur animé plus sophistiqué */}
+                        <motion.div
+                          className="relative w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: secondaryColor }}
+                          animate={{ 
+                            scale: [1, 1.4, 1],
+                            opacity: [0.8, 1, 0.8],
+                          }}
+                          transition={{ 
+                            duration: 2, 
+                            repeat: Infinity,
+                            delay: index * 0.3
+                          }}
+                        >
+                          {/* Anneaux pulsants */}
+                          <motion.div
+                            className="absolute inset-0 rounded-full border-2"
+                            style={{ borderColor: secondaryColor }}
+                            animate={{ 
+                              scale: [1, 2, 1],
+                              opacity: [0.5, 0, 0.5]
+                            }}
+                            transition={{ 
+                              duration: 2, 
+                              repeat: Infinity,
+                              delay: index * 0.3
+                            }}
+                          />
+                        </motion.div>
+                        
+                        <motion.span
+                          className="font-semibold"
+                          animate={{ opacity: [0.9, 1, 0.9] }}
+                          transition={{ 
+                            duration: 2.5, 
+                            repeat: Infinity,
+                            delay: index * 0.4
+                          }}
+                        >
+                          {log}
+                        </motion.span>
+                        
+                        {/* Étoiles scintillantes */}
+                        <motion.span
+                          animate={{ 
+                            opacity: [0, 1, 0],
+                            rotate: [0, 180, 360]
+                          }}
+                          transition={{ 
+                            duration: 3, 
+                            repeat: Infinity,
+                            delay: index * 0.5
+                          }}
+                          className="text-xs"
+                        >
+                          ✨
+                        </motion.span>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.div 
+                      className="flex items-center space-x-4 text-white/80 text-sm"
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                    >
+                      <motion.div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: secondaryColor }}
+                        animate={{ 
+                          scale: [1, 1.5, 1],
+                          rotate: [0, 360]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                      <span className="font-semibold">🔮 Initialisation du processus premium...</span>
+                      <motion.span
+                        animate={{ 
+                          opacity: [0, 1, 0],
+                          y: [0, -5, 0]
+                        }}
+                        transition={{ 
+                          duration: 1.5, 
+                          repeat: Infinity 
+                        }}
+                      >
+                        ⭐
+                      </motion.span>
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+              
+              {/* Gestion des erreurs premium */}
               {error && (
                 <motion.div 
-                  className="mt-4 p-3 bg-red-900 bg-opacity-20 border border-red-500 text-red-100 rounded-lg"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-8 p-5 rounded-3xl border border-red-400/40"
+                  style={{
+                    background: `
+                      linear-gradient(135deg, 
+                        rgba(239, 68, 68, 0.15) 0%, 
+                        rgba(185, 28, 28, 0.25) 50%,
+                        rgba(127, 29, 29, 0.15) 100%
+                      )
+                    `,
+                    backdropFilter: 'blur(15px)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 30px rgba(239, 68, 68, 0.3)',
+                  }}
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ type: "spring", damping: 20 }}
                 >
-                  {error}
+                  <div className="flex items-center space-x-4">
+                    <motion.div
+                      animate={{ 
+                        rotate: [0, 15, -15, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{ duration: 0.8, repeat: 4 }}
+                      className="text-2xl"
+                    >
+                      ❌
+                    </motion.div>
+                    <span className="text-red-200 font-semibold text-lg">{error}</span>
+                    <motion.div
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      ⚠️
+                    </motion.div>
+                  </div>
                 </motion.div>
               )}
               
-              <div className="mt-6 flex justify-center">
+              {/* Boutons d'action premium */}
+              <motion.div 
+                className="flex justify-center space-x-6"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 0.8 }}
+              >
                 <motion.button
                   onClick={() => {
                     setProcessing(false);
                     router.push(`/photobooth-premium/${slug}`);
                   }}
-                  className="px-6 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.25)" }}
+                  className="px-10 py-4 rounded-2xl font-bold text-base border border-white/25 relative overflow-hidden group"
+                  style={{ 
+                    background: `
+                      linear-gradient(135deg, 
+                        rgba(255, 255, 255, 0.15) 0%, 
+                        rgba(255, 255, 255, 0.08) 50%,
+                        rgba(255, 255, 255, 0.03) 100%
+                      )
+                    `,
+                    color: "white",
+                    backdropFilter: 'blur(10px)',
+                  }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: `0 15px 40px rgba(255, 255, 255, 0.15)`,
+                  }}
                   whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", damping: 15 }}
                 >
-                  Annuler
+                  {/* Effet de brillance animé */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  
+                  {/* Particules sur hover */}
+                  <motion.div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={`cancel-sparkle-${i}`}
+                        className="absolute w-1 h-1 bg-white rounded-full"
+                        style={{
+                          left: `${20 + Math.random() * 60}%`,
+                          top: `${20 + Math.random() * 60}%`,
+                        }}
+                        animate={{
+                          opacity: [0, 1, 0],
+                          scale: [0, 1.5, 0],
+                          y: [0, -20],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                          ease: "easeOut"
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                  
+                  <span className="relative z-10 flex items-center gap-2">
+                    🚫 <span>Annuler</span>
+                  </span>
                 </motion.button>
-              </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}

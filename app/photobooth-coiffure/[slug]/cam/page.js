@@ -8,6 +8,8 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import QuotaManager from '../../../lib/quota-manager';
+
 // Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
 const dataURLtoFile = (dataurl, filename) => {
   if (!dataurl) {
@@ -1452,18 +1454,10 @@ export default function CameraCapture({ params }) {
   const [imageProcessing, setImageProcessing] = useState(false);
   
   const generateImageSwap = async () => {
-    // ✅ VÉRIFICATION DU QUOTA AVANT GÉNÉRATION
-    if (quotaAtteint) {
-      if (isFreePlan) {
-        // Redirection directe vers la page des plans pour les utilisateurs gratuits
-        alert("🎉 Vos 3 photos gratuites sont épuisées ! Choisissez un plan pour continuer.");
-        window.location.href = '/photobooth-ia/admin/choose-plan';
-        return;
-      } else {
-        // Message pour les utilisateurs payants
-        alert("Quota atteint. Veuillez renouveler votre abonnement.");
-        return;
-      }
+    // ✅ NOUVEAU SYSTÈME DE QUOTA AVANCÉ
+    const canProceed = await QuotaManager.checkAndAlertQuota(project?.id);
+    if (!canProceed) {
+      return; // L'utilisateur a été redirigé ou alerté
     }
 
     setNumProses(2);
@@ -2241,6 +2235,22 @@ const generateImageGemini = async () => {
       } else {
         setLogs(logs => [...logs, "Session enregistrée dans la base."]);
         console.log("===> [DEBUG] Insertion sessions réussie:", sessionInsertData);
+        
+        // ✅ NOUVEAU : Consommer le quota APRÈS le succès de la session
+        if (sessionInsertData && sessionInsertData[0]?.id) {
+          try {
+            const quotaResult = await QuotaManager.consumeAfterSuccess(
+              sessionInsertData[0].id, 
+              project?.id
+            );
+            if (quotaResult) {
+              console.log("===> [DEBUG] Quota consommé avec succès:", quotaResult.consumed);
+            }
+          } catch (quotaError) {
+            console.error("===> [DEBUG] Erreur consommation quota:", quotaError);
+            // Ne pas faire échouer la génération pour une erreur de quota
+          }
+        }
       }
     } catch (sessionError) {
       setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);

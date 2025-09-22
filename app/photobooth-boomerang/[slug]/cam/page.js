@@ -2306,46 +2306,208 @@ export default function CameraCapture({ params }) {
             )}
           </AnimatePresence>
           
-          {/* Indicateur de traitement amélioré */}
+          {/* Indicateur de traitement Web 3.0 sophistiqué - Boomerang */}
           <AnimatePresence>
             {processing && (
               <motion.div 
                 className="absolute inset-0 z-20 flex flex-col items-center justify-center"
-                style={{ backgroundColor: `rgba(0,0,0,0.7)` }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                style={{ 
+                  background: `linear-gradient(135deg, 
+                    rgba(0, 0, 0, 0.95) 0%, 
+                    rgba(0, 0, 0, 0.85) 50%, 
+                    rgba(0, 0, 0, 0.95) 100%
+                  )`,
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)'
+                }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               >
-                <motion.div 
-                  className="w-16 h-16 rounded-full mb-4"
-                  style={{ 
-                    borderWidth: '4px',
-                    borderColor: `${secondaryColor}50`,
-                    borderTopColor: secondaryColor,
-                    borderStyle: 'solid'
+                {/* Particules d'ambiance pour effet boomerang */}
+                {[...Array(18)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 rounded-full"
+                    style={{
+                      backgroundColor: i % 3 === 0 ? primaryColor : secondaryColor,
+                      left: `${20 + (i * 3.5)}%`,
+                      top: `${30 + Math.sin(i * 0.5) * 20}%`,
+                    }}
+                    animate={{
+                      x: [0, Math.cos(i * 0.8) * 30, 0],
+                      y: [0, Math.sin(i * 0.8) * 30, 0],
+                      opacity: [0.3, 1, 0.3],
+                      scale: [0.5, 1.2, 0.5]
+                    }}
+                    transition={{
+                      duration: 3 + (i * 0.1),
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: i * 0.15
+                    }}
+                  />
+                ))}
+
+                {/* Container principal glassmorphisme */}
+                <motion.div
+                  className="relative p-8 rounded-3xl border"
+                  style={{
+                    background: `linear-gradient(135deg, 
+                      rgba(255, 255, 255, 0.1) 0%,
+                      rgba(255, 255, 255, 0.05) 100%
+                    )`,
+                    borderColor: `rgba(255, 255, 255, 0.2)`,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    boxShadow: `
+                      0 25px 50px rgba(0, 0, 0, 0.25),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.2)
+                    `
                   }}
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                ></motion.div>
-                <motion.p 
-                  className="text-white font-medium mb-2"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
                 >
-                  Traitement en cours...
-                </motion.p>
-                {logs.length > 0 && (
-                  <motion.div 
-                    className="text-white text-sm opacity-80 max-w-md text-center p-3 rounded"
-                    style={{ backgroundColor: `${primaryColor}30` }}
-                    initial={{ opacity: 0, y: 10 }}
+                  {/* Logo central avec animation boomerang */}
+                  <div className="relative flex items-center justify-center mb-6">
+                    {/* Cercle de rotation extérieur */}
+                    <motion.div
+                      className="absolute w-20 h-20 rounded-full border-2"
+                      style={{
+                        borderColor: `${primaryColor}40`,
+                        borderTopColor: primaryColor,
+                        borderRightColor: secondaryColor
+                      }}
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                    
+                    {/* Forme losange représentant le boomerang */}
+                    <motion.div
+                      className="absolute w-12 h-12 transform rotate-45"
+                      style={{
+                        background: `linear-gradient(45deg, ${primaryColor}, ${secondaryColor})`,
+                        borderRadius: '20% 80% 20% 80%'
+                      }}
+                      animate={{
+                        rotateZ: [0, 180, 360],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+
+                    {/* Points orbitaux représentant le mouvement */}
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
+                        }}
+                        animate={{
+                          x: Math.cos((i * 60 * Math.PI) / 180) * 35,
+                          y: Math.sin((i * 60 * Math.PI) / 180) * 35,
+                          scale: [0.5, 1, 0.5],
+                          opacity: [0.4, 1, 0.4]
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: i * 0.2
+                        }}
+                      />
+                    ))}
+
+                    {/* Icône centrale de traitement vidéo */}
+                    <motion.div
+                      className="relative z-10 text-3xl"
+                      animate={{ 
+                        rotateY: [0, 180, 360],
+                        scale: [0.9, 1.1, 0.9]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      🎬
+                    </motion.div>
+                  </div>
+
+                  {/* Texte principal */}
+                  <motion.div
+                    className="text-center mb-4"
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
                   >
-                    {logs[logs.length - 1]}
+                    <h3 className="text-white text-xl font-bold mb-2">
+                      Création de votre Boomerang
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Traitement magique en cours...
+                    </p>
                   </motion.div>
-                )}
+
+                  {/* Barre de progression sophistiquée */}
+                  <motion.div
+                    className="w-64 h-2 rounded-full overflow-hidden mb-4"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                    initial={{ opacity: 0, scaleX: 0 }}
+                    animate={{ opacity: 1, scaleX: 1 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                  >
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor}, ${primaryColor})`
+                      }}
+                      animate={{
+                        x: ["-100%", "100%"]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  </motion.div>
+
+                  {/* Affichage des logs stylisé */}
+                  {logs.length > 0 && (
+                    <motion.div
+                      className="text-center p-4 rounded-xl border max-w-sm"
+                      style={{
+                        backgroundColor: `rgba(255, 255, 255, 0.05)`,
+                        borderColor: `rgba(255, 255, 255, 0.1)`,
+                        backdropFilter: 'blur(10px)'
+                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8, duration: 0.5 }}
+                    >
+                      <motion.p
+                        className="text-white text-sm leading-relaxed"
+                        animate={{ opacity: [0.7, 1, 0.7] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        {logs[logs.length - 1]}
+                      </motion.p>
+                    </motion.div>
+                  )}
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

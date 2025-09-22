@@ -359,9 +359,10 @@ export default function DonneesPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-        Données Capturées des Utilisateurs
-      </h2>
+          <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white mb-6">
+        <h1 className="text-2xl font-bold mb-2">Datas Globales</h1>
+        <p className="text-white text-opacity-80 text-sm">Retrouvez toutes les datas de vos utilisateurs ici.</p>
+      </div>
 
       {error && (
         <div className="p-4 mb-4 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">

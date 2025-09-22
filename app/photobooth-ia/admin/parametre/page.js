@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RiRefreshLine, RiMoneyEuroCircleLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
+import QuotaDisplay from '../../../../components/QuotaDisplay';
 
 export default function ParametrePage() {
   const supabase = createClientComponentClient();
@@ -13,6 +14,49 @@ export default function ParametrePage() {
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
+
+  // Fonction pour synchroniser les factures
+  const syncInvoices = async () => {
+    setSyncLoading(true);
+    setSyncMessage(null);
+    try {
+      const response = await fetch('/api/stripe/sync-invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSyncMessage({ type: 'success', text: data.message });
+        // Recharger les paiements
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setSyncMessage({ type: 'error', text: data.error || 'Erreur lors de la synchronisation' });
+      }
+    } catch (error) {
+      setSyncMessage({ type: 'error', text: 'Erreur de connexion: ' + error.message });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  // Fonction pour convertir l'ID Stripe en nom de plan lisible
+  const getPlanName = (planId) => {
+    const planNames = {
+      'price_1RdtbYIgKYOzHnxE7NSZjxCP': 'Plan Starter (50 photos)',
+      'price_1RdtbzIgKYOzHnxEjvMFHmM6': 'Plan Pro (200 photos)',
+      'price_1RdtcOIgKYOzHnxEHhGQxTSm': 'Plan Business (500 photos)',
+      'price_1RdtcoIgKYOzHnxErGz9TBPZ': 'Plan Enterprise (1000 photos)',
+      // Ajoutez d'autres IDs de plan si nécessaire
+    };
+    return planNames[planId] || planId || 'Gratuit (3 photos)';
+  };
 
   // Récupère l'utilisateur connecté
   useEffect(() => {
@@ -57,8 +101,6 @@ export default function ParametrePage() {
         return;
       }
       setPaymentsLoading(true);
-      // Debug log
-      console.log('[ParametrePage] Fetching payments for admin_user_id:', user.id);
       
       // Récupérer les abonnements
       const { data: paymentsData, error: paymentsError } = await supabase
@@ -77,19 +119,15 @@ export default function ParametrePage() {
       if (paymentsError) {
         setError("Erreur lors du chargement des paiements : " + paymentsError.message);
         setPayments([]);
-        console.error("Erreur Supabase admin_payments:", paymentsError);
       } else {
         setPayments(paymentsData || []);
-        console.log('[ParametrePage] Payments loaded:', paymentsData);
       }
       
       if (addonError) {
         setError("Erreur lors du chargement des achats addon : " + addonError.message);
         setAddonPurchases([]);
-        console.error("Erreur Supabase addon_purchases:", addonError);
       } else {
         setAddonPurchases(addonData || []);
-        console.log('[ParametrePage] Addon purchases loaded:', addonData);
       }
       
       setPaymentsLoading(false);
@@ -116,35 +154,15 @@ export default function ParametrePage() {
           <div className="flex-1">
             <div><strong>Email :</strong> {user.email}</div>
             {/* Affiche le dernier plan payé */}
-            <div><strong>Plan :</strong> {payments[0]?.plan || 'Gratuit (3 photos)'}</div>
+            <div><strong>Plan :</strong> {getPlanName(payments[0]?.plan)}</div>
             
-            {/* Calcul du quota total */}
-            {(() => {
-              const baseQuota = payments[0]?.photo_quota || 3;
-              const addonPhotos = addonPurchases.reduce((total, addon) => {
-                return total + (addon.addon_value || 0);
-              }, 0);
-              const totalQuota = baseQuota + addonPhotos;
-              
-              return (
-                <div className="space-y-1">
-                  <div><strong>Quota photos total :</strong> {totalQuota}</div>
-                  {addonPhotos > 0 && (
-                    <div className="text-sm text-gray-600 ml-4">
-                      → Quota de base : {baseQuota}
-                      <br />
-                      → Photos addon : +{addonPhotos}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+            {/* Nouveau composant de quota détaillé */}
+            <div className="mt-4 p-4 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-lg">
+              <h3 className="text-white font-semibold mb-3">📊 Détail du quota</h3>
+              <QuotaDisplay adminId={user.id} />
+            </div>
             
-            <div><strong>Prochain reset quota :</strong> {payments[0]?.photo_quota_reset_at ? new Date(payments[0].photo_quota_reset_at).toLocaleDateString() : '-'}</div>
-          </div>
-          <div className="flex flex-col gap-2 text-xs">
-            <div><strong>Stripe customer ID :</strong> {payments[0]?.stripe_customer_id || '-'}</div>
-            <div><strong>Stripe subscription ID :</strong> {payments[0]?.stripe_subscription_id || '-'}</div>
+            <div className="mt-4"><strong>Prochain reset quota :</strong> {payments[0]?.photo_quota_reset_at ? new Date(payments[0].photo_quota_reset_at).toLocaleDateString() : '-'}</div>
           </div>
         </div>
       </div>
@@ -156,15 +174,41 @@ export default function ParametrePage() {
             <RiMoneyEuroCircleLine className="w-6 h-6 text-green-600" />
             <h3 className="text-lg font-medium text-gray-900">Historique des paiements</h3>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all text-xs"
-            title="Rafraîchir"
-          >
-            <RiRefreshLine className="w-4 h-4" />
-            Actualiser
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={syncInvoices}
+              disabled={syncLoading}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg shadow transition-all text-xs ${
+                syncLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+              } text-white`}
+              title="Synchroniser les factures depuis Stripe"
+            >
+              <RiRefreshLine className={`w-4 h-4 ${syncLoading ? 'animate-spin' : ''}`} />
+              {syncLoading ? 'Sync...' : 'Sync Factures'}
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all text-xs"
+              title="Rafraîchir"
+            >
+              <RiRefreshLine className="w-4 h-4" />
+              Actualiser
+            </button>
+          </div>
         </div>
+        
+        {/* Message de synchronisation */}
+        {syncMessage && (
+          <div className={`mx-6 mt-4 p-3 rounded-lg text-sm ${
+            syncMessage.type === 'success' 
+              ? 'bg-green-100 text-green-700' 
+              : 'bg-red-100 text-red-700'
+          }`}>
+            {syncMessage.text}
+          </div>
+        )}
         {paymentsLoading ? (
           <div className="p-6 text-center text-gray-500">Chargement des paiements...</div>
         ) : payments.length === 0 ? (
@@ -180,7 +224,6 @@ export default function ParametrePage() {
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Plan</th>
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Images incluses</th>
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
-                    <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
                     <th className="px-4 py-2 text-left font-semibold text-gray-700">Facture</th>
                   </tr>
                 </thead>
@@ -193,7 +236,7 @@ export default function ParametrePage() {
                     >
                       <td className="px-4 py-2">{new Date(payment.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-2">{(payment.amount / 100).toFixed(2)} €</td>
-                      <td className="px-4 py-2">{payment.plan || payment.plan_name || '-'}</td>
+                      <td className="px-4 py-2">{getPlanName(payment.plan || payment.plan_name)}</td>
                       <td className="px-4 py-2">{payment.images_included || '-'}</td>
                       <td className="px-4 py-2">
                         {payment.status === 'succeeded' ? (
@@ -206,7 +249,6 @@ export default function ParametrePage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2">{payment.stripe_payment_id || '-'}</td>
                       <td className="px-4 py-2">
                         {payment.invoice_url ? (
                           <a
@@ -217,8 +259,10 @@ export default function ParametrePage() {
                           >
                             Voir la facture
                           </a>
+                        ) : payment.stripe_payment_id ? (
+                          <span className="text-yellow-600 text-xs">En attente de génération</span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400">Non disponible</span>
                         )}
                         {payment.invoice_pdf && (
                           <>
@@ -261,7 +305,7 @@ export default function ParametrePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                           <div><strong>Montant :</strong> {(payment.amount / 100).toFixed(2)} €</div>
                           <div><strong>Statut :</strong> {payment.status}</div>
-                          <div><strong>Plan :</strong> {payment.plan || payment.plan_name || '-'}</div>
+                          <div><strong>Plan :</strong> {getPlanName(payment.plan || payment.plan_name)}</div>
                           <div><strong>Images incluses :</strong> {payment.images_included || '-'}</div>
                           <div><strong>Stripe customer ID :</strong> {payment.stripe_customer_id}</div>
                           <div><strong>Stripe subscription ID :</strong> {payment.stripe_subscription_id}</div>
@@ -346,7 +390,7 @@ export default function ParametrePage() {
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Photos</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Prix</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Statut</th>
-                  <th className="px-4 py-2 text-left font-semibold text-gray-700">ID Stripe</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Facture</th>
                 </tr>
               </thead>
               <tbody>
@@ -371,7 +415,35 @@ export default function ParametrePage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-gray-600">{addon.stripe_session_id?.slice(0, 20)}...</td>
+                    <td className="px-4 py-2">
+                      {addon.invoice_url ? (
+                        <a
+                          href={addon.invoice_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline hover:text-blue-800"
+                        >
+                          Voir la facture
+                        </a>
+                      ) : addon.stripe_session_id ? (
+                        <span className="text-yellow-600 text-xs">En attente de génération</span>
+                      ) : (
+                        <span className="text-gray-400">Non disponible</span>
+                      )}
+                      {addon.invoice_pdf && (
+                        <>
+                          <span className="mx-1 text-gray-400">|</span>
+                          <a
+                            href={addon.invoice_pdf}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-600 underline hover:text-green-800"
+                          >
+                            PDF
+                          </a>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

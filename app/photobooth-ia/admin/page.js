@@ -122,7 +122,7 @@ export default function AdminPage() {
           </div>
           {/* Applications externes encarts */}
           <div className="mt-8">
-            <h2 className="text-lg font-semibold mb-3 text-gray-700">Applications externes</h2>
+            <h2 className="text-lg font-semibold mb-3 text-gray-700">Editer par WeAreIntelligence</h2>
             <div className="flex flex-col gap-3">
               {externalApps.map(app =>
                 app.url ? (

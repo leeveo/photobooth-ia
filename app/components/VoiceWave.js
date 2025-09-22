@@ -146,9 +146,9 @@ export default function VoiceWave({ direct }) {
     <div className="relative top-0 left-0 mt-5 lg:mt-20 w-full h-full">
         <div className="relative w-full">
             <div className='relative w-[35%] lg:w-[50%] mx-auto flex justify-center items-center'>
-                <Image src='/primaria/orang-1.png' width={512} height={512} alt='Zirolu' className={`w-full ${progressKetawa >= 40 ? 'opacity-0' : ''}`} priority />
-                <Image src='/primaria/orang-2.png' width={512} height={512} alt='Zirolu' className={`w-full absolute w-full ${progressKetawa >= 40 && progressKetawa <= 80  ? '' : 'opacity-0'}`} priority />
-                <Image src='/primaria/orang-3.png' width={512} height={512} alt='Zirolu' className={`w-full absolute w-full ${progressKetawa >= 80 ? '' : 'opacity-0'}`} priority />
+                <Image src='/primaria/orang-1.png' width={512} height={512} alt='waibooth' className={`w-full ${progressKetawa >= 40 ? 'opacity-0' : ''}`} priority />
+                <Image src='/primaria/orang-2.png' width={512} height={512} alt='waibooth' className={`w-full absolute w-full ${progressKetawa >= 40 && progressKetawa <= 80  ? '' : 'opacity-0'}`} priority />
+                <Image src='/primaria/orang-3.png' width={512} height={512} alt='waibooth' className={`w-full absolute w-full ${progressKetawa >= 80 ? '' : 'opacity-0'}`} priority />
             </div>
             <div className="relative bg-white w-[80%] h-[30px] lg:h-[50px] mt-5 lg:mt-14 mx-auto rounded-full p-2 overflow-hidden">
                 <div className="absolute top-0 left-0 border-4 bg-gradient-to-r from-[#FF2A38] to-[#EF000F] h-full mx-auto rounded-full flex items-center justify-center" style={{ width: progressKetawa+"%" }}>

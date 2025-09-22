@@ -1717,6 +1717,308 @@ const generateImageReplicate = async () => {
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
     >
+      
+
+      {/* Processing Overlay - Design Simple mais Élégant */}
+      <AnimatePresence>
+        {processing && (
+          <motion.div 
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            style={{
+              background: `
+                radial-gradient(circle at 30% 70%, rgba(180, 180, 180, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(200, 200, 200, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(40, 40, 40, 0.9) 100%)
+              `
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Particules simples en arrière-plan */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 bg-white rounded-full opacity-20"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    y: [0, -25, 0],
+                    opacity: [0.2, 0.6, 0.2],
+                    scale: [1, 1.3, 1],
+                  }}
+                  transition={{
+                    duration: 3 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
+            <motion.div 
+              className="relative max-w-md w-full mx-4 p-8 rounded-2xl shadow-xl border border-white/15"
+              style={{
+                background: `
+                  linear-gradient(135deg, 
+                    rgba(255, 255, 255, 0.12) 0%, 
+                    rgba(255, 255, 255, 0.06) 100%
+                  )
+                `,
+                backdropFilter: 'blur(15px)',
+                WebkitBackdropFilter: 'blur(15px)',
+              }}
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ 
+                type: "spring", 
+                damping: 25, 
+                stiffness: 300,
+                duration: 0.5 
+              }}
+            >
+              {/* Logo simple au centre avec pulsation douce */}
+              <div className="flex justify-center mb-6">
+                <motion.div
+                  className="relative w-16 h-16 flex items-center justify-center text-4xl"
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    opacity: [0.8, 1, 0.8],
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity,
+                    ease: "easeInOut" 
+                  }}
+                >
+                  ⚡
+                  {/* Cercle pulsant autour */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 opacity-30"
+                    style={{ borderColor: secondaryColor }}
+                    animate={{
+                      scale: [1, 1.3, 1],
+                      opacity: [0.3, 0, 0.3],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                </motion.div>
+              </div>
+
+              {/* Titre simple avec gradient subtil */}
+              <motion.h2 
+                className="text-2xl font-bold mb-4 text-center"
+                style={{ 
+                  color: secondaryColor,
+                  textShadow: `0 0 20px ${secondaryColor}30`,
+                }}
+                initial={{ opacity: 0, y: -15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              >
+                ⚡ Traitement Simple ⚡
+              </motion.h2>
+              
+              {/* Temps écoulé */}
+              <motion.p 
+                className="text-white/90 text-center mb-6 text-lg font-medium"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                <motion.span
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  ⏱️ {(elapsedTime / 1000).toFixed(1)}s
+                </motion.span>
+              </motion.p>
+              
+              {/* Barre de progression simple mais élégante */}
+              <motion.div 
+                className="mb-6"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+              >
+                <div className="relative w-full h-3 rounded-full overflow-hidden border border-white/20">
+                  <div className="absolute inset-0 bg-gray-800" />
+                  <motion.div 
+                    className="absolute inset-0 rounded-full"
+                    style={{ 
+                      background: `linear-gradient(90deg, 
+                        ${secondaryColor} 0%, 
+                        #ffffff 50%, 
+                        ${secondaryColor} 100%
+                      )`,
+                      width: `${loadingProgress}%`,
+                    }}
+                    initial={{ width: "0%" }}
+                  >
+                    {/* Effet de brillance simple */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </motion.div>
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-white/70 font-medium">
+                  <span>🚀 Début</span>
+                  <motion.span 
+                    className="text-base font-bold"
+                    style={{ color: secondaryColor }}
+                  >
+                    {loadingProgress.toFixed(0)}%
+                  </motion.span>
+                  <span>🎯 Fin</span>
+                </div>
+              </motion.div>
+              
+              {/* Zone de logs simple */}
+              <motion.div 
+                className="mb-6 h-28 overflow-y-auto rounded-xl border border-white/10 p-4"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(0, 0, 0, 0.3) 0%, 
+                      rgba(20, 20, 20, 0.4) 100%
+                    )
+                  `,
+                  backdropFilter: 'blur(8px)',
+                }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+              >
+                <div className="space-y-2">
+                  {logs.length > 0 ? (
+                    logs.map((log, index) => (
+                      <motion.div 
+                        key={index}
+                        className="flex items-center space-x-3 text-white/90 text-sm"
+                        initial={{ opacity: 0, x: -15 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ 
+                          delay: index * 0.1, 
+                          duration: 0.3
+                        }}
+                      >
+                        <motion.div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: secondaryColor }}
+                          animate={{ 
+                            scale: [1, 1.2, 1],
+                            opacity: [0.7, 1, 0.7]
+                          }}
+                          transition={{ 
+                            duration: 1.5, 
+                            repeat: Infinity,
+                            delay: index * 0.2
+                          }}
+                        />
+                        <span className="font-medium">{log}</span>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.div 
+                      className="flex items-center space-x-3 text-white/70 text-sm"
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <motion.div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: secondaryColor }}
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      />
+                      <span>🔄 Traitement en cours...</span>
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+              
+              {/* Gestion des erreurs simple */}
+              {error && (
+                <motion.div 
+                  className="mb-6 p-4 rounded-xl border border-red-400/30"
+                  style={{
+                    background: `
+                      linear-gradient(135deg, 
+                        rgba(239, 68, 68, 0.1) 0%, 
+                        rgba(185, 28, 28, 0.15) 100%
+                      )
+                    `,
+                    backdropFilter: 'blur(8px)',
+                  }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", damping: 25 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <motion.div
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 0.5, repeat: 2 }}
+                    >
+                      ❌
+                    </motion.div>
+                    <span className="text-red-200 font-medium">{error}</span>
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Bouton d'action simple */}
+              <motion.div 
+                className="flex justify-center"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+              >
+                <motion.button
+                  onClick={() => {
+                    setProcessing(false);
+                    router.push(`/photobooth-simple/${slug}`);
+                  }}
+                  className="px-8 py-3 rounded-xl font-semibold text-sm border border-white/20 relative overflow-hidden"
+                  style={{ 
+                    background: `
+                      linear-gradient(135deg, 
+                        rgba(255, 255, 255, 0.1) 0%, 
+                        rgba(255, 255, 255, 0.05) 100%
+                      )
+                    `,
+                    color: "white"
+                  }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: `0 10px 25px rgba(255, 255, 255, 0.1)`,
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", damping: 15 }}
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <span className="relative z-10">🚫 Annuler</span>
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div 
         className={`w-full mx-auto mt-4 relative z-10 ${processing ? 'opacity-20 pointer-events-none' : ''} ${
           deviceType === 'mobile' || deviceType === 'tablet' 

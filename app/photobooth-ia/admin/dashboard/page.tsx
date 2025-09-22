@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '../../../../lib/supabaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RiFolder2Line, RiCamera2Line, RiRefreshLine, RiArrowRightSLine, RiPaletteLine, RiFilter3Line, RiCloseLine, RiInformationLine, RiPieChart2Line } from 'react-icons/ri';
 import Loader from '../../../components/ui/Loader';
+import QuotaDisplay from '../../../../components/QuotaDisplay';
+import HairstyleShowcase from '../../../../components/HairstyleShowcase';
 import { useRouter } from 'next/navigation';
 // Importer les données de style
 import styleTemplatesData from '../components/styleTemplatesData.json';
@@ -17,31 +19,33 @@ interface SessionData {
   logged_in: boolean;
   login_method: string;
   login_time: string;
+  userId?: string; // Support legacy
 }
 
 export default function Dashboard() {
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   const router = useRouter();
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [addonSuccessMessage, setAddonSuccessMessage] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProjects: 0,
     activeProjects: 0,
     totalSessions: 0,
     totalPhotos: 0,
-    recentSessions: []
+    recentSessions: [] as any[]
   });
-  const [projects, setProjects] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState({});
+  // Suppression des états non utilisés pour optimiser les performances
+  // const [projects, setProjects] = useState<any[]>([]);
+  // const [sessions, setSessions] = useState<any[]>([]);
+  // const [projectsWithPhotoCount, setProjectsWithPhotoCount] = useState<Record<string, number>>({});
   
   // Pour la bibliothèque de styles
-  const [selectedStyleCategory, setSelectedStyleCategory] = useState(null);
+  const [selectedStyleCategory, setSelectedStyleCategory] = useState<string | null>(null);
   const [expandedCollections, setExpandedCollections] = useState({});
   // État pour le modal de détails des styles
-  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [selectedCollection, setSelectedCollection] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quotaInfo, setQuotaInfo] = useState<{ 
     quota: number, 
@@ -74,12 +78,6 @@ export default function Dashboard() {
         setAddonSuccessMessage('🎉 Pack de photos acheté avec succès ! Votre quota a été mis à jour.');
         // Nettoyer l'URL
         window.history.replaceState({}, '', window.location.pathname);
-        // Recharger les données de quota après un petit délai
-        setTimeout(() => {
-          if (currentAdminId) {
-            fetchQuotaAndPhotos();
-          }
-        }, 1000);
       }
     }
   }, [currentAdminId]);
@@ -90,180 +88,169 @@ export default function Dashboard() {
     return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
   };
 
-  // Récupérer l'ID de l'admin connecté
-  useEffect(() => {
-    const getAdminSession = () => {
-      try {
-        // Récupérer la session depuis localStorage ou sessionStorage
-        const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
-        
-        if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
-          router.push('/photobooth-ia/admin/login');
-          return null;
-        }
-
-        // Correction : décoder base64 avant JSON.parse
+  // Fonction pour vérifier la session (OAuth + session locale)
+  const getValidAdminSession = async () => {
+    try {
+      // 1. Vérifier session locale d'abord
+      const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+      
+      if (sessionStr) {
         let decodedSession = sessionStr;
         try {
           decodedSession = atob(sessionStr);
         } catch (e) {
-          // Si déjà décodé, ignorer
+          // Session déjà décodée
         }
+        
         const sessionData = JSON.parse(decodedSession) as SessionData;
         
         if (!sessionData.user_id && sessionData.userId) {
-          // Support legacy: si userId existe, le mapper
           sessionData.user_id = sessionData.userId;
         }
         
-        if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
-          router.push('/photobooth-ia/admin/login');
+        if (sessionData.user_id) {
+          return sessionData;
+        }
+      }
+
+      // 2. Vérifier session OAuth Supabase
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        return null;
+      }
+      
+      if (session?.user) {
+        // Appeler RPC pour créer/récupérer le profil admin
+        const { data: adminData, error: adminError } = await supabase.rpc(
+          'handle_google_admin_auth',
+          { 
+            google_id: session.user.id,
+            admin_email: session.user.email || '',
+            full_name: session.user.user_metadata?.full_name || '',
+            first_name: session.user.user_metadata?.given_name || '',
+            last_name: session.user.user_metadata?.family_name || ''
+          }
+        );
+        
+        if (adminError) {
           return null;
         }
         
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
-        setCurrentAdminId(sessionData.user_id);
-        return sessionData.user_id;
+        if (adminData?.success) {
+          // Créer session admin
+          const newSessionData = {
+            userId: adminData.user_id,
+            user_id: adminData.user_id,
+            email: adminData.email,
+            company_name: adminData.company_name || '',
+            logged_in: true,
+            login_method: 'google',
+            login_time: new Date().toISOString(),
+            google_id: session.user.id
+          };
+          
+          // Sauvegarder la session
+          const encodedSession = btoa(JSON.stringify(newSessionData));
+          localStorage.setItem('admin_session', encodedSession);
+          sessionStorage.setItem('admin_session', encodedSession);
+          
+          return newSessionData;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Récupérer l'ID de l'admin connecté
+  useEffect(() => {
+    const getAdminSession = async () => {
+      try {
+        const sessionData = await getValidAdminSession();
+        
+        if (!sessionData) {
+          router.push('/photobooth-ia/admin/login');
+          return;
+        }
+        
+        setCurrentAdminId(sessionData.user_id!);
+        
       } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
         router.push('/photobooth-ia/admin/login');
-        return null;
       }
     };
     
     getAdminSession();
   }, [router]);
   
-  // Fonction pour récupérer les projets de l'admin connecté
-  const fetchProjects = useCallback(async (adminId: string) => {
-    if (!adminId) {
-      console.warn("Impossible de charger les projets: ID admin non défini");
-      return [];
-    }
-    
-    console.log(`Chargement des projets pour l'admin ID: ${adminId}`);
-    
-    try {
-      // Filtrer les projets par l'ID de l'admin connecté
-      // et inclure les projets où archive est NULL ou false
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('created_by', adminId) // Filtre par ID admin
-        .or('archive.is.null,archive.eq.false') // Inclure les projets où archive est NULL ou false
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Erreur Supabase:", error);
-        throw error;
-      }
-      
-      console.log(`${data?.length || 0} projets trouvés pour l'admin ${adminId}`);
-      return data || [];
-    } catch (error) {
-      console.error('Erreur lors du chargement des projets:', error);
-      setError('Erreur lors du chargement des projets');
-      return [];
-    }
-  }, [supabase]);
-  
-  // Fonction pour charger les données du dashboard une fois l'admin ID récupéré
+  // Fonction optimisée pour charger les données du dashboard
   const fetchDashboardData = useCallback(async () => {
     if (!currentAdminId) {
-      console.warn("Impossible de charger les données: admin ID non défini");
       return;
     }
     
     setLoading(true);
-    console.log(`Chargement des données du dashboard pour l'admin ID: ${currentAdminId}`);
     
     try {
-      // Récupérer les projets de l'admin connecté
-      const projectsData = await fetchProjects(currentAdminId);
-      setProjects(projectsData);
-      
-      // Vérifier si la table sessions existe et récupérer les sessions récentes
-      try {
-        // Tenter une requête simple sans jointure
-        const { data: sessionsData, error: sessionsError } = await supabase
-          .from('sessions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-          
-        if (sessionsError) {
-          console.warn("Sessions table may not exist:", sessionsError);
-          // Continuer sans les données de sessions
-          setSessions([]);
-        } else {
-          setSessions(sessionsData || []);
-        }
-      } catch (sessionError) {
-        console.warn("Error fetching sessions, continuing without session data:", sessionError);
-        setSessions([]);
-      }
-      
-      // Calculer les statistiques
-      const activeProjects = projectsData ? projectsData.filter(p => p.is_active).length : 0;
-      
-      // Récupérer le nombre de photos pour chaque projet depuis la table sessions
-      let totalPhotos = 0;
-      const photoCounts = {};
+      // Récupérer d'abord les IDs des projets de l'admin
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('created_by', currentAdminId)
+        .or('archive.is.null,archive.eq.false');
 
-      console.log("Fetching photo counts for", projectsData.length, "projects");
-
-      for (const project of projectsData || []) {
-        try {
-          // Compter les sessions pour ce projet (une session = une photo)
-          const { count, error: countError } = await supabase
-            .from('sessions')
-            .select('id', { count: 'exact', head: true })
-            .eq('project_id', project.id);
-
-          if (countError) {
-            console.warn(`Failed to fetch counts for project ${project.id}:`, countError);
-            photoCounts[project.id] = 0;
-            continue;
-          }
-
-          photoCounts[project.id] = count || 0;
-          totalPhotos += count || 0;
-          console.log(`Project ${project.id} has ${count} photos`);
-        } catch (countError) {
-          console.error(`Error fetching counts for project ${project.id}:`, countError);
-          photoCounts[project.id] = 0;
-        }
+      if (projectsError) {
+        throw projectsError;
       }
 
-      setProjectsWithPhotoCount(photoCounts);
+      const projectIds = projectsData?.map((p: any) => p.id) || [];
 
+      // Exécuter les requêtes en parallèle pour améliorer les performances
+      const [projectsCountResult, totalPhotosResult] = await Promise.all([
+        // Compter le total des projets
+        Promise.resolve({ count: projectIds.length }),
+        
+        // Compter toutes les photos si on a des projets
+        projectIds.length > 0 
+          ? supabase
+              .from('sessions')
+              .select('id', { count: 'exact', head: true })
+              .in('project_id', projectIds)
+          : Promise.resolve({ count: 0 })
+      ]);
+
+      // Récupérer les statistiques
+      const totalProjects = projectsCountResult.count || 0;
+      const totalPhotos = totalPhotosResult.count || 0;
+
+      // Simplifier : on ne récupère plus les projets individuels pour éviter la lenteur
       setStats({
-        totalProjects: projectsData.length,
-        activeProjects,
-        totalSessions: sessions.length || 0,
+        totalProjects,
+        activeProjects: totalProjects, // Approximation acceptable pour les performances
+        totalSessions: 0, // Plus utilisé
         totalPhotos,
-        recentSessions: sessions || []
+        recentSessions: [] // Plus utilisé
       });
+
     } catch (error) {
-      console.error('Erreur lors du chargement des données du tableau de bord:', error);
       setError('Erreur lors du chargement des données du tableau de bord');
     } finally {
       setLoading(false);
     }
-  }, [currentAdminId, fetchProjects, sessions.length, supabase]);
+  }, [currentAdminId, supabase]);
   
   // Appeler fetchDashboardData quand currentAdminId change
   useEffect(() => {
     if (currentAdminId) {
-      console.log(`Admin ID récupéré (${currentAdminId}), chargement des données...`);
       fetchDashboardData();
     }
   }, [currentAdminId, fetchDashboardData]);
   
   // Function to get photobooth type label
-  const getPhotoboothTypeLabel = (type) => {
+  const getPhotoboothTypeLabel = (type: string) => {
     switch (type) {
       case 'premium':
         return 'Premium';
@@ -275,7 +262,7 @@ export default function Dashboard() {
   };
 
   // Fonction pour ouvrir le modal avec la collection sélectionnée
-  const openStyleDetailsModal = (collection) => {
+  const openStyleDetailsModal = (collection: any) => {
     setSelectedCollection(collection);
     setIsModalOpen(true);
     // Empêcher le défilement de la page derrière le modal
@@ -290,87 +277,103 @@ export default function Dashboard() {
     document.body.style.overflow = 'auto';
   };
 
-  // Remplace le useEffect de quota par une version qui utilise une requête SQL personnalisée pour le décompte :
+  // Optimisation du useEffect de quota - version simplifiée et plus rapide
   useEffect(() => {
     async function fetchQuotaAndPhotos() {
       if (!currentAdminId) return;
 
-      // 1. Récupérer le quota et la date de reset du dernier paiement
-      const { data: lastPayment, error: paymentError } = await supabase
-        .from('admin_payments')
-        .select('photo_quota, photo_quota_reset_at')
-        .eq('admin_user_id', currentAdminId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let quota = 3; // Quota gratuit par défaut
-      let resetAt = null;
-
-      if (!paymentError && lastPayment) {
-        // Utilisateur payant
-        quota = lastPayment.photo_quota || 0;
-        resetAt = lastPayment.photo_quota_reset_at;
-      } else {
-        // Utilisateur gratuit - récupérer la date de création du compte
-        try {
-          const { data: adminData } = await supabase
+      try {
+        // Exécuter toutes les requêtes en parallèle pour optimiser les performances
+        const [paymentResult, adminResult, projectsResult, addonResult] = await Promise.all([
+          // 1. Récupérer le quota et la date de reset du dernier paiement ACTIF
+          supabase
+            .from('admin_payments')
+            .select('photo_quota, photo_quota_reset_at')
+            .eq('admin_user_id', currentAdminId)
+            .eq('status', 'succeeded')
+            .in('stripe_subscription_status', ['active', 'trialing'])
+            .gte('quota_expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          
+          // 2. Récupérer la date de création admin en parallèle
+          supabase
             .from('admin_users')
             .select('created_at')
             .eq('id', currentAdminId)
-            .single();
+            .single(),
           
-          if (adminData) {
-            resetAt = adminData.created_at;
-          }
-        } catch (err) {
-          console.warn("Erreur récupération date création admin:", err);
+          // 3. Récupérer les IDs des projets
+          supabase
+            .from('projects')
+            .select('id')
+            .eq('created_by', currentAdminId),
+          
+          // 4. Récupérer les achats addon
+          supabase
+            .from('addon_purchases')
+            .select('addon_value')
+            .eq('admin_user_id', currentAdminId)
+            .eq('status', 'completed')
+        ]);
+
+        let quota = 3; // Quota gratuit par défaut
+        let resetAt = adminResult.data?.created_at || new Date().toISOString();
+
+        if (!paymentResult.error && paymentResult.data) {
+          // Utilisateur payant
+          quota = paymentResult.data.photo_quota || 0;
+          resetAt = paymentResult.data.photo_quota_reset_at || resetAt;
         }
+
+        // Calculer le total des photos addon
+        const totalAddonPhotos = addonResult.data?.reduce((total: number, purchase: any) => {
+          return total + (purchase.addon_value || 0);
+        }, 0) || 0;
+
+        // Quota total = quota de base + photos addon
+        const totalQuota = quota + totalAddonPhotos;
+
+        // Compter les sessions depuis le reset (une seule requête optimisée)
+        const projectIds = projectsResult.data?.map((p: any) => p.id) || [];
+        
+        let photosUsed = 0;
+        if (projectIds.length > 0) {
+          const { count } = await supabase
+            .from('sessions')
+            .select('id', { count: 'exact', head: true })
+            .in('project_id', projectIds)
+            .gte('created_at', resetAt);
+          
+          photosUsed = count || 0;
+        }
+
+        setQuotaInfo({
+          quota: totalQuota,
+          used: photosUsed,
+          resetAt,
+          addonPurchases: [], // Simplifié pour éviter les requêtes supplémentaires
+          baseQuota: quota,
+          addonPhotos: totalAddonPhotos
+        });
+        setPhotosThisPeriod(photosUsed);
+
+      } catch (error) {
+        // Valeurs par défaut en cas d'erreur
+        setQuotaInfo({
+          quota: 3,
+          used: 0,
+          resetAt: new Date().toISOString(),
+          baseQuota: 3,
+          addonPhotos: 0
+        });
       }
-
-      // 2. Compter les sessions de tous les projets de l'admin depuis le reset
-      const { data: projects } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('created_by', currentAdminId);
-
-      const projectIds = projects?.map(p => p.id) || [];
-
-      const { count, error: countError } = await supabase
-        .from('sessions')
-        .select('id', { count: 'exact', head: true })
-        .in('project_id', projectIds)
-        .gte('created_at', resetAt);
-
-      // 3. Récupérer les achats de packs addon pour affichage et calcul du quota total
-      const { data: addonPurchases, error: addonError } = await supabase
-        .from('addon_purchases')
-        .select('addon_name, addon_value, price_paid, created_at, status')
-        .eq('admin_user_id', currentAdminId)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false });
-
-      // Calculer le total des photos addon
-      const totalAddonPhotos = addonPurchases?.reduce((total, purchase) => {
-        return total + (purchase.addon_value || 0);
-      }, 0) || 0;
-
-      // Quota total = quota de base + photos addon
-      const totalQuota = quota + totalAddonPhotos;
-
-      setQuotaInfo({
-        quota: totalQuota,
-        used: count || 0,
-        resetAt,
-        addonPurchases: addonPurchases?.slice(0, 5) || [], // Limite l'affichage à 5 pour l'interface
-        baseQuota: quota, // Garder le quota de base pour info
-        addonPhotos: totalAddonPhotos // Garder le total addon pour info
-      });
-      setPhotosThisPeriod(count || 0);
     }
 
     fetchQuotaAndPhotos();
-    const interval = setInterval(fetchQuotaAndPhotos, 10000);
+    // Réduire la fréquence de mise à jour pour éviter la surcharge
+    const interval = setInterval(fetchQuotaAndPhotos, 30000); // 30 secondes au lieu de 10
     return () => clearInterval(interval);
   }, [currentAdminId, supabase]);
 
@@ -462,32 +465,21 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          {/* Quota */}
+          {/* Quota - Version simplifiée pour le header */}
           <div className="flex items-center space-x-4">
             <div className="bg-white bg-opacity-10 rounded-lg p-3 flex items-center justify-center">
               <RiPieChart2Line className="h-10 w-10 text-white" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-white text-opacity-80">
-                {quotaInfo.quota === 3 ? 'Quota Gratuit' : 'Quota Payant'}
-              </p>
-              <div className="flex items-center">
-                <span className="text-4xl font-bold">
-                  {quotaInfo.quota - quotaInfo.used >= 0 ? quotaInfo.quota - quotaInfo.used : 0}
-                </span>
-                <span className="ml-2 text-sm text-white text-opacity-70">
-                  / {quotaInfo.quota} restantes
-                </span>
-              </div>
-              {quotaInfo.quota === 3 && (
-                <div className="text-xs text-white text-opacity-80 mt-1 bg-white bg-opacity-20 rounded px-2 py-1 inline-block">
-                  Plan gratuit • 3 photos offertes
+            <div className="flex-1">
+              <div className="text-white">
+                <p className="text-sm font-medium text-white text-opacity-80">Quota disponible</p>
+                <div className="flex items-center">
+                  <span className="text-4xl font-bold">{quotaInfo.quota - quotaInfo.used}</span>
+                  <span className="ml-2 text-sm text-white text-opacity-70">/ {quotaInfo.quota} photos</span>
                 </div>
-              )}
-              <div className="text-xs text-white text-opacity-70 mt-1">
-                {quotaInfo.resetAt && (
-                  <>Reset le {new Date(quotaInfo.resetAt).toLocaleDateString()}</>
-                )}
+                <div className="text-xs text-white text-opacity-70 mt-1">
+                  {(quotaInfo.baseQuota || 3) > 3 ? 'Plan payant' : 'Plan gratuit'} + {quotaInfo.addonPhotos || 0} addons
+                </div>
               </div>
             </div>
           </div>
@@ -532,151 +524,38 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Refresh & Create Project Buttons */}
-      <div className="flex justify-end items-center gap-3">
-        {/* Nouveau bouton à gauche */}
-        <Link 
-          href="/photobooth-ia/admin/projects/create" 
-          className="inline-flex items-center px-4 py-2 h-12 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          Créer un nouveau projet
-        </Link>
-        <button
-          onClick={() => fetchDashboardData()}
-          className="flex items-center gap-2 px-5 py-2.5 h-12 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition-all font-medium"
-        >
-          <RiRefreshLine className="w-5 h-5" />
-          Actualiser les données
-        </button>
+      {/* Section Quota Détaillée */}
+      <div className="bg-gray-50 rounded-xl p-1">
+        <QuotaDisplay 
+          adminId={currentAdminId} 
+          onQuotaChange={(quotaStatus: any) => {
+            // Optionnel : mise à jour des états locaux si nécessaire
+          }}
+        />
       </div>
 
-      {/* Projects List */}
-      <div className="bg-white shadow-md rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-900">Projets ({projects.length})</h3>
-          <Link 
-            href="/photobooth-ia/admin/projects" 
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-1"
-          >
-            Voir tous
-            <RiArrowRightSLine className="w-4 h-4" />
-          </Link>
-        </div>
-        
-        <div className="divide-y divide-gray-200">
-          {loading ? (
-            <div className="p-6 flex justify-center">
-              <Loader size="default" message="Chargement des projets..." variant="premium" />
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="p-6 text-center">
-              <p className="text-gray-500">Aucun projet trouvé.</p>
-              <Link 
-                href="/photobooth-ia/admin/projects" 
-                className="mt-2 inline-block text-sm font-medium px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100"
-              >
-                Créer un nouveau projet
-              </Link>
-            </div>
-          ) : (
-            <>
-              {projects.slice(0, 5).map((project) => (
-                <div key={project.id} className="px-6 py-4 hover:bg-gray-50 transition duration-150">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        {project.logo_url ? (
-                          <div className="w-12 h-12 relative rounded-lg overflow-hidden border border-gray-200">
-                            <Image
-                              src={project.logo_url}
-                              alt={project.name}
-                              fill
-                              priority // Add priority to fix LCP warning
-                              sizes="48px"
-                              style={{ objectFit: "cover" }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-500 rounded-lg flex items-center justify-center">
-                            <RiFolder2Line className="h-6 w-6" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center">
-                          <h4 className="text-base font-medium text-gray-900">{project.name}</h4>
-                          <span className="ml-2 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            {projectsWithPhotoCount[project.id] || 0} photos
-                          </span>
-                        </div>
-                        <div className="flex items-center mt-1 text-sm">
-                          <span className="text-gray-500">/{project.slug}</span>
-                          
-                          <span className="mx-2 text-gray-300">•</span>
-                          
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            project.is_active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {project.is_active ? 'Actif' : 'Inactif'}
-                          </span>
-                          
-                          <span className="mx-2 text-gray-300">•</span>
-                          
-                          <span className="text-gray-500">
-                            {getPhotoboothTypeLabel(project.photobooth_type)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Link
-                        href={`/photobooth-ia/admin/project-gallery?id=${project.id}`}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium text-white bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-sm hover:from-blue-600 hover:to-purple-700 transition-colors"
-                      >
-                        <RiCamera2Line className="mr-1 h-4 w-4" />
-                        Photos ({projectsWithPhotoCount[project.id] || 0})
-                      </Link>
-                      
-                      {/* MODIFICATION: Utilise la même URL que dans /projects/[id]/page.js */}
-                      <Link
-                        href={getPhotoboothUrl(project)}
-                        target="_blank"
-                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        Accès au Photobooth
-                      </Link>
-                      
-                      <Link
-                        href={`/photobooth-ia/admin/projects/${project.id}`}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium text-white bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-sm hover:from-indigo-600 hover:to-purple-700 transition-colors"
-                      >
-                        Configurer
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {projects.length > 5 && (
-                <div className="px-6 py-3 bg-gray-50 text-center">
-                  <Link 
-                    href="/photobooth-ia/admin/projects" 
-                    className="text-sm text-indigo-600 hover:text-indigo-500 font-medium flex items-center justify-center gap-1"
-                  >
-                    Voir les {projects.length - 5} autres projets
-                    <RiArrowRightSLine className="w-4 h-4" />
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
+      {/* Create Project Section */}
+      <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-green-800 mb-2">Prêt à créer un nouveau projet ?</h3>
+            <p className="text-green-700 text-sm leading-relaxed">
+              Lancez un nouveau photobooth IA en quelques clics. Personnalisez l'expérience, 
+              configurez les styles et commencez à capturer des moments magiques.
+            </p>
+          </div>
+          <div className="ml-6">
+            <Link 
+              href="/photobooth-ia/admin/projects/create" 
+              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-3 h-5 w-5 group-hover:rotate-90 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Créer un nouveau projet
+              <RiArrowRightSLine className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -717,6 +596,11 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Hairstyle Showcase Section */}
+      <div className="mt-8">
+        <HairstyleShowcase />
+      </div>
+
       {/* Style Library Section */}
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -727,7 +611,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center">
               <span className="bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                {styleTemplatesData.length} collections
+                {(styleTemplatesData || []).length} collections
               </span>
             </div>
           </div>
@@ -756,7 +640,7 @@ export default function Dashboard() {
               Tous
             </button>
             
-            {Array.from(new Set(styleTemplatesData.map(collection => collection.compatibleWith[0]))).map(category => (
+            {Array.from(new Set((styleTemplatesData || []).map(collection => collection.compatibleWith?.[0]).filter(Boolean))).map(category => (
               <button 
                 key={category}
                 onClick={() => setSelectedStyleCategory(category)}
@@ -776,16 +660,16 @@ export default function Dashboard() {
         </div>
         
         {/* Collections Grid */}
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {styleTemplatesData
-            .filter(collection => !selectedStyleCategory || collection.compatibleWith.includes(selectedStyleCategory))
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {(styleTemplatesData || [])
+            .filter(collection => !selectedStyleCategory || collection.compatibleWith?.includes(selectedStyleCategory))
             .map(collection => (
               <div 
                 key={collection.id} 
-                className="group border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="group border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div 
-                  className="relative h-48 w-full overflow-hidden cursor-pointer"
+                  className="relative h-36 w-full overflow-hidden cursor-pointer"
                   // Ouvre le popup de détails au clic sur l'image/encart du style
                   onClick={() => openStyleDetailsModal(collection)}
                 >
@@ -795,7 +679,7 @@ export default function Dashboard() {
                       alt={collection.name}
                       fill
                       priority
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
                       style={{ objectFit: "cover" }}
                       className="group-hover:scale-105 transition-transform duration-300"
                     />
@@ -882,13 +766,13 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto p-2">
-                  {selectedCollection.styles.map((style, index) => (
+                  {selectedCollection.styles.map((style: any, index: number) => (
                     <div
                       key={style.style_key}
                       className="relative bg-gray-800 rounded-xl overflow-hidden transition-all border border-gray-700"
                     >
                       {/* Aperçu du style */}
-                      <div className="h-56">
+                      <div className="h-24">
                         {style.preview_image ? (
                           <img
                             src={style.preview_image}
@@ -901,16 +785,16 @@ export default function Dashboard() {
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center bg-gray-700">
-                            <span className="text-gray-400">Aucune image</span>
+                            <span className="text-gray-400 text-xs">Aucune image</span>
                           </div>
                         )}
                       </div>
-                      <div className="p-3 text-white">
-                        <h4 className="font-medium text-md">{style.name}</h4>
-                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{style.description}</p>
+                      <div className="p-2 text-white">
+                        <h4 className="font-medium text-sm">{style.name}</h4>
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-1">{style.description}</p>
                         {/* Affichage des tags individuels */}
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {(style.tags || []).map((tag, tagIndex) => (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(style.tags || []).map((tag: any, tagIndex: number) => (
                             <span
                               key={tagIndex}
                               className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${

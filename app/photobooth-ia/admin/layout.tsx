@@ -50,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Vérifier si c'est une route publique - en utilisant useEffect pour éviter les retours prématurés
   useEffect(() => {
-    setIsPublicRoute(publicRoutes.includes(pathname));
+    setIsPublicRoute(pathname ? publicRoutes.includes(pathname) : false);
   }, [pathname]);
 
   // Récupérer les informations de l'utilisateur connecté
@@ -67,7 +67,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         // Récupérer la session depuis localStorage
         const sessionData = localStorage.getItem('admin_session');
-        console.log('Admin layout - Token present:', !!sessionData);
 
         if (sessionData) {
           // Log format check
@@ -77,28 +76,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             containsDots: sessionData.includes('.'),
             parts: sessionData.split('.').length
           };
-          console.log('Token format check:', tokenFormat);
 
           try {
             // Vérifier si c'est du Base64 (commence typiquement par "eyJ")
             if (sessionData.startsWith('eyJ')) {
-              console.log('Attempting to decode as base64 string');
               const decodedSession = atob(sessionData);
               adminSession = JSON.parse(decodedSession);
-              console.log('Successfully parsed decoded token as JSON');
             } else {
               adminSession = JSON.parse(sessionData);
-              console.log('Parsed session as plain JSON');
             }
 
-            console.log('Valid user found in token:', {
-              userId: adminSession.userId || adminSession.user_id,
-              hasEmail: !!adminSession.email
-            });
             setUser(adminSession);
             setAdminEmail(adminSession.email || 'Utilisateur');
             setShouldRedirect(false);
-            console.log('Admin layout - User verified:', true);
           } catch (parseError) {
             console.error('Erreur lors du parsing de la session:', parseError);
 
@@ -115,26 +105,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 containsDots: cookieValue.includes('.'),
                 parts: cookieValue.split('.').length
               };
-              console.log('Token format check (cookie):', tokenFormat);
 
               try {
                 if (cookieValue.startsWith('eyJ')) {
-                  console.log('Attempting to decode as base64 string (cookie)');
                   const decodedCookie = atob(cookieValue);
                   adminSession = JSON.parse(decodedCookie);
-                  console.log('Successfully parsed decoded token as JSON (cookie)');
                 } else {
                   adminSession = JSON.parse(cookieValue);
-                  console.log('Parsed session as plain JSON (cookie)');
                 }
-                console.log('Valid user found in token (cookie):', {
-                  userId: adminSession.userId || adminSession.user_id,
-                  hasEmail: !!adminSession.email
-                });
                 setUser(adminSession);
                 setAdminEmail(adminSession.email || 'Utilisateur');
                 setShouldRedirect(false);
-                console.log('Admin layout - User verified (cookie):', true);
               } catch (cookieError) {
                 console.error('Erreur lors du parsing du cookie:', cookieError);
               }
@@ -142,7 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         } else {
           setUser(null);
-          if (!publicRoutes.includes(pathname)) {
+          if (pathname && !publicRoutes.includes(pathname)) {
             setShouldRedirect(true);
           }
         }
@@ -201,7 +182,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>;
   }
 
-  const isActive = (path: string) => pathname.includes(path);
+  const isActive = (path: string) => pathname ? pathname.includes(path) : false;
 
   const photoboothLinks = [
     { name: 'Dashboard', path: '/photobooth-ia/admin/dashboard', icon: <FiHome className="w-5 h-5" /> },
@@ -247,7 +228,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             src="/images/logo.png" 
             alt="WaiBooth.app" 
             width={isSidebarRetracted ? 40 : 180} 
-            height={50} 
+            height={isSidebarRetracted ? 40 : 50} 
+            priority
+            style={{
+              width: isSidebarRetracted ? '40px' : '180px',
+              height: isSidebarRetracted ? '40px' : '50px',
+              objectFit: 'contain'
+            }}
             className={`mx-auto ${isSidebarRetracted ? 'hidden' : ''}`}
           />
         </div>
@@ -291,10 +278,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className={`px-6 py-2 mt-6 font-bold text-gray-700 flex items-center gap-2 ${isSidebarRetracted ? 'justify-center px-0' : ''}`}>
-            <FiExternalLink className="w-4 h-4" />
-            {!isSidebarRetracted && <span>Applications externes</span>}
-          </div>
           <div className={`flex flex-col gap-3 px-4 ${isSidebarRetracted ? 'px-0 items-center' : ''}`}>
             {/* 
             externalApps.map(app =>
@@ -318,6 +301,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <hr className={`my-6 border-gray-200 mx-4 ${isSidebarRetracted ? 'mx-2' : ''}`} />
+          
+          {/* Crédit en bas de sidebar */}
+          <div className={`mt-auto px-6 py-4 border-t border-gray-100 ${isSidebarRetracted ? 'px-2' : ''}`}>
+            <div className={`flex items-center gap-2 text-xs text-gray-500 ${isSidebarRetracted ? 'justify-center' : ''}`}>
+              <FiExternalLink className="w-3 h-3" />
+              {!isSidebarRetracted && <span>Editer par WeAreIntelligence</span>}
+            </div>
+          </div>
         </nav>
         {/* Toggle button as a vertical tab */}
         <button

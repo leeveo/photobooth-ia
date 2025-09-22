@@ -35,7 +35,6 @@ export default function StatsPage() {
         const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
         
         if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
@@ -55,16 +54,13 @@ export default function StatsPage() {
         }
 
         if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
 
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
         setCurrentAdminId(sessionData.user_id);
         return sessionData.user_id;
       } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
         router.push('/photobooth-ia/admin/login');
         return null;
       }
@@ -76,7 +72,6 @@ export default function StatsPage() {
   // Récupérer les projets et compter les photos
   const fetchStats = useCallback(async () => {
     if (!currentAdminId) {
-      console.warn("Impossible de charger les statistiques: admin ID non défini");
       return;
     }
     
@@ -183,19 +178,11 @@ export default function StatsPage() {
         <Loader size="large" message="Chargement complet des statistiques..." variant="premium" />
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <RiBarChart2Line className="w-7 h-7 text-indigo-600" />
-              Statistiques globales
-            </h1>
-            <button
-              onClick={fetchStats}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:from-green-600 hover:to-emerald-700 transition font-medium"
-            >
-              <RiRefreshLine className="w-5 h-5" />
-              Actualiser
-            </button>
-          </div>
+              <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white mb-6">
+        <h1 className="text-2xl font-bold mb-2">Statistiques Globales</h1>
+        <p className="text-white text-opacity-80 text-sm">Retrouvez toutes les statistiques de vos projets ici.</p>
+      </div>
+
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>

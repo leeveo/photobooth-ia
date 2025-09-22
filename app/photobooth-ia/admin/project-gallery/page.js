@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -28,6 +28,9 @@ export default function ProjectGallery() {
   const [moderationConfirm, setModerationConfirm] = useState(null);
   const [showMosaicSettings, setShowMosaicSettings] = useState(false);
   const [currentAdminId, setCurrentAdminId] = useState(null);
+  const [selectedRowProject, setSelectedRowProject] = useState(null);
+  const [rowProjectImages, setRowProjectImages] = useState([]);
+  const [loadingRowImages, setLoadingRowImages] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,7 +181,6 @@ export default function ProjectGallery() {
         const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
         
         if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
@@ -198,16 +200,13 @@ export default function ProjectGallery() {
         }
 
         if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
 
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
         setCurrentAdminId(sessionData.user_id);
         return sessionData.user_id;
       } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
         router.push('/photobooth-ia/admin/login');
         return null;
       }
@@ -228,7 +227,6 @@ export default function ProjectGallery() {
           .eq('created_by', currentAdminId);
 
         if (projectsError) {
-          console.error("Erreur récupération projets:", projectsError);
           setError('Erreur récupération des projets');
           setLoading(false);
           return;
@@ -253,7 +251,6 @@ export default function ProjectGallery() {
               setProjectsWithPhotoCount(photoCounts);
             }
           } catch (apiError) {
-            console.error("Erreur API comptage:", apiError);
             // Fallback local en cas d'erreur API
             const photoCounts = {};
             projectIds.forEach(id => photoCounts[id] = 0);
@@ -262,7 +259,6 @@ export default function ProjectGallery() {
         }
       } catch (err) {
         setError('Impossible de charger les projets');
-        console.error("Erreur globale loadProjects:", err);
       } finally {
         setLoading(false);
       }
@@ -303,7 +299,6 @@ export default function ProjectGallery() {
           .range(from, to);
 
         if (sessionsError) {
-          console.error("Erreur récupération images sessions:", sessionsError);
           setProjectImages([]);
         } else {
           // Calculer le nombre total de pages
@@ -334,7 +329,6 @@ export default function ProjectGallery() {
         }
       } catch (err) {
         setError('Impossible de charger les images du projet');
-        console.error("Erreur globale loadSessionImages:", err);
       } finally {
         setLoadingImages(false);
       }
@@ -379,7 +373,6 @@ export default function ProjectGallery() {
         .eq('id', id);
         
       if (error) {
-        console.error('Erreur lors de la mise à jour dans la base de données:', error);
         throw error;
       }
       
@@ -393,7 +386,6 @@ export default function ProjectGallery() {
       setSuccess("Image modérée avec succès");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Erreur lors de la modération:', err);
       setError('Erreur lors de la modération. Veuillez réessayer.');
     } finally {
       setModerationConfirm(null);
@@ -435,8 +427,6 @@ export default function ProjectGallery() {
       
       if (bgImageFile) {
         try {
-          console.log('Téléchargement de l\'image d\'arrière-plan');
-          
           // Générer un nom de fichier unique
           const fileExt = bgImageFile.name.split('.').pop();
           const fileName = `mosaic-bg-${Date.now()}.${fileExt}`;
@@ -461,9 +451,7 @@ export default function ProjectGallery() {
           const uploadResult = await uploadResponse.json();
           bgImageUrl = uploadResult.url;
           
-          console.log('Image d\'arrière-plan téléchargée avec succès vers S3:', bgImageUrl);
         } catch (uploadErr) {
-          console.error('Erreur lors du téléchargement de l\'image:', uploadErr);
           setError(`Erreur lors du téléchargement de l'image: ${uploadErr.message}`);
           setSavingMosaicSettings(false);
           return;
@@ -485,10 +473,6 @@ export default function ProjectGallery() {
         updated_at: new Date().toISOString()
       };
       
-      console.log('🔍 Données à enregistrer:', mosaicData);
-      console.log('🔍 Project ID sélectionné:', selectedProject);
-      console.log('🔍 Type de selectedProject:', typeof selectedProject);
-      
       // Utiliser l'API pour sauvegarder avec les permissions service role
       const response = await fetch('/api/save-mosaic-settings', {
         method: 'POST',
@@ -503,9 +487,6 @@ export default function ProjectGallery() {
       
       const result = await response.json();
       
-      console.log('🔍 Réponse API:', result);
-      console.log('🔍 Status de la réponse:', response.status);
-      
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Erreur lors de la sauvegarde');
       }
@@ -518,7 +499,6 @@ export default function ProjectGallery() {
       await loadMosaicSettings(selectedProject);
 
     } catch (err) {
-      console.error('Erreur lors de l\'enregistrement des paramètres:', err);
       setError(`Erreur lors de l'enregistrement des paramètres: ${err.message}`);
     } finally {
       setSavingMosaicSettings(false);
@@ -551,7 +531,6 @@ export default function ProjectGallery() {
       const projectId = isEditing || tempProjectId || selectedProject;
       await fetchBackgroundsForProject(projectId);
     } catch (error) {
-      console.error('Error deleting background:', error);
       setError(`Erreur lors de la suppression: ${error.message}`);
     }
   };
@@ -595,7 +574,6 @@ export default function ProjectGallery() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (err) {
-      console.error('Erreur lors de la modération:', err);
       setError(`Erreur lors de la modération: ${err.message}`);
     } finally {
       setDeleteConfirm(null);
@@ -636,10 +614,62 @@ export default function ProjectGallery() {
       setTimeout(() => setSuccess(null), 3000);
       
     } catch (err) {
-      console.error('Erreur lors de la démodération:', err);
       setError(`Erreur lors de la démodération: ${err.message}`);
     }
   };
+
+  // Fonction pour charger les 10 dernières images d'un projet pour la ligne sélectionnée
+  const loadRowProjectImages = useCallback(async (projectId) => {
+    if (!projectId) return;
+    
+    setLoadingRowImages(true);
+    try {
+      const projectIdToQuery = String(projectId).trim();
+      
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('project_id', projectIdToQuery)
+        .not('result_s3_url', 'is', null)
+        .not('result_image_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (sessionsError) {
+        setRowProjectImages([]);
+      } else {
+        const images = (sessionsData || [])
+          .filter(session => {
+            const url = session.result_s3_url || session.result_image_url;
+            return url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
+          })
+          .map(session => ({
+            id: session.id,
+            image_url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at,
+            isModerated: session.moderation === 'M'
+          }));
+        setRowProjectImages(images);
+      }
+    } catch (err) {
+      setRowProjectImages([]);
+    } finally {
+      setLoadingRowImages(false);
+    }
+  }, [supabase]);
+
+  // Fonction pour gérer la sélection/désélection d'une ligne de projet
+  const handleRowProjectSelect = useCallback((projectId) => {
+    if (selectedRowProject === projectId) {
+      // Désélectionner si déjà sélectionné
+      setSelectedRowProject(null);
+      setRowProjectImages([]);
+    } else {
+      // Sélectionner et charger les images
+      setSelectedRowProject(projectId);
+      loadRowProjectImages(projectId);
+    }
+  }, [selectedRowProject, loadRowProjectImages]);
 
   // Add helper function to handle image errors
   const handleImageError = useCallback((imageId) => {
@@ -666,12 +696,11 @@ export default function ProjectGallery() {
         </div>
       ) : (
         <>
-          <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-            Galerie des Photobooths 
-            <span className="text-sm font-normal text-green-600 ml-2">
-              ⚡ Optimisé pour des performances rapides
-            </span>
-          </h2>
+           <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white mb-6">
+        <h1 className="text-2xl font-bold mb-2">Galerie des Photobooths</h1>
+        <p className="text-white text-opacity-80 text-sm">Gérez vos Photobooths, consultez les photos des utilisateurs et diffusez-les sur grands écrans.</p>
+      </div>
+
           
           {error && (
             <div className="p-4 mb-4 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
@@ -696,8 +725,6 @@ export default function ProjectGallery() {
                       <tr>
                         <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase"></th>
                         <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Nom</th>
-                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Couleur principale</th>
-                        <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Couleur secondaire</th>
                         <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Nb photos</th>
                         <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 uppercase">Actions</th>
                       </tr>
@@ -709,86 +736,169 @@ export default function ProjectGallery() {
                         </tr>
                       )}
                       {projects.map((project, idx) => (
-                        <tr
-                          key={project.id}
-                          className={
-                            (idx % 2 === 0 ? "bg-white" : "bg-gray-50") +
-                            (selectedProject === project.id ? " bg-indigo-50" : "")
-                          }
-                        >
-                          {/* Logo du projet */}
-                          <td className="px-2 sm:px-4 py-2">
-                            {project.logo_url ? (
-                              <img
-                                src={project.logo_url}
-                                alt="Logo"
-                                className="w-8 h-8 rounded-full object-cover border"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <RiImageLine className="w-5 h-5 text-gray-400" />
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-2 sm:px-4 py-2 font-medium">{project.name}</td>
-                          {/* Primary color pastille */}
-                          <td className="px-2 sm:px-4 py-2">
-                            <span
-                              className="inline-block w-5 h-5 rounded-full border"
-                              style={{
-                                backgroundColor: project.primary_color || "#cccccc",
-                                borderColor: "#bbb"
-                              }}
-                              title={project.primary_color}
-                            ></span>
-                          </td>
-                          {/* Secondary color pastille */}
-                          <td className="px-2 sm:px-4 py-2">
-                            <span
-                              className="inline-block w-5 h-5 rounded-full border"
-                              style={{
-                                backgroundColor: project.secondary_color || "#cccccc",
-                                borderColor: "#bbb"
-                              }}
-                              title={project.secondary_color}
-                            ></span>
-                          </td>
-                          <td className="px-2 sm:px-4 py-2">
-                            <span className="font-semibold text-indigo-600">
-                              {projectsWithPhotoCount[project.id] !== undefined ? projectsWithPhotoCount[project.id] : '...'}
-                            </span>
-                          </td>
-                          <td className="px-2 sm:px-4 py-2 flex flex-col sm:flex-row gap-2">
-                            <Link
-                              href={`/photobooth-ia/admin/project-mosaic?projectId=${project.id}&fullscreen=true`}
-                              className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Voir la mosaïque de photos en plein écran"
-                            >
-                              <RiImageLine className="h-4 w-4 mr-1" />
-                              <span className="hidden xs:inline">Voir mosaïque</span>
-                              <span className="inline xs:hidden">Mosaïque</span>
-                            </Link>
-                            <button
-                              onClick={() => {
-                                if (selectedProject !== project.id) setSelectedProject(project.id);
-                                setTimeout(() => setShowMosaicSettings(true), 0);
-                              }}
-                              className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent"
-                              title="Personnaliser l'apparence de la mosaïque"
-                            >
-                              <RiSettings3Line className="h-4 w-4 mr-1" />
-                              <span className="hidden xs:inline">Personnaliser</span>
-                              <span className="inline xs:hidden">Edit</span>
-                            </button>
-                          </td>
-                        </tr>
+                        <React.Fragment key={project.id}>
+                          <tr
+                            key={project.id}
+                            onClick={() => handleRowProjectSelect(project.id)}
+                            className={
+                              (idx % 2 === 0 ? "bg-white" : "bg-gray-50") +
+                              (selectedProject === project.id ? " bg-indigo-50" : "") +
+                              (selectedRowProject === project.id ? " bg-blue-100 border-l-4 border-blue-500" : "") +
+                              " cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                            }
+                          >
+                            {/* Logo du projet */}
+                            <td className="px-2 sm:px-4 py-2">
+                              {project.logo_url ? (
+                                <img
+                                  src={project.logo_url}
+                                  alt="Logo"
+                                  className="w-8 h-8 rounded-full object-cover border"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <RiImageLine className="w-5 h-5 text-gray-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-2 sm:px-4 py-2 font-medium">{project.name}</td>
+                            <td className="px-2 sm:px-4 py-2">
+                              <span className="font-semibold text-indigo-600">
+                                {projectsWithPhotoCount[project.id] !== undefined ? projectsWithPhotoCount[project.id] : '...'}
+                              </span>
+                            </td>
+                            <td className="px-2 sm:px-4 py-2 flex flex-col sm:flex-row gap-2">
+                              <Link
+                                href={`/photobooth-ia/admin/project-mosaic?projectId=${project.id}&fullscreen=true`}
+                                className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-transparent"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Voir la mosaïque de photos en plein écran"
+                              >
+                                <RiImageLine className="h-4 w-4 mr-1" />
+                                <span className="hidden xs:inline">Voir mosaïque</span>
+                                <span className="inline xs:hidden">Mosaïque</span>
+                              </Link>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (selectedProject !== project.id) setSelectedProject(project.id);
+                                  setTimeout(() => setShowMosaicSettings(true), 0);
+                                }}
+                                className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 border-transparent"
+                                title="Personnaliser l'apparence de la mosaïque"
+                              >
+                                <RiSettings3Line className="h-4 w-4 mr-1" />
+                                <span className="hidden xs:inline">Personnaliser</span>
+                                <span className="inline xs:hidden">Paramètres</span>
+                              </button>
+                            </td>
+                          </tr>
+                          {/* Ligne d'affichage des images avec effet slide */}
+                          {selectedRowProject === project.id && (
+                            <tr key={`images-${project.id}`}>
+                              <td colSpan={4} className="px-4 py-0">
+                                <div className="overflow-hidden">
+                                  <div className="animate-slideDown bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg my-2">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <h4 className="text-sm font-semibold text-gray-700 flex items-center">
+                                        <RiImageLine className="w-4 h-4 mr-2 text-blue-500" />
+                                        10 dernières photos du projet "{project.name}"
+                                      </h4>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedRowProject(null);
+                                          setRowProjectImages([]);
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                      >
+                                        <RiCloseFill className="w-5 h-5" />
+                                      </button>
+                                    </div>
+                                    
+                                    {loadingRowImages ? (
+                                      <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                                        <div className="relative">
+                                          {/* Cercle extérieur qui tourne */}
+                                          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200"></div>
+                                          {/* Cercle intérieur avec gradient qui tourne dans l'autre sens */}
+                                          <div className="absolute top-0 left-0 animate-spin-reverse rounded-full h-12 w-12 border-4 border-transparent border-t-blue-500 border-r-blue-500"></div>
+                                          {/* Icône centrale */}
+                                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                            <RiImageLine className="w-5 h-5 text-blue-500 animate-pulse" />
+                                          </div>
+                                        </div>
+                                        <div className="text-center">
+                                          <p className="text-sm font-medium text-gray-700 animate-pulse">
+                                            Chargement des images...
+                                          </p>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            Récupération des 10 dernières photos
+                                          </p>
+                                        </div>
+                                        {/* Barre de progression simulée */}
+                                        <div className="w-48 bg-gray-200 rounded-full h-1.5">
+                                          <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full animate-progress"></div>
+                                        </div>
+                                      </div>
+                                    ) : rowProjectImages.length > 0 ? (
+                                      <div className="flex gap-2">
+                                        {rowProjectImages.map((image, imgIdx) => (
+                                          <div 
+                                            key={image.id} 
+                                            className="relative group animate-fadeIn flex-1"
+                                            style={{ animationDelay: `${imgIdx * 50}ms` }}
+                                          >
+                                            <div className="w-full aspect-square relative overflow-hidden rounded-lg shadow-md bg-gray-100 border-2 border-transparent group-hover:border-blue-300 transition-all duration-200">
+                                              <Image
+                                                src={image.image_url}
+                                                alt={`Photo ${imgIdx + 1}`}
+                                                fill
+                                                className="object-cover transition-transform duration-200 group-hover:scale-110"
+                                                sizes="(max-width: 768px) 10vw, (max-width: 1200px) 8vw, 6vw"
+                                              />
+                                              {image.isModerated && (
+                                                <div className="absolute inset-0 bg-red-500 bg-opacity-70 flex items-center justify-center">
+                                                  <span className="text-white text-xs font-bold">M</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                              {new Date(image.created_at).toLocaleDateString('fr-FR', { 
+                                                day: '2-digit', 
+                                                month: '2-digit' 
+                                              })}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-8 text-gray-500">
+                                        <RiImageLine className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                        <p className="text-sm">Aucune image trouvée pour ce projet</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
+              
+              {/* Information sur le nouveau système de sélection */}
+              {!selectedRowProject && projects.length > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    💡 <strong>Astuce :</strong> Cliquez sur une ligne de projet pour voir ses 10 dernières photos s'afficher avec un effet de slide.
+                  </p>
+                </div>
+              )}
               {/* Affiche le nom du projet courant */}
               {selectedProject && (
                 <div className="mb-2 text-lg font-semibold text-indigo-700">
@@ -848,7 +958,7 @@ export default function ProjectGallery() {
               </div>
             ) : null}
             
-            {!loading && selectedProject && projectImages.length > 0 && (
+            {!loading && selectedProject && projectImages.length > 0 && !selectedRowProject && (
               <div className="p-6">
                 <div className="mb-4 text-sm flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div className="text-gray-600 flex items-center">
@@ -1160,13 +1270,7 @@ export default function ProjectGallery() {
                             Si activé, un lien vers la galerie complète sera affiché sur la page de récupération des photos.
                             Les utilisateurs pourront voir toutes les photos de l'événement.
                           </p>
-                          {mosaicSettings.is_public && (
-                            <div className="mt-2 ml-6 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                              ✅ La galerie sera accessible à l'adresse : 
-                              <br />
-                              <code className="bg-white px-1 rounded">/photobooth-coiffure/[slug]/gallery</code>
-                            </div>
-                          )}
+
                         </div>
                         
                         {/* Swipe/Like système */}
@@ -1187,13 +1291,7 @@ export default function ProjectGallery() {
                             Si activé, un lien vers le système de swipe sera affiché sur la page de récupération des photos.
                             Les utilisateurs pourront liker ou disliker les photos de l'événement façon Tinder.
                           </p>
-                          {mosaicSettings.enable_swipe && (
-                            <div className="mt-2 ml-6 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                              ✅ Le swipe sera accessible à l'adresse : 
-                              <br />
-                              <code className="bg-white px-1 rounded">/photobooth-coiffure/[slug]/swipe</code>
-                            </div>
-                          )}
+
                         </div>
                         
                         <div className="flex items-center">

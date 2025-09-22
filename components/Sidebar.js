@@ -59,7 +59,7 @@ export default function Sidebar() {
       </div>
       {/* Liens vers applications externes */}
       <div className="mt-6">
-        <span className="font-bold text-gray-700 mb-2 block">Applications externes</span>
+        <span className="font-bold text-gray-700 mb-2 block">Editer par WeAreIntelligence</span>
         <div className="flex flex-col gap-3">
           {externalApps.map(app =>
             app.href ? (

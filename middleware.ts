@@ -69,6 +69,7 @@ export async function middleware(req: NextRequest) {
     path === '/photobooth-ia/admin/logout' ||
     path === '/photobooth-ia/admin/register' ||
     path === '/photobooth-ia/admin/oauth-callback' ||
+    path === '/photobooth-ia/admin/auth/callback' || // AJOUT CRUCIAL
     path === '/photobooth-ia/admin/dashboard' ||
     path === '/photobooth-ia/admin/choose-plan' ||
     // Ajouter des exclusions pour les routes liées à la création de projet

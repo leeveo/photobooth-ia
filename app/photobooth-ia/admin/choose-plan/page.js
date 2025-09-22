@@ -42,9 +42,9 @@ const ADDON_PACKS = [
 
 const PLANS = [
 	{
-		name: 'Starter',
-		price: 10,
-		annualPrice: 10 * 12 * (1 - DISCOUNT),
+		name: 'Start',
+		price: 19,
+		annualPrice: 19 * 12 * (1 - DISCOUNT),
 		priceId: {
 			monthly: 'price_1RdtbBIgKYOzHnxEwrDVPJdI',
 			yearly: 'price_1RdtbBIgKYOzHnxEwrDVPJdI_annual', // Remplace par ton vrai price_id annuel
@@ -59,41 +59,57 @@ const PLANS = [
 		cardDesc: "Idéal pour une expérience photo ludique lors d'événements et de fêtes du quotidien.",
 	},
 	{
-		name: 'Pro',
-		price: 29,
-		annualPrice: 29 * 12 * (1 - DISCOUNT),
+		name: 'Essentiel',
+		price: 49,
+		annualPrice: 49 * 12 * (1 - DISCOUNT),
 		priceId: {
 			monthly: 'price_1RdtbYIgKYOzHnxE7NSZjxCP',
 			yearly: 'price_1RdtbYIgKYOzHnxE7NSZjxCP_annual', // Remplace par ton vrai price_id annuel
 		},
-		quota: 500,
-		description: '500 photos / mois',
+		quota: 400,
+		description: '400 photos / mois',
 		features: [
-			'Toutes les fonctionnalités Starter',
+			'Toutes les fonctionnalités Start',
 			'Support prioritaire',
 			'API dédiée',
-			'Personnalisation avancée',
 		],
-		cardDesc: "Parfait pour les professionnels souhaitant automatiser et personnaliser leurs animations photo.",
+		cardDesc: "Parfait pour les événements réguliers et les petites entreprises.",
 	},
 	{
-		name: 'Entreprise',
-		price: 99,
-		annualPrice: 99 * 12 * (1 - DISCOUNT),
+		name: 'Pro',
+		price: 89,
+		annualPrice: 89 * 12 * (1 - DISCOUNT),
 		priceId: {
 			monthly: 'price_xxx3',
 			yearly: 'price_xxx3_annual', // Remplace par ton vrai price_id annuel
 		},
-		quota: 5000,
-		description: '5000 photos / mois',
+		quota: 1000,
+		description: '1000 photos / mois',
 		features: [
-			'Toutes les fonctionnalités Pro',
+			'Toutes les fonctionnalités Essentiel',
+			'Personnalisation avancée',
 			'Gestion multi-utilisateurs',
 			'SLA 99.9%',
+		],
+		cardDesc: "Conçu pour les professionnels souhaitant automatiser et personnaliser leurs animations photo.",
+	},
+	{
+		name: 'Premium',
+		price: 119,
+		annualPrice: 119 * 12 * (1 - DISCOUNT),
+		priceId: {
+			monthly: 'price_xxx4',
+			yearly: 'price_xxx4_annual', // Remplace par ton vrai price_id annuel
+		},
+		quota: 1500,
+		description: '1500 photos / mois',
+		features: [
+			'Toutes les fonctionnalités Pro',
 			'Support 24/7',
 			'Intégrations avancées',
+			'Accès prioritaire aux nouvelles fonctionnalités',
 		],
-		cardDesc: "Conçu pour les entreprises exigeantes avec besoins avancés, support dédié et intégrations sur mesure.",
+		cardDesc: "Solution premium pour les entreprises exigeantes avec besoins avancés et support dédié.",
 	},
 ];
 
@@ -109,6 +125,7 @@ const ALL_FEATURES = [
 	'SLA 99.9%',
 	'Support 24/7',
 	'Intégrations avancées',
+	'Accès prioritaire aux nouvelles fonctionnalités',
 ];
 
 export default function ChoosePlanPage() {
@@ -118,6 +135,8 @@ export default function ChoosePlanPage() {
 	const [showAddonPacks, setShowAddonPacks] = useState(false);
 	const [successMessage, setSuccessMessage] = useState('');
 	const [showTestSection, setShowTestSection] = useState(false);
+	const [hasActivePlan, setHasActivePlan] = useState(false);
+	const [quotaLoading, setQuotaLoading] = useState(true);
 
 	// Vérifier les paramètres URL pour les messages
 	useEffect(() => {
@@ -139,6 +158,63 @@ export default function ChoosePlanPage() {
 				}, 5000);
 			}
 		}
+	}, []);
+
+	// Vérifier si l'utilisateur a un plan payant actif
+	useEffect(() => {
+		const checkActivePlan = async () => {
+			setQuotaLoading(true);
+			try {
+				// Récupérer l'admin ID de la session
+				let adminUserId = localStorage.getItem('currentAdminId') 
+					|| localStorage.getItem('adminUserId')
+					|| localStorage.getItem('admin_user_id')
+					|| localStorage.getItem('userId')
+					|| localStorage.getItem('user_id');
+
+				// Essayer de décoder admin_session
+				if (!adminUserId) {
+					const adminSession = localStorage.getItem('admin_session');
+					if (adminSession) {
+						try {
+							const decodedSession = JSON.parse(atob(adminSession));
+							adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+						} catch (e) {
+							// Erreur silencieuse lors du décodage
+						}
+					}
+				}
+
+				if (!adminUserId) {
+					setHasActivePlan(false);
+					setQuotaLoading(false);
+					return;
+				}
+
+				// Appeler l'API quota-manager pour vérifier le plan
+				const response = await fetch('/api/quota-manager', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ adminId: adminUserId, action: 'check' })
+				});
+
+				if (response.ok) {
+					const quotaData = await response.json();
+					
+					// L'utilisateur a un plan payant s'il n'est PAS sur le plan gratuit
+					const hasPayingPlan = !quotaData.monthly.isFreePlan && quotaData.monthly.quota > 3;
+					setHasActivePlan(hasPayingPlan);
+				} else {
+					setHasActivePlan(false);
+				}
+			} catch (error) {
+				setHasActivePlan(false);
+			} finally {
+				setQuotaLoading(false);
+			}
+		};
+
+		checkActivePlan();
 	}, []);
 
 	const handleSubscribe = async (priceId) => {
@@ -163,7 +239,6 @@ export default function ChoosePlanPage() {
 	};
 
 	const handleAddonPurchase = async (pack) => {
-		console.log('🛒 Tentative d\'achat pack:', pack);
 		setLoading(true);
 		setError(null);
 		
@@ -181,10 +256,9 @@ export default function ChoosePlanPage() {
 				if (adminSession) {
 					try {
 						const decodedSession = JSON.parse(atob(adminSession));
-						console.log('🔍 Session décodée pour addon:', decodedSession);
 						adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
 					} catch (e) {
-						console.log('Erreur décodage admin_session:', e);
+						// Erreur silencieuse
 					}
 				}
 			}
@@ -192,16 +266,6 @@ export default function ChoosePlanPage() {
 			if (!adminUserId) {
 				throw new Error('Impossible de récupérer l\'ID administrateur. Veuillez vous reconnecter.');
 			}
-
-			console.log('🔑 Admin ID récupéré:', adminUserId);
-
-			console.log('📤 Envoi requête API avec:', {
-				priceId: pack.priceId,
-				addonType: 'photo_pack',
-				addonValue: pack.photos,
-				addonName: pack.name,
-				adminId: adminUserId
-			});
 
 			const res = await fetch('/api/create-addon-checkout-session', {
 				method: 'POST',
@@ -215,16 +279,12 @@ export default function ChoosePlanPage() {
 				}),
 			});
 
-			console.log('📥 Réponse API status:', res.status);
-
 			const data = await res.json();
-			console.log('📄 Données de réponse:', data);
 
 			if (!res.ok) {
 				throw new Error(data.error || 'Erreur lors de la création de la session Stripe');
 			}
 
-			console.log('🔄 Redirection vers Stripe avec sessionId:', data.sessionId);
 			const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 			
 			if (!stripe) {
@@ -238,7 +298,6 @@ export default function ChoosePlanPage() {
 			}
 
 		} catch (err) {
-			console.error('❌ Erreur handleAddonPurchase:', err);
 			setError(err.message);
 		} finally {
 			setLoading(false);
@@ -247,10 +306,7 @@ export default function ChoosePlanPage() {
 
 	// Fonction de test pour ajouter du quota manuellement
 	const handleTestQuota = async () => {
-		// Debug: afficher tout le localStorage
-		console.log('🔍 Contenu localStorage:', Object.keys(localStorage));
-
-		// Essayer différentes clés possibles
+		// Récupérer l'admin ID
 		let adminUserId = localStorage.getItem('currentAdminId') 
 			|| localStorage.getItem('adminUserId')
 			|| localStorage.getItem('admin_user_id')
@@ -264,10 +320,9 @@ export default function ChoosePlanPage() {
 				try {
 					// Décoder le base64
 					const decodedSession = JSON.parse(atob(adminSession));
-					console.log('🔍 Session décodée:', decodedSession);
 					adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
 				} catch (e) {
-					console.log('Erreur décodage admin_session:', e);
+					// Erreur silencieuse
 				}
 			}
 		}
@@ -280,17 +335,14 @@ export default function ChoosePlanPage() {
 					const parsed = JSON.parse(adminData);
 					adminUserId = parsed.id || parsed.user_id || parsed.admin_id;
 				} catch (e) {
-					console.log('Erreur parsing adminData:', e);
+					// Erreur silencieuse
 				}
 			}
 		}
 
-		console.log('🆔 Admin User ID trouvé:', adminUserId);
-
 		// Si toujours pas trouvé, utiliser l'ID de la session décodée manuellement
 		if (!adminUserId) {
 			adminUserId = 'bb70d283-b02e-4e22-9d06-a705952b366b'; // ID from decoded admin_session
-			console.log('🆔 Utilisation ID fixe:', adminUserId);
 		}
 
 		if (!adminUserId) {
@@ -423,11 +475,11 @@ export default function ChoosePlanPage() {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
 				{PLANS.map((plan, idx) => (
 					<div
 						key={plan.name}
-						className={`relative bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center border-2 ${
+						className={`relative bg-white rounded-3xl shadow-xl p-6 flex flex-col items-center border-2 ${
 							idx === 1
 								? 'border-indigo-600 scale-105 z-10'
 								: 'border-gray-200'
@@ -438,25 +490,25 @@ export default function ChoosePlanPage() {
 								Populaire
 							</span>
 						)}
-						<h2 className="text-2xl font-bold mb-2 text-indigo-700">{plan.name}</h2>
+						<h2 className="text-xl font-bold mb-2 text-indigo-700">{plan.name}</h2>
 						<div className="flex items-end mb-2">
-							<span className="text-4xl font-extrabold text-gray-900">
+							<span className="text-3xl font-extrabold text-gray-900">
 								{billing === 'monthly'
 									? plan.price
 									: Math.round(plan.annualPrice)}
 								€
 							</span>
-							<span className="ml-2 text-gray-500 font-medium text-lg">
+							<span className="ml-2 text-gray-500 font-medium text-sm">
 								/{billing === 'monthly' ? 'mois' : 'an'}
 							</span>
 						</div>
-						<div className="mb-4 text-gray-500">{plan.description}</div>
-						<div className="mb-4 text-sm text-gray-700 text-center">{plan.cardDesc}</div>
-						<ul className="mb-6 text-left w-full space-y-2">
+						<div className="mb-3 text-gray-500 text-sm">{plan.description}</div>
+						<div className="mb-4 text-xs text-gray-700 text-center">{plan.cardDesc}</div>
+						<ul className="mb-6 text-left w-full space-y-1">
 							{plan.features.map((feature, i) => (
-								<li key={i} className="flex items-center">
+								<li key={i} className="flex items-start">
 									<svg
-										className="w-5 h-5 text-green-500 mr-2"
+										className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0"
 										fill="none"
 										stroke="currentColor"
 										strokeWidth="2"
@@ -468,14 +520,14 @@ export default function ChoosePlanPage() {
 											d="M5 13l4 4L19 7"
 										/>
 									</svg>
-									<span>{feature}</span>
+									<span className="text-sm">{feature}</span>
 								</li>
 							))}
 						</ul>
 						<button
 							onClick={() => handleSubscribe(plan.priceId[billing])}
 							disabled={loading}
-							className={`w-full py-3 rounded-xl font-bold text-lg transition ${
+							className={`w-full py-3 rounded-xl font-bold text-sm transition ${
 								idx === 1
 									? 'bg-indigo-600 text-white hover:bg-indigo-700'
 									: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -487,27 +539,32 @@ export default function ChoosePlanPage() {
 				))}
 			</div>
 
-			<div className="max-w-3xl mx-auto mt-16 text-center">
+			<div className="max-w-4xl mx-auto mt-16 text-center">
 				<h3 className="text-2xl font-bold text-indigo-700 mb-4">
-					Quel plan choisir ?
+					Quel plan choisir ?
 				</h3>
-				<p className="text-gray-700 text-lg mb-2">
-					<span className="font-semibold text-indigo-600">Starter</span> est idéal
-					pour découvrir la génération IA et lancer vos premiers événements.
-				</p>
-				<p className="text-gray-700 text-lg mb-2">
-					<span className="font-semibold text-indigo-600">Pro</span> convient aux
-					professionnels qui souhaitent automatiser et personnaliser leur expérience.
-				</p>
-				<p className="text-gray-700 text-lg">
-					<span className="font-semibold text-indigo-600">Entreprise</span> est conçu
-					pour les organisations exigeantes, avec un support dédié et des intégrations
-					avancées.
-				</p>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+					<p className="text-gray-700 text-lg">
+						<span className="font-semibold text-indigo-600">Start</span> est idéal
+						pour découvrir la génération IA et lancer vos premiers événements.
+					</p>
+					<p className="text-gray-700 text-lg">
+						<span className="font-semibold text-indigo-600">Essentiel</span> convient 
+						aux événements réguliers et petites entreprises avec plus de volume.
+					</p>
+					<p className="text-gray-700 text-lg">
+						<span className="font-semibold text-indigo-600">Pro</span> est parfait pour 
+						les professionnels avec personnalisation avancée et gestion multi-utilisateurs.
+					</p>
+					<p className="text-gray-700 text-lg">
+						<span className="font-semibold text-indigo-600">Premium</span> est conçu
+						pour les entreprises exigeantes avec support 24/7 et accès prioritaire.
+					</p>
+				</div>
 			</div>
 
 			{/* Tableau comparatif des plans */}
-			<div className="overflow-x-auto max-w-5xl mx-auto mt-12 mb-24">
+			<div className="overflow-x-auto max-w-7xl mx-auto mt-12 mb-24">
 				<table className="min-w-full border-collapse bg-white rounded-xl shadow">
 					<thead>
 						<tr>
@@ -530,14 +587,23 @@ export default function ChoosePlanPage() {
 									>
 										<div className="flex justify-center">
 											{plan.features.includes(feature) ||
-											(plan.name === 'Pro' && feature === 'Génération IA illimitée') ||
-											(plan.name === 'Entreprise' && (
+											(plan.name === 'Essentiel' && feature === 'Génération IA illimitée') ||
+											(plan.name === 'Pro' && (
+												feature === 'Génération IA illimitée' ||
+												feature === 'Support standard' ||
+												feature === 'Accès web uniquement' ||
+												feature === 'Support prioritaire' ||
+												feature === 'API dédiée'
+											)) ||
+											(plan.name === 'Premium' && (
 												feature === 'Génération IA illimitée' ||
 												feature === 'Support standard' ||
 												feature === 'Accès web uniquement' ||
 												feature === 'Support prioritaire' ||
 												feature === 'API dédiée' ||
-												feature === 'Personnalisation avancée'
+												feature === 'Personnalisation avancée' ||
+												feature === 'Gestion multi-utilisateurs' ||
+												feature === 'SLA 99.9%'
 											))
 												? <span className="inline-block w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-lg">✅</span>
 												: ''}
@@ -550,90 +616,113 @@ export default function ChoosePlanPage() {
 				</table>
 			</div>
 
-			{/* Section Packs Supplémentaires */}
-			<div id="addon-packs" className="max-w-6xl mx-auto mt-16 mb-16">
-				<div className="text-center mb-12">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-4">
-						Besoin de plus de photos ? 📸
-					</h2>
-					<p className="text-lg text-gray-600 mb-6">
-						Vous avez déjà un plan mais besoin de photos supplémentaires ? Achetez des packs d'images ponctuels !
-					</p>
-					<button
-						onClick={() => setShowAddonPacks(!showAddonPacks)}
-						className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-purple-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
-					>
-						{showAddonPacks ? 'Masquer les packs' : 'Voir les packs supplémentaires'} 
-						<span className="ml-2">{showAddonPacks ? '🔼' : '🔽'}</span>
-					</button>
-				</div>
-
-				{showAddonPacks && (
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-						{ADDON_PACKS.map((pack, idx) => (
-							<div
-								key={pack.id}
-								className={`relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg p-6 border-2 transition-all hover:shadow-xl hover:scale-105 ${
-									pack.popular 
-										? 'border-purple-400 ring-2 ring-purple-200' 
-										: 'border-gray-200'
-								}`}
-							>
-								{pack.popular && (
-									<span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs px-4 py-1 rounded-full shadow">
-										Populaire
-									</span>
-								)}
-								
-								<div className="text-center">
-									<div className="text-4xl mb-3">{pack.icon}</div>
-									<h3 className="text-xl font-bold text-gray-800 mb-2">{pack.name}</h3>
-									<div className="flex items-center justify-center mb-3">
-										<span className="text-3xl font-extrabold text-purple-600">{pack.price}€</span>
-										<span className="ml-2 text-gray-500">une seule fois</span>
-									</div>
-									<p className="text-gray-600 text-sm mb-4">{pack.description}</p>
-									
-									<div className="bg-purple-50 rounded-lg p-3 mb-4">
-										<div className="text-purple-700 font-semibold">
-											+{pack.photos} photos
-										</div>
-										<div className="text-purple-600 text-sm">
-											Ajoutées à votre quota actuel
-										</div>
-									</div>
-
-									<button
-										onClick={() => handleAddonPurchase(pack)}
-										disabled={loading}
-										className={`w-full py-3 rounded-xl font-bold text-lg transition ${
-											pack.popular
-												? 'bg-purple-600 text-white hover:bg-purple-700'
-												: 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-										} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-									>
-										{loading ? 'Redirection...' : 'Acheter maintenant'}
-									</button>
-								</div>
-							</div>
-						))}
+			{/* Section Packs Supplémentaires - SEULEMENT pour les utilisateurs avec plan payant */}
+			{hasActivePlan && (
+				<div id="addon-packs" className="max-w-6xl mx-auto mt-16 mb-16">
+					<div className="text-center mb-12">
+						<h2 className="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-4">
+							Besoin de plus de photos ? 📸
+						</h2>
+						<p className="text-lg text-gray-600 mb-6">
+							Vous avez déjà un plan mais besoin de photos supplémentaires ? Achetez des packs d'images ponctuels !
+						</p>
+						<button
+							onClick={() => setShowAddonPacks(!showAddonPacks)}
+							className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-purple-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
+						>
+							{showAddonPacks ? 'Masquer les packs' : 'Voir les packs supplémentaires'} 
+							<span className="ml-2">{showAddonPacks ? '🔼' : '🔽'}</span>
+						</button>
 					</div>
-				)}
 
-				{showAddonPacks && (
-					<div className="mt-8 text-center">
-						<div className="bg-blue-50 rounded-xl p-6 max-w-2xl mx-auto">
-							<h4 className="text-lg font-semibold text-blue-800 mb-2">💡 Comment ça marche ?</h4>
-							<ul className="text-blue-700 text-sm space-y-1">
-								<li>• Les photos achetées s'ajoutent à votre quota mensuel existant</li>
-								<li>• Elles ne sont pas perdues à la fin du mois</li>
-								<li>• Parfait pour les événements exceptionnels ou les pics d'activité</li>
-								<li>• Achat ponctuel, aucun engagement supplémentaire</li>
-							</ul>
+					{showAddonPacks && (
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+							{ADDON_PACKS.map((pack, idx) => (
+								<div
+									key={pack.id}
+									className={`relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg p-6 border-2 transition-all hover:shadow-xl hover:scale-105 ${
+										pack.popular 
+											? 'border-purple-400 ring-2 ring-purple-200' 
+											: 'border-gray-200'
+									}`}
+								>
+									{pack.popular && (
+										<span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs px-4 py-1 rounded-full shadow">
+											Populaire
+										</span>
+									)}
+									
+									<div className="text-center">
+										<div className="text-4xl mb-3">{pack.icon}</div>
+										<h3 className="text-xl font-bold text-gray-800 mb-2">{pack.name}</h3>
+										<div className="flex items-center justify-center mb-3">
+											<span className="text-3xl font-extrabold text-purple-600">{pack.price}€</span>
+											<span className="ml-2 text-gray-500">une seule fois</span>
+										</div>
+										<p className="text-gray-600 text-sm mb-4">{pack.description}</p>
+										
+										<div className="bg-purple-50 rounded-lg p-3 mb-4">
+											<div className="text-purple-700 font-semibold">
+												+{pack.photos} photos
+											</div>
+											<div className="text-purple-600 text-sm">
+												Ajoutées à votre quota actuel
+											</div>
+										</div>
+
+										<button
+											onClick={() => handleAddonPurchase(pack)}
+											disabled={loading}
+											className={`w-full py-3 rounded-xl font-bold text-lg transition ${
+												pack.popular
+													? 'bg-purple-600 text-white hover:bg-purple-700'
+													: 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+											} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+										>
+											{loading ? 'Redirection...' : 'Acheter maintenant'}
+										</button>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+
+					{showAddonPacks && (
+						<div className="mt-8 text-center">
+							<div className="bg-blue-50 rounded-xl p-6 max-w-2xl mx-auto">
+								<h4 className="text-lg font-semibold text-blue-800 mb-2">💡 Comment ça marche ?</h4>
+								<ul className="text-blue-700 text-sm space-y-1">
+									<li>• Les photos achetées s'ajoutent à votre quota mensuel existant</li>
+									<li>• Elles ne sont pas perdues à la fin du mois</li>
+									<li>• Parfait pour les événements exceptionnels ou les pics d'activité</li>
+									<li>• Achat ponctuel, aucun engagement supplémentaire</li>
+								</ul>
+							</div>
+						</div>
+					)}
+				</div>
+			)}
+
+			{/* Message informatif pour les utilisateurs sans plan payant */}
+			{!hasActivePlan && !quotaLoading && (
+				<div className="max-w-4xl mx-auto mt-16 mb-16">
+					<div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-8 text-center">
+						<div className="text-4xl mb-4">🔒</div>
+						<h3 className="text-2xl font-bold text-amber-700 mb-4">
+							Packs d'images supplémentaires
+						</h3>
+						<p className="text-amber-600 text-lg mb-6">
+							Les packs d'images supplémentaires sont exclusivement réservés aux utilisateurs avec un plan payant actif.
+						</p>
+						<p className="text-amber-600 mb-6">
+							Souscrivez d'abord à un plan ci-dessus pour accéder aux packs addon !
+						</p>
+						<div className="inline-flex items-center text-amber-700 bg-amber-100 px-4 py-2 rounded-lg">
+							<span className="text-sm font-medium">💡 Astuce : Commencez par le plan Start pour débloquer cette fonctionnalité</span>
 						</div>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 
 			{/* Encart Discord - Déplacé en bas */}
 			<div className="flex justify-center mb-10">

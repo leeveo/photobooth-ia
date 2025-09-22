@@ -49,7 +49,6 @@ export default function ProjectsPage() {
         const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
         
         if (!sessionStr) {
-          console.warn("Aucune session admin trouvée, redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
@@ -69,16 +68,13 @@ export default function ProjectsPage() {
         }
 
         if (!sessionData.user_id) {
-          console.warn("Session invalide (aucun user_id), redirection vers login");
           router.push('/photobooth-ia/admin/login');
           return null;
         }
 
-        console.log("Session admin trouvée, ID:", sessionData.user_id);
         setCurrentAdminId(sessionData.user_id);
         return sessionData.user_id;
       } catch (err) {
-        console.error("Erreur lors de la récupération de la session admin:", err);
         router.push('/photobooth-ia/admin/login');
         return null;
       }
@@ -89,11 +85,9 @@ export default function ProjectsPage() {
 
   const fetchProjects = useCallback(async () => {
     if (!currentAdminId) {
-      console.warn("Impossible de charger les projets: ID admin non défini");
       return;
     }
     
-    console.log(`Fetching projects from Supabase for admin ID: ${currentAdminId}...`);
     setLoading(true);
     try {
       // Filtrer les projets par l'ID de l'admin connecté et non archivés (incluant NULL)
@@ -105,14 +99,11 @@ export default function ProjectsPage() {
         .order('created_at', { ascending: false });
         
       if (error) {
-        console.error("Supabase error:", error);
         throw error;
       }
       
-      console.log(`Projects received for admin ${currentAdminId}:`, data?.length || 0, "projects");
       setProjects(data || []);
     } catch (error) {
-      console.error('Error fetching projects:', error);
       setError('Erreur lors du chargement des projets');
     } finally {
       setLoading(false);
@@ -121,7 +112,6 @@ export default function ProjectsPage() {
   
   useEffect(() => {
     if (currentAdminId) {
-      console.log(`Projects page mounted with admin ID: ${currentAdminId}, calling fetchProjects`);
       fetchProjects();
     }
   }, [fetchProjects, currentAdminId]);
@@ -168,7 +158,6 @@ export default function ProjectsPage() {
       
       router.push(`/photobooth-ia/admin/projects/${data.id}`);
     } catch (error) {
-      console.error('Error creating project:', error);
       setError('Erreur lors de la création du projet');
     } finally {
       setCreatingProject(false);
@@ -179,7 +168,6 @@ export default function ProjectsPage() {
     try {
       setDeleteLoading(true);
       setDeletingProject(true);
-      console.log(`Début de l'archivage du projet ${projectId} (${projectName})`);
       
       // Vérifier que le projet appartient bien à l'admin connecté
       const { data: projectData, error: projectError } = await supabase
@@ -195,7 +183,6 @@ export default function ProjectsPage() {
       
       // Méthode 1: Utiliser l'API
       try {
-        console.log("Tentative d'archivage via API...");
         const response = await fetch('/api/delete-project', {
           method: 'POST',
           headers: {
@@ -205,16 +192,11 @@ export default function ProjectsPage() {
         });
         
         const result = await response.json();
-        console.log("Réponse API:", result);
         
         if (!response.ok) {
           throw new Error(result.error || 'API: Échec de l\'archivage');
         }
-        
-        console.log('Projet archivé avec succès via API');
       } catch (apiError) {
-        console.warn("L'API a échoué, tentative d'archivage direct:", apiError.message);
-        
         // Méthode 2: Archiver directement depuis le client (si l'API échoue)
         const { data: updateData, error: updateError } = await supabase
           .from('projects')
@@ -228,8 +210,6 @@ export default function ProjectsPage() {
         if (updateError) {
           throw new Error(`Archivage direct: ${updateError.message}`);
         }
-        
-        console.log("Résultat de l'archivage direct:", updateData);
       }
       
       // Afficher le message de succès
@@ -240,7 +220,6 @@ export default function ProjectsPage() {
       await fetchProjects();
       
     } catch (error) {
-      console.error('Erreur lors de l\'archivage du projet:', error);
       setError(`Erreur lors de l\'archivage du projet: ${error.message}`);
     } finally {
       setDeleteLoading(false);
@@ -320,18 +299,23 @@ export default function ProjectsPage() {
         <Loader size="large" message="Chargement des projets..." variant="premium" />
       ) : (
         <>
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Projets</h1>
-            {/* Create new project button */}
-            <Link 
-              href="/photobooth-ia/admin/projects/create" 
-              className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              Créer un nouveau projet
-            </Link>
+          <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">Projets</h1>
+                <p className="text-white text-opacity-80 text-sm">Gérez et organisez tous vos projets photobooths.</p>
+              </div>
+              {/* Create new project button */}
+              <Link 
+                href="/photobooth-ia/admin/projects/create" 
+                className="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm border border-white border-opacity-30 rounded-lg shadow-sm text-sm font-medium text-white transition-all duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Créer un nouveau projet
+              </Link>
+            </div>
           </div>
 
           {error && (
@@ -380,8 +364,9 @@ export default function ProjectsPage() {
                         <Image
                           src={deleteConfirm.logo_url}
                           alt={deleteConfirm.name}
-                          fill
-                          style={{ objectFit: "contain" }}
+                          width={128}
+                          height={128}
+                          style={{ objectFit: "cover" }}
                           className="rounded-lg"
                         />
                         
@@ -457,7 +442,7 @@ export default function ProjectsPage() {
                                 alt={project.name}
                                 width={48}
                                 height={48}
-                                className="h-12 w-12 object-cover"
+                                style={{ objectFit: 'cover' }}
                               />
                             </div>
                           ) : (

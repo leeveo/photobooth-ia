@@ -150,6 +150,8 @@ export async function POST(request) {
         status: 'succeeded',
         stripe_payment_id: session.payment_intent || null,
         images_included: quota,
+        stripe_subscription_status: subscription.status, // SÉCURISÉ: statut réel Stripe
+        quota_expires_at: new Date(subscription.current_period_end * 1000).toISOString(), // Date d'expiration
         created_at: new Date().toISOString()
       }]);
 
@@ -217,6 +219,73 @@ export async function POST(request) {
     }
 
     console.log('[WEBHOOK] Recurring payment inserted for user:', paymentUser.admin_user_id);
+  }
+
+  // SÉCURITÉ: Gestion des abonnements suspendus/annulés
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object;
+    console.log('[WEBHOOK] Subscription status changed:', subscription.status, 'for subscription:', subscription.id);
+
+    // Mettre à jour le statut de l'abonnement dans admin_payments
+    const { error: updateError } = await supabase
+      .from('admin_payments')
+      .update({ 
+        stripe_subscription_status: subscription.status,
+        quota_expires_at: new Date(subscription.current_period_end * 1000).toISOString()
+      })
+      .eq('stripe_subscription_id', subscription.id);
+
+    if (updateError) {
+      console.error('[WEBHOOK] Error updating subscription status:', updateError);
+    } else {
+      console.log('[WEBHOOK] Subscription status updated to:', subscription.status);
+    }
+  }
+
+  // SÉCURITÉ: Gestion des abonnements supprimés
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object;
+    console.log('[WEBHOOK] Subscription deleted:', subscription.id);
+
+    // Marquer l'abonnement comme annulé
+    const { error: deleteError } = await supabase
+      .from('admin_payments')
+      .update({ 
+        stripe_subscription_status: 'canceled',
+        quota_expires_at: new Date().toISOString() // Expire immédiatement
+      })
+      .eq('stripe_subscription_id', subscription.id);
+
+    if (deleteError) {
+      console.error('[WEBHOOK] Error marking subscription as deleted:', deleteError);
+    } else {
+      console.log('[WEBHOOK] Subscription marked as canceled');
+    }
+  }
+
+  // SÉCURITÉ: Gestion des paiements échoués
+  if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object;
+    const subscriptionId = invoice.subscription;
+    console.log('[WEBHOOK] Payment failed for subscription:', subscriptionId);
+
+    // Marquer le paiement comme échoué
+    const { error: failedError } = await supabase
+      .from('admin_payments')
+      .insert([{
+        stripe_subscription_id: subscriptionId,
+        status: 'failed',
+        amount: invoice.amount_due || 0,
+        stripe_payment_id: invoice.payment_intent || null,
+        stripe_subscription_status: 'past_due',
+        created_at: new Date().toISOString()
+      }]);
+
+    if (failedError) {
+      console.error('[WEBHOOK] Error recording failed payment:', failedError);
+    } else {
+      console.log('[WEBHOOK] Failed payment recorded');
+    }
   }
 
   return new Response(JSON.stringify({ received: true }), { status: 200 });

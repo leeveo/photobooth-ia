@@ -103,7 +103,7 @@ export default function Register() {
     return (
         <main className="flex fixed h-full w-full bg-tautaufest overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 lg:pt-12 lg:px-10">
             <div className="relative w-[60%] mx-auto mt-0]">
-            {/*<Image src='/photobooth-ia/title-identify.png' width={900} height={340} alt='Zirolu' className='w-full' priority />*/}
+            {/*<Image src='/photobooth-ia/title-identify.png' width={900} height={340} alt='waibooth' className='w-full' priority />*/}
             </div>
             {/* PILIH STYLE */}
             <div className="relative w-[90%] mx-auto mt-0">
@@ -317,7 +317,7 @@ export default function Register() {
                     {genderFix && genderFix == 'f' && 
                     <div className='relative w-full mt-14'>
                         <div className="relative w-[60%] mx-auto mt-0">
-                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='Zirolu' className='w-full' priority />
+                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
                             <div className='px-12 '>
@@ -443,7 +443,7 @@ export default function Register() {
                     {genderFix && genderFix == 'ag' && 
                     <div className='relative w-full mt-14'>
                         <div className="relative w-[60%] mx-auto mt-0">
-                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='Zirolu' className='w-full' priority />
+                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
                             <div className='px-12 '>
@@ -569,7 +569,7 @@ export default function Register() {
                     {genderFix && genderFix == 'af' && 
                     <div className='relative w-full mt-14'>
                         <div className="relative w-[60%] mx-auto mt-0">
-                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='Zirolu' className='w-full' priority />
+                        <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
                             <div className='px-12 '>
@@ -696,7 +696,7 @@ export default function Register() {
                 {/* {character && */}
                     <div className={`relative w-full flex justify-center items-center mt-10 z-20  ${character ? `` : 'opacity-20 pointer-events-none'}`}>
                         <button className="relative mx-auto w-[80%] flex justify-center items-center" onClick={generateAI}>
-                            <Image src='/photobooth-ia/btn-next.png' width={505} height={136} alt='Zirolu' className='w-full' priority />
+                            <Image src='/photobooth-ia/btn-next.png' width={505} height={136} alt='waibooth' className='w-full' priority />
                         </button>
                     </div>
                 {/* } */}

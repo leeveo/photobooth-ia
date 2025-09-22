@@ -46,7 +46,7 @@ export default function Register() {
     return (
         <main className="flex fixed h-full w-full bg-tautaufest overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 lg:pt-0 lg:px-20 mt-0">
             <div className="relative w-[55%] mx-auto mt-0">
-                <Image src='/photobooth-ia/title-registration.png' width={687} height={336} alt='Zirolu' className='w-full' priority />
+                <Image src='/photobooth-ia/title-registration.png' width={687} height={336} alt='waibooth' className='w-full' priority />
             </div>
             <div className="relative w-full flex flex-col justify-center items-center mt-16 mb-6">
                 <div className='relative w-[80%] mb-14 lg:mb-20'>

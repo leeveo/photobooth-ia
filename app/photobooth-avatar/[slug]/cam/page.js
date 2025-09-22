@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Configuration fal.ai
 fal.config({
@@ -235,6 +235,7 @@ export default function CameraCapture({ params }) {
   const [currentCameraFacing, setCurrentCameraFacing] = useState('user'); // 'user' = avant, 'environment' = arrière
   const [switchingCamera, setSwitchingCamera] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Initialize webcam
   useWebcam({ videoRef, previewRef });
@@ -507,8 +508,18 @@ export default function CameraCapture({ params }) {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
+    setLoadingProgress(0);
     
     const start = Date.now();
+    
+    // Simuler le progress pendant que l'IA travaille
+    const progressInterval = setInterval(() => {
+      setElapsedTime(Date.now() - start);
+      const elapsed = Date.now() - start;
+      const maxTime = (settings?.max_processing_time || 60) * 1000;
+      const progress = Math.min(95, (elapsed / maxTime) * 100); // Max 95% jusqu'à la fin
+      setLoadingProgress(progress);
+    }, 100);
     
     try {
       // Get the selected style and gender from localStorage or state
@@ -643,6 +654,10 @@ export default function CameraCapture({ params }) {
         console.error("Error incrementing photo count:", countError);
       }
       
+      // Finaliser le progress
+      clearInterval(progressInterval);
+      setLoadingProgress(100);
+      
       // Redirect to results page after a short delay
       setTimeout(() => {
         router.push(`/photobooth-avatar/${slug}/result`);
@@ -651,6 +666,9 @@ export default function CameraCapture({ params }) {
     } catch (error) {
       console.error("Error generating avatar:", error);
       setError(error.message || "Une erreur est survenue");
+      
+      // Nettoyer l'interval en cas d'erreur
+      clearInterval(progressInterval);
       
       // Log failed attempt
       try {
@@ -710,58 +728,550 @@ export default function CameraCapture({ params }) {
         )}
       </div>
 
-      {/* Processing Overlay */}
-      {processing && (
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center flex-col z-20">
-          <div 
-            className="py-4 px-6 rounded-lg text-center"
-            style={{ backgroundColor: primaryColor, border: `2px solid ${secondaryColor}` }}
+      {/* Processing Overlay Web 3.0 */}
+      <AnimatePresence>
+        {processing && (
+          <motion.div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%)',
+              backdropFilter: 'blur(10px)'
+            }}
           >
-            <h2 className="text-xl mb-2" style={{ color: secondaryColor }}>
-              Création de votre avatar...
-            </h2>
-            <p style={{ color: 'white' }}>
-              Processus: {(elapsedTime / 1000).toFixed(1)} secondes
-            </p>
-            <div className="mt-4 mb-4">
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div 
-                  className="h-2.5 rounded-full" 
-                  style={{ 
-                    width: `${Math.min(100, (elapsedTime / ((settings?.max_processing_time || 60) * 1000)) * 100)}%`,
-                    backgroundColor: secondaryColor
+            {/* Container principal du modal */}
+            <motion.div 
+              className="relative w-full max-w-lg mx-auto"
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
+              transition={{ 
+                type: "spring", 
+                damping: 20, 
+                stiffness: 300,
+                duration: 0.6 
+              }}
+            >
+              {/* Background avec effet glassmorphism */}
+              <div 
+                className="relative overflow-hidden rounded-3xl p-8 shadow-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                }}
+              >
+                {/* Animated background gradient */}
+                <motion.div
+                  className="absolute inset-0 opacity-30"
+                  animate={{
+                    background: [
+                      'linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3))',
+                      'linear-gradient(45deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))',
+                      'linear-gradient(45deg, rgba(16, 185, 129, 0.3), rgba(139, 92, 246, 0.3))'
+                    ]
                   }}
-                ></div>
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
+
+                {/* Particules flottantes */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={`particle-${i}`}
+                    className="absolute w-2 h-2 rounded-full bg-white/20"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                      y: [0, -20, 0],
+                      opacity: [0.2, 0.8, 0.2],
+                      scale: [1, 1.5, 1],
+                    }}
+                    transition={{
+                      duration: 3 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                      ease: "easeInOut"
+                    }}
+                  />
+                ))}
+
+                {/* Contenu principal */}
+                <div className="relative z-10 text-center">
+                  {/* Logo avec cercles rotatifs et points */}
+                  <motion.div
+                    className="relative mb-6 mx-auto w-32 h-32 flex items-center justify-center"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.8 }}
+                  >
+                    {/* Cercle principal central */}
+                    <motion.div
+                      className="relative w-20 h-20 rounded-full flex items-center justify-center z-10"
+                      style={{
+                        background: `linear-gradient(135deg, ${primaryColor}90, ${secondaryColor}90)`,
+                        border: '3px solid rgba(255,255,255,0.4)',
+                        boxShadow: `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`
+                      }}
+                      animate={{ 
+                        scale: [1, 1.1, 1],
+                        boxShadow: [
+                          `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`,
+                          `0 0 60px ${primaryColor}70, inset 0 0 30px rgba(255,255,255,0.3)`,
+                          `0 0 40px ${primaryColor}50, inset 0 0 20px rgba(255,255,255,0.2)`
+                        ]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      {/* Icône centrale moderne et professionnelle */}
+                      <motion.div
+                        className="text-white flex items-center justify-center"
+                        animate={{ 
+                          rotate: [0, 360],
+                          scale: [1, 1.1, 1]
+                        }}
+                        transition={{ 
+                          rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+                          scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+                        }}
+                      >
+                        {/* Icône géométrique moderne - hexagone avec point central */}
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                          <motion.path
+                            d="M16 4L25.856 9V23L16 28L6.144 23V9L16 4Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="rgba(255,255,255,0.1)"
+                            animate={{
+                              strokeDasharray: ["0 100", "50 100", "100 100"],
+                              strokeDashoffset: [0, -25, -50]
+                            }}
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                          <motion.circle
+                            cx="16"
+                            cy="16"
+                            r="3"
+                            fill="currentColor"
+                            animate={{
+                              scale: [1, 1.3, 1],
+                              opacity: [0.8, 1, 0.8]
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                          <motion.circle
+                            cx="16"
+                            cy="16"
+                            r="6"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            fill="none"
+                            opacity="0.5"
+                            animate={{
+                              scale: [1, 1.2, 1],
+                              opacity: [0.3, 0.7, 0.3]
+                            }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: 0.5
+                            }}
+                          />
+                        </svg>
+                      </motion.div>
+                    </motion.div>
+
+                    {/* Premier cercle externe avec 6 points */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ 
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(6)].map((_, i) => {
+                        const angle = (i * 60) * (Math.PI / 180);
+                        const radius = 55;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`outer-dot-${i}`}
+                            className="absolute w-3 h-3 rounded-full"
+                            style={{
+                              background: `linear-gradient(45deg, ${primaryColor}, ${secondaryColor})`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: `0 0 15px ${primaryColor}80`
+                            }}
+                            animate={{
+                              scale: [0.8, 1.3, 0.8],
+                              opacity: [0.7, 1, 0.7]
+                            }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              delay: i * 0.2,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Deuxième cercle externe avec 8 points (rotation inverse) */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [360, 0] }}
+                      transition={{ 
+                        duration: 12,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(8)].map((_, i) => {
+                        const angle = (i * 45) * (Math.PI / 180);
+                        const radius = 42;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`middle-dot-${i}`}
+                            className="absolute w-2 h-2 rounded-full"
+                            style={{
+                              background: `rgba(255,255,255,0.9)`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: '0 0 10px rgba(255,255,255,0.8)'
+                            }}
+                            animate={{
+                              scale: [0.5, 1.2, 0.5],
+                              opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              delay: i * 0.15,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Troisième cercle interne avec 4 points */}
+                    <motion.div
+                      className="absolute inset-0 w-32 h-32"
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ 
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {[...Array(4)].map((_, i) => {
+                        const angle = (i * 90) * (Math.PI / 180);
+                        const radius = 28;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        return (
+                          <motion.div
+                            key={`inner-dot-${i}`}
+                            className="absolute w-2.5 h-2.5 rounded-full"
+                            style={{
+                              background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})`,
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                              boxShadow: `0 0 12px ${secondaryColor}70`
+                            }}
+                            animate={{
+                              scale: [0.8, 1.4, 0.8],
+                              opacity: [0.8, 1, 0.8],
+                              rotate: [0, 180, 360]
+                            }}
+                            transition={{
+                              duration: 2.5,
+                              repeat: Infinity,
+                              delay: i * 0.3,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+
+                    {/* Anneaux de pulsation externe */}
+                    {[...Array(2)].map((_, i) => (
+                      <motion.div
+                        key={`pulse-ring-${i}`}
+                        className="absolute rounded-full border border-white/30"
+                        style={{
+                          width: `${140 + i * 20}px`,
+                          height: `${140 + i * 20}px`,
+                          left: '50%',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                        animate={{
+                          scale: [0.8, 1.2, 0.8],
+                          opacity: [0.6, 0.1, 0.6],
+                        }}
+                        transition={{
+                          duration: 3 + i * 0.5,
+                          repeat: Infinity,
+                          delay: i * 1,
+                          ease: "easeOut"
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+
+                  {/* Titre principal */}
+                  <motion.h2 
+                    className="text-2xl font-bold text-white mb-3"
+                    style={{
+                      background: 'linear-gradient(135deg, #ffffff, #e0e0e0)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      textShadow: '0 0 20px rgba(255,255,255,0.5)'
+                    }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                  >
+                    Création de votre avatar...
+                  </motion.h2>
+
+                  {/* Sous-titre */}
+                  <motion.p 
+                    className="text-white/80 text-sm mb-6 leading-relaxed"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                  >
+                    Notre intelligence artificielle transforme votre photo
+                    <br />
+                    <span className="text-white/60">Veuillez patienter...</span>
+                  </motion.p>
+
+                  {/* Timer futuriste */}
+                  <motion.div 
+                    className="flex items-center justify-center gap-3 mb-6"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                  >
+                    <div 
+                      className="px-4 py-2 rounded-full text-white font-mono text-lg"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <motion.span
+                        className="inline-flex items-center justify-center"
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >
+                        {/* Icône timer moderne */}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white">
+                          <motion.circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="none"
+                            animate={{
+                              strokeDasharray: ["0 63", "31.5 63", "63 63"],
+                              rotate: [0, 360]
+                            }}
+                            transition={{
+                              strokeDasharray: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                              rotate: { duration: 4, repeat: Infinity, ease: "linear" }
+                            }}
+                          />
+                          <motion.path
+                            d="M12 6V12L16 16"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            animate={{
+                              opacity: [0.7, 1, 0.7]
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        </svg>
+                      </motion.span>
+                      {" "}
+                      <motion.span
+                        key={Math.floor(elapsedTime / 1000)} // Re-render on change
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {Math.floor(elapsedTime / 1000)}s
+                      </motion.span>
+                    </div>
+                  </motion.div>
+
+                  {/* Barre de progression futuriste */}
+                  <motion.div 
+                    className="mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9, duration: 0.6 }}
+                  >
+                    <div 
+                      className="relative w-full h-3 rounded-full overflow-hidden mb-3"
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      <motion.div 
+                        className="h-full rounded-full relative overflow-hidden"
+                        style={{ 
+                          background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
+                          boxShadow: `0 0 10px ${primaryColor}50`,
+                          width: `${loadingProgress}%`
+                        }}
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${loadingProgress}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      >
+                        {/* Effet de brillance */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                      </motion.div>
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-white/60">
+                      <span>{Math.round(loadingProgress)}%</span>
+                      <span>ETA: {Math.max(0, Math.round(((settings?.max_processing_time || 60) * 1000 - elapsedTime) / 1000))}s</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Zone de logs avec style moderne */}
+                  <motion.div 
+                    className="mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.1, duration: 0.6 }}
+                  >
+                    <div 
+                      className="h-24 overflow-y-auto text-sm text-left p-3 rounded-xl"
+                      style={{ 
+                        background: 'rgba(0,0,0,0.3)', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      {logs.length > 0 ? (
+                        logs.map((log, index) => (
+                          <motion.div 
+                            key={index}
+                            className="text-white/80 leading-relaxed mb-1"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            <span className="text-green-400 mr-2">•</span>
+                            {log}
+                          </motion.div>
+                        ))
+                      ) : (
+                        <div className="text-white/60 italic">Initialisation du processus...</div>
+                      )}
+                    </div>
+                  </motion.div>
+                  
+                  {/* Bouton d'annulation modernisé */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.3, duration: 0.6 }}
+                  >
+                    <Link 
+                      href={`/photobooth-avatar/${slug}`}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})`,
+                        color: 'white',
+                        boxShadow: `0 4px 15px ${secondaryColor}30, inset 0 1px 0 rgba(255,255,255,0.2)`
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Annuler
+                    </Link>
+                  </motion.div>
+
+                  {/* Gestion des erreurs */}
+                  {error && (
+                    <motion.div 
+                      className="mt-4 p-4 rounded-xl border"
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                        color: '#fecaca'
+                      }}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="15" y1="9" x2="9" y2="15"></line>
+                          <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        <span className="font-medium">Erreur</span>
+                      </div>
+                      <p className="text-sm">{error}</p>
+                    </motion.div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div 
-              className="mt-4 h-24 overflow-y-auto text-sm text-left p-2 rounded"
-              style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'white' }}
-            >
-              {logs.length > 0 ? (
-                logs.map((log, index) => <div key={index}>{log}</div>)
-              ) : (
-                <div>Initialisation du processus...</div>
-              )}
-            </div>
-            
-            {error && (
-              <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-            
-            <Link 
-              href={`/photobooth-avatar/${slug}`}
-              className="mt-6 inline-block px-4 py-2 rounded font-medium"
-              style={{ backgroundColor: secondaryColor, color: primaryColor }}
-            >
-              Annuler
-            </Link>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className={`w-full max-w-2xl mx-auto mt-[20vh] ${processing ? 'opacity-20' : ''}`}>
         <h2 

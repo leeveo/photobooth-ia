@@ -17,7 +17,7 @@ const BtnHexagonTauTau = ({ disabled, onClick}) => {
         width={479}
         height={96}
         className='w-full'
-        alt='Zirolu'
+        alt='waibooth'
         priority
       />
     </button>
