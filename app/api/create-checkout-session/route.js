@@ -12,8 +12,8 @@ const supabase = createClient(
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { priceId } = body;
-    console.log('[API] create-checkout-session called with priceId:', priceId);
+    const { priceId, adminId, adminEmail } = body;
+    console.log('[API] create-checkout-session called with:', { priceId, adminId, adminEmail });
 
     // Vérifie que le priceId est bien présent
     if (!priceId) {
@@ -21,17 +21,27 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Aucun priceId fourni.' }, { status: 400 });
     }
 
-    // Récupérer l'utilisateur connecté (par exemple via session ou JWT)
-    // Ici, on suppose que l'ID admin est dans un cookie ou header (à adapter selon ton auth)
-    // const adminId = ...;
-
-    // TODO: Récupérer l'email de l'utilisateur connecté
-    // const email = ...;
+    // Si adminId est fourni mais pas d'email, récupérer l'email depuis la base
+    let customerEmail = adminEmail;
+    
+    if (adminId && !customerEmail) {
+      console.log('[API] Fetching admin email for ID:', adminId);
+      const { data: adminUser, error: userError } = await supabase
+        .from('admin_users')
+        .select('email')
+        .eq('id', adminId)
+        .single();
+      
+      if (!userError && adminUser) {
+        customerEmail = adminUser.email;
+        console.log('[API] Found admin email:', customerEmail);
+      }
+    }
 
     // Créer la session Stripe Checkout
     let session;
     try {
-      session = await stripe.checkout.sessions.create({
+      const sessionConfig = {
         payment_method_types: ['card'],
         mode: 'subscription',
         line_items: [
@@ -40,13 +50,21 @@ export async function POST(req) {
             quantity: 1,
           },
         ],
-        // Ajoute l'email si tu l'as, ou laisse Stripe demander à l'utilisateur
-        // customer_email: email,
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?success=1`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/photobooth-ia/admin/choose-plan?canceled=1`,
-        // Ajoute l'id utilisateur en metadata si tu veux
-        // metadata: { admin_user_id: ... }
-      });
+        metadata: {
+          admin_user_id: adminId || 'unknown',
+          price_id: priceId
+        }
+      };
+
+      // Ajouter l'email si disponible
+      if (customerEmail) {
+        sessionConfig.customer_email = customerEmail;
+        console.log('[API] Setting customer_email:', customerEmail);
+      }
+
+      session = await stripe.checkout.sessions.create(sessionConfig);
       console.log('[API] Stripe session created:', session.id);
     } catch (stripeErr) {
       console.error('[API] Stripe error:', stripeErr);

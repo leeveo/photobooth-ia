@@ -2,116 +2,138 @@
 
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { getStripePrices, getStripeAddons } from './stripe-config';
 
 // Remise de 20% sur l'annuel
 const DISCOUNT = 0.2;
 
-// Packs d'images supplémentaires
-const ADDON_PACKS = [
-	{
-		id: 'addon-100',
-		name: 'Pack +100 Photos',
-		photos: 100,
-		price: 9.90,
-		priceId: 'price_1S9K5gIgKYOzHnxE8pKcberV', // À créer dans Stripe
-		description: 'Ajoutez 100 photos supplémentaires à votre quota actuel',
-		popular: false,
-		icon: '📸'
-	},
-	{
-		id: 'addon-500', 
-		name: 'Pack +500 Photos',
-		photos: 500,
-		price: 39.90,
-		priceId: 'price_1S9K9SIgKYOzHnxE8IozRMRi', // À créer dans Stripe
-		description: 'Ajoutez 500 photos supplémentaires à votre quota actuel',
-		popular: true,
-		icon: '🚀'
-	},
-	{
-		id: 'addon-1000',
-		name: 'Pack +1000 Photos', 
-		photos: 1000,
-		price: 79.90,
-		priceId: 'price_1S9KAqIgKYOzHnxE9IA5m0fJ', // À créer dans Stripe
-		description: 'Ajoutez 1000 photos supplémentaires à votre quota actuel',
-		popular: false,
-		icon: '💎'
-	}
-];
+// Fonction pour générer les packs d'addons avec les bons Price IDs
+const generateAddonPacks = () => {
+	const addons = getStripeAddons();
+	
+	return [
+		{
+			id: 'addon-100',
+			name: 'Pack +100 Photos',
+			photos: 100,
+			price: 9.90,
+			priceId: addons.pack100,
+			description: 'Ajoutez 100 photos supplémentaires à votre quota actuel',
+			popular: false,
+			icon: '📸'
+		},
+		{
+			id: 'addon-500', 
+			name: 'Pack +500 Photos',
+			photos: 500,
+			price: 39.90,
+			priceId: addons.pack500,
+			description: 'Ajoutez 500 photos supplémentaires à votre quota actuel',
+			popular: true,
+			icon: '🚀'
+		},
+		{
+			id: 'addon-1000',
+			name: 'Pack +1000 Photos', 
+			photos: 1000,
+			price: 79.90,
+			priceId: addons.pack1000,
+			description: 'Ajoutez 1000 photos supplémentaires à votre quota actuel',
+			popular: false,
+			icon: '💎'
+		}
+	];
+};
 
-const PLANS = [
-	{
-		name: 'Start',
-		price: 19,
-		annualPrice: 19 * 12 * (1 - DISCOUNT),
-		priceId: {
-			monthly: 'price_1RdtbBIgKYOzHnxEwrDVPJdI',
-			yearly: 'price_1RdtbBIgKYOzHnxEwrDVPJdI_annual', // Remplace par ton vrai price_id annuel
+const ADDON_PACKS = generateAddonPacks();
+
+// Fonction pour générer les plans avec les bons Price IDs selon l'environnement
+const generatePlans = () => {
+	// FORCER les nouveaux Price IDs en mode test
+	const prices = {
+		start: 'price_1SA8gYRBtAFMZV17dLua6okj',      // 19€ - 100 photos
+		essentiel: 'price_1SA8hHRBtAFMZV17URFPVdai',  // 49€ - 400 photos
+		pro: 'price_1SA8hiRBtAFMZV17KoZsrsaR',        // 89€ - 1000 photos
+		premium: 'price_1SA8hvRBtAFMZV17K5BcWUaR'     // 119€ - 1500 photos
+	};
+	
+	console.log('[CHOOSE-PLAN] Using forced Price IDs:', prices);
+	
+	return [
+		{
+			name: 'Start',
+			price: 19,
+			annualPrice: 19 * 12 * (1 - DISCOUNT),
+			priceId: {
+				monthly: prices.start,
+				yearly: prices.start + '_annual', // À créer pour l'abonnement annuel
+			},
+			quota: 100,
+			description: '100 photos / mois',
+			features: [
+				'Génération IA illimitée',
+				'Support standard',
+				'Accès web uniquement',
+			],
+			cardDesc: "Idéal pour une expérience photo ludique lors d'événements et de fêtes du quotidien.",
 		},
-		quota: 100,
-		description: '100 photos / mois',
-		features: [
-			'Génération IA illimitée',
-			'Support standard',
-			'Accès web uniquement',
-		],
-		cardDesc: "Idéal pour une expérience photo ludique lors d'événements et de fêtes du quotidien.",
-	},
-	{
-		name: 'Essentiel',
-		price: 49,
-		annualPrice: 49 * 12 * (1 - DISCOUNT),
-		priceId: {
-			monthly: 'price_1RdtbYIgKYOzHnxE7NSZjxCP',
-			yearly: 'price_1RdtbYIgKYOzHnxE7NSZjxCP_annual', // Remplace par ton vrai price_id annuel
+		{
+			name: 'Essentiel',
+			price: 49,
+			annualPrice: 49 * 12 * (1 - DISCOUNT),
+			priceId: {
+				monthly: prices.essentiel,
+				yearly: prices.essentiel + '_annual', // À créer pour l'abonnement annuel
+			},
+			quota: 400,
+			description: '400 photos / mois',
+			features: [
+				'Toutes les fonctionnalités Start',
+				'Support prioritaire',
+				'API dédiée',
+			],
+			cardDesc: "Parfait pour les événements réguliers et les petites entreprises.",
 		},
-		quota: 400,
-		description: '400 photos / mois',
-		features: [
-			'Toutes les fonctionnalités Start',
-			'Support prioritaire',
-			'API dédiée',
-		],
-		cardDesc: "Parfait pour les événements réguliers et les petites entreprises.",
-	},
-	{
-		name: 'Pro',
-		price: 89,
-		annualPrice: 89 * 12 * (1 - DISCOUNT),
-		priceId: {
-			monthly: 'price_xxx3',
-			yearly: 'price_xxx3_annual', // Remplace par ton vrai price_id annuel
+		{
+			name: 'Pro',
+			price: 89,
+			annualPrice: 89 * 12 * (1 - DISCOUNT),
+			priceId: {
+				monthly: prices.pro,
+				yearly: prices.pro + '_annual', // À créer pour l'abonnement annuel
+			},
+			quota: 1000,
+			description: '1000 photos / mois',
+			features: [
+				'Toutes les fonctionnalités Essentiel',
+				'Personnalisation avancée',
+				'Gestion multi-utilisateurs',
+				'SLA 99.9%',
+			],
+			cardDesc: "Conçu pour les professionnels souhaitant automatiser et personnaliser leurs animations photo.",
 		},
-		quota: 1000,
-		description: '1000 photos / mois',
-		features: [
-			'Toutes les fonctionnalités Essentiel',
-			'Personnalisation avancée',
-			'Gestion multi-utilisateurs',
-			'SLA 99.9%',
-		],
-		cardDesc: "Conçu pour les professionnels souhaitant automatiser et personnaliser leurs animations photo.",
-	},
-	{
-		name: 'Premium',
-		price: 119,
-		annualPrice: 119 * 12 * (1 - DISCOUNT),
-		priceId: {
-			monthly: 'price_xxx4',
-			yearly: 'price_xxx4_annual', // Remplace par ton vrai price_id annuel
-		},
-		quota: 1500,
-		description: '1500 photos / mois',
-		features: [
-			'Toutes les fonctionnalités Pro',
-			'Support 24/7',
-			'Intégrations avancées',
-			'Accès prioritaire aux nouvelles fonctionnalités',
-		],
-		cardDesc: "Solution premium pour les entreprises exigeantes avec besoins avancés et support dédié.",
-	},
-];
+		{
+			name: 'Premium',
+			price: 119,
+			annualPrice: 119 * 12 * (1 - DISCOUNT),
+			priceId: {
+				monthly: prices.premium,
+				yearly: prices.premium + '_annual', // À créer pour l'abonnement annuel
+			},
+			quota: 1500,
+			description: '1500 photos / mois',
+			features: [
+				'Toutes les fonctionnalités Pro',
+				'Support 24/7',
+				'Intégrations avancées',
+				'Accès prioritaire aux nouvelles fonctionnalités',
+			],
+			cardDesc: "Solution premium pour les entreprises exigeantes avec besoins avancés et support dédié.",
+		}
+	];
+};
+
+const PLANS = generatePlans();
 
 // Liste exhaustive des features pour le tableau comparatif
 const ALL_FEATURES = [
@@ -221,10 +243,41 @@ export default function ChoosePlanPage() {
 		setLoading(true);
 		setError(null);
 		try {
+			// Récupérer l'ID utilisateur connecté
+			let adminUserId = localStorage.getItem('currentAdminId') 
+				|| localStorage.getItem('adminUserId')
+				|| sessionStorage.getItem('adminUserId')
+				|| localStorage.getItem('userId')
+				|| sessionStorage.getItem('userId');
+
+			// Essayer de décoder admin_session
+			if (!adminUserId) {
+				const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+				if (adminSession) {
+					try {
+						let decodedSession = atob(adminSession);
+						decodedSession = JSON.parse(decodedSession);
+						adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+					} catch (e) {
+						console.warn('Cannot decode admin_session');
+					}
+				}
+			}
+
+			if (!adminUserId) {
+				setError('Utilisateur non connecté. Veuillez vous reconnecter.');
+				return;
+			}
+
+			console.log('[CHOOSE-PLAN] Creating checkout session with adminId:', adminUserId);
+
 			const res = await fetch('/api/create-checkout-session', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ priceId }),
+				body: JSON.stringify({ 
+					priceId, 
+					adminId: adminUserId 
+				}),
 			});
 			const data = await res.json();
 			if (!res.ok)

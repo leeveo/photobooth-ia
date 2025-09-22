@@ -124,88 +124,56 @@ export async function POST(request) {
       return new Response(JSON.stringify({ received: true, addon_inserted: insertData }), { status: 200 });
     }
 
-    // Traitement normal des abonnements ou achats ponctuels
+    // Traitement normal des abonnements
     const subscriptionId = session.subscription;
     console.log('[WEBHOOK] checkout.session.completed for email:', email, 'subscription:', subscriptionId);
 
-    if (!email) {
-      console.error('[WEBHOOK] Missing email in session:', session);
-      return new Response('Missing email', { status: 400 });
+    if (!email || !subscriptionId) {
+      console.error('[WEBHOOK] Missing email or subscriptionId in session:', session);
+      return new Response('Missing email or subscriptionId', { status: 400 });
     }
 
-    // Récupérer les informations du price directement depuis la session
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    const priceId = lineItems.data[0]?.price?.id;
-    
-    if (!priceId) {
-      console.error('[WEBHOOK] No price ID found in session');
-      return new Response('No price ID found', { status: 400 });
+    let subscription;
+    try {
+      subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      console.log('[WEBHOOK] Subscription retrieved:', subscription.id);
+    } catch (e) {
+      console.error('[WEBHOOK] Stripe subscription fetch error:', e.message);
+      return new Response(`Stripe subscription fetch error: ${e.message}`, { status: 500 });
     }
 
+    const priceId = subscription.items.data[0].price.id;
+    const planName = subscription.items.data[0].price.nickname || subscription.items.data[0].price.id;
     const quota = getQuotaFromPriceId(priceId);
-    let planName = 'Unknown';
-    
-    // Pour les nouveaux Price IDs, récupérer le nom du plan
-    if (priceId === 'price_1SA8gYRBtAFMZV17dLua6okj') planName = 'Start';
-    if (priceId === 'price_1SA8hHRBtAFMZV17URFPVdai') planName = 'Essentiel';
-    if (priceId === 'price_1SA8hiRBtAFMZV17KoZsrsaR') planName = 'Pro';
-    if (priceId === 'price_1SA8hvRBtAFMZV17K5BcWUaR') planName = 'Premium';
-    
-    if (quota === 0) {
-      console.error('[WEBHOOK] Unknown price ID:', priceId);
-      return new Response('Unknown price ID', { status: 400 });
-    }
 
-    console.log('[WEBHOOK] Plan:', planName, 'Quota:', quota, 'Price ID:', priceId);
-
-    // Récupérer ou créer l'utilisateur par email
-    let { data: user, error: userError } = await supabase
+    // Récupérer l'utilisateur par email
+    const { data: user, error: userError } = await supabase
       .from('admin_users')
       .select('id')
       .eq('email', email)
       .single();
 
-    if (userError && userError.code === 'PGRST116') {
-      // Utilisateur n'existe pas, le créer
-      console.log('[WEBHOOK] Creating new admin user for:', email);
-      const { data: newUser, error: createError } = await supabase
-        .from('admin_users')
-        .insert({ email: email })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('[WEBHOOK] Error creating admin user:', createError);
-        return new Response('User creation failed', { status: 500 });
-      }
-      user = newUser;
-    } else if (userError) {
-      console.error('[WEBHOOK] User lookup error:', userError);
-      return new Response('User lookup failed', { status: 500 });
+    if (userError || !user) {
+      console.error('[WEBHOOK] User not found or error:', userError);
+      return new Response('User not found', { status: 404 });
     }
-
-    // Calculer les dates d'expiration
-    const resetDate = new Date();
-    resetDate.setMonth(resetDate.getMonth() + 1);
 
     // Insérer le paiement initial dans admin_payments
     const { error: paymentError } = await supabase
       .from('admin_payments')
       .insert([{
         admin_user_id: user.id,
-        admin_email: email,
         stripe_customer_id: session.customer,
-        stripe_subscription_id: subscriptionId || null,
-        stripe_session_id: session.id,
+        stripe_subscription_id: subscriptionId,
         plan: planName,
         photo_quota: quota,
-        photo_quota_reset_at: resetDate.toISOString(),
-        amount: (session.amount_total || 0) / 100, // Convertir centimes en euros
+        photo_quota_reset_at: new Date().toISOString(),
+        amount: subscription.items.data[0].price.unit_amount || 0,
         status: 'succeeded',
         stripe_payment_id: session.payment_intent || null,
         images_included: quota,
-        stripe_subscription_status: subscriptionId ? 'active' : 'one_time', // SÉCURISÉ: one-time pour achats ponctuels
-        quota_expires_at: resetDate.toISOString(),
+        stripe_subscription_status: subscription.status, // SÉCURISÉ: statut réel Stripe
+        quota_expires_at: new Date(subscription.current_period_end * 1000).toISOString(), // Date d'expiration
         created_at: new Date().toISOString()
       }]);
 

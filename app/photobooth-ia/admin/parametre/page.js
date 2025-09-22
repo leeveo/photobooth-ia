@@ -49,13 +49,26 @@ export default function ParametrePage() {
   // Fonction pour convertir l'ID Stripe en nom de plan lisible
   const getPlanName = (planId) => {
     const planNames = {
-      'price_1RdtbYIgKYOzHnxE7NSZjxCP': 'Plan Starter (50 photos)',
+      // Nouveaux Price IDs (actuels)
+      'price_1SA8gYRBtAFMZV17dLua6okj': 'Plan Start (100 photos) - 19€',
+      'price_1SA8hHRBtAFMZV17URFPVdai': 'Plan Essentiel (400 photos) - 49€',
+      'price_1SA8hiRBtAFMZV17KoZsrsaR': 'Plan Pro (1000 photos) - 89€',
+      'price_1SA8hvRBtAFMZV17K5BcWUaR': 'Plan Premium (1500 photos) - 119€',
+      
+      // Anciens Price IDs (compatibilité)
+      'price_1RdtbBIgKYOzHnxEwrDVPJdI': 'Plan Basic (100 photos)',
+      'price_1RdtbYIgKYOzHnxE7NSZjxCP': 'Plan Starter (500 photos)',
       'price_1RdtbzIgKYOzHnxEjvMFHmM6': 'Plan Pro (200 photos)',
       'price_1RdtcOIgKYOzHnxEHhGQxTSm': 'Plan Business (500 photos)',
       'price_1RdtcoIgKYOzHnxErGz9TBPZ': 'Plan Enterprise (1000 photos)',
-      // Ajoutez d'autres IDs de plan si nécessaire
+      
+      // Plans basés sur le nom
+      'Start': 'Plan Start (100 photos) - 19€',
+      'Essentiel': 'Plan Essentiel (400 photos) - 49€',
+      'Pro': 'Plan Pro (1000 photos) - 89€',
+      'Premium': 'Plan Premium (1500 photos) - 119€',
     };
-    return planNames[planId] || planId || 'Gratuit (3 photos)';
+    return planNames[planId] || planId || 'Plan Gratuit (3 photos)';
   };
 
   // Récupère l'utilisateur connecté
