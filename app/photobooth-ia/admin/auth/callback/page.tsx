@@ -37,6 +37,10 @@ export default function AuthCallbackPage() {
         }
 
         console.log("✅ Code d'autorisation valide, échange en cours...");
+        console.log("🌐 Environment détecté:", process.env.NODE_ENV);
+        console.log("🔗 Origin:", window.location.origin);
+        console.log("🏠 Hostname:", window.location.hostname);
+        
         setStatus('Échange du code contre un token...');
 
         // Utiliser notre API custom pour échanger le code
@@ -47,8 +51,8 @@ export default function AuthCallbackPage() {
           },
           body: JSON.stringify({
             code,
-            redirect_uri: window.location.hostname === 'localhost' 
-              ? 'http://localhost:3000/photobooth-ia/admin/auth/callback' // HTTP temporaire
+            redirect_uri: window.location.origin.includes('localhost') 
+              ? 'http://localhost:3000/photobooth-ia/admin/auth/callback'
               : 'https://photobooth.waibooth.app/photobooth-ia/admin/auth/callback'
           })
         });
