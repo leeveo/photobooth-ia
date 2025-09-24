@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Marquer cette route comme dynamique pour éviter l'erreur de rendu statique
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);

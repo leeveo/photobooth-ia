@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseClient } from '../../../../lib/supabaseClient';
 
+// Marquer comme dynamique pour éviter l'erreur de rendu statique
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const supabase = createSupabaseClient();

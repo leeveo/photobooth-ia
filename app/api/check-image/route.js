@@ -1,3 +1,6 @@
+// Marquer comme dynamique pour éviter l'erreur de rendu statique
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {

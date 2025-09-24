@@ -5,6 +5,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Marquer comme dynamique pour éviter l'erreur de rendu statique
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email') || 'waibooth.app2@gmail.com';
