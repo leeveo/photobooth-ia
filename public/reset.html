@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Complet</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>🔄 RESET COMPLET EN COURS</h1>
+        <div id="status" class="status">Initialisation...</div>
+        <p>Ne fermez pas cette page</p>
+    </div>
+
+    <script>
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message;
+            console.log('RESET:', message);
+        }
+
+        async function completeReset() {
+            try {
+                updateStatus('📋 Analyse de l\'état actuel...');
+                
+                // Étape 1: Analyser l'état actuel
+                console.log('=== ÉTAT AVANT RESET ===');
+                console.log('localStorage items:', Object.keys(localStorage).length);
+                console.log('sessionStorage items:', Object.keys(sessionStorage).length);
+                console.log('cookies:', document.cookie);
+                
+                updateStatus('🧹 Suppression localStorage...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Étape 2: Vider localStorage
+                try {
+                    localStorage.clear();
+                    console.log('✅ localStorage vidé');
+                } catch (e) {
+                    console.error('❌ Erreur localStorage:', e);
+                }
+                
+                updateStatus('🧹 Suppression sessionStorage...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Étape 3: Vider sessionStorage  
+                try {
+                    sessionStorage.clear();
+                    console.log('✅ sessionStorage vidé');
+                } catch (e) {
+                    console.error('❌ Erreur sessionStorage:', e);
+                }
+                
+                updateStatus('🍪 Suppression de TOUS les cookies...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Étape 4: Supprimer TOUS les cookies de toutes les façons possibles
+                try {
+                    // Méthode 1: Par domaine
+                    const cookies = document.cookie.split(";");
+                    cookies.forEach(cookie => {
+                        const eqPos = cookie.indexOf("=");
+                        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                        
+                        // Supprimer pour tous les chemins possibles
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.waibooth.app";
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=waibooth.app";
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.photobooth.waibooth.app";
+                        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=photobooth.waibooth.app";
+                        document.cookie = name + "=;max-age=0;path=/";
+                    });
+                    
+                    console.log('✅ Cookies supprimés');
+                } catch (e) {
+                    console.error('❌ Erreur cookies:', e);
+                }
+                
+                updateStatus('🔄 Nettoyage du cache navigateur...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Étape 5: Tenter de vider le cache (limité en JS)
+                try {
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(
+                            cacheNames.map(cacheName => caches.delete(cacheName))
+                        );
+                        console.log('✅ Cache nettoyé');
+                    }
+                } catch (e) {
+                    console.error('⚠️ Cache non accessible:', e);
+                }
+                
+                updateStatus('✅ Reset terminé - Vérification...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Étape 6: Vérification finale
+                console.log('=== ÉTAT APRÈS RESET ===');
+                console.log('localStorage items:', Object.keys(localStorage).length);
+                console.log('sessionStorage items:', Object.keys(sessionStorage).length);
+                console.log('cookies:', document.cookie);
+                
+                updateStatus('🚀 Redirection vers login...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Étape 7: Redirection brutale
+                window.location.replace('/photobooth-ia/admin/login?reset=complete');
+                
+            } catch (error) {
+                console.error('❌ Erreur durante reset:', error);
+                updateStatus('❌ Erreur: ' + error.message);
+                
+                // Même en cas d'erreur, rediriger
+                setTimeout(() => {
+                    window.location.replace('/photobooth-ia/admin/login?reset=error');
+                }, 3000);
+            }
+        }
+
+        // Lancer le reset au chargement
+        completeReset();
+    </script>
+</body>
+</html>
