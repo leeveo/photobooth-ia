@@ -44,6 +44,12 @@ export default function AuthCallbackPage() {
         setStatus('Échange du code contre un token...');
 
         // Utiliser notre API custom pour échanger le code
+        const redirectUri = process.env.NEXT_PUBLIC_OAUTH_REDIRECT_BASE 
+          ? `${process.env.NEXT_PUBLIC_OAUTH_REDIRECT_BASE}/photobooth-ia/admin/auth/callback`
+          : `${window.location.origin}/photobooth-ia/admin/auth/callback`;
+          
+        console.log("🔗 Redirect URI utilisé:", redirectUri);
+        
         const response = await fetch('/api/auth/google-oauth', {
           method: 'POST',
           headers: {
@@ -51,9 +57,7 @@ export default function AuthCallbackPage() {
           },
           body: JSON.stringify({
             code,
-            redirect_uri: window.location.origin.includes('localhost') 
-              ? 'http://localhost:3000/photobooth-ia/admin/auth/callback'
-              : 'https://photobooth.waibooth.app/photobooth-ia/admin/auth/callback'
+            redirect_uri: redirectUri
           })
         });
 

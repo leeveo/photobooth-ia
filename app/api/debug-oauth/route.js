@@ -4,39 +4,28 @@ export async function GET() {
   try {
     const env = process.env.NODE_ENV;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const hostname = 'localhost'; // Pour test local
     
     const config = {
       environment: env,
       base_url: baseUrl,
+      oauth_redirect_base: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_BASE,
       google_config: {
         client_id_configured: !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         client_secret_configured: !!process.env.GOOGLE_CLIENT_SECRET,
-        client_id_preview: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.substring(0, 20) + '...'
+        client_id_preview: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.substring(0, 30) + '...',
+        client_id_full: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID // Pour debug uniquement
       },
-      redirect_uris: {
-        localhost: 'http://localhost:3000/photobooth-ia/admin/auth/callback',
-        production: 'https://photobooth.waibooth.app/photobooth-ia/admin/auth/callback',
-        current_should_be: hostname === 'localhost' 
-          ? 'http://localhost:3000/photobooth-ia/admin/auth/callback'
-          : 'https://photobooth.waibooth.app/photobooth-ia/admin/auth/callback'
+      expected_redirect_uris: {
+        local: 'http://localhost:3000/photobooth-ia/admin/auth/callback',
+        production: 'https://photobooth.waibooth.app/photobooth-ia/admin/auth/callback'
       },
-      google_oauth_url: 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
-        redirect_uri: 'http://localhost:3000/photobooth-ia/admin/auth/callback',
-        response_type: 'code',
-        scope: 'openid email profile',
-        access_type: 'offline',
-        prompt: 'consent'
-      }).toString(),
+      current_redirect_uri: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_BASE 
+        ? `${process.env.NEXT_PUBLIC_OAUTH_REDIRECT_BASE}/photobooth-ia/admin/auth/callback`
+        : 'VARIABLE_NOT_SET',
       troubleshooting: {
-        problem: 'Google OAuth redirect to dashboard without login',
-        likely_causes: [
-          'Missing localhost redirect URI in Google Cloud Console',
-          'Wrong redirect_uri parameter in OAuth URL',
-          'Google OAuth client configuration mismatch'
-        ],
-        solution: 'Add http://localhost:3000/photobooth-ia/admin/auth/callback to Google Cloud Console'
+        problem: 'OAuth works local but not in production',
+        likely_cause: 'NEXT_PUBLIC_OAUTH_REDIRECT_BASE variable not set correctly on Vercel',
+        solution: 'Set NEXT_PUBLIC_OAUTH_REDIRECT_BASE=https://photobooth.waibooth.app on Vercel'
       }
     };
 
