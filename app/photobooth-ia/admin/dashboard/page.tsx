@@ -89,32 +89,47 @@ export default function Dashboard() {
     return `${baseUrl}/photobooth-${project.photobooth_type}/${project.slug}`;
   };
 
-  // Fonction pour vérifier la session (OAuth + session locale)
+  // Fonction pour vérifier la session (OAuth + session locale) - VERSION SIMPLIFIÉE
   const getValidAdminSession = async () => {
     try {
+      console.log("🔍 Vérification session simplifiée...");
+      
       // 1. Vérifier session locale d'abord
       const sessionStr = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
       
       if (sessionStr) {
+        console.log("✅ Session trouvée dans le stockage local");
         let decodedSession = sessionStr;
         try {
           decodedSession = atob(sessionStr);
+          console.log("✅ Session décodée avec succès");
         } catch (e) {
-          // Session déjà décodée
+          console.log("✅ Session déjà décodée");
+          decodedSession = sessionStr;
         }
         
         const sessionData = JSON.parse(decodedSession) as SessionData;
+        console.log("👤 Session data:", { 
+          email: sessionData.email, 
+          login_method: sessionData.login_method,
+          logged_in: sessionData.logged_in 
+        });
         
-        if (!sessionData.user_id && sessionData.userId) {
-          sessionData.user_id = sessionData.userId;
-        }
-        
-        if (sessionData.user_id) {
+        // Accepter toute session admin valide
+        if (sessionData.logged_in && (sessionData.user_id || sessionData.userId)) {
+          console.log("✅ Session admin valide acceptée");
+          
+          // Normaliser les données
+          if (!sessionData.user_id && sessionData.userId) {
+            sessionData.user_id = sessionData.userId;
+          }
+          
           return sessionData;
         }
       }
 
-      // 2. Vérifier session OAuth Supabase
+      console.log("⚠️ Pas de session locale, vérification OAuth...");
+      // 2. Vérifier session OAuth Supabase uniquement si pas de session locale
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
