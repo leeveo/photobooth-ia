@@ -164,62 +164,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Déconnexion de l'utilisateur
   const handleLogout = async () => {
     try {
-      console.log("🚪 Déconnexion en cours...");
+      console.log("🚪 DÉCONNEXION - DÉBUT");
       
-      // Fonction pour lire les cookies
-      const getCookie = (name: string) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift();
-        return null;
-      };
-
-      // Récupérer la session depuis n'importe quelle source
-      const localSession = localStorage.getItem('admin_session');
-      const sessionSession = sessionStorage.getItem('admin_session');
-      const cookieSession = getCookie('admin_session');
-      const sessionData = localSession || sessionSession || cookieSession;
+      // Forcer le nettoyage immédiat et brutal
+      console.log("🧹 Nettoyage localStorage...");
+      localStorage.clear(); // Vider TOUT le localStorage
       
-      console.log("📋 Sessions à nettoyer:");
-      console.log("  - localStorage:", localSession ? 'PRÉSENT' : 'ABSENT');
-      console.log("  - sessionStorage:", sessionSession ? 'PRÉSENT' : 'ABSENT');
-      console.log("  - cookie:", cookieSession ? 'PRÉSENT' : 'ABSENT');
-
-      // Si c'est une session Google OAuth, déconnecter aussi de Supabase
-      if (sessionData) {
-        try {
-          const decodedSession = JSON.parse(atob(sessionData));
-          if (decodedSession.login_method?.includes('google')) {
-            console.log("🔑 Déconnexion Google OAuth...");
-            const supabase = createSupabaseClient();
-            await supabase.auth.signOut();
-          }
-        } catch (e) {
-          console.log("⚠️ Erreur décodage session pour déconnexion Google:", e);
-        }
-      }
-
-      // Nettoyer TOUTES les sources de session
-      localStorage.removeItem('admin_session');
-      sessionStorage.removeItem('admin_session');
-      localStorage.removeItem('last_registered_email');
-      sessionStorage.removeItem('last_registered_email');
+      console.log("🧹 Nettoyage sessionStorage...");
+      sessionStorage.clear(); // Vider TOUT le sessionStorage
       
-      // Supprimer le cookie avec plusieurs méthodes pour être sûr
-      document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-      document.cookie = 'admin_session=; path=/; max-age=0; SameSite=Lax';
-      document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = 'admin_session=; max-age=0';
-
-      console.log("✅ Déconnexion terminée, redirection...");
+      console.log("🧹 Nettoyage cookies...");
+      // Supprimer TOUS les cookies du domaine
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
       
-      // Force la redirection avec window.location pour éviter les problèmes de cache
-      window.location.href = '/photobooth-ia/admin/login';
+      // Extra: cibler spécifiquement admin_session
+      document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      console.log("✅ Nettoyage terminé");
+      console.log("🚀 REDIRECTION FORCÉE...");
+      
+      // Redirection la plus brutale possible avec paramètre de nettoyage
+      setTimeout(() => {
+        window.location.replace('/photobooth-ia/admin/login?logout=true');
+      }, 100); // Très court délai pour éviter que quoi que ce soit interfère
       
     } catch (error) {
       console.error("❌ Erreur déconnexion:", error);
-      // Rediriger même en cas d'erreur
-      window.location.href = '/photobooth-ia/admin/login';
+      // Même en cas d'erreur, forcer la redirection
+      window.location.replace('/photobooth-ia/admin/login');
     }
   };
 
