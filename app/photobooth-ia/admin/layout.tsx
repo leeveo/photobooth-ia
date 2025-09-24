@@ -164,38 +164,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Déconnexion de l'utilisateur
   const handleLogout = async () => {
-    try {
-      console.log("🚪 DÉCONNEXION - DÉBUT");
-      
-      // Forcer le nettoyage immédiat et brutal
-      console.log("🧹 Nettoyage localStorage...");
-      localStorage.clear(); // Vider TOUT le localStorage
-      
-      console.log("🧹 Nettoyage sessionStorage...");
-      sessionStorage.clear(); // Vider TOUT le sessionStorage
-      
-      console.log("🧹 Nettoyage cookies...");
-      // Supprimer TOUS les cookies du domaine
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-      });
-      
-      // Extra: cibler spécifiquement admin_session
-      document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      
-      console.log("✅ Nettoyage terminé");
-      console.log("🚀 REDIRECTION FORCÉE...");
-      
-      // Redirection la plus brutale possible avec paramètre de nettoyage
-      setTimeout(() => {
-        window.location.replace('/photobooth-ia/admin/login?logout=true');
-      }, 100); // Très court délai pour éviter que quoi que ce soit interfère
-      
-    } catch (error) {
-      console.error("❌ Erreur déconnexion:", error);
-      // Même en cas d'erreur, forcer la redirection
-      window.location.replace('/photobooth-ia/admin/login');
-    }
+    console.log("🚪 DÉCONNEXION - Redirection vers reset");
+    // Ne pas essayer de nettoyer ici, laisser la page reset s'en occuper
+    window.location.href = '/reset';
   };
 
   if (loading) {
