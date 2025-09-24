@@ -34,7 +34,10 @@ export default function AuthCallbackPage() {
         setStatus('Échange du token...');
         console.log("🔄 Échange du token...");
 
-        // Appel API ultra-simple
+        // Appel API ultra-simple avec logging détaillé
+        console.log("📡 Calling API with code length:", code?.length);
+        console.log("📡 Origin:", window.location.origin);
+        
         const response = await fetch('/api/auth/google-token-exchange', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -45,10 +48,12 @@ export default function AuthCallbackPage() {
         });
 
         console.log("📡 Réponse API:", response.status);
+        console.log("📡 Réponse OK:", response.ok);
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("❌ Erreur API:", errorText);
+          console.error("❌ Erreur API:", response.status, response.statusText);
+          console.error("❌ Détail erreur:", errorText);
           setError("Erreur lors de l'échange du token");
           return;
         }
