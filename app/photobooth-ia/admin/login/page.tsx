@@ -25,19 +25,30 @@ export default function AdminLoginPage() {
     // Vérifier si l'utilisateur est déjà connecté
     const checkExistingSession = () => {
       const sessionData = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+      console.log("🔍 Vérification session existante:");
+      console.log("  - localStorage:", localStorage.getItem('admin_session') ? 'PRÉSENT' : 'ABSENT');
+      console.log("  - sessionStorage:", sessionStorage.getItem('admin_session') ? 'PRÉSENT' : 'ABSENT');
+      console.log("  - cookie:", document.cookie.includes('admin_session=') ? 'PRÉSENT' : 'ABSENT');
+      
       if (sessionData) {
         try {
           const decodedSession = JSON.parse(atob(sessionData));
+          console.log("📋 Session décodée:", decodedSession);
+          
           if (decodedSession.logged_in) {
-            console.log("Session existante détectée, redirection vers dashboard");
+            console.log("✅ Session valide détectée, redirection vers dashboard");
             router.push('/photobooth-ia/admin/dashboard');
             return;
+          } else {
+            console.log("❌ Session invalide (logged_in: false)");
           }
         } catch (error) {
-          console.log("Session invalide détectée, nettoyage");
+          console.log("❌ Erreur décodage session:", error);
           localStorage.removeItem('admin_session');
           sessionStorage.removeItem('admin_session');
         }
+      } else {
+        console.log("📭 Aucune session trouvée");
       }
     };
 

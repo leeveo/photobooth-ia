@@ -98,6 +98,24 @@ export default function AuthCallbackPage() {
           
           console.log("💾 Données session à créer:", sessionData);
           
+          // Vérifier les permissions de stockage
+          console.log("🔒 Test permissions stockage:");
+          try {
+            localStorage.setItem('test_storage', 'test');
+            localStorage.removeItem('test_storage');
+            console.log("  - localStorage: ✅ AUTORISÉ");
+          } catch (e) {
+            console.error("  - localStorage: ❌ BLOQUÉ", e);
+          }
+          
+          try {
+            sessionStorage.setItem('test_storage', 'test');
+            sessionStorage.removeItem('test_storage');
+            console.log("  - sessionStorage: ✅ AUTORISÉ");
+          } catch (e) {
+            console.error("  - sessionStorage: ❌ BLOQUÉ", e);
+          }
+          
           // Encodage en base64 pour être stocké dans un cookie
           const encodedSession = btoa(JSON.stringify(sessionData));
           
@@ -113,7 +131,19 @@ export default function AuthCallbackPage() {
           
           // Vérifier que le stockage a fonctionné
           const storedSession = localStorage.getItem('admin_session');
-          console.log("🔍 Vérification stockage:", storedSession ? 'SUCCESS' : 'FAILED');
+          const storedSessionStorage = sessionStorage.getItem('admin_session');
+          const cookieSession = document.cookie.includes('admin_session=');
+          
+          console.log("🔍 Vérification stockage:");
+          console.log("  - localStorage:", storedSession ? 'PRÉSENT' : 'ABSENT');
+          console.log("  - sessionStorage:", storedSessionStorage ? 'PRÉSENT' : 'ABSENT');
+          console.log("  - cookie:", cookieSession ? 'PRÉSENT' : 'ABSENT');
+          
+          if (!storedSession && !storedSessionStorage && !cookieSession) {
+            console.error("❌ AUCUNE SESSION STOCKÉE - PROBLÈME CRITIQUE");
+            setError("Erreur de stockage de session. Veuillez réessayer.");
+            return;
+          }
           
           setStatus('Connexion réussie ! Redirection vers le tableau de bord...');
           
