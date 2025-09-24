@@ -3,6 +3,9 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 
+// Forcer le rendu dynamique
+export const dynamic = 'force-dynamic';
+
 export default function EmergencyLogoutPage() {
   useEffect(() => {
     console.log('🚨 Mode urgence - Reset immédiat');

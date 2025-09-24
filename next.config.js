@@ -2,6 +2,8 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  // Désactiver la génération statique pour éviter les erreurs de sérialisation
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -35,22 +37,24 @@ const nextConfig = {
       'replicate.delivery',
       'replicate.com'
     ],
-    unoptimized: process.env.NODE_ENV === 'development' // Optimize in production, skip in development
+    unoptimized: process.env.NODE_ENV === 'development'
   },
   experimental: {
     outputFileTracingRoot: process.cwd(),
-    largePageDataBytes: 256 * 1000, // 256KB (increased)
+    largePageDataBytes: 256 * 1000,
     serverComponentsExternalPackages: ['sharp', 'aws-sdk', '@aws-sdk/client-s3'],
     serverActions: true,
+    // Désactiver la génération de pages statiques pour éviter les erreurs de sérialisation
+    staticPageGenerationTimeout: 0,
   },
   typescript: {
-    ignoreBuildErrors: true, // Ignorer les erreurs TS pendant le build
+    ignoreBuildErrors: true,
   },
   eslint: {
-    ignoreDuringBuilds: true, // Ignorer les erreurs ESLint pendant le build
+    ignoreDuringBuilds: true,
   },
-  productionBrowserSourceMaps: true, // Add better source maps for production
-  transpilePackages: ['react-konva', '@dnd-kit', 'konva'], // Increase stability for problematic modules
+  productionBrowserSourceMaps: false, // Désactiver pour réduire la taille
+  transpilePackages: ['react-konva', '@dnd-kit', 'konva'],
   webpack: (config, { dev, isServer }) => {
     // Configuration pour la production sur Vercel
     if (!dev && isServer) {

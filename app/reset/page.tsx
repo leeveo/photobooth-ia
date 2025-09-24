@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react';
 
+// Forcer le rendu dynamique
+export const dynamic = 'force-dynamic';
+
 export default function ResetPage() {
   useEffect(() => {
     console.log('🔄 Début du reset complet...');

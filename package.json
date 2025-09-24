@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev-https": "next dev --experimental-https",
-    "build": "NODE_OPTIONS='--max_old_space_size=4096' next build",
+    "build": "set NODE_OPTIONS=--max_old_space_size=4096 && next build",
+    "build-linux": "NODE_OPTIONS='--max_old_space_size=4096' next build",
     "start": "next start",
     "preview": "npm run build && next start",
     "check": "tsc --noEmit && eslint .",
