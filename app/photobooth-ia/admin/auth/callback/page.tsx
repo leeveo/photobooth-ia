@@ -150,12 +150,27 @@ export default function AuthCallbackPage() {
           // Redirection avec loader fluide
           console.log("🚀 Redirection vers dashboard...");
           
-          // Attendre plus longtemps pour que l'utilisateur voie les logs et le message de succès
+          // Attendre un délai réduit mais suffisant pour que le stockage soit effectif
           setTimeout(() => {
             console.log("🚀 Redirection vers dashboard maintenant...");
-            // Utiliser replace au lieu de href pour éviter l'historique
-            window.location.replace('/photobooth-ia/admin/dashboard');
-          }, 3000); // 3 secondes au lieu de 1.5
+            
+            // Vérifier une dernière fois que la session est bien stockée avant la redirection
+            const finalSessionCheck = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+            if (finalSessionCheck) {
+              console.log("✅ Session confirmée avant redirection");
+              // Utiliser le router Next.js au lieu de window.location pour une redirection plus fluide
+              router.push('/photobooth-ia/admin/dashboard');
+            } else {
+              console.error("❌ Session non trouvée avant redirection - retry stockage");
+              // Réessayer le stockage
+              localStorage.setItem('admin_session', encodedSession);
+              sessionStorage.setItem('admin_session', encodedSession);
+              // Redirection de secours
+              setTimeout(() => {
+                router.push('/photobooth-ia/admin/dashboard');
+              }, 1000);
+            }
+          }, 1500); // Délai réduit à 1.5 secondes
           
         } else {
           console.error("❌ Échec création profil admin:", result.adminData);

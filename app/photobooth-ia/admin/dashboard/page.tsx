@@ -169,16 +169,27 @@ export default function Dashboard() {
   useEffect(() => {
     const getAdminSession = async () => {
       try {
-        const sessionData = await getValidAdminSession();
+        // Première tentative
+        let sessionData = await getValidAdminSession();
+        
+        // Si aucune session trouvée, attendre un peu et réessayer (utile après OAuth callback)
+        if (!sessionData) {
+          console.log("🔄 Aucune session trouvée, retry dans 1 seconde...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          sessionData = await getValidAdminSession();
+        }
         
         if (!sessionData) {
+          console.log("❌ Aucune session trouvée après retry, redirection login");
           router.push('/photobooth-ia/admin/login');
           return;
         }
         
+        console.log("✅ Session valide trouvée:", sessionData.email);
         setCurrentAdminId(sessionData.user_id!);
         
       } catch (err) {
+        console.error("❌ Erreur lors de la vérification de session:", err);
         router.push('/photobooth-ia/admin/login');
       }
     };
