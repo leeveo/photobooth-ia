@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+export async function GET(request: NextRequest) {
+  console.log("🔍 API Google Token - Test GET");
+  
+  // Vérification des variables d'environnement
+  const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+  
+  return NextResponse.json({
+    message: "API Google Token Exchange - Test",
+    status: "active",
+    config: {
+      client_id_exists: !!CLIENT_ID,
+      client_id_preview: CLIENT_ID ? CLIENT_ID.substring(0, 20) + "..." : "non configuré",
+      client_secret_exists: !!CLIENT_SECRET,
+      client_secret_preview: CLIENT_SECRET ? CLIENT_SECRET.substring(0, 10) + "..." : "non configuré"
+    },
+    usage: "POST avec { code, redirectUri } pour échanger un code OAuth"
+  });
+}
+
 export async function POST(request: NextRequest) {
   console.log("🔐 API Google Token Exchange appelée");
   
