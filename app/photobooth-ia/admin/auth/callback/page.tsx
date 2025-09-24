@@ -150,11 +150,12 @@ export default function AuthCallbackPage() {
           // Redirection avec loader fluide
           console.log("🚀 Redirection vers dashboard...");
           
-          // Attendre un peu pour que l'utilisateur voie le message de succès
+          // Attendre plus longtemps pour que l'utilisateur voie les logs et le message de succès
           setTimeout(() => {
+            console.log("🚀 Redirection vers dashboard maintenant...");
             // Utiliser replace au lieu de href pour éviter l'historique
             window.location.replace('/photobooth-ia/admin/dashboard');
-          }, 1500);
+          }, 3000); // 3 secondes au lieu de 1.5
           
         } else {
           console.error("❌ Échec création profil admin:", result.adminData);

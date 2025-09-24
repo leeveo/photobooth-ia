@@ -24,11 +24,25 @@ export default function AdminLoginPage() {
 
     // Vérifier si l'utilisateur est déjà connecté
     const checkExistingSession = () => {
-      const sessionData = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+      // Fonction pour lire les cookies
+      const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+        return null;
+      };
+
+      const localSession = localStorage.getItem('admin_session');
+      const sessionSession = sessionStorage.getItem('admin_session');
+      const cookieSession = getCookie('admin_session');
+      
       console.log("🔍 Vérification session existante:");
-      console.log("  - localStorage:", localStorage.getItem('admin_session') ? 'PRÉSENT' : 'ABSENT');
-      console.log("  - sessionStorage:", sessionStorage.getItem('admin_session') ? 'PRÉSENT' : 'ABSENT');
-      console.log("  - cookie:", document.cookie.includes('admin_session=') ? 'PRÉSENT' : 'ABSENT');
+      console.log("  - localStorage:", localSession ? 'PRÉSENT' : 'ABSENT');
+      console.log("  - sessionStorage:", sessionSession ? 'PRÉSENT' : 'ABSENT');
+      console.log("  - cookie:", cookieSession ? 'PRÉSENT' : 'ABSENT');
+      
+      // Prendre la première session disponible (priorité: localStorage > sessionStorage > cookie)
+      const sessionData = localSession || sessionSession || cookieSession;
       
       if (sessionData) {
         try {
@@ -37,6 +51,13 @@ export default function AdminLoginPage() {
           
           if (decodedSession.logged_in) {
             console.log("✅ Session valide détectée, redirection vers dashboard");
+            
+            // S'assurer que la session est dans localStorage pour cohérence
+            if (!localSession && sessionData) {
+              localStorage.setItem('admin_session', sessionData);
+              console.log("💾 Session copiée dans localStorage");
+            }
+            
             router.push('/photobooth-ia/admin/dashboard');
             return;
           } else {
@@ -44,8 +65,10 @@ export default function AdminLoginPage() {
           }
         } catch (error) {
           console.log("❌ Erreur décodage session:", error);
+          // Nettoyer toutes les sessions corrompues
           localStorage.removeItem('admin_session');
           sessionStorage.removeItem('admin_session');
+          document.cookie = 'admin_session=; path=/; max-age=0';
         }
       } else {
         console.log("📭 Aucune session trouvée");
