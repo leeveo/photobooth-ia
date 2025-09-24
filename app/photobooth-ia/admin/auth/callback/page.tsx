@@ -36,61 +36,53 @@ export default function AuthCallbackPage() {
 
         // === STRATÉGIE TRIPLE POUR GARANTIR LE SUCCÈS ===
         
-        // 1) TENTATIVE AVEC CLIENT SECRET
+        // 1) TENTATIVE AVEC API ROUTE SÉCURISÉE
         try {
-          console.log("🔐 Tentative #1: OAuth avec Client Secret");
-          const secretResponse = await fetch('/api/config/google-secret');
+          console.log("🔐 Tentative #1: OAuth avec API route sécurisée");
           
-          if (secretResponse.ok) {
-            const { secret: CLIENT_SECRET } = await secretResponse.json();
-            console.log("✅ Client Secret récupéré");
-            
-            const CLIENT_ID = '861872459075-0rddreeofg3us5falu78gpfp5qu5qr0q.apps.googleusercontent.com';
-            const REDIRECT_URI = `${window.location.origin}/photobooth-ia/admin/auth/callback`;
-
-            const tokenParams = new URLSearchParams({
-              client_id: CLIENT_ID,
-              client_secret: CLIENT_SECRET,
+          const REDIRECT_URI = `${window.location.origin}/photobooth-ia/admin/auth/callback`;
+          
+          console.log("🔗 Appel API route sécurisée pour échange token...");
+          const tokenResponse = await fetch('/api/auth/google-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               code: code,
-              grant_type: 'authorization_code',
-              redirect_uri: REDIRECT_URI,
-            });
+              redirectUri: REDIRECT_URI
+            })
+          });
 
-            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: tokenParams.toString(),
-            });
-
-            if (tokenResponse.ok) {
-              const tokenData = await tokenResponse.json();
-              console.log("✅ Token Google obtenu");
+          if (tokenResponse.ok) {
+            const responseData = await tokenResponse.json();
+            
+            if (responseData.success && responseData.user) {
+              const userData = responseData.user;
+              console.log("🎉 DONNÉES UTILISATEUR RÉELLES:", userData.email, userData.name);
               
-              // Récupérer les données utilisateur
-              const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`);
+              // Créer session complète avec vraies données Google
+              const fullSession = {
+                userId: userData.id,
+                user_id: userData.id,
+                email: userData.email, // VRAIE ADRESSE GMAIL
+                name: userData.name || 'Utilisateur Google',
+                company_name: userData.name || 'Google User',
+                logged_in: true,
+                login_method: 'google_oauth_complete',
+                login_time: new Date().toISOString(),
+                profile_picture: userData.picture,
+                verified_email: userData.verified_email,
+                session_id: `google_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              };
               
-              if (userResponse.ok) {
-                const userData = await userResponse.json();
-                console.log("✅ Données utilisateur Google:", userData.email);
-                
-                // Créer session complète avec vraies données Google
-                const fullSession = {
-                  userId: userData.id,
-                  user_id: userData.id,
-                  email: userData.email,
-                  name: userData.name || 'Utilisateur Google',
-                  company_name: userData.name || 'Google User',
-                  logged_in: true,
-                  login_method: 'google_oauth_complete',
-                  login_time: new Date().toISOString(),
-                  profile_picture: userData.picture,
-                  session_id: `google_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                };
-                
-                saveSessionAndRedirect(fullSession, 'OAuth Google complet réussi !');
-                return; // SUCCÈS - Sortir de la fonction
-              }
+              console.log("🚀 SESSION COMPLÈTE CRÉÉE AVEC EMAIL RÉEL:", fullSession.email);
+              saveSessionAndRedirect(fullSession, `Connexion réussie avec ${userData.email} !`);
+              return; // SUCCÈS - Sortir de la fonction
+            } else {
+              console.log("⚠️ Réponse API invalide:", responseData);
             }
+          } else {
+            const errorData = await tokenResponse.json();
+            console.log("⚠️ Erreur API route:", errorData);
           }
         } catch (e: any) {
           console.log("⚠️ Méthode #1 échouée:", e.message || 'Erreur inconnue');
