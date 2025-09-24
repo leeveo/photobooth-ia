@@ -37,15 +37,25 @@ export default function AuthCallbackPage() {
         // Appel API ultra-simple avec logging détaillé
         console.log("📡 Calling API with code length:", code?.length);
         console.log("📡 Origin:", window.location.origin);
+        console.log("📡 Full API URL:", `${window.location.origin}/api/auth/google-token-exchange`);
         
-        const response = await fetch('/api/auth/google-token-exchange', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code,
-            redirect_uri: `${window.location.origin}/photobooth-ia/admin/auth/callback`
-          })
-        });
+        let response;
+        try {
+          response = await fetch('/api/auth/google-token-exchange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code,
+              redirect_uri: `${window.location.origin}/photobooth-ia/admin/auth/callback`
+            })
+          });
+        } catch (fetchError) {
+          console.error("💥 Fetch Error:", fetchError);
+          console.error("💥 Fetch Error Name:", fetchError instanceof Error ? fetchError.name : 'Unknown');
+          console.error("💥 Fetch Error Message:", fetchError instanceof Error ? fetchError.message : String(fetchError));
+          setError(`Erreur réseau: ${fetchError instanceof Error ? fetchError.message : 'Erreur de connexion'}`);
+          return;
+        }
 
         console.log("📡 Réponse API:", response.status);
         console.log("📡 Réponse OK:", response.ok);
