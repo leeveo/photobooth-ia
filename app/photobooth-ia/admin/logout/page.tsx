@@ -27,7 +27,7 @@ export default function LogoutPage() {
         }
 
         // Si c'est une session Google OAuth, déconnecter aussi de Supabase Auth
-        if (sessionData?.login_method === 'google') {
+        if (sessionData?.login_method?.includes('google')) {
           setStatus('Déconnexion de Google...');
           const { error } = await supabase.auth.signOut();
           if (error) {
@@ -41,8 +41,11 @@ export default function LogoutPage() {
         localStorage.removeItem('admin_session');
         sessionStorage.removeItem('admin_session');
         
-        // Supprimer le cookie
-        document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        // Supprimer le cookie avec plusieurs méthodes pour être sûr
+        document.cookie = 'admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        document.cookie = 'admin_session=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'admin_session=; max-age=0';
         
         // Nettoyer d'autres données potentielles
         localStorage.removeItem('last_registered_email');
