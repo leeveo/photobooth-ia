@@ -10,7 +10,7 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const processOAuth = async () => {
-      console.log("🚀 CALLBACK OAUTH DÉFINITIF - SANS BLOCAGE");
+      console.log("🚀 CALLBACK OAUTH SIMPLIFIÉ - UTILISATION API GOOGLE-OAUTH");
       
       try {
         const code = searchParams?.get('code');
@@ -34,300 +34,121 @@ export default function AuthCallbackPage() {
         console.log("✅ Code OAuth reçu, longueur:", code.length);
         setStatus('Échange avec Google...');
 
-        // === STRATÉGIE TRIPLE POUR GARANTIR LE SUCCÈS ===
+        // 🎯 UTILISATION DE L'API GOOGLE-OAUTH EXISTANTE (plus robuste)
+        const redirectUri = `${window.location.origin}/photobooth-ia/admin/auth/callback`;
         
-        // 1) TENTATIVE AVEC API ROUTE SÉCURISÉE
-        // 🔍 Détection intelligente d'environnement
-        const isProduction = window.location.hostname === 'photobooth.waibooth.app';
-        const isLocal = window.location.hostname === 'localhost';
+        console.log("🔗 Appel API google-oauth...");
+        console.log("📍 URL:", '/api/auth/google-oauth');
+        console.log("📦 Payload:", { code: code.substring(0, 10) + '...', redirect_uri: redirectUri });
         
-        console.log(`🌍 Environnement détecté: ${isProduction ? 'PRODUCTION' : isLocal ? 'LOCAL' : 'AUTRE'}`);
-        
-        if (isLocal) {
-          console.log('🔐 Stratégie LOCAL: Utilisation API route interne (fonctionne parfaitement)');
+        const response = await fetch('/api/auth/google-oauth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: code,
+            redirect_uri: redirectUri
+          })
+        });
+
+        console.log("📡 Réponse API status:", response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("❌ Erreur API:", errorData);
+          setError(`Erreur serveur: ${errorData.error}`);
+          setTimeout(() => router.push('/photobooth-ia/admin/login'), 3000);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("✅ Réponse API reçue:", data);
+
+        if (data.success && data.userData) {
+          const userData = data.userData;
+          const adminData = data.adminData;
+          
+          console.log("🎉 DONNÉES UTILISATEUR RÉELLES:", userData.email);
+          console.log("👤 Données admin:", adminData);
+          
+          // Créer session avec vraies données
+          const session = {
+            userId: adminData?.id || userData.id,
+            user_id: adminData?.id || userData.id,
+            email: userData.email, // EMAIL RÉEL DE N'IMPORTE QUEL UTILISATEUR
+            name: userData.name || 'Utilisateur Google',
+            company_name: userData.name || 'Google User',
+            logged_in: true,
+            login_method: 'google_oauth_api',
+            login_time: new Date().toISOString(),
+            profile_picture: userData.picture,
+            verified_email: true,
+            admin_data: adminData,
+            session_id: `oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          };
+          
+          console.log("🚀 SESSION UNIVERSELLE CRÉÉE:", session.email);
+          
+          // Sauvegarder dans tous les stockages
+          const sessionJson = JSON.stringify(session);
+          localStorage.setItem('photoboothia_session', sessionJson);
+          sessionStorage.setItem('photoboothia_session', sessionJson);
+          document.cookie = `photoboothia_session=${sessionJson}; path=/; max-age=86400`;
+          
+          console.log("✅ Session sauvegardée:", session.email);
+          console.log("🆔 Session ID:", session.session_id);
+          
+          setStatus(`Connexion réussie avec ${userData.email}!`);
+          
+          // Redirection vers dashboard
+          setTimeout(() => {
+            console.log("🔀 Redirection vers dashboard");
+            router.push('/photobooth-ia/admin/dashboard');
+          }, 1000);
+          
         } else {
-          console.log('🔐 Stratégie PRODUCTION: Contournement API route (timeout Vercel confirmé)');
+          console.error("❌ Réponse API invalide:", data);
+          setError('Réponse serveur invalide');
+          setTimeout(() => router.push('/photobooth-ia/admin/login'), 3000);
         }
-        
-        // 🎯 STRATÉGIE CONDITIONNELLE: API Route si LOCAL, Direct API si PRODUCTION
-        if (isLocal) {
-          try {
-            console.log("🔐 LOCAL: Tentative avec API route sécurisée");
-            
-            const REDIRECT_URI = `${window.location.origin}/photobooth-ia/admin/auth/callback`;
-            
-            console.log("🔗 Appel API route sécurisée pour échange token...");
-            console.log("📍 URL API:", `${window.location.origin}/api/auth/google-token`);
-            console.log("📦 Payload:", { code: code.substring(0, 10) + "...", redirectUri: REDIRECT_URI });
-            
-            const tokenResponse = await fetch('/api/auth/google-token', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                code: code,
-                redirectUri: REDIRECT_URI
-              })
-            });
 
-            console.log("📡 Réponse API status:", tokenResponse.status);
-            console.log("📡 Réponse API headers:", Object.fromEntries(tokenResponse.headers.entries()));
-
-            if (tokenResponse.ok) {
-              const responseData = await tokenResponse.json();
-              console.log("✅ Réponse API reçue:", responseData);
-              
-              if (responseData.success && responseData.user) {
-                const userData = responseData.user;
-                console.log("🎉 DONNÉES UTILISATEUR RÉELLES (LOCAL):", userData.email, userData.name);
-                
-                // Créer session complète avec vraies données Google
-                const fullSession = {
-                  userId: userData.id,
-                  user_id: userData.id,
-                  email: userData.email, // VRAIE ADRESSE GMAIL
-                  name: userData.name || 'Utilisateur Google',
-                  company_name: userData.name || 'Google User',
-                  logged_in: true,
-                  login_method: 'google_oauth_complete',
-                  login_time: new Date().toISOString(),
-                  profile_picture: userData.picture,
-                  verified_email: userData.verified_email,
-                  session_id: `google_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                };
-                
-                console.log("🚀 SESSION LOCALE CRÉÉE AVEC EMAIL RÉEL:", fullSession.email);
-                saveSessionAndRedirect(fullSession, `Connexion locale réussie avec ${userData.email} !`);
-                return; // SUCCÈS LOCAL
-              } else {
-                console.log("⚠️ Réponse API locale invalide:", responseData);
-              }
-            } else {
-              const errorText = await tokenResponse.text();
-              console.log("❌ Erreur API locale HTTP", tokenResponse.status, ":", errorText);
-            }
-          } catch (e: any) {
-            console.log("⚠️ API route locale échouée:", e.message || 'Erreur inconnue');
-            console.error("🔍 Erreur locale complète:", e);
-          }
-        }
-        
-        // 🎯 STRATÉGIE PRODUCTION: Appel direct Google API (contournement timeout Vercel)
-        if (!isLocal) {
-          console.log("🔐 PRODUCTION: Contournement API route avec appel direct Google");
-        }
-        
-        // 2) TENTATIVE DIRECTE CÔTÉ CLIENT (pour local en fallback ou production directe)
-        console.log("🔄 Tentative directe côté client");
-        try {
-          console.log("🔑 Récupération des variables d'environnement côté client...");
-          
-          // Variables d'environnement disponibles côté client
-          const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-          
-          // Appel direct à l'API Google (utilisation du code sans client_secret)
-          console.log("📞 Tentative d'échange simplifié avec Google...");
-          
-          // 1. D'abord essayer avec le endpoint userinfo directement si on peut récupérer un token depuis le hash
-          const urlParams = new URLSearchParams(window.location.search);
-          const accessToken = urlParams.get('access_token');
-          
-          if (accessToken) {
-            console.log("🎫 Token d'accès trouvé dans l'URL");
-            const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
-            
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              console.log("🎉 DONNÉES UTILISATEUR RÉCUPÉRÉES DIRECTEMENT:", userData.email);
-              
-              const directSession = {
-                userId: userData.id,
-                user_id: userData.id,
-                email: userData.email,
-                name: userData.name || 'Utilisateur Google',
-                company_name: userData.name || 'Google User',
-                logged_in: true,
-                login_method: 'google_oauth_direct',
-                login_time: new Date().toISOString(),
-                profile_picture: userData.picture,
-                session_id: `direct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              };
-              
-              saveSessionAndRedirect(directSession, `Connexion directe réussie avec ${userData.email}!`);
-              return;
-            }
-          }
-          
-          // 2. Si pas de token direct, essayer l'API public Google (sans secret)
-          console.log("🌐 Tentative avec l'API publique Google...");
-          
-          // Cette approche utilise l'endpoint de validation du code
-          const publicResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?code=${encodeURIComponent(code)}`);
-          
-          if (publicResponse.ok) {
-            const tokenInfo = await publicResponse.json();
-            console.log("📋 Info token public:", tokenInfo);
-            
-            if (tokenInfo.email) {
-              const publicSession = {
-                userId: tokenInfo.sub || `pub_${Date.now()}`,
-                user_id: tokenInfo.sub || `pub_${Date.now()}`,
-                email: tokenInfo.email,
-                name: tokenInfo.name || 'Utilisateur Google Public',
-                company_name: tokenInfo.name || 'Google User',
-                logged_in: true,
-                login_method: 'google_oauth_public',
-                login_time: new Date().toISOString(),
-                verified_email: tokenInfo.email_verified,
-                session_id: `public_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              };
-              
-              saveSessionAndRedirect(publicSession, `Connexion publique réussie avec ${tokenInfo.email}!`);
-              return;
-            }
-          }
-          
-          console.log("⚠️ Méthodes directes échouées, passage au fallback");
-          
-        } catch (e: any) {
-          console.log("⚠️ Méthode #2 échouée:", e.message || 'Erreur inconnue');
-        }
-        
-        // 3) TENTATIVE FALLBACK INTELLIGENT (avec code OAuth comme preuve)
-        console.log("🔄 Tentative #3: Session basée sur code OAuth validé");
-        try {
-          // Validation du code OAuth format Google
-          if (code.length > 50 && (code.startsWith('4/') || code.includes('-'))) {
-            const codeBasedSession = {
-              userId: `oauth_${Date.now()}`,
-              user_id: `oauth_${Date.now()}`,
-              email: 'admin@google-oauth.app',
-              name: 'Administrateur OAuth',
-              company_name: 'Google OAuth Admin',
-              logged_in: true,
-              login_method: 'google_oauth_code_verified',
-              login_time: new Date().toISOString(),
-              oauth_code_hash: btoa(code.substring(0, 20)), // Hash du code pour sécurité
-              session_id: `oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            };
-            
-            saveSessionAndRedirect(codeBasedSession, 'OAuth vérifié par code !');
-            return; // SUCCÈS - Sortir de la fonction
-          }
-        } catch (e: any) {
-          console.log("⚠️ Méthode #3 échouée:", e.message || 'Erreur inconnue');
-        }
-        
-        // 4) FALLBACK ABSOLU - TOUJOURS FONCTIONNEL
-        console.log("🆘 Méthode #4: Session de secours garantie");
-        const emergencySession = {
-          userId: `emergency_${Date.now()}`,
-          user_id: `emergency_${Date.now()}`,
-          email: 'admin@emergency-access.app',
-          name: 'Administrateur d\'urgence',
-          company_name: 'Accès d\'urgence',
-          logged_in: true,
-          login_method: 'emergency_google_fallback',
-          login_time: new Date().toISOString(),
-          session_id: `emergency_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        };
-        
-        saveSessionAndRedirect(emergencySession, 'Session d\'urgence créée !');
-
-      } catch (error) {
-        console.error("💥 Erreur générale callback:", error);
-        
-        // MÊME EN CAS D'ERREUR GÉNÉRALE - CRÉER UNE SESSION
-        const crashSession = {
-          userId: `crash_${Date.now()}`,
-          user_id: `crash_${Date.now()}`,
-          email: 'admin@crash-recovery.app',
-          name: 'Récupération de crash',
-          company_name: 'Session de récupération',
-          logged_in: true,
-          login_method: 'crash_recovery',
-          login_time: new Date().toISOString(),
-          session_id: `crash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        };
-        
-        saveSessionAndRedirect(crashSession, 'Session de récupération !');
+      } catch (error: any) {
+        console.error("💥 Erreur callback OAuth:", error);
+        setError(`Erreur: ${error.message}`);
+        setTimeout(() => router.push('/photobooth-ia/admin/login'), 3000);
       }
     };
 
-    // Fonction helper pour sauvegarder et rediriger
-    const saveSessionAndRedirect = (sessionData: any, message: string) => {
-      const encodedSession = btoa(JSON.stringify(sessionData));
-      
-      // Stockage triple pour garantie maximale
-      localStorage.setItem('admin_session', encodedSession);
-      sessionStorage.setItem('admin_session', encodedSession);
-      document.cookie = `admin_session=${encodedSession}; path=/; max-age=86400; secure; samesite=strict`;
-      
-      console.log("✅ Session sauvegardée:", sessionData.email);
-      console.log("🆔 Session ID:", sessionData.session_id);
-      
-      setStatus(message + ' Redirection...');
-      
-      // Redirection forcée
-      setTimeout(() => {
-        console.log("🔀 Redirection forcée vers dashboard");
-        window.location.href = '/photobooth-ia/admin/dashboard';
-      }, 1500);
-    };
-
-    // Lancer le processus OAuth
     processOAuth();
   }, [router, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-600 to-blue-700 text-white">
-      <div className="max-w-md w-full mx-4">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl p-8 text-center">
-          {!error ? (
-            <>
-              <div className="mb-6">
-                <div className="w-20 h-20 mx-auto bg-white/20 rounded-full flex items-center justify-center">
-                  <div className="w-10 h-10 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              </div>
-              
-              <h2 className="text-2xl font-bold mb-4">Connexion Google</h2>
-              <p className="text-white/90 text-lg mb-6">{status}</p>
-              
-              <div className="space-y-2 text-sm text-white/70">
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>Triple stratégie activée</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>Session garantie</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>Accès immédiat au dashboard</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mx-auto mb-6 w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold mb-4 text-red-400">Erreur OAuth</h2>
-              <p className="text-white/80 mb-6">{error}</p>
-              <button
-                onClick={() => router.push('/photobooth-ia/admin/login')}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                Nouvelle tentative
-              </button>
-            </>
-          )}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+        <div className="mb-4">
+          <div className="w-16 h-16 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+        
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          Connexion Google
+        </h2>
+        
+        <p className="text-gray-600 mb-4">{status}</p>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
+        <div className="text-sm text-gray-500">
+          Finalisation de l'authentification...
         </div>
       </div>
     </div>

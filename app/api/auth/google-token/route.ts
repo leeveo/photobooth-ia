@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   console.log("🔐 API Google Token Exchange appelée");
   
+  // ⚡ Configuration timeout optimisée pour Vercel
+  const TIMEOUT_MS = 8000; // 8 secondes max pour éviter timeout Vercel
+  
   try {
     const { code, redirectUri } = await request.json();
     
@@ -54,11 +57,19 @@ export async function POST(request: NextRequest) {
     });
     
     console.log("🔗 Échange du code pour un token avec Google...");
+    
+    // ⚡ Timeout controller pour éviter les timeouts Vercel
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), TIMEOUT_MS);
+    
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: tokenParams.toString(),
+      signal: timeoutController.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
@@ -69,9 +80,17 @@ export async function POST(request: NextRequest) {
     const tokenData = await tokenResponse.json();
     console.log("✅ Token obtenu avec succès");
     
-    // Récupération des données utilisateur
+    // Récupération des données utilisateur avec timeout
     console.log("👤 Récupération des données utilisateur...");
-    const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`);
+    
+    const userTimeoutController = new AbortController();
+    const userTimeoutId = setTimeout(() => userTimeoutController.abort(), TIMEOUT_MS - 2000); // 6 secondes
+    
+    const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`, {
+      signal: userTimeoutController.signal
+    });
+    
+    clearTimeout(userTimeoutId);
     
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
@@ -98,8 +117,19 @@ export async function POST(request: NextRequest) {
       }
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("💥 Erreur API Google Token:", error);
+    
+    // Gestion spécifique des timeouts
+    if (error.name === 'AbortError') {
+      console.log("⏱️ Timeout détecté lors de l'échange OAuth");
+      return NextResponse.json({ 
+        error: 'Timeout OAuth', 
+        message: 'Délai dépassé lors de l\'échange avec Google',
+        timeout: true 
+      }, { status: 408 });
+    }
+    
     return NextResponse.json({ 
       error: 'Erreur serveur', 
       details: error instanceof Error ? error.message : 'Erreur inconnue' 

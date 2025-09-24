@@ -5,6 +5,11 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 export async function POST(request: NextRequest) {
+  console.log("🔐 API Google OAuth appelée (version optimisée)");
+  
+  // ⚡ Timeout optimisé pour Vercel
+  const TIMEOUT_MS = 8000;
+  
   try {
     const { code, redirect_uri } = await request.json();
 
@@ -15,7 +20,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Échanger le code contre un access token
+    // Échanger le code contre un access token (avec timeout)
+    console.log("🔗 Échange code OAuth avec Google...");
+    
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), TIMEOUT_MS);
+    
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -28,7 +38,10 @@ export async function POST(request: NextRequest) {
         grant_type: 'authorization_code',
         redirect_uri,
       }),
+      signal: timeoutController.signal
     });
+    
+    clearTimeout(timeoutId);
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
@@ -41,10 +54,18 @@ export async function POST(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
 
-    // Récupérer les informations utilisateur
+    // Récupérer les informations utilisateur (avec timeout)
+    console.log("👤 Récupération données utilisateur...");
+    
+    const userTimeoutController = new AbortController();
+    const userTimeoutId = setTimeout(() => userTimeoutController.abort(), TIMEOUT_MS - 2000);
+    
     const userResponse = await fetch(
-      `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`
+      `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`,
+      { signal: userTimeoutController.signal }
     );
+    
+    clearTimeout(userTimeoutId);
 
     if (!userResponse.ok) {
       return NextResponse.json(
@@ -87,10 +108,21 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur API Google OAuth:', error);
+    
+    // Gestion spécifique des timeouts
+    if (error.name === 'AbortError') {
+      console.log("⏱️ Timeout détecté lors de l'OAuth");
+      return NextResponse.json({ 
+        error: 'Timeout OAuth', 
+        message: 'Délai dépassé lors de l\'échange avec Google',
+        timeout: true 
+      }, { status: 408 });
+    }
+    
     return NextResponse.json(
-      { error: 'Erreur serveur interne' }, 
+      { error: 'Erreur serveur interne', details: error.message }, 
       { status: 500 }
     );
   }
