@@ -64,14 +64,24 @@ export default function AuthCallbackPage() {
         console.log("📡 Réponse API OAuth:", response.status, response.statusText);
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error("❌ Erreur API OAuth:", errorData);
+          const errorText = await response.text();
+          console.error("❌ Erreur API OAuth (text):", errorText);
+          
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+            console.error("❌ Erreur API OAuth (parsed):", errorData);
+          } catch (e) {
+            console.error("❌ Impossible de parser l'erreur JSON:", e);
+            errorData = { error: errorText || "Erreur inconnue" };
+          }
+          
           setError(errorData.error || "Erreur lors de l'authentification");
           return;
         }
 
         const result = await response.json();
-        console.log("✅ Résultat API OAuth:", result);
+        console.log("✅ Résultat API OAuth complet:", result);
 
         if (!result.success) {
           console.error("❌ Échec OAuth:", result.error);
