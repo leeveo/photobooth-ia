@@ -26,6 +26,7 @@ export default function Dashboard() {
   const supabase = createSupabaseClient();
   const router = useRouter();
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+  const [currentAdminEmail, setCurrentAdminEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addonSuccessMessage, setAddonSuccessMessage] = useState<string | null>(null);
@@ -187,6 +188,7 @@ export default function Dashboard() {
         
         console.log("✅ Session valide trouvée:", sessionData.email);
         setCurrentAdminId(sessionData.user_id!);
+        setCurrentAdminEmail(sessionData.email!);
         
       } catch (err) {
         console.error("❌ Erreur lors de la vérification de session:", err);
@@ -199,26 +201,53 @@ export default function Dashboard() {
   
   // Fonction optimisée pour charger les données du dashboard
   const fetchDashboardData = useCallback(async () => {
-    if (!currentAdminId) {
+    console.log("📊 fetchDashboardData démarré, currentAdminId:", currentAdminId);
+    console.log("📊 fetchDashboardData démarré, currentAdminEmail:", currentAdminEmail);
+    
+    if (!currentAdminId || !currentAdminEmail) {
+      console.log("❌ Pas d'admin ID ou email, retour");
       return;
     }
     
     setLoading(true);
     
     try {
-      // Récupérer d'abord les IDs des projets de l'admin
+      console.log("🔍 Requête projets Supabase...");
+      console.log("🔍 Recherche pour currentAdminId:", currentAdminId);
+      console.log("🔍 Type de currentAdminId:", typeof currentAdminId);
+      
+      // SOLUTION TEMPORAIRE : Tester avec tous les projets d'abord pour voir la structure
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
-        .select('id')
-        .eq('created_by', currentAdminId)
-        .or('archive.is.null,archive.eq.false');
+        .select('id, created_by, name')
+        .limit(5);
+
+      console.log("📊 Résultat projets:", { projectsData, projectsError });
+      console.log("📊 ProjectsError type:", typeof projectsError);
+      console.log("📊 ProjectsError keys:", projectsError ? Object.keys(projectsError) : "null");
+      
+      // FORCER L'AFFICHAGE DE L'ERREUR
+      if (projectsError) {
+        console.log("🚨 ERREUR FORCÉE - Code:", projectsError.code);
+        console.log("🚨 ERREUR FORCÉE - Message:", projectsError.message);
+        console.log("🚨 ERREUR FORCÉE - Details:", projectsError.details); 
+        console.log("🚨 ERREUR FORCÉE - Hint:", projectsError.hint);
+      }
 
       if (projectsError) {
+        console.error("❌ Erreur projets Supabase:", projectsError);
+        console.error("❌ Code erreur:", projectsError.code);
+        console.error("❌ Message erreur:", projectsError.message);
+        console.error("❌ Détails erreur:", projectsError.details);
+        console.error("❌ Hint erreur:", projectsError.hint);
+        console.error("❌ Erreur complète:", JSON.stringify(projectsError, null, 2));
         throw projectsError;
       }
 
       const projectIds = projectsData?.map((p: any) => p.id) || [];
+      console.log("🆔 Project IDs extraits:", projectIds);
 
+      console.log("🔄 Requêtes parallèles en cours...");
       // Exécuter les requêtes en parallèle pour améliorer les performances
       const [projectsCountResult, totalPhotosResult] = await Promise.all([
         // Compter le total des projets
@@ -233,20 +262,30 @@ export default function Dashboard() {
           : Promise.resolve({ count: 0 })
       ]);
 
+      console.log("📈 Résultats requêtes:", { projectsCountResult, totalPhotosResult });
+
       // Récupérer les statistiques
       const totalProjects = projectsCountResult.count || 0;
       const totalPhotos = totalPhotosResult.count || 0;
+      
+      console.log("📊 Stats calculées:", { totalProjects, totalPhotos });
 
       // Simplifier : on ne récupère plus les projets individuels pour éviter la lenteur
-      setStats({
+      const newStats = {
         totalProjects,
         activeProjects: totalProjects, // Approximation acceptable pour les performances
         totalSessions: 0, // Plus utilisé
         totalPhotos,
         recentSessions: [] // Plus utilisé
-      });
+      };
+      
+      console.log("📊 Stats finales à définir:", newStats);
+      setStats(newStats);
+      console.log("✅ fetchDashboardData terminé avec succès !");
 
     } catch (error) {
+      console.error("💥 Erreur fetchDashboardData:", error);
+      console.error("💥 Détails erreur:", JSON.stringify(error, null, 2));
       setError('Erreur lors du chargement des données du tableau de bord');
     } finally {
       setLoading(false);
