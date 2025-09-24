@@ -50,7 +50,7 @@ export default function AuthCallbackPage() {
           
         console.log("🔗 Redirect URI utilisé:", redirectUri);
         
-        const response = await fetch('/api/auth/google-oauth-simple', {
+        const response = await fetch('/api/auth/google-oauth-debug', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -33,7 +33,7 @@
     "**/*.tsx",
     "app/api/fal/proxy/route.js",
     "app/generateexample/page.js"
-  ],
+, "app/photobooth-ia/admin/login/page.tsx.backup001"  ],
   "exclude": [
     "node_modules"
   ]
