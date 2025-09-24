@@ -411,7 +411,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </button>
                     <hr className="my-2 border-gray-200" />
                     <button 
-                      onClick={() => window.location.href = '/reset.html'}
+                      onClick={() => window.location.href = '/reset'}
                       className="flex w-full items-center gap-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
                     >
                       <FiRefreshCw className="w-5 h-5" />
