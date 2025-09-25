@@ -103,10 +103,52 @@ export default function AuthCallbackPage() {
           metadata: session.user.user_metadata
         });
 
+        // 🔍 Vérifier que l'utilisateur existe dans admin_users (après sync trigger)
+        console.log("🔍 Vérification utilisateur dans admin_users...");
+        setStatus('Vérification du profil utilisateur...');
+        
+        const { data: adminUser, error: adminError } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (adminError) {
+          console.error("❌ Erreur récupération admin_user:", adminError);
+          if (adminError.code === 'PGRST116') {
+            console.log("⏳ Utilisateur pas encore synchronisé, attente...");
+            setStatus('Finalisation du profil...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Retry
+            const { data: retryAdminUser, error: retryError } = await supabase
+              .from('admin_users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (retryError) {
+              console.error("❌ Utilisateur toujours pas synchronisé:", retryError);
+              setError('Erreur de synchronisation utilisateur - Contactez le support');
+              setTimeout(() => router.push('/photobooth-ia/admin/login'), 5000);
+              return;
+            }
+            
+            console.log("✅ Utilisateur synchronisé:", retryAdminUser);
+          } else {
+            setError(`Erreur profil utilisateur: ${adminError.message}`);
+            setTimeout(() => router.push('/photobooth-ia/admin/login'), 5000);
+            return;
+          }
+        } else {
+          console.log("✅ Utilisateur admin trouvé:", adminUser);
+        }
+
         const adminSession = {
           userId: session.user.id,
           email: session.user.email,
           name: session.user.user_metadata?.full_name || session.user.email,
+          company_name: adminUser?.company_name,
           logged_in: true,
           login_method: 'supabase_google',
           access_token: session.access_token,
