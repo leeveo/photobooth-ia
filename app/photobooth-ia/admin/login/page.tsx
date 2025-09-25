@@ -166,22 +166,59 @@ export default function AdminLoginPage() {
       const { createSupabaseClient } = await import('../../../../lib/supabaseClient');
       const supabase = createSupabaseClient();
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/photobooth-ia/admin/auth/callback`,
+      // Forcer l'URL de production pour la redirection
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://photobooth.waibooth.app'
+        : window.location.origin;
+      
+      console.log("🌍 URL de base pour OAuth:", baseUrl);
+      console.log("🔗 URL de redirection:", `${baseUrl}/photobooth-ia/admin/auth/callback`);
+      
+      // 🔧 SOLUTION TEMPORAIRE: Forcer la configuration Supabase
+      if (process.env.NODE_ENV === 'production') {
+        // Override temporaire des URLs Supabase pour production
+        const productionConfig = {
+          redirectTo: `${baseUrl}/photobooth-ia/admin/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            // Forcer site_url en production
+            site_url: baseUrl,
+            referrer: baseUrl
           },
+        };
+        console.log("🔧 Configuration OAuth forcée pour production:", productionConfig);
+        
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: productionConfig
+        });
+        
+        if (error) {
+          console.error("Erreur OAuth Google:", error);
+          setErrorMessage(`Erreur de connexion Google: ${error.message}`);
+          setIsLoading(false);
+          return;
         }
-      });
-
-      if (error) {
-        console.error("Erreur OAuth Google:", error);
-        setErrorMessage(`Erreur de connexion Google: ${error.message}`);
-        setIsLoading(false);
-        return;
+      } else {
+        // Configuration normale pour développement
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${baseUrl}/photobooth-ia/admin/auth/callback`,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+          }
+        });
+        
+        if (error) {
+          console.error("Erreur OAuth Google:", error);
+          setErrorMessage(`Erreur de connexion Google: ${error.message}`);
+          setIsLoading(false);
+          return;
+        }
       }
 
       // La redirection se fait automatiquement

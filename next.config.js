@@ -119,6 +119,9 @@ const nextConfig = {
     NEXT_PUBLIC_GIF_GENERATION_ENABLED: 'true',
     REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
     GEMINI: process.env.GEMINI,
+    // 🔧 Force correct site URL for production
+    NEXT_PUBLIC_SITE_URL: process.env.NODE_ENV === 'production' ? 'https://photobooth.waibooth.app' : process.env.NEXT_PUBLIC_SITE_URL,
+    NEXTAUTH_URL: process.env.NODE_ENV === 'production' ? 'https://photobooth.waibooth.app' : process.env.NEXTAUTH_URL,
   },
   
   // Configuration pour réduire la taille des bundles sur Vercel
