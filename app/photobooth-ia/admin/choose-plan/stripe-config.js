@@ -15,15 +15,15 @@ const STRIPE_CONFIG = {
   },
   production: {
     prices: {
-      start: 'price_LIVE_START_TO_REPLACE',
-      essentiel: 'price_LIVE_ESSENTIEL_TO_REPLACE',
-      pro: 'price_LIVE_PRO_TO_REPLACE', 
-      premium: 'price_LIVE_PREMIUM_TO_REPLACE'
+      start: 'price_1SA8gYRBtAFMZV17dLua6okj',      // TEMPORAIRE: Use test prices in prod
+      essentiel: 'price_1SA8hHRBtAFMZV17URFPVdai',  // TEMPORAIRE: Use test prices in prod
+      pro: 'price_1SA8hiRBtAFMZV17KoZsrsaR',        // TEMPORAIRE: Use test prices in prod
+      premium: 'price_1SA8hvRBtAFMZV17K5BcWUaR'     // TEMPORAIRE: Use test prices in prod
     },
     addons: {
-      pack100: 'price_LIVE_ADDON_100_TO_REPLACE',
-      pack500: 'price_LIVE_ADDON_500_TO_REPLACE',
-      pack1000: 'price_LIVE_ADDON_1000_TO_REPLACE'
+      pack100: 'price_1SA8joRBtAFMZV17iyiQb2lX',   // TEMPORAIRE: Use test prices in prod
+      pack500: 'price_1SA8kMRBtAFMZV17ltt0C0Lk',   // TEMPORAIRE: Use test prices in prod
+      pack1000: 'price_1SA8kxRBtAFMZV172WkrMQEq'   // TEMPORAIRE: Use test prices in prod
     }
   }
 };

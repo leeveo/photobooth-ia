@@ -25,6 +25,21 @@ export async function POST(req) {
       );
     }
 
+    // Vérifier que le priceId n'est pas un placeholder
+    if (priceId.includes('TO_REPLACE')) {
+      console.error('❌ PriceId is a placeholder:', priceId);
+      return NextResponse.json(
+        { error: 'Configuration Stripe incomplète. Price ID addon non configuré.' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier les variables d'environnement Stripe
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY not configured');
+      return NextResponse.json({ error: 'Configuration Stripe manquante.' }, { status: 500 });
+    }
+
     console.log('� Création session Stripe...');
     // Créer la session Stripe pour l'addon (même structure que l'API qui fonctionne)
     let session;

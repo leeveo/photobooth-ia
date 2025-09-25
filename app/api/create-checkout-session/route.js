@@ -15,10 +15,21 @@ export async function POST(req) {
     const { priceId, adminId, adminEmail } = body;
     console.log('[API] create-checkout-session called with:', { priceId, adminId, adminEmail });
 
-    // Vérifie que le priceId est bien présent
+    // Vérifie que le priceId est bien présent et n'est pas un placeholder
     if (!priceId) {
       console.error('[API] No priceId provided');
       return NextResponse.json({ error: 'Aucun priceId fourni.' }, { status: 400 });
+    }
+
+    if (priceId.includes('TO_REPLACE')) {
+      console.error('[API] PriceId is a placeholder:', priceId);
+      return NextResponse.json({ error: 'Configuration Stripe incomplète. Price ID non configuré.' }, { status: 400 });
+    }
+
+    // Vérifier les variables d'environnement Stripe
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('[API] STRIPE_SECRET_KEY not configured');
+      return NextResponse.json({ error: 'Configuration Stripe manquante.' }, { status: 500 });
     }
 
     // Si adminId est fourni mais pas d'email, récupérer l'email depuis la base
