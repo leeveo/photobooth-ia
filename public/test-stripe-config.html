@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Configuration Stripe</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .error { background: #ffebee; border-color: #f44336; }
+        .success { background: #e8f5e8; border-color: #4caf50; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Configuration Stripe</h1>
+        
+        <div class="section">
+            <h3>Configuration actuelle</h3>
+            <button onclick="testConfig()">🔄 Tester la configuration</button>
+            <div id="config-result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>Test API Checkout</h3>
+            <button onclick="testCheckout()">🛒 Tester création session checkout</button>
+            <div id="checkout-result"></div>
+        </div>
+        
+        <div class="section">
+            <h3>Test API Addon</h3>
+            <button onclick="testAddon()">📦 Tester création session addon</button>
+            <div id="addon-result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testConfig() {
+            const resultDiv = document.getElementById('config-result');
+            resultDiv.innerHTML = '<p>⏳ Test en cours...</p>';
+            
+            try {
+                const response = await fetch('/api/debug-stripe-config');
+                const data = await response.json();
+                
+                let html = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.validation?.pricesValid && data.validation?.addonsValid) {
+                    html = '<div class="success"><strong>✅ Configuration OK</strong></div>' + html;
+                } else {
+                    html = '<div class="error"><strong>❌ Configuration invalide</strong></div>' + html;
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error"><strong>❌ Erreur:</strong> ' + error.message + '</div>';
+            }
+        }
+
+        async function testCheckout() {
+            const resultDiv = document.getElementById('checkout-result');
+            resultDiv.innerHTML = '<p>⏳ Test en cours...</p>';
+            
+            try {
+                // D'abord récupérer la config pour utiliser les bons Price IDs
+                const configResponse = await fetch('/api/debug-stripe-config');
+                const config = await configResponse.json();
+                
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        priceId: config.prices.start, // Utiliser le Price ID selon l'environnement
+                        adminId: '7a77784c-7864-4fbb-8cb5-1f9b40ca1f62',
+                        adminEmail: 'test@example.com'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let html = '<div><strong>Price ID utilisé:</strong> ' + config.prices.start + '</div>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (response.ok && data.sessionId) {
+                    html = '<div class="success"><strong>✅ Session créée avec succès</strong></div>' + html;
+                } else {
+                    html = '<div class="error"><strong>❌ Erreur création session</strong></div>' + html;
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error"><strong>❌ Erreur:</strong> ' + error.message + '</div>';
+            }
+        }
+
+        async function testAddon() {
+            const resultDiv = document.getElementById('addon-result');
+            resultDiv.innerHTML = '<p>⏳ Test en cours...</p>';
+            
+            try {
+                // D'abord récupérer la config pour utiliser les bons Price IDs
+                const configResponse = await fetch('/api/debug-stripe-config');
+                const config = await configResponse.json();
+                
+                const response = await fetch('/api/create-addon-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        priceId: config.addons.pack100, // Utiliser le Price ID selon l'environnement
+                        addonType: 'pack100',
+                        addonValue: 100,
+                        addonName: 'Pack +100 Photos',
+                        adminId: '7a77784c-7864-4fbb-8cb5-1f9b40ca1f62'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let html = '<div><strong>Price ID utilisé:</strong> ' + config.addons.pack100 + '</div>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (response.ok && data.sessionId) {
+                    html = '<div class="success"><strong>✅ Session addon créée avec succès</strong></div>' + html;
+                } else {
+                    html = '<div class="error"><strong>❌ Erreur création session addon</strong></div>' + html;
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error"><strong>❌ Erreur:</strong> ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

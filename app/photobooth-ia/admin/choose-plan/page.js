@@ -49,15 +49,10 @@ const ADDON_PACKS = generateAddonPacks();
 
 // Fonction pour générer les plans avec les bons Price IDs selon l'environnement
 const generatePlans = () => {
-	// FORCER les nouveaux Price IDs en mode test
-	const prices = {
-		start: 'price_1SA8gYRBtAFMZV17dLua6okj',      // 19€ - 100 photos
-		essentiel: 'price_1SA8hHRBtAFMZV17URFPVdai',  // 49€ - 400 photos
-		pro: 'price_1SA8hiRBtAFMZV17KoZsrsaR',        // 89€ - 1000 photos
-		premium: 'price_1SA8hvRBtAFMZV17K5BcWUaR'     // 119€ - 1500 photos
-	};
+	// Utiliser la configuration automatique selon l'environnement
+	const prices = getStripePrices();
 	
-	console.log('[CHOOSE-PLAN] Using forced Price IDs:', prices);
+	console.log('[CHOOSE-PLAN] Using Price IDs from config:', prices);
 	
 	return [
 		{
