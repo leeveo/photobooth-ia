@@ -43,9 +43,6 @@ const nextConfig = {
     outputFileTracingRoot: process.cwd(),
     largePageDataBytes: 256 * 1000,
     serverComponentsExternalPackages: ['sharp', 'aws-sdk', '@aws-sdk/client-s3'],
-    serverActions: true,
-    // Désactiver la génération de pages statiques pour éviter les erreurs de sérialisation
-    staticPageGenerationTimeout: 0,
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -118,7 +115,7 @@ const nextConfig = {
   },
   // Handle environment variables
   env: {
-    NEXT_PUBLIC_GIF_GENERATION_ENABLED: process.env.NODE_ENV !== 'production',
+    NEXT_PUBLIC_GIF_GENERATION_ENABLED: 'true',
     REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
     GEMINI: process.env.GEMINI,
   },
