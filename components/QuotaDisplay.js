@@ -137,45 +137,7 @@ export default function QuotaDisplay({ adminId, onQuotaChange, className = '' })
   return (
     <div className={`bg-white rounded-xl shadow-lg overflow-hidden ${className}`}>
       {/* Header avec total */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 rounded-full p-2">
-              <RiCameraLine className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">
-                {quotaStatus.total.remaining.toLocaleString()}
-              </div>
-              <div className="text-sm text-white/80">
-                photos restantes sur {quotaStatus.total.quota.toLocaleString()}
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <CircularProgress 
-              percentage={totalPercentage} 
-              size={50} 
-              strokeWidth={4}
-              color="#ffffff"
-            />
-          </div>
-        </div>
-        
-        {/* Barre de progression globale */}
-        <div className="mt-4">
-          <div className="flex justify-between text-xs text-white/80 mb-1">
-            <span>Utilisation globale</span>
-            <span>{Math.round(100 - totalPercentage)}% utilisé</span>
-          </div>
-          <div className="w-full bg-white/20 rounded-full h-2">
-            <div 
-              className="bg-white h-2 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${totalPercentage}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
+ 
 
       {/* Détail des quotas */}
       <div className="p-4 space-y-4">
@@ -196,7 +158,7 @@ export default function QuotaDisplay({ adminId, onQuotaChange, className = '' })
                   Plan {quotaStatus.monthly.isFreePlan ? 'Gratuit' : 'Payant'}
                 </div>
                 <div className="text-sm text-blue-700">
-                  {quotaStatus.monthly.remaining} / {quotaStatus.monthly.quota} photos
+                  {quotaStatus.monthly.quota} photos
                 </div>
               </div>
             </div>
@@ -237,7 +199,7 @@ export default function QuotaDisplay({ adminId, onQuotaChange, className = '' })
                     Packs Achetés
                   </div>
                   <div className="text-sm text-purple-700">
-                    {quotaStatus.addons.remaining} / {quotaStatus.addons.total} photos
+                    {quotaStatus.addons.total} photos
                   </div>
                 </div>
               </div>

@@ -128,61 +128,40 @@ async function checkQuotaStatus(adminId) {
       quotaResetAt = adminData?.created_at || new Date().toISOString();
     }
 
-    // 2. Calculer la consommation mensuelle
-    const { data: projectsData } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('created_by', adminId);
+    // 2. Calculer la consommation mensuelle - FIX: Utiliser admin_user_id au lieu de project_id
+    console.log(`[QUOTA_MANAGER] Calcul consommation avec resetAt: ${quotaResetAt}`);
     
-    const projectIds = projectsData?.map(p => p.id) || [];
+    const { count, error: countError } = await supabase
+      .from('quota_usage')
+      .select('id', { count: 'exact', head: true })
+      .eq('admin_user_id', adminId) // ✅ FIX: Utiliser admin_user_id directement
+      .gte('consumed_at', quotaResetAt);
     
-    let monthlyConsumed = 0;
-    if (projectIds.length > 0) {
-      const { count } = await supabase
-        .from('quota_usage')
-        .select('id', { count: 'exact', head: true })
-        .in('project_id', projectIds)
-        .eq('quota_type', 'monthly')
-        .gte('consumed_at', quotaResetAt);
-      
-      monthlyConsumed = count || 0;
+    if (countError) {
+      console.error('[QUOTA_MANAGER] Erreur comptage quota:', countError);
     }
+    
+    const monthlyConsumed = count || 0;
+    console.log(`[QUOTA_MANAGER] Photos consommées trouvées: ${monthlyConsumed}`);
 
-    // 3. Récupérer les addons et leur utilisation
+    // 3. Récupérer les addons - SIMPLIFIÉ pour correspondre au dashboard
     const { data: addonPurchases } = await supabase
       .from('addon_purchases')
-      .select(`
-        id,
-        addon_value,
-        addon_name,
-        created_at,
-        addon_usage (
-          photos_consumed,
-          photos_remaining
-        )
-      `)
+      .select('addon_value')
       .eq('admin_user_id', adminId)
-      .eq('status', 'completed')
-      .order('created_at', { ascending: true }); // FIFO : premier acheté = premier consommé
+      .eq('status', 'completed');
 
-    let totalAddonPhotos = 0;
-    let totalAddonRemaining = 0;
-    const addonsWithUsage = [];
+    const totalAddonPhotos = addonPurchases?.reduce((total, purchase) => {
+      return total + (purchase.addon_value || 0);
+    }, 0) || 0;
+    
+    console.log(`[QUOTA_MANAGER] Addons calculés: ${totalAddonPhotos} photos`);
 
-    for (const addon of addonPurchases || []) {
-      const usage = addon.addon_usage[0] || { photos_consumed: 0, photos_remaining: addon.addon_value };
-      totalAddonPhotos += addon.addon_value;
-      totalAddonRemaining += usage.photos_remaining;
-      
-      addonsWithUsage.push({
-        id: addon.id,
-        name: addon.addon_name,
-        total: addon.addon_value,
-        consumed: usage.photos_consumed,
-        remaining: usage.photos_remaining,
-        purchasedAt: addon.created_at
-      });
-    }
+    // Calculer les quotas
+    const totalQuota = monthlyQuota + totalAddonPhotos;
+    const remaining = Math.max(0, totalQuota - monthlyConsumed);
+    
+    console.log(`[QUOTA_MANAGER] Calculs finaux: ${monthlyQuota} (mensuel) + ${totalAddonPhotos} (addons) = ${totalQuota} total, ${monthlyConsumed} consommé, ${remaining} restant`);
 
     const result = {
       // Quota mensuel
@@ -198,19 +177,19 @@ async function checkQuotaStatus(adminId) {
       // Addons
       addons: {
         total: totalAddonPhotos,
-        remaining: totalAddonRemaining,
-        packs: addonsWithUsage
+        remaining: Math.max(0, remaining - Math.max(0, monthlyQuota - monthlyConsumed)), // Ce qui reste des addons
+        packs: [] // Simplifié
       },
       
       // Total
       total: {
-        quota: monthlyQuota + totalAddonPhotos,
-        consumed: monthlyConsumed + (totalAddonPhotos - totalAddonRemaining),
-        remaining: Math.max(0, monthlyQuota - monthlyConsumed) + totalAddonRemaining
+        quota: totalQuota,
+        consumed: monthlyConsumed,
+        remaining: remaining
       },
       
       // Logique de consommation
-      canTakePhoto: (Math.max(0, monthlyQuota - monthlyConsumed) + totalAddonRemaining) > 0,
+      canTakePhoto: remaining > 0,
       nextQuotaSource: Math.max(0, monthlyQuota - monthlyConsumed) > 0 ? 'monthly' : 'addon'
     };
 

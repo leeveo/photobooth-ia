@@ -57,6 +57,11 @@ export default function Dashboard() {
     addonPhotos?: number
   }>({ quota: 0, used: 0, resetAt: null });
   
+  // 🐛 DEBUG: Log de l'état quotaInfo à chaque changement
+  useEffect(() => {
+    console.log("🔍 [QUOTA_STATE] QuotaInfo changed:", quotaInfo);
+  }, [quotaInfo]);
+  
   // Ajoute un nouvel état pour le nombre de photos prises sur la période de quota
   const [photosThisPeriod, setPhotosThisPeriod] = useState(0);
   const [baseUrl, setBaseUrl] = useState('');
@@ -346,6 +351,8 @@ export default function Dashboard() {
     async function fetchQuotaAndPhotos() {
       if (!currentAdminId) return;
 
+      console.log("🚀 [QUOTA_FETCH] Début fetchQuotaAndPhotos pour admin:", currentAdminId);
+
       try {
         // Exécuter toutes les requêtes en parallèle pour optimiser les performances
         const [paymentResult, adminResult, projectsResult, addonResult] = await Promise.all([
@@ -421,6 +428,16 @@ export default function Dashboard() {
           addonPhotos: totalAddonPhotos
         });
         setPhotosThisPeriod(photosUsed);
+        
+        // 🐛 DEBUG: Log des valeurs pour identifier le problème
+        console.log("🔍 [DEBUG] Quota Info Updated:", {
+          totalQuota,
+          photosUsed,
+          restantes: totalQuota - photosUsed,
+          baseQuota: quota,
+          addonPhotos: totalAddonPhotos,
+          resetAt
+        });
 
       } catch (error) {
         // Valeurs par défaut en cas d'erreur
@@ -543,6 +560,92 @@ export default function Dashboard() {
                 <div className="text-xs text-white text-opacity-70 mt-1">
                   {(quotaInfo.baseQuota || 3) > 3 ? 'Plan payant' : 'Plan gratuit'} + {quotaInfo.addonPhotos || 0} addons
                 </div>
+                {/* 🐛 DEBUG: Bouton temporaire pour forcer rechargement */}
+                <button 
+                  onClick={async () => {
+                    console.log("🔄 [DEBUG] Force refresh quotas...");
+                    if (currentAdminId) {
+                      // Réappeler directement la fonction avec logs
+                      const interval = setInterval(() => {}, 1000);
+                      clearInterval(interval);
+                      
+                      // Appel direct
+                      try {
+                        const [paymentResult, adminResult, addonResult] = await Promise.all([
+                          supabase
+                            .from('admin_payments')
+                            .select('photo_quota, photo_quota_reset_at, created_at')
+                            .eq('admin_user_id', currentAdminId)
+                            .eq('status', 'succeeded')
+                            .in('stripe_subscription_status', ['active', 'trialing'])
+                            .gte('quota_expires_at', new Date().toISOString())
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle(),
+                          
+                          supabase
+                            .from('admin_users')
+                            .select('created_at')
+                            .eq('id', currentAdminId)
+                            .single(),
+                          
+                          supabase
+                            .from('addon_purchases')
+                            .select('addon_value')
+                            .eq('admin_user_id', currentAdminId)
+                            .eq('status', 'completed')
+                        ]);
+
+                        let quota = 3;
+                        let resetAt = adminResult.data?.created_at || new Date().toISOString();
+
+                        if (!paymentResult.error && paymentResult.data) {
+                          quota = paymentResult.data.photo_quota || 0;
+                          resetAt = paymentResult.data.created_at || resetAt;
+                        }
+
+                        const totalAddonPhotos = addonResult.data?.reduce((total, purchase) => {
+                          return total + (purchase.addon_value || 0);
+                        }, 0) || 0;
+
+                        const totalQuota = quota + totalAddonPhotos;
+
+                        const { count } = await supabase
+                          .from('quota_usage')
+                          .select('id', { count: 'exact', head: true })
+                          .eq('admin_user_id', currentAdminId)
+                          .gte('consumed_at', resetAt);
+                        
+                        const photosUsed = count || 0;
+
+                        console.log("🔄 [DEBUG] Direct fetch results:", {
+                          paymentResult: paymentResult.data,
+                          quota,
+                          totalAddonPhotos,
+                          totalQuota,
+                          resetAt,
+                          photosUsed,
+                          remaining: totalQuota - photosUsed
+                        });
+
+                        setQuotaInfo({
+                          quota: totalQuota,
+                          used: photosUsed,
+                          resetAt,
+                          addonPurchases: [],
+                          baseQuota: quota,
+                          addonPhotos: totalAddonPhotos
+                        });
+                        
+                      } catch (error) {
+                        console.error("🔄 [DEBUG] Error:", error);
+                      }
+                    }
+                  }}
+                  className="mt-2 px-2 py-1 bg-white bg-opacity-20 text-xs rounded text-white hover:bg-opacity-30"
+                >
+                  🔄 DEBUG: Forcer MAJ Quota
+                </button>
               </div>
             </div>
           </div>
