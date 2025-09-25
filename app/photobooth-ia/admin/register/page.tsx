@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSupabaseClient } from '/lib/supabaseClient';
+import { createSupabaseClient } from '../../../../lib/supabaseClient';
 import Image from 'next/image';
 
 export default function AdminRegisterPage() {
@@ -76,6 +76,7 @@ const handleGoogleSignup = async () => {
   try {
     console.log("Tentative d'inscription avec Google");
     
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

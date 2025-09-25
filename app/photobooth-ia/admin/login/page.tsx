@@ -161,16 +161,34 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      console.log("Démarrage OAuth Google custom");
+      console.log("Démarrage OAuth Google avec Supabase");
       
-      // Utiliser notre service OAuth custom au lieu de Supabase Auth
-      const { GoogleOAuthService } = await import('../../../../lib/googleOAuthService');
-      GoogleOAuthService.startOAuthFlow();
+      const { createSupabaseClient } = await import('../../../../lib/supabaseClient');
+      const supabase = createSupabaseClient();
       
-      // La redirection se fait automatiquement, pas besoin de setIsLoading(false)
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/photobooth-ia/admin/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      });
+
+      if (error) {
+        console.error("Erreur OAuth Google:", error);
+        setErrorMessage(`Erreur de connexion Google: ${error.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // La redirection se fait automatiquement
+      console.log("Redirection vers Google OAuth via Supabase...");
       
     } catch (err) {
-      console.error("Erreur Google OAuth custom:", err);
+      console.error("Erreur Google OAuth Supabase:", err);
       setErrorMessage(`Une erreur inattendue s'est produite: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
       setIsLoading(false);
     }
