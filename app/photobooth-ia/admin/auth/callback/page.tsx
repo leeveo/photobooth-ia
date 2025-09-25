@@ -23,12 +23,27 @@ export default function AuthCallbackPage() {
         const error_description = searchParams?.get('error_description');
         
         if (error_param) {
+          const decodedDescription = error_description ? decodeURIComponent(error_description) : 'N/A';
           console.error("❌ Erreur OAuth reçue:", {
             error: error_param,
             code: error_code,
-            description: error_description ? decodeURIComponent(error_description) : 'N/A'
+            description: decodedDescription
           });
-          setError(`Erreur OAuth: ${error_param} - ${error_description ? decodeURIComponent(error_description) : 'Erreur inconnue'}`);
+          
+          // 🔍 Diagnostic spécifique pour "Database error saving new user"
+          if (decodedDescription.includes('Database error saving new user')) {
+            console.error("🚨 DIAGNOSTIC ERREUR DATABASE:");
+            console.error("  - Cette erreur vient de Supabase, pas de votre code");
+            console.error("  - Problème probable: Configuration Auth dans Supabase Dashboard");
+            console.error("  - Solutions: Vérifier Site URL, Redirect URLs, et politiques RLS");
+            console.error("  - Dashboard: https://supabase.com/dashboard/project/gyohqmahwntkmebayeej");
+            
+            setError(`🚨 Erreur de configuration Supabase: ${decodedDescription}`);
+            setStatus(`Configuration Supabase requise - Consultez SUPABASE_AUTH_FIX.md`);
+          } else {
+            setError(`Erreur OAuth: ${error_param} - ${decodedDescription}`);
+          }
+          
           setTimeout(() => router.push('/photobooth-ia/admin/login'), 5000);
           return;
         }
