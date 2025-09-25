@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Admin IDs</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .admin-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .info-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Admin IDs</h1>
+        
+        <div class="debug-section">
+            <h3>Current localStorage/sessionStorage Content</h3>
+            <div class="admin-info">
+                <div class="info-card">
+                    <h4>localStorage</h4>
+                    <pre id="localStorage-content">Loading...</pre>
+                </div>
+                <div class="info-card">
+                    <h4>sessionStorage</h4>
+                    <pre id="sessionStorage-content">Loading...</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>QuotaManager.getAdminId() Result</h3>
+            <pre id="quota-admin-id">Loading...</pre>
+            <button onclick="refreshAdminId()">🔄 Refresh Admin ID</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>Last Session Creation Test</h3>
+            <pre id="session-test">Click button to create test session</pre>
+            <button onclick="createTestSession()">🧪 Create Test Session</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>Database Sessions Check</h3>
+            <pre id="db-sessions">Click button to check sessions</pre>
+            <button onclick="checkDatabaseSessions()">📊 Check DB Sessions</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>Admin ID Comparison</h3>
+            <pre id="comparison-result">Run tests above first</pre>
+            <button onclick="compareAdminIds()">🔍 Compare Admin IDs</button>
+        </div>
+    </div>
+
+    <script>
+        // QuotaManager simplified version for debugging
+        const QuotaManagerDebug = {
+            getAdminId() {
+                try {
+                    let adminUserId = localStorage.getItem('currentAdminId') 
+                        || localStorage.getItem('adminUserId')
+                        || localStorage.getItem('admin_user_id')
+                        || localStorage.getItem('userId')
+                        || localStorage.getItem('user_id');
+
+                    if (!adminUserId) {
+                        const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+                        if (adminSession) {
+                            try {
+                                const decodedSession = JSON.parse(atob(adminSession));
+                                adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+                            } catch (e) {
+                                console.warn('Erreur décodage admin_session:', e);
+                            }
+                        }
+                    }
+
+                    return adminUserId;
+                } catch (error) {
+                    console.error('Erreur getAdminId:', error);
+                    return null;
+                }
+            }
+        };
+
+        let lastSessionId = null;
+        let lastCreatedBy = null;
+
+        function displayStorageContent() {
+            // localStorage
+            const localStorageItems = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                localStorageItems[key] = value;
+            }
+            document.getElementById('localStorage-content').textContent = JSON.stringify(localStorageItems, null, 2);
+
+            // sessionStorage
+            const sessionStorageItems = {};
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                sessionStorageItems[key] = value;
+            }
+            document.getElementById('sessionStorage-content').textContent = JSON.stringify(sessionStorageItems, null, 2);
+        }
+
+        function refreshAdminId() {
+            const adminId = QuotaManagerDebug.getAdminId();
+            document.getElementById('quota-admin-id').textContent = `Admin ID: ${adminId}\nType: ${typeof adminId}`;
+        }
+
+        async function createTestSession() {
+            try {
+                document.getElementById('session-test').textContent = 'Creating test session...';
+                
+                const sessionId = crypto.randomUUID();
+                const adminId = QuotaManagerDebug.getAdminId();
+                
+                // Simuler l'insertion de session comme dans l'application
+                const sessionData = {
+                    user_email: null,
+                    style_id: 'test-style-id',
+                    style_key: null,
+                    gender: 'femme',
+                    result_image_url: 'data:image/png;base64,test',
+                    result_s3_key: `test_${Date.now()}_${sessionId}.jpg`,
+                    created_by: adminId,
+                    project_id: '6b3f61c6-ccb7-43ef-9c07-dd5ac69ba877',
+                    id: sessionId
+                };
+
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    lastSessionId = sessionId;
+                    lastCreatedBy = adminId;
+                    
+                    document.getElementById('session-test').textContent = 
+                        `✅ Session créée avec succès!\n` +
+                        `Session ID: ${sessionId}\n` +
+                        `Created by: ${adminId}\n` +
+                        `Response: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('session-test').textContent = 
+                        `❌ Erreur création session:\n${JSON.stringify(error, null, 2)}`;
+                }
+            } catch (error) {
+                document.getElementById('session-test').textContent = 
+                    `❌ Erreur: ${error.message}\n${error.stack}`;
+            }
+        }
+
+        async function checkDatabaseSessions() {
+            try {
+                document.getElementById('db-sessions').textContent = 'Checking database sessions...';
+                
+                if (!lastSessionId) {
+                    document.getElementById('db-sessions').textContent = 'Create a test session first!';
+                    return;
+                }
+
+                // Vérifier la session dans la base
+                const response = await fetch(`/api/debug-session/${lastSessionId}`, {
+                    method: 'GET'
+                });
+
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    document.getElementById('db-sessions').textContent = 
+                        `📊 Session in database:\n${JSON.stringify(sessionData, null, 2)}`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('db-sessions').textContent = 
+                        `❌ Erreur: ${JSON.stringify(error, null, 2)}`;
+                }
+            } catch (error) {
+                document.getElementById('db-sessions').textContent = 
+                    `❌ Erreur: ${error.message}`;
+            }
+        }
+
+        function compareAdminIds() {
+            const currentAdminId = QuotaManagerDebug.getAdminId();
+            
+            let comparison = `🔍 COMPARISON RESULTS:\n\n`;
+            comparison += `QuotaManager.getAdminId(): "${currentAdminId}"\n`;
+            comparison += `Last session created_by: "${lastCreatedBy}"\n`;
+            comparison += `Last session ID: "${lastSessionId}"\n\n`;
+            
+            if (currentAdminId === lastCreatedBy) {
+                comparison += `✅ MATCH: Admin IDs are identical\n`;
+                comparison += `This should work for quota consumption\n`;
+            } else {
+                comparison += `❌ MISMATCH: Admin IDs are different!\n`;
+                comparison += `This will cause "Session non autorisée" error\n\n`;
+                comparison += `Difference details:\n`;
+                comparison += `- Current ID type: ${typeof currentAdminId}\n`;
+                comparison += `- Session created_by type: ${typeof lastCreatedBy}\n`;
+                comparison += `- Current ID length: ${currentAdminId ? currentAdminId.length : 'null'}\n`;
+                comparison += `- Session created_by length: ${lastCreatedBy ? lastCreatedBy.length : 'null'}\n`;
+            }
+
+            document.getElementById('comparison-result').textContent = comparison;
+        }
+
+        // Initialize
+        displayStorageContent();
+        refreshAdminId();
+        
+        // Refresh every 5 seconds
+        setInterval(() => {
+            displayStorageContent();
+            refreshAdminId();
+        }, 5000);
+    </script>
+</body>
+</html>

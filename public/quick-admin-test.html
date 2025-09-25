@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Admin ID Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Quick Admin ID Test</h1>
+    <div id="results">Loading...</div>
+
+    <script>
+        async function runTest() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+
+            // Test 1: Check QuotaManager.getAdminId()
+            const quotaManagerCode = `
+                let adminUserId = localStorage.getItem('currentAdminId') 
+                    || localStorage.getItem('adminUserId')
+                    || localStorage.getItem('admin_user_id')
+                    || localStorage.getItem('userId')
+                    || localStorage.getItem('user_id');
+
+                if (!adminUserId) {
+                    const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+                    if (adminSession) {
+                        try {
+                            const decodedSession = JSON.parse(atob(adminSession));
+                            adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+                        } catch (e) {
+                            console.warn('Erreur décodage admin_session:', e);
+                        }
+                    }
+                }
+                return adminUserId;
+            `;
+
+            const quotaAdminId = eval(`(() => { ${quotaManagerCode} })()`);
+            
+            results.innerHTML += `
+                <div class="test-result info">
+                    <h3>Test 1: QuotaManager Admin ID</h3>
+                    <pre>Admin ID: ${quotaAdminId}
+Type: ${typeof quotaAdminId}
+Length: ${quotaAdminId ? quotaAdminId.length : 'null'}</pre>
+                </div>
+            `;
+
+            // Test 2: Check all localStorage keys
+            const localStorageData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                localStorageData[key] = localStorage.getItem(key);
+            }
+
+            results.innerHTML += `
+                <div class="test-result info">
+                    <h3>Test 2: All localStorage Data</h3>
+                    <pre>${JSON.stringify(localStorageData, null, 2)}</pre>
+                </div>
+            `;
+
+            // Test 3: Try to create a test session and consume quota
+            try {
+                const sessionId = crypto.randomUUID();
+                
+                // Create session
+                const sessionResponse = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_email: null,
+                        style_id: 'test-style',
+                        result_image_url: 'test-image',
+                        result_s3_key: `test_${sessionId}.jpg`,
+                        created_by: quotaAdminId,
+                        project_id: '6b3f61c6-ccb7-43ef-9c07-dd5ac69ba877',
+                        id: sessionId
+                    })
+                });
+
+                if (sessionResponse.ok) {
+                    results.innerHTML += `
+                        <div class="test-result success">
+                            <h3>Test 3a: Session Creation ✅</h3>
+                            <pre>Session ID: ${sessionId}
+Created by: ${quotaAdminId}</pre>
+                        </div>
+                    `;
+
+                    // Try quota consumption
+                    const quotaResponse = await fetch('/api/quota-simple', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            adminId: quotaAdminId,
+                            sessionId: sessionId,
+                            projectId: '6b3f61c6-ccb7-43ef-9c07-dd5ac69ba877',
+                            action: 'consume'
+                        })
+                    });
+
+                    if (quotaResponse.ok) {
+                        const quotaResult = await quotaResponse.json();
+                        results.innerHTML += `
+                            <div class="test-result success">
+                                <h3>Test 3b: Quota Consumption ✅</h3>
+                                <pre>${JSON.stringify(quotaResult, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        const quotaError = await quotaResponse.json();
+                        results.innerHTML += `
+                            <div class="test-result error">
+                                <h3>Test 3b: Quota Consumption ❌</h3>
+                                <pre>Status: ${quotaResponse.status}
+Error: ${JSON.stringify(quotaError, null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const sessionError = await sessionResponse.json();
+                    results.innerHTML += `
+                        <div class="test-result error">
+                            <h3>Test 3a: Session Creation ❌</h3>
+                            <pre>Status: ${sessionResponse.status}
+Error: ${JSON.stringify(sessionError, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML += `
+                    <div class="test-result error">
+                        <h3>Test 3: Exception ❌</h3>
+                        <pre>${error.message}
+${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Run test automatically
+        runTest();
+    </script>
+</body>
+</html>

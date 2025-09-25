@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Quota</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; white-space: pre-wrap; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnostic Quota Complet</h1>
+    
+    <div class="section">
+        <h3>1. Admin ID Actuel</h3>
+        <div id="admin-id">Loading...</div>
+        <button class="btn-primary" onclick="checkAdminId()">🔄 Vérifier Admin ID</button>
+    </div>
+
+    <div class="section">
+        <h3>2. Sessions Récentes</h3>
+        <div id="sessions">Loading...</div>
+        <button class="btn-primary" onclick="checkSessions()">📊 Vérifier Sessions</button>
+    </div>
+
+    <div class="section">
+        <h3>3. Quota Usage</h3>
+        <div id="quota-usage">Loading...</div>
+        <button class="btn-primary" onclick="checkQuotaUsage()">📈 Vérifier Quota Usage</button>
+    </div>
+
+    <div class="section">
+        <h3>4. Test Photo Virtuelle</h3>
+        <div id="test-photo">Click pour tester</div>
+        <button class="btn-success" onclick="testVirtualPhoto()">🧪 Tester Photo</button>
+    </div>
+
+    <div class="section">
+        <h3>5. Dashboard Quota Calculation</h3>
+        <div id="dashboard-calc">Loading...</div>
+        <button class="btn-primary" onclick="testDashboardCalculation()">🔢 Test Calcul Dashboard</button>
+    </div>
+
+    <script>
+        // Fonction pour récupérer l'admin ID
+        function getAdminId() {
+            let adminUserId = localStorage.getItem('currentAdminId') 
+                || localStorage.getItem('adminUserId')
+                || localStorage.getItem('admin_user_id')
+                || localStorage.getItem('userId')
+                || localStorage.getItem('user_id');
+
+            if (!adminUserId) {
+                const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+                if (adminSession) {
+                    try {
+                        const decodedSession = JSON.parse(atob(adminSession));
+                        adminUserId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+                    } catch (e) {
+                        console.warn('Erreur décodage admin_session:', e);
+                    }
+                }
+            }
+            return adminUserId;
+        }
+
+        function checkAdminId() {
+            const adminId = getAdminId();
+            document.getElementById('admin-id').innerHTML = 
+                `<div class="${adminId ? 'success' : 'error'}">
+                    <pre>Admin ID: ${adminId || 'NON TROUVÉ'}
+Type: ${typeof adminId}
+Longueur: ${adminId ? adminId.length : 'null'}</pre>
+                </div>`;
+        }
+
+        async function checkSessions() {
+            try {
+                const adminId = getAdminId();
+                if (!adminId) {
+                    document.getElementById('sessions').innerHTML = '<div class="error">Admin ID non trouvé</div>';
+                    return;
+                }
+
+                // Requête pour récupérer les sessions récentes
+                const response = await fetch('/api/sessions', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const sessions = await response.json();
+                    const userSessions = sessions.filter(s => s.created_by === adminId).slice(0, 5);
+                    
+                    document.getElementById('sessions').innerHTML = 
+                        `<div class="info">
+                            <h4>Sessions trouvées (5 plus récentes):</h4>
+                            <pre>${JSON.stringify(userSessions, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    document.getElementById('sessions').innerHTML = '<div class="error">Erreur lors de la récupération des sessions</div>';
+                }
+            } catch (error) {
+                document.getElementById('sessions').innerHTML = 
+                    `<div class="error">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function checkQuotaUsage() {
+            try {
+                const adminId = getAdminId();
+                if (!adminId) {
+                    document.getElementById('quota-usage').innerHTML = '<div class="error">Admin ID non trouvé</div>';
+                    return;
+                }
+
+                // Créer un script pour query la table quota_usage
+                const response = await fetch('/api/quota-debug', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'check_quota_usage',
+                        adminId: adminId
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('quota-usage').innerHTML = 
+                        `<div class="info">
+                            <h4>Quota Usage pour Admin ${adminId}:</h4>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('quota-usage').innerHTML = 
+                        `<div class="error">Erreur: ${JSON.stringify(error, null, 2)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('quota-usage').innerHTML = 
+                    `<div class="error">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function testVirtualPhoto() {
+            try {
+                const adminId = getAdminId();
+                if (!adminId) {
+                    document.getElementById('test-photo').innerHTML = '<div class="error">Admin ID non trouvé</div>';
+                    return;
+                }
+
+                document.getElementById('test-photo').innerHTML = '<div class="info">Création session test...</div>';
+
+                // 1. Créer une session test
+                const sessionId = crypto.randomUUID();
+                const sessionResponse = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_email: null,
+                        style_id: 'test-diagnostic',
+                        result_image_url: 'test-image',
+                        result_s3_key: `diagnostic_${sessionId}.jpg`,
+                        created_by: adminId,
+                        project_id: '6b3f61c6-ccb7-43ef-9c07-dd5ac69ba877',
+                        id: sessionId,
+                        is_success: true,
+                        has_watermark: false
+                    })
+                });
+
+                if (!sessionResponse.ok) {
+                    throw new Error(`Erreur création session: ${sessionResponse.status}`);
+                }
+
+                document.getElementById('test-photo').innerHTML = '<div class="info">Session créée, test quota...</div>';
+
+                // 2. Tester le quota
+                const quotaResponse = await fetch('/api/quota-simple', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminId: adminId,
+                        sessionId: sessionId,
+                        action: 'consume'
+                    })
+                });
+
+                if (quotaResponse.ok) {
+                    const quotaResult = await quotaResponse.json();
+                    document.getElementById('test-photo').innerHTML = 
+                        `<div class="success">
+                            <h4>✅ Test réussi !</h4>
+                            <pre>Session ID: ${sessionId}
+Quota Result: ${JSON.stringify(quotaResult, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    const quotaError = await quotaResponse.json();
+                    document.getElementById('test-photo').innerHTML = 
+                        `<div class="error">
+                            <h4>❌ Échec quota</h4>
+                            <pre>Status: ${quotaResponse.status}
+Error: ${JSON.stringify(quotaError, null, 2)}</pre>
+                        </div>`;
+                }
+            } catch (error) {
+                document.getElementById('test-photo').innerHTML = 
+                    `<div class="error">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function testDashboardCalculation() {
+            try {
+                const adminId = getAdminId();
+                if (!adminId) {
+                    document.getElementById('dashboard-calc').innerHTML = '<div class="error">Admin ID non trouvé</div>';
+                    return;
+                }
+
+                // Simuler le calcul du dashboard
+                const response = await fetch('/api/quota-debug', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'simulate_dashboard_calc',
+                        adminId: adminId
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('dashboard-calc').innerHTML = 
+                        `<div class="info">
+                            <h4>Calcul Dashboard:</h4>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('dashboard-calc').innerHTML = 
+                        `<div class="error">Erreur: ${JSON.stringify(error, null, 2)}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('dashboard-calc').innerHTML = 
+                    `<div class="error">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Initialisation
+        checkAdminId();
+    </script>
+</body>
+</html>

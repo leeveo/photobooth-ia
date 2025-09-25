@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Quota Final</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { border: 1px solid #ddd; margin: 10px 0; padding: 15px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Debug Quota Final</h1>
+    
+    <div class="section">
+        <h2>Admin ID: 7a77784c-7864-4fbb-8cb5-1f9b40ca1f62</h2>
+    </div>
+    
+    <div class="section">
+        <h2>1. Test Connexion et Admin</h2>
+        <button onclick="testConnection()">Test Connexion</button>
+        <div id="connectionResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>1.5. Vérifier Structure Sessions</h2>
+        <button onclick="checkSessions()">Vérifier Table Sessions</button>
+        <div id="sessionsResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Test Insertion Simple</h2>
+        <button onclick="testInsert()">Test Insertion</button>
+        <div id="insertResult"></div>
+    </div>
+
+    <script>
+        const adminId = '7a77784c-7864-4fbb-8cb5-1f9b40ca1f62';
+
+        function showResult(elementId, response, data) {
+            const element = document.getElementById(elementId);
+            const statusClass = response.status >= 400 ? 'error' : 'success';
+            element.innerHTML = `
+                <div class="${statusClass}">Status: ${response.status}</div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch('/api/quota-debug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: adminId,
+                        action: 'check' 
+                    })
+                });
+                const data = await response.json();
+                showResult('connectionResult', response, data);
+            } catch (error) {
+                document.getElementById('connectionResult').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function checkSessions() {
+            try {
+                const response = await fetch('/api/quota-debug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: adminId,
+                        action: 'check-sessions' 
+                    })
+                });
+                const data = await response.json();
+                showResult('sessionsResult', response, data);
+            } catch (error) {
+                document.getElementById('sessionsResult').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testInsert() {
+            try {
+                const response = await fetch('/api/quota-debug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: adminId,
+                        action: 'test-insert'
+                    })
+                });
+                const data = await response.json();
+                showResult('insertResult', response, data);
+            } catch (error) {
+                document.getElementById('insertResult').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

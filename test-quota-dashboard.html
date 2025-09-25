@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Quota Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">🧪 Test Quota Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Configuration -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">⚙️ Configuration</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Admin ID:</label>
+                        <input type="text" id="adminId" value="01933c3d-a76a-7c7b-9bc1-1a00b37fa7fc" 
+                               class="w-full p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Project ID:</label>
+                        <input type="text" id="projectId" value="test-project" 
+                               class="w-full p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Session ID:</label>
+                        <input type="text" id="sessionId" value="test-session" 
+                               class="w-full p-2 border rounded-md">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">🎛️ Actions</h2>
+                <div class="space-y-3">
+                    <button onclick="checkQuota()" 
+                            class="w-full p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        📊 Vérifier Quota
+                    </button>
+                    <button onclick="consumeQuota()" 
+                            class="w-full p-3 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        📸 Simuler Prise Photo
+                    </button>
+                    <button onclick="testFullFlow()" 
+                            class="w-full p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                        🔄 Test Complet
+                    </button>
+                    <button onclick="clearLogs()" 
+                            class="w-full p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                        🧹 Effacer Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Résultats -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">📋 Résultats</h2>
+            <div id="results" class="bg-gray-50 p-4 rounded-md min-h-[300px] font-mono text-sm overflow-auto">
+                <div class="text-gray-500">En attente de tests...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logCounter = 0;
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                'info': 'text-gray-800',
+                'success': 'text-green-800',
+                'error': 'text-red-800',
+                'warning': 'text-yellow-800'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `${colors[type] || colors.info} mb-1`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            
+            if (logCounter === 0) {
+                results.innerHTML = '';
+            }
+            
+            results.appendChild(logEntry);
+            results.scrollTop = results.scrollHeight;
+            logCounter++;
+        }
+        
+        function clearLogs() {
+            document.getElementById('results').innerHTML = '<div class="text-gray-500">En attente de tests...</div>';
+            logCounter = 0;
+        }
+        
+        function getConfig() {
+            return {
+                adminId: document.getElementById('adminId').value,
+                projectId: document.getElementById('projectId').value + '-' + Date.now(),
+                sessionId: document.getElementById('sessionId').value + '-' + Date.now()
+            };
+        }
+        
+        async function checkQuota() {
+            const config = getConfig();
+            log('🔍 Vérification du quota...', 'info');
+            log(`Admin ID: ${config.adminId}`, 'info');
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: config.adminId,
+                        action: 'check'
+                    })
+                });
+                
+                const result = await response.json();
+                log(`📊 Quota Status: ${response.status}`, response.ok ? 'success' : 'error');
+                log(`📈 Total disponible: ${result.total?.remaining || 'N/A'}/${result.total?.quota || 'N/A'}`, 'info');
+                log(`📈 Mensuel: ${result.monthly?.remaining || 'N/A'}/${result.monthly?.quota || 'N/A'}`, 'info');
+                log(`📦 Addons: ${result.addons?.remaining || 'N/A'}`, 'info');
+                log(`🎯 Peut prendre photo: ${result.canTakePhoto ? 'OUI' : 'NON'}`, result.canTakePhoto ? 'success' : 'warning');
+                
+                if (!response.ok) {
+                    log(`❌ Erreur: ${result.error || 'Erreur inconnue'}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`💥 Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+        
+        async function consumeQuota() {
+            const config = getConfig();
+            log('📸 Simulation prise de photo...', 'info');
+            log(`Session: ${config.sessionId}, Project: ${config.projectId}`, 'info');
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: config.adminId,
+                        action: 'consume',
+                        sessionId: config.sessionId,
+                        projectId: config.projectId
+                    })
+                });
+                
+                const result = await response.json();
+                log(`📸 Consommation: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok && result.success) {
+                    log(`✅ Photo simulée avec succès !`, 'success');
+                    log(`🎯 Type quota utilisé: ${result.consumed?.type}`, 'info');
+                    log(`📈 Nouveau quota: ${result.quotaStatus?.total?.remaining || 'N/A'}/${result.quotaStatus?.total?.quota || 'N/A'}`, 'success');
+                } else {
+                    log(`❌ Échec: ${result.error || 'Erreur inconnue'}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`💥 Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFullFlow() {
+            log('🔄 === DÉBUT TEST COMPLET ===', 'info');
+            
+            // 1. Vérifier quota avant
+            log('1️⃣ Quota AVANT:', 'info');
+            await checkQuota();
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 2. Consommer
+            log('\\n2️⃣ Consommation:', 'info');
+            await consumeQuota();
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 3. Vérifier quota après
+            log('\\n3️⃣ Quota APRÈS:', 'info');
+            await checkQuota();
+            
+            log('🏁 === FIN TEST COMPLET ===', 'success');
+        }
+        
+        // Auto-remplir les IDs avec des valeurs uniques au chargement
+        window.addEventListener('load', () => {
+            const timestamp = Date.now();
+            document.getElementById('projectId').value = `test-project-${timestamp}`;
+            document.getElementById('sessionId').value = `test-session-${timestamp}`;
+        });
+    </script>
+</body>
+</html>

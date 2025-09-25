@@ -268,13 +268,12 @@ export default function Dashboard() {
         // Compter le total des projets
         Promise.resolve({ count: projectIds.length }),
         
-        // Compter toutes les photos si on a des projets
-        projectIds.length > 0 
-          ? supabase
-              .from('sessions')
-              .select('id', { count: 'exact', head: true })
-              .in('project_id', projectIds)
-          : Promise.resolve({ count: 0 })
+        // ✅ CORRIGÉ: Compter dans quota_usage au lieu de sessions
+        // Cela compte les vraies consommations de quota, pas les sessions vides
+        supabase
+          .from('quota_usage')
+          .select('id', { count: 'exact', head: true })
+          .eq('admin_user_id', currentAdminId)
       ]);
 
       console.log("📈 Résultats requêtes:", { projectsCountResult, totalPhotosResult });
@@ -353,7 +352,7 @@ export default function Dashboard() {
           // 1. Récupérer le quota et la date de reset du dernier paiement ACTIF
           supabase
             .from('admin_payments')
-            .select('photo_quota, photo_quota_reset_at')
+            .select('photo_quota, photo_quota_reset_at, created_at')
             .eq('admin_user_id', currentAdminId)
             .eq('status', 'succeeded')
             .in('stripe_subscription_status', ['active', 'trialing'])
@@ -389,7 +388,9 @@ export default function Dashboard() {
         if (!paymentResult.error && paymentResult.data) {
           // Utilisateur payant
           quota = paymentResult.data.photo_quota || 0;
-          resetAt = paymentResult.data.photo_quota_reset_at || resetAt;
+          // ✅ CORRECTION: Utiliser la date de création du paiement comme début de période
+          // au lieu de photo_quota_reset_at qui est la date de fin
+          resetAt = paymentResult.data.created_at || resetAt;
         }
 
         // Calculer le total des photos addon
@@ -400,19 +401,16 @@ export default function Dashboard() {
         // Quota total = quota de base + photos addon
         const totalQuota = quota + totalAddonPhotos;
 
-        // Compter les sessions depuis le reset (une seule requête optimisée)
-        const projectIds = projectsResult.data?.map((p: any) => p.id) || [];
-        
+        // Compter les quotas consommés depuis le reset dans la table quota_usage
         let photosUsed = 0;
-        if (projectIds.length > 0) {
-          const { count } = await supabase
-            .from('sessions')
-            .select('id', { count: 'exact', head: true })
-            .in('project_id', projectIds)
-            .gte('created_at', resetAt);
-          
-          photosUsed = count || 0;
-        }
+        
+        const { count } = await supabase
+          .from('quota_usage')
+          .select('id', { count: 'exact', head: true })
+          .eq('admin_user_id', currentAdminId)
+          .gte('consumed_at', resetAt);
+        
+        photosUsed = count || 0;
 
         setQuotaInfo({
           quota: totalQuota,

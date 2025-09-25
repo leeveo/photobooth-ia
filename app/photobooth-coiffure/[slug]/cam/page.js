@@ -1792,6 +1792,14 @@ export default function CameraCapture({ params }) {
       
       // Enregistre l'échec dans sessions pour garder la cohérence du quota
       try {
+        // Récupérer l'admin ID du projet pour les sessions
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('created_by')
+          .eq('id', project?.id)
+          .single();
+        const adminUserId = projectData?.created_by;
+        
         const sessionPayload = {
           user_email: null,
           style_id: localStorage.getItem('selectedStyleId'),
@@ -1803,7 +1811,7 @@ export default function CameraCapture({ params }) {
           is_success: false,
           error_message: err.message,
           project_id: project?.id,
-          created_by: null,
+          created_by: adminUserId,
           has_watermark: false,
           moderation: null,
           created_at: new Date().toISOString()
@@ -2197,25 +2205,31 @@ const generateImageGemini = async () => {
     }
 
     // Enregistrement dans la table sessions (identique pour les deux cas)
-    try {
-      const sessionPayload = {
-        user_email: null,
-        style_id: localStorage.getItem('selectedStyleId'),
-        style_key: localStorage.getItem('selectedStyleKey') || null,
-        gender: styleGender,
-        result_image_url: finalImageUrl,
-        result_s3_url: resultS3Url,
-        processing_time_ms: Date.now() - start,
-        is_success: true,
-        error_message: null,
-        project_id: project?.id,
-        created_by: null,
-        has_watermark: hasWatermark,
-        moderation: null,
-        created_at: new Date().toISOString()
-      };
-
-      console.log("===> [DEBUG] Tentative d'insertion dans la table sessions avec payload :", sessionPayload);
+      try {
+        // Récupérer l'admin ID du projet pour les sessions
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('created_by')
+          .eq('id', project?.id)
+          .single();
+        const adminUserId = projectData?.created_by;
+        
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: finalImageUrl,
+          result_s3_url: resultS3Url,
+          processing_time_ms: Date.now() - start,
+          is_success: true,
+          error_message: null,
+          project_id: project?.id,
+          created_by: adminUserId,
+          has_watermark: hasWatermark,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };      console.log("===> [DEBUG] Tentative d'insertion dans la table sessions avec payload :", sessionPayload);
 
       const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
         .from('sessions')
@@ -2295,6 +2309,14 @@ const generateImageGemini = async () => {
     }
     // Enregistre l'échec dans sessions pour garder la cohérence du quota
     try {
+      // Récupérer l'admin ID du projet pour les sessions
+      const { data: projectData } = await supabase
+        .from('projects')
+        .select('created_by')
+        .eq('id', project?.id)
+        .single();
+      const adminUserId = projectData?.created_by;
+      
       const sessionPayload = {
         user_email: null,
         style_id: localStorage.getItem('selectedStyleId'),
@@ -2306,7 +2328,7 @@ const generateImageGemini = async () => {
         is_success: false,
         error_message: err.message,
         project_id: project?.id,
-        created_by: null,
+        created_by: adminUserId,
         has_watermark: false,
         moderation: null,
         created_at: new Date().toISOString()

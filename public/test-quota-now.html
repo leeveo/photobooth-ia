@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Quota PhotoboothIA</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { border: 1px solid #ddd; margin: 10px 0; padding: 15px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Système Quota PhotoboothIA</h1>
+    
+    <div class="section">
+        <h2>1. Récupérer Admin ID</h2>
+        <button onclick="getAdminId()">Récupérer Admin ID</button>
+        <div id="adminIdResult"></div>
+        <br>
+        <input type="text" id="manualAdminId" placeholder="Ou entrez Admin ID manuellement">
+        <button onclick="setManualAdminId()">Utiliser cet ID</button>
+    </div>
+
+    <div class="section">
+        <h2>2. Vérifier Quota Actuel</h2>
+        <button onclick="checkQuota()">Vérifier Quota</button>
+        <div id="quotaResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Simuler Prise de Photo</h2>
+        <input type="text" id="sessionId" placeholder="Session ID (auto-généré)" readonly>
+        <input type="text" id="projectId" placeholder="Project ID (optionnel)">
+        <br>
+        <button onclick="simulatePhotoTaken()">Simuler Prise de Photo</button>
+        <div id="simulationResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Vérifier Nouveau Quota</h2>
+        <button onclick="checkQuotaAfter()">Re-vérifier Quota</button>
+        <div id="quotaAfterResult"></div>
+    </div>
+
+    <script>
+        let currentAdminId = null;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        function getAdminId() {
+            log('adminIdResult', 'Recherche Admin ID...');
+            
+            // Essayer plusieurs méthodes
+            let adminId = localStorage.getItem('currentAdminId') 
+                || localStorage.getItem('adminUserId')
+                || localStorage.getItem('admin_user_id')
+                || localStorage.getItem('userId')
+                || localStorage.getItem('user_id');
+
+            if (!adminId) {
+                const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+                if (adminSession) {
+                    try {
+                        let decodedSession;
+                        try {
+                            decodedSession = JSON.parse(atob(adminSession));
+                        } catch (e) {
+                            decodedSession = JSON.parse(adminSession);
+                        }
+                        adminId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+                        
+                        log('adminIdResult', `
+                            <div class="success">✅ Admin ID trouvé: ${adminId}</div>
+                            <div class="info">Session complète:</div>
+                            <pre>${JSON.stringify(decodedSession, null, 2)}</pre>
+                        `, 'success');
+                        currentAdminId = adminId;
+                        return;
+                    } catch (e) {
+                        log('adminIdResult', `Erreur décodage session: ${e.message}`, 'error');
+                    }
+                }
+            }
+
+            if (adminId) {
+                log('adminIdResult', `✅ Admin ID trouvé: ${adminId}`, 'success');
+                currentAdminId = adminId;
+            } else {
+                log('adminIdResult', '❌ Admin ID non trouvé. Assurez-vous d\'être connecté au dashboard admin.', 'error');
+            }
+        }
+
+        function setManualAdminId() {
+            const manualId = document.getElementById('manualAdminId').value.trim();
+            if (manualId) {
+                currentAdminId = manualId;
+                log('adminIdResult', `✅ Admin ID défini manuellement: ${manualId}`, 'success');
+            }
+        }
+
+        async function checkQuota() {
+            if (!currentAdminId) {
+                log('quotaResult', '❌ Admin ID requis', 'error');
+                return;
+            }
+
+            log('quotaResult', 'Vérification quota...');
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminId: currentAdminId, action: 'check' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('quotaResult', `
+                        <div class="success">✅ Quota récupéré:</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const error = await response.text();
+                    log('quotaResult', `❌ Erreur API: ${response.status} - ${error}`, 'error');
+                }
+            } catch (error) {
+                log('quotaResult', `❌ Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulatePhotoTaken() {
+            if (!currentAdminId) {
+                log('simulationResult', '❌ Admin ID requis', 'error');
+                return;
+            }
+
+            // Générer un session ID unique
+            const sessionId = 'test_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            document.getElementById('sessionId').value = sessionId;
+            
+            const projectId = document.getElementById('projectId').value.trim() || null;
+            
+            log('simulationResult', `Simulation prise de photo (Session: ${sessionId})...`);
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: currentAdminId, 
+                        action: 'consume',
+                        sessionId: sessionId,
+                        projectId: projectId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('simulationResult', `
+                        <div class="success">✅ Photo simulée avec succès!</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const error = await response.text();
+                    log('simulationResult', `❌ Erreur consommation: ${response.status} - ${error}`, 'error');
+                }
+            } catch (error) {
+                log('simulationResult', `❌ Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkQuotaAfter() {
+            await checkQuota();
+            const quotaResult = document.getElementById('quotaResult').innerHTML;
+            log('quotaAfterResult', quotaResult);
+        }
+
+        // Auto-récupération de l'Admin ID au chargement
+        window.onload = function() {
+            getAdminId();
+        }
+    </script>
+</body>
+</html>

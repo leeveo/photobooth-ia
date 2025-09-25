@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin ID</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { border: 1px solid #ddd; margin: 10px 0; padding: 15px; }
+        pre { background: #f5f5f5; padding: 10px; }
+        button { padding: 10px 15px; margin: 5px; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>Test Admin ID Réel</h1>
+    
+    <div class="section">
+        <h2>1. Récupérer votre Admin ID réel</h2>
+        <button onclick="getAdminId()">Récupérer Admin ID</button>
+        <div id="adminResult"></div>
+        <br>
+        <input type="text" id="realAdminId" placeholder="Admin ID récupéré">
+    </div>
+    
+    <div class="section">
+        <h2>2. Tester avec votre Admin ID réel</h2>
+        <button onclick="testWithRealId()">Test Consume avec ID réel</button>
+        <div id="testResult"></div>
+    </div>
+
+    <script>
+        let currentAdminId = null;
+
+        function getAdminId() {
+            // Récupérer l'admin ID de la session
+            const adminSession = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
+            if (adminSession) {
+                try {
+                    let decodedSession;
+                    try {
+                        decodedSession = JSON.parse(atob(adminSession));
+                    } catch (e) {
+                        decodedSession = JSON.parse(adminSession);
+                    }
+                    currentAdminId = decodedSession.userId || decodedSession.user_id || decodedSession.id;
+                    
+                    document.getElementById('adminResult').innerHTML = `
+                        <div style="color: green;">✅ Admin ID trouvé: ${currentAdminId}</div>
+                        <pre>${JSON.stringify(decodedSession, null, 2)}</pre>
+                    `;
+                    document.getElementById('realAdminId').value = currentAdminId;
+                } catch (e) {
+                    document.getElementById('adminResult').innerHTML = `
+                        <div style="color: red;">❌ Erreur décodage: ${e.message}</div>
+                    `;
+                }
+            } else {
+                document.getElementById('adminResult').innerHTML = `
+                    <div style="color: red;">❌ Aucune session admin trouvée. Connectez-vous au dashboard d'abord.</div>
+                `;
+            }
+        }
+
+        async function testWithRealId() {
+            const adminId = document.getElementById('realAdminId').value.trim();
+            if (!adminId) {
+                document.getElementById('testResult').innerHTML = `
+                    <div style="color: red;">❌ Admin ID requis</div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: adminId,
+                        action: 'consume',
+                        sessionId: 'real-test-' + Date.now(),
+                        projectId: null
+                    })
+                });
+                
+                const data = await response.json();
+                const statusClass = response.status >= 400 ? 'error' : 'success';
+                const statusColor = response.status >= 400 ? 'red' : 'green';
+                
+                document.getElementById('testResult').innerHTML = `
+                    <div style="color: ${statusColor};">Status: ${response.status}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('testResult').innerHTML = `
+                    <div style="color: red;">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Auto-récupération au chargement
+        window.onload = function() {
+            getAdminId();
+        }
+    </script>
+</body>
+</html>

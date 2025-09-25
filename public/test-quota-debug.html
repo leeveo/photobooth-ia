@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Quota Simple</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { border: 1px solid #ddd; margin: 10px 0; padding: 15px; }
+        pre { background: #f5f5f5; padding: 10px; }
+        button { padding: 10px 15px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Test Quota Simple</h1>
+    
+    <div class="section">
+        <h2>Test API Simple</h2>
+        <button onclick="testSimple()">Tester API Simple</button>
+        <div id="resultSimple"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Test API Simple - Consume</h2>
+        <button onclick="testSimpleConsume()">Tester Consume API Simple</button>
+        <div id="resultSimpleConsume"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Test API Originale - Consume</h2>
+        <button onclick="testOriginalConsume()">Tester Consume API Originale</button>
+        <div id="resultOriginalConsume"></div>
+    </div>
+
+    <script>
+        async function testSimple() {
+            try {
+                const response = await fetch('/api/test-quota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: 'test-admin-id',
+                        action: 'check' 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('resultSimple').innerHTML = 
+                    `<pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('resultSimple').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function testOriginal() {
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: 'test-admin-id',
+                        action: 'check' 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('resultOriginal').innerHTML = 
+                    `<pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+        
+        async function testSimpleConsume() {
+            try {
+                const response = await fetch('/api/test-quota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: 'test-admin-id',
+                        action: 'consume',
+                        sessionId: 'test-session-id',
+                        projectId: 'test-project-id'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('resultSimpleConsume').innerHTML = 
+                    `<pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('resultSimpleConsume').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function testOriginalConsume() {
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        adminId: 'test-admin-id',
+                        action: 'consume',
+                        sessionId: 'test-session-id',
+                        projectId: 'test-project-id'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('resultOriginalConsume').innerHTML = 
+                    `<pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('resultOriginalConsume').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

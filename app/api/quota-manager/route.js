@@ -8,24 +8,34 @@ const supabase = createClient(
 
 export async function POST(req) {
   try {
-    const { adminId, action = 'check' } = await req.json();
-    console.log(`[QUOTA_MANAGER] Action: ${action} for admin: ${adminId}`);
+    console.log(`[QUOTA_MANAGER] === DÉBUT REQUÊTE ===`);
+    
+    // ✅ FIX: Lire toutes les données du body en une seule fois
+    const body = await req.json();
+    console.log(`[QUOTA_MANAGER] Body reçu:`, JSON.stringify(body, null, 2));
+    
+    const { adminId, action = 'check', sessionId, projectId } = body;
+    console.log(`[QUOTA_MANAGER] Action: ${action} for admin: ${adminId}, sessionId: ${sessionId}, projectId: ${projectId}`);
     
     if (!adminId) {
+      console.log(`[QUOTA_MANAGER] ERROR: Admin ID manquant`);
       return NextResponse.json({ error: 'Admin ID requis' }, { status: 400 });
     }
 
     if (action === 'check') {
+      console.log(`[QUOTA_MANAGER] Appel checkQuotaStatus...`);
       return await checkQuotaStatus(adminId);
     } else if (action === 'consume') {
-      const { sessionId, projectId } = await req.json();
+      console.log(`[QUOTA_MANAGER] Appel consumeQuota...`);
       return await consumeQuota(adminId, sessionId, projectId);
     } else {
+      console.log(`[QUOTA_MANAGER] ERROR: Action non supportée: ${action}`);
       return NextResponse.json({ error: 'Action non supportée' }, { status: 400 });
     }
 
   } catch (error) {
-    console.error('[QUOTA_MANAGER] Erreur:', error);
+    console.error('[QUOTA_MANAGER] ERREUR GLOBALE:', error);
+    console.error('[QUOTA_MANAGER] Stack trace:', error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -214,14 +224,20 @@ async function checkQuotaStatus(adminId) {
 }
 
 async function consumeQuota(adminId, sessionId, projectId) {
-  console.log(`[QUOTA_MANAGER] Consommation quota - Admin: ${adminId}, Session: ${sessionId}`);
+  console.log(`[QUOTA_MANAGER] === DÉBUT CONSUME_QUOTA ===`);
+  console.log(`[QUOTA_MANAGER] Params - Admin: ${adminId}, Session: ${sessionId}, Project: ${projectId}`);
   
   try {
     // 1. Vérifier le quota actuel
+    console.log(`[QUOTA_MANAGER] 1. Vérification quota actuel...`);
     const checkResponse = await checkQuotaStatus(adminId);
+    console.log(`[QUOTA_MANAGER] checkResponse status:`, checkResponse.status);
+    
     const quotaStatus = await checkResponse.json();
+    console.log(`[QUOTA_MANAGER] quotaStatus:`, JSON.stringify(quotaStatus, null, 2));
     
     if (!quotaStatus.canTakePhoto) {
+      console.log(`[QUOTA_MANAGER] ERROR: Quota épuisé`);
       return NextResponse.json({ 
         error: 'Quota épuisé',
         quotaStatus 
@@ -229,16 +245,22 @@ async function consumeQuota(adminId, sessionId, projectId) {
     }
 
     // 2. Déterminer quel quota consommer (mensuel en premier, puis addons FIFO)
+    console.log(`[QUOTA_MANAGER] 2. Détermination type de quota...`);
     let quotaType = 'monthly';
     let addonPurchaseId = null;
     
-    if (quotaStatus.monthly.remaining <= 0) {
+    console.log(`[QUOTA_MANAGER] Monthly remaining: ${quotaStatus.monthly?.remaining}`);
+    
+    if (quotaStatus.monthly?.remaining <= 0) {
       // Quota mensuel épuisé, utiliser le premier addon disponible
+      console.log(`[QUOTA_MANAGER] Quota mensuel épuisé, recherche addon...`);
       quotaType = 'addon';
-      const firstAvailableAddon = quotaStatus.addons.packs.find(pack => pack.remaining > 0);
+      const firstAvailableAddon = quotaStatus.addons?.packs?.find(pack => pack.remaining > 0);
       if (firstAvailableAddon) {
         addonPurchaseId = firstAvailableAddon.id;
+        console.log(`[QUOTA_MANAGER] Addon trouvé: ${addonPurchaseId}`);
       } else {
+        console.log(`[QUOTA_MANAGER] ERROR: Aucun addon disponible`);
         return NextResponse.json({ 
           error: 'Aucun quota disponible',
           quotaStatus 
@@ -246,54 +268,161 @@ async function consumeQuota(adminId, sessionId, projectId) {
       }
     }
 
-    // 3. Enregistrer la consommation
-    const { error: insertError } = await supabase
-      .from('quota_usage')
-      .insert({
-        admin_user_id: adminId,
-        session_id: sessionId,
-        project_id: projectId,
-        quota_type: quotaType,
-        addon_purchase_id: addonPurchaseId
-      });
+    console.log(`[QUOTA_MANAGER] Type quota sélectionné: ${quotaType}, addonId: ${addonPurchaseId}`);
 
-    if (insertError) {
-      console.error('[QUOTA_MANAGER] Erreur insertion quota_usage:', insertError);
-      return NextResponse.json({ error: 'Erreur enregistrement consommation' }, { status: 500 });
-    }
-
-    // 4. Si c'est un addon, mettre à jour addon_usage
-    if (quotaType === 'addon' && addonPurchaseId) {
-      const { error: updateError } = await supabase
-        .from('addon_usage')
-        .update({
-          photos_consumed: supabase.raw('photos_consumed + 1'),
-          photos_remaining: supabase.raw('photos_remaining - 1'),
-          last_consumed_at: new Date().toISOString()
-        })
-        .eq('addon_purchase_id', addonPurchaseId);
-
-      if (updateError) {
-        console.error('[QUOTA_MANAGER] Erreur mise à jour addon_usage:', updateError);
-        // Note: On ne fait pas échouer la requête car quota_usage est déjà inséré
-      }
-    }
-
-    // 5. Retourner le nouveau statut
-    const updatedResponse = await checkQuotaStatus(adminId);
-    const updatedStatus = await updatedResponse.json();
+    // 3. Enregistrer la consommation - VERSION FONCTIONNELLE
+    console.log(`[QUOTA_MANAGER] 3. Création session et insertion quota_usage...`);
     
-    return NextResponse.json({
-      success: true,
-      consumed: {
-        type: quotaType,
-        addonPurchaseId
-      },
-      quotaStatus: updatedStatus
-    });
+    try {
+      // 1. Créer d'abord une session valide avec UUID
+      let actualSessionId;
+      
+      // Valider que le sessionId est un UUID valide sinon en générer un nouveau
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (sessionId && uuidRegex.test(sessionId)) {
+        actualSessionId = sessionId;
+        console.log(`[QUOTA_MANAGER] UUID valide fourni: ${actualSessionId}`);
+      } else {
+        actualSessionId = crypto.randomUUID();
+        console.log(`[QUOTA_MANAGER] UUID généré (invalide ou manquant): ${actualSessionId}`);
+      }
+      
+      // Valider si le projectId existe (si fourni) pour les nouvelles sessions seulement
+      let validProjectId = null;
+      if (projectId) {
+        const { data: projectExists } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('id', projectId)
+          .eq('created_by', adminId)
+          .single();
+          
+        if (projectExists) {
+          validProjectId = projectId;
+          console.log(`[QUOTA_MANAGER] Projet valide trouvé: ${projectId}`);
+        } else {
+          console.log(`[QUOTA_MANAGER] Projet inexistant ou non autorisé: ${projectId}, utilisation de null`);
+        }
+      }
+      
+      // Vérifier si une session existe déjà avec cet UUID
+      let sessionResult;
+      
+      const { data: existingSession, error: existingSessionError } = await supabase
+        .from('sessions')
+        .select('id, created_by, project_id')
+        .eq('id', actualSessionId)
+        .single();
+      
+      if (existingSession) {
+        console.log(`[QUOTA_MANAGER] Session existante trouvée: ${actualSessionId}`);
+        
+        // Vérifier que cette session appartient bien à cet admin
+        if (existingSession.created_by === adminId) {
+          sessionResult = existingSession;
+          // Mettre à jour le validProjectId avec celui de la session existante si disponible
+          validProjectId = existingSession.project_id || validProjectId;
+          console.log(`[QUOTA_MANAGER] Réutilisation session existante avec projet: ${validProjectId}`);
+        } else {
+          console.error(`[QUOTA_MANAGER] Session ${actualSessionId} appartient à un autre admin: ${existingSession.created_by}`);
+          return NextResponse.json({ error: 'Session non autorisée' }, { status: 403 });
+        }
+      } else {
+        console.log(`[QUOTA_MANAGER] Création nouvelle session: ${actualSessionId}`);
+        
+        // Créer session dans la table sessions avec les vrais champs
+        const { data: newSession, error: sessionError } = await supabase
+          .from('sessions')
+          .insert({
+            id: actualSessionId,
+            user_email: 'quota-consumption@photobooth.ai',
+            project_id: validProjectId, // Utiliser le projectId validé ou null
+            created_by: adminId,
+            result_image_url: 'quota-consumption-tracking',
+            is_success: true,
+            processing_time_ms: 0,
+            ai_source: 'quota_system',
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (sessionError) {
+          console.error('[QUOTA_MANAGER] Erreur création session:', sessionError);
+          return NextResponse.json({ error: 'Erreur création session pour quota' }, { status: 500 });
+        }
+        
+        sessionResult = newSession;
+      }
+      
+      console.log(`[QUOTA_MANAGER] Session utilisée:`, { sessionResult });
+      
+      // 2. Maintenant insérer dans quota_usage
+      const insertData = {
+        admin_user_id: adminId,
+        session_id: actualSessionId,
+        project_id: validProjectId, // Utiliser le projectId validé ou null
+        quota_type: quotaType,
+        addon_purchase_id: addonPurchaseId,
+        consumed_at: new Date().toISOString()
+      };
+      
+      console.log(`[QUOTA_MANAGER] Insertion quota_usage:`, JSON.stringify(insertData, null, 2));
+      
+      const { data: quotaInsertResult, error: insertError } = await supabase
+        .from('quota_usage')
+        .insert(insertData)
+        .select();
+
+      if (insertError) {
+        console.error('[QUOTA_MANAGER] Erreur insertion quota_usage:', insertError);
+        return NextResponse.json({ error: 'Erreur enregistrement consommation' }, { status: 500 });
+      }
+      
+      console.log(`[QUOTA_MANAGER] Quota inséré avec succès:`, quotaInsertResult);
+
+      // 4. Si c'est un addon, mettre à jour addon_usage
+      if (quotaType === 'addon' && addonPurchaseId) {
+        const { error: updateError } = await supabase
+          .from('addon_usage')
+          .update({
+            photos_consumed: supabase.raw('photos_consumed + 1'),
+            photos_remaining: supabase.raw('photos_remaining - 1'),
+            last_consumed_at: new Date().toISOString()
+          })
+          .eq('addon_purchase_id', addonPurchaseId);
+
+        if (updateError) {
+          console.error('[QUOTA_MANAGER] Erreur mise à jour addon_usage:', updateError);
+          // Note: On ne fait pas échouer la requête car quota_usage est déjà inséré
+        }
+      }
+
+      // 5. Retourner le nouveau statut
+      const updatedResponse = await checkQuotaStatus(adminId);
+      const updatedStatus = await updatedResponse.json();
+      
+      return NextResponse.json({
+        success: true,
+        consumed: {
+          type: quotaType,
+          addonPurchaseId,
+          sessionId: actualSessionId
+        },
+        quotaStatus: updatedStatus
+      });
+      
+    } catch (insertException) {
+      console.error('[QUOTA_MANAGER] Exception insertion complète:', insertException);
+      return NextResponse.json({ 
+        error: 'Erreur lors de la consommation quota', 
+        details: insertException.message 
+      }, { status: 500 });
+    }
 
   } catch (error) {
-    console.error('[QUOTA_MANAGER] Erreur consume:', error);
+    console.error('[QUOTA_MANAGER] Erreur globale consume:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

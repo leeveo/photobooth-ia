@@ -36,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [photoboothOpen, setPhotoboothOpen] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [adminEmail, setAdminEmail] = useState<string>('');
   const [shouldRedirect, setShouldRedirect] = useState(false);
@@ -164,9 +165,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Déconnexion de l'utilisateur
   const handleLogout = async () => {
-    console.log("🚪 DÉCONNEXION - Redirection vers reset");
-    // Ne pas essayer de nettoyer ici, laisser la page reset s'en occuper
-    window.location.href = '/reset';
+    console.log("🚪 DÉCONNEXION - Affichage popup et reset");
+    setIsLoggingOut(true);
+    
+    // Petit délai pour que l'utilisateur voit le popup
+    setTimeout(async () => {
+      try {
+        // Effacer localStorage
+        localStorage.clear();
+        
+        // Effacer sessionStorage
+        sessionStorage.clear();
+        
+        // Effacer tous les cookies
+        const cookies = document.cookie.split(";");
+        cookies.forEach(cookie => {
+          const eqPos = cookie.indexOf("=");
+          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=.waibooth.app;`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=photobooth.waibooth.app;`;
+        });
+        
+        console.log("✅ Reset effectué, redirection vers login");
+      } catch (error) {
+        console.error("❌ Erreur lors du reset:", error);
+      }
+      
+      // Redirection vers login
+      window.location.href = '/photobooth-ia/admin/login?logout=1';
+    }, 800); // 800ms pour voir le popup
   };
 
   if (loading) {
@@ -382,7 +411,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </button>
                     <hr className="my-2 border-gray-200" />
                     <button 
-                      onClick={() => window.location.href = '/reset'}
+                      onClick={handleLogout}
                       className="flex w-full items-center gap-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
                     >
                       <FiRefreshCw className="w-5 h-5" />
@@ -398,6 +427,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+      
+      {/* Popup de déconnexion */}
+      {isLoggingOut && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center justify-center mb-4">
+              <svg className="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-center text-gray-900 mb-2">
+              Déconnexion en cours...
+            </h3>
+            <p className="text-center text-gray-600 text-sm">
+              Nettoyage des données de session
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

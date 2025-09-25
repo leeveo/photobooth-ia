@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Originale - Détails</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #007cba;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .logs {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API Originale - Analyse Détaillée</h1>
+        <p>Admin ID utilisé: <strong>7a77784c-7864-4fbb-8cb5-1f9b40ca1f62</strong></p>
+
+        <div class="test-section">
+            <h3>1. Test Check API Originale</h3>
+            <button onclick="testOriginalCheck()">Tester Check</button>
+            <div id="check-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test Consume API Originale - Avec UUID Spécifique</h3>
+            <button onclick="testOriginalConsumeWithUUID()">Tester Consume (UUID fixe)</button>
+            <div id="consume-uuid-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Consume API Originale - Sans Session ID</h3>
+            <button onclick="testOriginalConsumeNoSession()">Tester Consume (sans sessionId)</button>
+            <div id="consume-no-session-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test Consume API Originale - Avec Project ID</h3>
+            <button onclick="testOriginalConsumeWithProject()">Tester Consume (avec projectId)</button>
+            <div id="consume-project-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Logs Détaillés</h3>
+            <div id="detailed-logs" class="logs">
+                Logs détaillés apparaîtront ici...
+            </div>
+            <button onclick="clearLogs()">Effacer les Logs</button>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_ID = '7a77784c-7864-4fbb-8cb5-1f9b40ca1f62';
+        let logCount = 0;
+
+        function addLog(message) {
+            logCount++;
+            const logsDiv = document.getElementById('detailed-logs');
+            const timestamp = new Date().toISOString();
+            logsDiv.innerHTML += `[${timestamp}] ${logCount}: ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('detailed-logs').innerHTML = 'Logs effacés...\n';
+            logCount = 0;
+        }
+
+        async function testOriginalCheck() {
+            const resultDiv = document.getElementById('check-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            addLog('Début test Check API originale');
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: ADMIN_ID,
+                        action: 'check'
+                    })
+                });
+
+                const data = await response.json();
+                const status = `Status: ${response.status}`;
+                const result = JSON.stringify(data, null, 2);
+                
+                addLog(`Check API - Status: ${response.status}, Data: ${JSON.stringify(data)}`);
+                
+                resultDiv.innerHTML = `${status}\n${result}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                addLog(`Check API - Erreur: ${error.message}`);
+                resultDiv.innerHTML = `Erreur: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testOriginalConsumeWithUUID() {
+            const resultDiv = document.getElementById('consume-uuid-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            const testUUID = 'test-uuid-' + Date.now();
+            addLog(`Début test Consume API avec UUID: ${testUUID}`);
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: ADMIN_ID,
+                        action: 'consume',
+                        sessionId: testUUID,
+                        projectId: null
+                    })
+                });
+
+                const data = await response.json();
+                const status = `Status: ${response.status}`;
+                const result = JSON.stringify(data, null, 2);
+                
+                addLog(`Consume UUID API - Status: ${response.status}, Data: ${JSON.stringify(data)}`);
+                
+                resultDiv.innerHTML = `${status}\n${result}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                addLog(`Consume UUID API - Erreur: ${error.message}`);
+                resultDiv.innerHTML = `Erreur: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testOriginalConsumeNoSession() {
+            const resultDiv = document.getElementById('consume-no-session-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            addLog('Début test Consume API sans sessionId');
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: ADMIN_ID,
+                        action: 'consume'
+                    })
+                });
+
+                const data = await response.json();
+                const status = `Status: ${response.status}`;
+                const result = JSON.stringify(data, null, 2);
+                
+                addLog(`Consume No Session API - Status: ${response.status}, Data: ${JSON.stringify(data)}`);
+                
+                resultDiv.innerHTML = `${status}\n${result}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                addLog(`Consume No Session API - Erreur: ${error.message}`);
+                resultDiv.innerHTML = `Erreur: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testOriginalConsumeWithProject() {
+            const resultDiv = document.getElementById('consume-project-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            const testUUID = crypto.randomUUID();
+            const testProjectId = 'project-' + Date.now();
+            addLog(`Début test Consume API avec UUID: ${testUUID} et projectId: ${testProjectId}`);
+            
+            try {
+                const response = await fetch('/api/quota-manager', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: ADMIN_ID,
+                        action: 'consume',
+                        sessionId: testUUID,
+                        projectId: testProjectId
+                    })
+                });
+
+                const data = await response.json();
+                const status = `Status: ${response.status}`;
+                const result = JSON.stringify(data, null, 2);
+                
+                addLog(`Consume Project API - Status: ${response.status}, UUID: ${testUUID}, Project: ${testProjectId}, Data: ${JSON.stringify(data)}`);
+                
+                resultDiv.innerHTML = `UUID utilisé: ${testUUID}\nProject ID: ${testProjectId}\n\n${status}\n${result}`;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                addLog(`Consume Project API - Erreur: ${error.message}`);
+                resultDiv.innerHTML = `Erreur: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Auto-load au démarrage
+        window.onload = function() {
+            addLog('Page de test chargée');
+        };
+    </script>
+</body>
+</html>
