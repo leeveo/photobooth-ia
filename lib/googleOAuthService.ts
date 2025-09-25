@@ -44,22 +44,48 @@ export class GoogleOAuthService {
    */
   static async exchangeCodeForToken(code: string, state?: string): Promise<any> {
     console.log("🔐 Échange du code pour un token");
+    console.log("🌍 Environment:", process.env.NODE_ENV);
+    console.log("🏠 Current origin:", typeof window !== 'undefined' ? window.location.origin : 'server-side');
     
     try {
-      const response = await fetch('/api/auth/google', {
+      const payload = {
+        code,
+        state,
+        redirect_uri: this.getRedirectUri()
+      };
+      
+      console.log("📤 Payload envoyé:", payload);
+      
+      // Construire l'URL complète pour éviter les problèmes de relative path
+      const apiUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/auth/google`
+        : '/api/auth/google';
+      
+      console.log("📡 API URL utilisée:", apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          code,
-          state,
-          redirect_uri: this.getRedirectUri()
-        })
+        body: JSON.stringify(payload)
       });
 
+      console.log("📡 Response status:", response.status);
+      console.log("📡 Response ok:", response.ok);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error("❌ Erreur raw response:", errorText);
+        
+        // Tenter de parser le JSON d'erreur
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: 'Erreur non-JSON', raw: errorText };
+        }
+        
         console.error("❌ Erreur échange token:", errorData);
         throw new Error(errorData.error || 'Erreur lors de l\'échange du code');
       }
@@ -69,8 +95,24 @@ export class GoogleOAuthService {
       
       return data;
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("💥 Erreur lors de l'échange du code:", error);
+      console.error("💥 Error type:", typeof error);
+      console.error("💥 Error name:", error.name);
+      console.error("💥 Error message:", error.message);
+      
+      // Si c'est une erreur de réseau, essayons de donner plus d'informations
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        console.error("🌐 Erreur réseau détectée - vérifiez:");
+        console.error("  1. La route API /api/auth/google est-elle accessible?");
+        console.error("  2. Y a-t-il des problèmes de CORS?");
+        console.error("  3. Les variables d'environnement sont-elles configurées?");
+        console.error("  4. La fonction serverless démarre-t-elle correctement?");
+        
+        // Améliorer le message d'erreur
+        throw new Error(`Erreur de connexion au serveur d'authentification. Détails: ${error.message}`);
+      }
+      
       throw error;
     }
   }

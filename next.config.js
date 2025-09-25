@@ -2,8 +2,8 @@
 
 const nextConfig = {
   reactStrictMode: true,
-  // Désactiver la génération statique pour éviter les erreurs de sérialisation
-  output: 'standalone',
+  // Temporairement désactiver standalone pour résoudre les problèmes de production
+  // output: 'standalone', // Commenté temporairement
   images: {
     remotePatterns: [
       {
@@ -94,9 +94,10 @@ const nextConfig = {
           minimizer.options.terserOptions.compress = {
             ...minimizer.options.terserOptions.compress,
             warnings: false,
-            drop_console: true, // Supprimer les console.log en production
+            // Temporairement garder les console.log pour debugging production
+            drop_console: false, // Changé en false pour debugging
             drop_debugger: true,
-            pure_funcs: ['console.log', 'console.info', 'console.debug'],
+            // pure_funcs: ['console.log', 'console.info', 'console.debug'], // Commenté
           };
         }
       });

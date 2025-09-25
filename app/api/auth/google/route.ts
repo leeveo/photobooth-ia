@@ -33,10 +33,18 @@ export async function GET(request: NextRequest) {
 // POST: Échange du code OAuth pour un token
 export async function POST(request: NextRequest) {
   console.log("🔐 Échange code OAuth Google");
+  console.log("🌍 Environment:", process.env.NODE_ENV);
+  console.log("🏠 Host header:", request.headers.get('host'));
+  console.log("🔗 Origin header:", request.headers.get('origin'));
   
   try {
     const body = await request.json();
     const { code, state, redirect_uri } = body;
+    console.log("📥 Received request data:", { 
+      code: code ? `${code.substring(0, 20)}...` : 'missing', 
+      state, 
+      redirect_uri 
+    });
     
     if (!code) {
       return NextResponse.json({ error: 'Code OAuth manquant' }, { status: 400 });
@@ -46,9 +54,25 @@ export async function POST(request: NextRequest) {
     const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
     
+    console.log("⚙️ Environment variables check:");
+    console.log("  CLIENT_ID exists:", !!CLIENT_ID);
+    console.log("  CLIENT_ID preview:", CLIENT_ID ? `${CLIENT_ID.substring(0, 25)}...` : "undefined");
+    console.log("  CLIENT_SECRET exists:", !!CLIENT_SECRET);
+    console.log("  CLIENT_SECRET preview:", CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 15)}...` : "undefined");
+    
     if (!CLIENT_ID || !CLIENT_SECRET) {
       console.error("❌ Variables d'environnement OAuth manquantes");
-      return NextResponse.json({ error: 'Configuration OAuth incomplète' }, { status: 500 });
+      console.error("Available env vars:", Object.keys(process.env).filter(key => 
+        key.includes('GOOGLE') || key.includes('CLIENT')
+      ));
+      return NextResponse.json({ 
+        error: 'Configuration OAuth incomplète',
+        debug: {
+          client_id_exists: !!CLIENT_ID,
+          client_secret_exists: !!CLIENT_SECRET,
+          node_env: process.env.NODE_ENV,
+        }
+      }, { status: 500 });
     }
     
     // URL de redirection
