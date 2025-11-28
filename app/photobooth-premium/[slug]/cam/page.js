@@ -8,6 +8,8 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import QuotaManager from '../../../../lib/quota-manager';
+
 // Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
 const dataURLtoFile = (dataurl, filename) => {
   if (!dataurl) {
@@ -445,12 +447,18 @@ export default function CameraCapture({ params }) {
   const [quotaAtteint, setQuotaAtteint] = useState(false);
   const [quotaRestant, setQuotaRestant] = useState(null);
 
+  // Add state for redirection handling
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(0);
+
   // Function to reset state when retrying
   const reset2 = () => {
     setError(null);
     setLogs([]);
     setElapsedTime(0);
     setLoadingProgress(0);
+    setIsRedirecting(false);
+    setRedirectCountdown(0);
   };
   
   // Initialize webcam with error handling - passing setCameraLoaded as well
@@ -1225,6 +1233,447 @@ export default function CameraCapture({ params }) {
   
   // Initialize state for image processing
   const [imageProcessing, setImageProcessing] = useState(false);
+  
+  // Fonction avec fallback Azure - délai de 3 secondes
+  const generateImageGemini = async () => {
+    setProcessing(true);
+    setError(null);
+    setLogs([]);
+    setElapsedTime(0);
+
+    const start = Date.now();
+    let progressTimer;
+    
+    // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
+    progressTimer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        setElapsedTime(elapsed);
+        
+        // Progression continue basée sur le temps écoulé
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        const maxTime = (settings?.max_processing_time || 60) * 1000;
+        let timeBasedProgress;
+        
+        if (elapsedSeconds < 5) {
+          timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
+        } else if (elapsedSeconds < 10) {
+          timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
+        } else if (elapsedSeconds < 15) {
+          timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
+        } else if (elapsedSeconds < 20) {
+          timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
+        } else {
+          timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+        }
+        
+        setLoadingProgress(timeBasedProgress);
+    }, 500);
+    
+    try {
+      const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+      const image = imageFile; // base64
+
+      setLogs(["Envoi de la requête au serveur IA..."]);
+      
+      // Ajouter des messages de progression basés sur le temps écoulé
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+      }, 5000);
+      
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+      }, 10000);
+      
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+      }, 15000);
+
+      const reqBody = {
+        prompt,
+        image
+      };
+
+      let resultUrl = null;
+      let aiSource = 'gemini'; // Track which AI service was used
+      
+      // Requête vers serveur IA
+      setLogs(prev => [...prev, "Connexion au serveur IA..."]);
+
+      const fetchStart = Date.now();
+      let response;
+      
+      try {
+        // ✅ ESSAI AVEC GEMINI AVEC TIMEOUT DE 30 SECONDES
+        const geminiPromise = fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody),
+        });
+        
+        // Timeout de 30 secondes pour déclencher le fallback
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout après 30 secondes')), 30000)
+        );
+        
+        response = await Promise.race([geminiPromise, timeoutPromise]);
+        
+      } catch (geminiError) {
+        console.log('[AI] ❌ Gemini failed or timeout:', geminiError.message);
+        setLogs(prev => [...prev, `Service principal indisponible: ${geminiError.message}`]);
+        setLogs(prev => [...prev, "🔄 Basculement vers service alternatif..."]);
+        
+        // ✅ FALLBACK TO AZURE AI avec retry
+        console.log('[AI] 🔄 Fallback to Azure AI...');
+        
+        let azureSuccess = false;
+        let azureAttempts = 0;
+        const maxAzureRetries = 2;
+        
+        while (!azureSuccess && azureAttempts < maxAzureRetries) {
+          azureAttempts++;
+          
+          try {
+            console.log(`[AI] Azure tentative ${azureAttempts}/${maxAzureRetries}...`);
+            setLogs(prev => [...prev, `Tentative service alternatif ${azureAttempts}/${maxAzureRetries}...`]);
+            
+            const azureResponse = await Promise.race([
+              fetch('/api/azure-ai', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  input: {
+                    prompt: prompt,
+                    input_image: image
+                  }
+                }),
+              }),
+              // Timeout de 10 secondes pour Azure
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout Azure après 10 secondes')), 10000)
+              )
+            ]);
+            
+            const azureResponseTime = Date.now() - fetchStart;
+            console.log(`[AI] Azure response received after ${azureResponseTime}ms (attempt ${azureAttempts})`);
+            
+            if (!azureResponse.ok) {
+              const azureErrorText = await azureResponse.text();
+              console.error(`[AI] Azure HTTP error (attempt ${azureAttempts}):`, azureResponse.status, azureErrorText);
+              
+              // Si c'est une erreur 400 ou 500, on peut retry
+              if (azureResponse.status >= 500 || azureResponse.status === 400) {
+                if (azureAttempts < maxAzureRetries) {
+                  console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
+                  setLogs(prev => [...prev, `Erreur service (${azureResponse.status}), retry dans 2s...`]);
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  continue;
+                }
+              }
+              
+              throw new Error(`Erreur Azure AI: ${azureResponse.status} ${azureErrorText}`);
+            }
+            
+            const azureData = await azureResponse.json();
+            console.log('[AI] Azure response parsed successfully:', azureData);
+            
+            if (azureData.success && azureData.output) {
+              resultUrl = azureData.output;
+              console.log('[AI] ✅ Azure AI successful - Image URL:', resultUrl);
+              setLogs(prev => [...prev, `Image générée avec succès! (tentative ${azureAttempts})`]);
+              aiSource = 'azure';
+              azureSuccess = true;
+            } else {
+              throw new Error(azureData.error || "Erreur Azure AI - pas de résultat");
+            }
+            
+          } catch (azureError) {
+            console.error(`[AI] ❌ Azure attempt ${azureAttempts} failed:`, azureError.message);
+            
+            if (azureAttempts >= maxAzureRetries) {
+              setLogs(prev => [...prev, `Service alternatif échoué après ${maxAzureRetries} tentatives`]);
+              
+              // Plus de fallback - échec final
+              throw new Error(`Tous les services IA ont échoué après plusieurs tentatives. Gemini: ${geminiError.message}. Azure: ${azureError.message}`);
+            } else if (azureAttempts < maxAzureRetries) {
+              console.log(`[AI] Azure retry dans 2 secondes... (${azureAttempts}/${maxAzureRetries})`);
+              setLogs(prev => [...prev, `Erreur service, retry dans 2s... (${azureAttempts}/${maxAzureRetries})`]);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+          }
+        }
+      }
+
+      // Si Gemini a réussi, traiter la réponse
+      if (!resultUrl && response) {
+        if (!response.ok) {
+          let errorText = '';
+          try { errorText = await response.text(); } catch {}
+          setLogs(prev => [...prev, `Erreur HTTP ${response.status}`]);
+          throw new Error(errorText || "Erreur Gemini");
+        }
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          setLogs(prev => [...prev, 'Réponse invalide du serveur']);
+          throw new Error(`Réponse invalide de Gemini`);
+        }
+
+        if (!data.success) {
+          console.error('[Gemini] API indicated failure:', data.error);
+          setLogs(prev => [...prev, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+          throw new Error(data.error || "Erreur Gemini");
+        }
+
+        resultUrl = typeof data.output === 'string'
+          ? data.output
+          : Array.isArray(data.output)
+            ? data.output[0]
+            : data.output?.url || data.output?.image || data.output;
+
+        if (!resultUrl) {
+          throw new Error("Aucune image générée");
+        }
+
+        setLogs(["Image générée avec succès !"]);
+      }
+      
+      if (!resultUrl) {
+        throw new Error("Aucune image générée par les services IA");
+      }
+      
+      // Image prête
+      setLogs(prev => [...prev, `Image reçue avec succès!`]);
+      localStorage.setItem("faceURLResult", resultUrl);
+      localStorage.setItem("aiSource", aiSource); // Store which AI was used
+
+      // 2. Ajout du layout (watermark) si disponible
+      setLogs(logs => [...logs, "Récupération du layout du projet..."]);
+      const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
+
+      let finalImageUrl = resultUrl;
+      let hasWatermark = false;
+
+      if (thumbnailUrl) {
+        setLogs(logs => [...logs, "Fusion de l'image avec le layout..."]);
+        setLogs(logs => [...logs, orientationData 
+          ? "Dimensions d'encart détectées, adaptation de l'image..." 
+          : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
+        try {
+          const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
+            resultUrl, 
+            thumbnailUrl, 
+            orientationData
+          );
+          if (combinedImageDataUrl && combinedImageDataUrl !== resultUrl) {
+            finalImageUrl = combinedImageDataUrl;
+            hasWatermark = true;
+            setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
+          } else {
+            setLogs(logs => [...logs, "Fusion échouée, utilisation de l'image originale."]);
+          }
+        } catch (watermarkError) {
+          setLogs(logs => [...logs, "Erreur lors de la fusion du layout."]);
+        }
+      } else {
+        setLogs(logs => [...logs, "Aucun layout trouvé pour ce projet."]);
+      }
+      
+      // 3. Upload S3 si besoin
+      let resultS3Url = null;
+      let uploadableImage = finalImageUrl;
+      if (finalImageUrl.startsWith('http')) {
+        setLogs(logs => [...logs, "Conversion de l'image pour l'upload S3..."]);
+        try {
+          uploadableImage = await toDataURL(finalImageUrl);
+        } catch (convError) {
+          setLogs(logs => [...logs, "Erreur conversion base64, upload direct."]);
+        }
+      }
+
+      if (uploadableImage && uploadableImage.startsWith('data:')) {
+        setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
+        const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
+        const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        formData.append('projectId', project?.id || 'unknown');
+
+        const uploadResponse = await fetch('/api/upload-to-s3', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          setLogs(logs => [...logs, "Erreur lors de l'upload S3."]);
+          throw new Error("Erreur upload S3");
+        }
+        const uploadData = await uploadResponse.json();
+        if (uploadData && uploadData.url) {
+          setLogs(logs => [...logs, "Image stockée dans le cloud !"]);
+          localStorage.setItem("faceURLResult", uploadData.url);
+          localStorage.setItem("faceURLResultS3", uploadData.url);
+          resultS3Url = uploadData.url;
+          setLogs(logs => [...logs, "Image prête à être affichée !"]);
+          
+          // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD S3 RÉUSSI
+          if (progressTimer) {
+            clearInterval(progressTimer);
+            progressTimer = null;
+          }
+        } else {
+          throw new Error("Réponse S3 invalide");
+        }
+      } else {
+        setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
+        localStorage.setItem("faceURLResult", finalImageUrl);
+        
+        // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD DIRECT
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+        }
+      }
+
+      // Enregistrement dans la table sessions
+      try {
+        // Récupérer l'admin ID du projet pour les sessions
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('created_by')
+          .eq('id', project?.id)
+          .single();
+        const adminUserId = projectData?.created_by;
+        
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: finalImageUrl,
+          result_s3_url: resultS3Url,
+          processing_time_ms: Date.now() - start,
+          is_success: true,
+          error_message: null,
+          project_id: project?.id,
+          created_by: adminUserId,
+          has_watermark: hasWatermark,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };
+
+        const { data: sessionInsertData, error: sessionInsertError } = await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+
+        if (sessionInsertError) {
+          setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+          console.error("Erreur lors de l'insertion dans sessions:", sessionInsertError);
+        } else {
+          setLogs(logs => [...logs, "Session enregistrée dans la base."]);
+          
+          // ✅ NOUVEAU : Consommer le quota APRÈS le succès de la session
+          if (sessionInsertData && sessionInsertData[0]?.id) {
+            try {
+              const quotaResult = await QuotaManager.consumeAfterSuccess(
+                sessionInsertData[0].id, 
+                project?.id
+              );
+              if (quotaResult) {
+                console.log("Quota consommé avec succès:", quotaResult.consumed);
+              }
+            } catch (quotaError) {
+              console.error("Erreur consommation quota:", quotaError);
+            }
+          }
+        }
+      } catch (sessionError) {
+        setLogs(logs => [...logs, "Erreur lors de l'enregistrement de la session."]);
+        console.error("Erreur insertion session:", sessionError);
+      }
+
+      // Gestion de la redirection après succès
+      setLogs(logs => [...logs, "Préparation de la redirection..."]);
+      setLoadingProgress(100);
+      
+      // Démarrer le countdown de redirection
+      setIsRedirecting(true);
+      setRedirectCountdown(3);
+      
+      // ✅ REDIRECTION DIRECTE AVEC ROUTER.PUSH APRÈS COUNTDOWN
+      const countdownInterval = setInterval(() => {
+        setRedirectCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            // Effectuer la redirection immédiatement avec router.push
+            console.log("🚀 Redirection vers /result...");
+            setProcessing(false); // Fermer le popup avant redirection
+            router.push(`/photobooth-premium/${slug}/result`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (err) {
+      setError(err.message || "Erreur lors de la génération");
+      setLogs([err.message]);
+      setIsRedirecting(false);
+      setRedirectCountdown(0);
+      setProcessing(false);
+      
+      // ✅ ARRÊTER LE TIMER EN CAS D'ERREUR IMMÉDIATEMENT
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+      // Enregistre l'échec dans sessions
+      try {
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('created_by')
+          .eq('id', project?.id)
+          .single();
+        const adminUserId = projectData?.created_by;
+        
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: null,
+          result_s3_url: null,
+          processing_time_ms: Date.now() - start,
+          is_success: false,
+          error_message: err.message,
+          project_id: project?.id,
+          created_by: adminUserId,
+          has_watermark: false,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };
+
+        await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+      } catch (e) {
+        console.error("Erreur insertion session (échec):", e);
+      }
+    } finally {
+      // ✅ SÉCURITÉ : Arrêter le timer s'il n'a pas encore été arrêté
+      if (progressTimer) {
+        clearInterval(progressTimer);
+      }
+      
+      // Mettre à jour le temps final
+      setElapsedTime(Date.now() - start);
+    }
+  };
   
   const generateImageSwap = async () => {
     setNumProses(2);
@@ -2010,7 +2459,7 @@ const generateImageReplicate = async () => {
                       ease: "easeInOut" 
                     }}
                   >
-                    💎
+                    
                   </motion.div>
                 </div>
               </div>
@@ -2035,7 +2484,7 @@ const generateImageReplicate = async () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 0.3, duration: 0.8 }}
               >
-                ✨ Création Premium ✨
+                Création Premium 
               </motion.h2>
               
               {/* Temps écoulé avec animation premium */}
@@ -2053,13 +2502,13 @@ const generateImageReplicate = async () => {
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  ⏱️ {(elapsedTime / 1000).toFixed(1)}s
+                   {(elapsedTime / 1000).toFixed(1)}s
                   <motion.span
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                     className="inline-block"
                   >
-                    ⚡
+                    
                   </motion.span>
                 </motion.span>
               </motion.p>
@@ -2162,7 +2611,7 @@ const generateImageReplicate = async () => {
                 
                 <div className="mt-3 flex justify-between text-sm text-white/70 font-semibold">
                   <span className="flex items-center gap-1">
-                    🚀 <span>Démarrage</span>
+                    <span>Démarrage</span>
                   </span>
                   <motion.span 
                     className="text-lg font-bold"
@@ -2173,7 +2622,7 @@ const generateImageReplicate = async () => {
                     {loadingProgress.toFixed(0)}%
                   </motion.span>
                   <span className="flex items-center gap-1">
-                    🎯 <span>Finalisation</span>
+                     <span>Finalisation</span>
                   </span>
                 </div>
               </motion.div>
@@ -2266,7 +2715,7 @@ const generateImageReplicate = async () => {
                           }}
                           className="text-xs"
                         >
-                          ✨
+                          
                         </motion.span>
                       </motion.div>
                     ))
@@ -2296,7 +2745,7 @@ const generateImageReplicate = async () => {
                           repeat: Infinity 
                         }}
                       >
-                        ⭐
+                        
                       </motion.span>
                     </motion.div>
                   )}
@@ -2331,14 +2780,13 @@ const generateImageReplicate = async () => {
                       transition={{ duration: 0.8, repeat: 4 }}
                       className="text-2xl"
                     >
-                      ❌
-                    </motion.div>
+                                      </motion.div>
                     <span className="text-red-200 font-semibold text-lg">{error}</span>
                     <motion.div
                       animate={{ opacity: [0.5, 1, 0.5] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      ⚠️
+                      
                     </motion.div>
                   </div>
                 </motion.div>
@@ -2410,7 +2858,7 @@ const generateImageReplicate = async () => {
                   </motion.div>
                   
                   <span className="relative z-10 flex items-center gap-2">
-                    🚫 <span>Annuler</span>
+                     <span>Annuler</span>
                   </span>
                 </motion.button>
               </motion.div>
@@ -2895,7 +3343,7 @@ const generateImageReplicate = async () => {
             <div className="flex flex-col space-y-4 items-center">
               {/* Enhanced GÉNÉRER MON IMAGE button with animations */}
               <motion.button 
-                onClick={generateImageReplicate}
+                onClick={generateImageGemini}
                 className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
