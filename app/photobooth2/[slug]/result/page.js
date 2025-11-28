@@ -50,6 +50,13 @@ export default function Result({ params }) {
   });
   const [savingDataCapture, setSavingDataCapture] = useState(false);
   
+  // États pour l'impression
+  const [printing, setPrinting] = useState(false);
+  const [printSuccess, setPrintSuccess] = useState(false);
+  const [printError, setPrintError] = useState(false);
+  const [showPrintPopup, setShowPrintPopup] = useState(false);
+  const [printCopies, setPrintCopies] = useState(1);
+  
   useEffect(() => {
     // Load project data and settings from localStorage
     const cachedProject = localStorage.getItem('projectData');
@@ -278,6 +285,57 @@ export default function Result({ params }) {
     // Navigate to the slug page
     router.push(`/photobooth2/${slug}`);
   }, [router, slug]); // Include slug in dependencies
+  
+  // Fonction pour ouvrir le popup d'impression
+  const handlePrint = () => {
+    setPrintCopies(1);
+    setPrintSuccess(false);
+    setPrintError(false);
+    setShowPrintPopup(true);
+  };
+  
+  // Fonction pour lancer l'impression
+  const handleConfirmPrint = async () => {
+    if (!imageResultAI || !project?.printer_enabled) return;
+    
+    setPrinting(true);
+    setPrintError(false);
+    
+    try {
+      const response = await fetch('/api/print-to-wcm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: imageResultAI,
+          projectId: project.id,
+          copies: printCopies,
+          printerConfig: {
+            ip: project.printer_ip,
+            endpoint: project.printer_endpoint || '/print',
+            format: project.printer_format || '10x15'
+          }
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'impression');
+      }
+      
+      setPrintSuccess(true);
+      setTimeout(() => {
+        setShowPrintPopup(false);
+        setPrintSuccess(false);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Erreur impression:', error);
+      setPrintError(true);
+    } finally {
+      setPrinting(false);
+    }
+  };
   
   if (loading) {
     return (
