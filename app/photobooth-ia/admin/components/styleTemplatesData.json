@@ -1639,6 +1639,101 @@
 ,
 
 {
+  "id": "themed_party",
+  "name": "Soirée à Thème",
+  "description": "Collection de styles pour soirées à thème",
+  "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_party.jpg",
+  "compatibleWith": [
+    "premium"
+  ],
+  "styles": [
+    {
+      "name": "Cabaret Années 30",
+      "gender": "g",
+      "style_key": "themed_cabaret_30s",
+      "description": "Ambiance cabaret années 30, Music-Hall festif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_cabaret_30s.jpg",
+      "prompt": "Garder exactement le visage de la personne. La personne est au premier plan, habillée dans le thème du décor. Décor : cabaret années 30, ambiance Music-Hall & fête, avec des personnes en arrière-plan en train de danser. Style photoréaliste.",
+      "variations": 1
+    },
+  
+    {
+      "name": "Belle Époque",
+      "gender": "g",
+      "style_key": "themed_belle_epoque",
+      "description": "Élégance de la Belle Époque dans un bar festif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_belle_epoque.jpg",
+      "prompt": "Garder exactement le visage et l'apparence de la personne, sans aucune modification. La personne doit être au premier plan, bien visible. Elle doit être habillée à la mode des années 30. Ambiance de bar festif des Années folles & Belle Époque. Des personnes en arrière-plan dansent et font la fête. Style photoréaliste.",
+      "variations": 1
+    },
+    {
+      "name": "Bistro Chic",
+      "gender": "g",
+      "style_key": "themed_bistro_chic",
+      "description": "Intérieur bistro chic avec ambiance festive élégante",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_bistro_chic.jpg",
+      "prompt": "Garder exactement le visage de la personne. La personne est au premier plan, habillée dans le thème du décor. Décor: Intérieur Esprit bistro chic, avec un arrière-plan légèrement différent comprenant des tables, des lampes douces, et des gens en arrière-plan en train de danser ou discuter, ambiance festive et élégante. Style photoréaliste. La personne n'est pas en mode selfie. Pas d'autres modifications sur le visage.",
+      "variations": 1
+    },
+    {
+      "name": "Bistro Élégant",
+      "gender": "g",
+      "style_key": "themed_elegant_bistro",
+      "description": "Ambiance bistro élégant avec atmosphère conviviale",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_elegant_bistro.jpg",
+      "prompt": "Garder exactement le visage de la personne. La personne est au premier plan, habillée dans le thème du décor. Décor: Intérieur Esprit bistro chic, avec un arrière-plan légèrement différent comprenant des tables, des lampes douces, et des gens en arrière-plan en train de danser ou discuter, ambiance festive et élégante. Style photoréaliste. La personne n'est pas en mode selfie. Pas d'autres modifications sur le visage.",
+      "variations": 1
+    },
+    {
+      "name": "Superhéros Cartoon",
+      "gender": "g",
+      "style_key": "themed_cartoon_superhero",
+      "description": "Univers cartoon superhéros avec visage réaliste",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_cartoon_superhero.jpg",
+      "prompt": "Garder exactement le visage réel de la personne, avec un rendu très réaliste au niveau de la tête. Les gens déjà présents ne doivent pas être changés. Décor : univers cartoon / dessin animé sur le thème des superhéros. Toutes les personnes doivent être habillées selon le thème du décor, dans un style cartoon cohérent. Le corps et les vêtements sont en style cartoon, mais la tête reste réaliste et fidèle. Ambiance dynamique et colorée, comme une scène de dessin animé de superhéros.",
+      "variations": 1
+    },
+    {
+      "name": "Retour vers le Futur",
+      "gender": "g",
+      "style_key": "themed_back_to_future",
+      "description": "Thème Retour vers le futur, style cartoon dynamique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_back_to_future.jpg",
+      "prompt": "Garder exactement le visage de la personne avec un rendu très réaliste. La personne est au premier plan et ne doit pas être modifiée, juste intégrée dans la scène. Les autres personnes visibles ne doivent pas être changées. Tout le décor et les vêtements doivent être dans le thème Retour vers le futur, avec une ambiance cartoon mais un visage réaliste. Les personnes en arrière-plan sont habillées dans le même thème. Style : cartoon dynamique pour le décor et les corps, mais tête réaliste fidèle à l'original.",
+      "variations": 1
+    },
+    {
+      "name": "Avatar Pandora",
+      "gender": "g",
+      "style_key": "themed_avatar_pandora",
+      "description": "Monde d'Avatar avec forêt bioluminescente magique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_avatar_pandora.jpg",
+      "prompt": "Garder exactement les visages des deux personnes sans aucune modification. Les deux personnes sont intégrées dans un décor inspiré du monde d'Avatar : forêt bioluminescente, lumières fluorescentes, ambiance magique et colorée. Les corps et les vêtements sont adaptés au thème Avatar (tenues inspirées du peuple Na'vi, couleurs et textures naturelles), mais les visages restent réalistes et identiques aux originaux. Style photoréaliste, couleurs vives, immersion totale. Les deux personnes sont cohérentes en taille et intégrées naturellement dans la scène.",
+      "variations": 1
+    },
+    {
+      "name": "Avengers",
+      "gender": "g",
+      "style_key": "themed_avengers",
+      "description": "Univers Avengers avec ambiance super-héros spectaculaire",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_avengers.jpg",
+      "prompt": "Garder exactement les visages des deux personnes sans aucune modification. Les deux personnes doivent sembler très réalistes au niveau du visage, parfaitement intégrées. Elles sont habillées dans un style inspiré des Avengers, cohérent avec l'univers super-héros, tout en restant crédible et réaliste. Décor : ambiance Avengers, avec éléments technologiques, lumières dynamiques, énergie et couleurs vives, style spectaculaire mais réaliste. Les deux personnes gardent leur apparence réelle, proportions normales, niveau de réalisme élevé. Aucun changement sur leurs visages.",
+      "variations": 1
+    },
+    {
+      "name": "Carnaval de Rio",
+      "gender": "g",
+      "style_key": "themed_rio_carnival",
+      "description": "Ambiance carnavalesque de Rio avec costumes festifs",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_rio_carnival.jpg",
+      "prompt": "Garder exactement le visage et l'apparence des deux personnes. Les deux personnes sont au premier plan, habillées dans le thème Carnaval de Rio, avec des costumes colorés et festifs. Décor : ambiance carnavalesque, avec d'autres personnes en arrière-plan en train de danser et de célébrer, couleurs vives et lumières festives. Les deux personnes sont à la même taille que tout le monde et parfaitement intégrées dans le décor. Style photoréaliste ultra-détaillé, visages réalistes avec proportions naturelles, textures de peau et éclairage crédibles, rendu digne d'une véritable photographie.",
+      "variations": 1
+    }
+  ]
+}
+,
+
+{
   "id": "music_styles_detailed",
   "name": "Styles Musicaux Détailés",
   "description": "20 styles vestimentaires inspirés de genres musicaux avec accessoires",

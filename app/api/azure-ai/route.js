@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// Configuration Azure AI Foundry - CORRECTION avec le bon endpoint
-const AZURE_AI_KEY = "84Lv7flCqhVehC79RpaLlZ18KpMd5I6HqDkKmJANsNPRDz3t8dAiJQQJ99BIAC5T7U2XJ3w3AAAAACOGsZ92";
-const AZURE_AI_BASE_ENDPOINT = "https://photoboothia-resource.cognitiveservices.azure.com/openai/deployments/FLUX.1-Kontext-pro/images";
+// Configuration Azure AI Foundry - SÉCURISÉE avec variables d'environnement
+const AZURE_AI_KEY = process.env.AZURE_AI_KEY || process.env.AZURE_OPENAI_KEY;
+const AZURE_AI_BASE_ENDPOINT = process.env.AZURE_AI_ENDPOINT || "https://photoboothia-resource.cognitiveservices.azure.com/openai/deployments/FLUX.1-Kontext-pro/images";
 const API_VERSION = "2025-04-01-preview";
 
 export async function POST(request) {
@@ -16,6 +16,15 @@ export async function POST(request) {
     
     const { input } = body;
     
+    // Vérifier les clés API Azure
+    if (!AZURE_AI_KEY || !AZURE_AI_BASE_ENDPOINT) {
+      console.error("Azure AI configuration missing");
+      return NextResponse.json({ 
+        success: false, 
+        error: "Configuration Azure AI manquante" 
+      }, { status: 500 });
+    }
+
     // Validate required parameters
     if (!input || !input.prompt || !input.input_image) {
       return NextResponse.json({ 

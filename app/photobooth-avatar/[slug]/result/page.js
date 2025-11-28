@@ -155,6 +155,57 @@ export default function ResultPage({ params }) {
     document.body.removeChild(link);
   };
   
+  // Fonction pour ouvrir le popup d'impression
+  const handlePrint = () => {
+    setPrintCopies(1);
+    setPrintSuccess(false);
+    setPrintError(false);
+    setShowPrintPopup(true);
+  };
+  
+  // Fonction pour lancer l'impression
+  const handleConfirmPrint = async () => {
+    if (!resultImage || !project?.printer_enabled) return;
+    
+    setPrinting(true);
+    setPrintError(false);
+    
+    try {
+      const response = await fetch('/api/print-to-wcm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: resultImage,
+          projectId: project.id,
+          copies: printCopies,
+          printerConfig: {
+            ip: project.printer_ip,
+            endpoint: project.printer_endpoint || '/print',
+            format: project.printer_format || '10x15'
+          }
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'impression');
+      }
+      
+      setPrintSuccess(true);
+      setTimeout(() => {
+        setShowPrintPopup(false);
+        setPrintSuccess(false);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Erreur impression:', error);
+      setPrintError(true);
+    } finally {
+      setPrinting(false);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -264,6 +315,20 @@ export default function ResultPage({ params }) {
             Télécharger
           </button>
           
+          {project?.printer_enabled && (
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 rounded font-medium flex items-center gap-2"
+              style={{ backgroundColor: secondaryColor, color: primaryColor }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                <path d="M6 14h12v8H6z"/>
+              </svg>
+              Imprimer
+            </button>
+          )}
+          
           <button
             onClick={() => setIsEmailFormVisible(!isEmailFormVisible)}
             className="px-4 py-2 rounded font-medium bg-white text-gray-800"
@@ -354,6 +419,133 @@ export default function ResultPage({ params }) {
           </div>
         )}
       </div>
+      
+      {/* Print Popup Modal */}
+      {showPrintPopup && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => !printing && !printSuccess && setShowPrintPopup(false)}
+        >
+          <div 
+            className="relative max-w-lg w-full p-12 rounded-3xl shadow-2xl"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            {!printing && !printSuccess && (
+              <button
+                onClick={() => setShowPrintPopup(false)}
+                className="absolute top-6 right-6 p-3 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            
+            {/* Icon Container */}
+            <div className="flex justify-center mb-8">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(107, 114, 128, 0.1)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                  <path d="M6 14h12v8H6z"/>
+                </svg>
+              </div>
+            </div>
+            
+            {/* Content */}
+            {printSuccess ? (
+              <div className="text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800 mb-3">Impression lancée !</h3>
+                <p className="text-lg text-gray-600">Votre photo va sortir dans quelques instants</p>
+              </div>
+            ) : printError ? (
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-gray-800 mb-3">Oops !</h3>
+                <p className="text-lg text-gray-600 mb-6">L'imprimante a un problème</p>
+                <p className="text-lg text-gray-700 font-medium">Envoyez votre photo plutôt par email</p>
+              </div>
+            ) : printing ? (
+              <div className="text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="animate-spin rounded-full h-20 w-20 border-4 border-gray-300 border-t-gray-600"></div>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800 mb-3">Impression en cours...</h3>
+                <p className="text-lg text-gray-600">Veuillez patienter</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-3xl font-bold text-center text-gray-800 mb-8">Nombre de copies</h3>
+                
+                <div className="flex items-center justify-center gap-8 mb-10">
+                  <button
+                    onClick={() => setPrintCopies(Math.max(1, printCopies - 1))}
+                    disabled={printCopies <= 1}
+                    className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{
+                      background: printCopies > 1 ? 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)' : '#e5e7eb',
+                      color: 'white',
+                      boxShadow: printCopies > 1 ? '0 4px 15px rgba(107, 114, 128, 0.3)' : 'none'
+                    }}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  
+                  <div className="w-32 text-center">
+                    <span className="text-7xl font-bold text-gray-800">{printCopies}</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => setPrintCopies(Math.min(5, printCopies + 1))}
+                    disabled={printCopies >= 5}
+                    className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{
+                      background: printCopies < 5 ? 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)' : '#e5e7eb',
+                      color: 'white',
+                      boxShadow: printCopies < 5 ? '0 4px 15px rgba(107, 114, 128, 0.3)' : 'none'
+                    }}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <button
+                  onClick={handleConfirmPrint}
+                  className="w-full py-6 px-8 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)',
+                    color: 'white',
+                    boxShadow: '0 6px 20px rgba(107, 114, 128, 0.4)'
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                    <path d="M6 14h12v8H6z"/>
+                  </svg>
+                  Lancer l'impression
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -896,7 +896,7 @@ export default function CameraCapture({ params }) {
       if (videoRef.current && videoRef.current.srcObject && 
           videoRef.current.readyState >= 2) {
         setCameraLoaded(true);
-        console.log("Camera loaded successfully");
+        // Camera chargée
       }
     };
     
@@ -1255,7 +1255,7 @@ export default function CameraCapture({ params }) {
   // Function to fetch thumbnail from canvas_layouts
   const fetchProjectThumbnail = async (projectId) => {
     try {
-      console.log('Fetching thumbnail for project:', projectId);
+      // Récupération du thumbnail
       
       // First check if there are any canvas_layouts for this project
       const { data: layoutsData, error: layoutsError } = await supabase
@@ -1264,16 +1264,14 @@ export default function CameraCapture({ params }) {
         .eq('project_id', projectId);
         
       if (layoutsError) {
-        console.error('Error checking for layouts:', layoutsError);
         return { thumbnailUrl: null, orientationData: null };
       }
       
       if (!layoutsData || layoutsData.length === 0) {
-        console.log('No layouts found for this project');
         return { thumbnailUrl: null, orientationData: null };
       }
       
-      console.log(`Found ${layoutsData.length} layouts, fetching thumbnail and orientation...`);
+      // Layouts disponibles
       
       // Get the thumbnail URL and orientation_id from the most recent layout
       const { data, error } = await supabase
@@ -1285,15 +1283,13 @@ export default function CameraCapture({ params }) {
         .single();
         
       if (error) {
-        console.error('Error fetching thumbnail:', error);
         return { thumbnailUrl: null, orientationData: null };
       }
       
       const thumbnailUrl = data?.thumbnail_url || null;
       const orientationId = data?.orientation_id || null;
       
-      console.log('Thumbnail URL found:', thumbnailUrl || 'null');
-      console.log('Orientation ID found:', orientationId || 'null');
+      // Thumbnail et orientation récupérés
       
       // Fetch orientation data if we have an orientation_id
       let orientationData = null;
@@ -1867,7 +1863,7 @@ const generateImageGemini = async () => {
       const elapsed = Date.now() - start;
       setElapsedTime(elapsed);
       
-      console.log(`[DEBUG] Timer update (Gemini): ${Math.floor(elapsed / 1000)}s`);
+      // Timer update silencieux
       
       // Progression continue basée sur le temps écoulé
       const elapsedSeconds = Math.floor(elapsed / 1000);
@@ -1890,21 +1886,12 @@ const generateImageGemini = async () => {
   }, 500);
   
   try {
-    console.log("===> [DEBUG] Bouton 'GÉNÉRER MON IMAGE' cliqué, lancement de generateImageGemini");
+    // Génération d'image lancée
 
     const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
     const image = imageFile; // base64
 
-    // Logs détaillés avant envoi
-    console.group('[AI] Request (generateImageGemini)');
-    console.log('Model:', 'gemini-2.5-flash-image-preview');
-    console.log('Prompt:', prompt);
-    console.log('Input image present:', !!image);
-    console.log('Input image size:', image ? `${image.length.toLocaleString()} chars` : 0);
-    console.log('Project ID:', project?.id);
-    console.log('Slug:', slug);
-    console.log('Image header:', image ? image.substring(0, 50) + '...' : 'N/A');
-    console.groupEnd();
+    // Requête AI en cours (logs désactivés pour sécurité)
 
     setLogs(["Envoi de la requête au serveur IA..."]);
     
@@ -1926,17 +1913,12 @@ const generateImageGemini = async () => {
       image
     };
 
-    // Version sûre pour le debug (sans base64 complet)
-    window.debugPayload = {
-      prompt,
-      image: image ? `${image.substring(0, 30)}... (length: ${image.length})` : null
-    };
-    console.log('[AI] Payload summary:', window.debugPayload);
+    // Payload préparé (logs désactivés)
 
     let resultUrl = null;
     let aiSource = 'gemini'; // Track which AI service was used
     
-    console.log('[AI] Starting request to /api/gemini...');
+    // Requête vers serveur IA
     setLogs(prev => [...prev, "Connexion au serveur IA..."]);
 
     const fetchStart = Date.now();
@@ -2047,26 +2029,12 @@ const generateImageGemini = async () => {
 
     // Si Gemini a réussi, traiter la réponse
     if (!resultUrl && response) {
-      const responseTime = Date.now() - fetchStart;
-      console.log(`[AI] Gemini response received after ${responseTime}ms`);
-      console.log(`[AI] Status: ${response.status} ${response.statusText}`);
+      // Traitement de la réponse
       
-      // Log response headers
-      try {
-        const headers = {};
-        response.headers.forEach((value, key) => { headers[key] = value; });
-        console.log('[Gemini] Response headers:', headers);
-      } catch {}
-
       if (!response.ok) {
         let errorText = '';
         try { errorText = await response.text(); } catch {}
-        console.error('[Gemini] HTTP Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText: errorText?.substring(0, 500)
-        });
-        setLogs(prev => [...prev, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
+        setLogs(prev => [...prev, `Erreur HTTP ${response.status}`]);
         throw new Error(errorText || "Erreur Gemini");
       }
 
@@ -2074,15 +2042,9 @@ const generateImageGemini = async () => {
       try {
         data = await response.json();
       } catch (parseErr) {
-        console.error('[Gemini] JSON parse error:', parseErr);
-        let rawText = '';
-        try { rawText = await response.text(); } catch {}
-        console.log('[Gemini] Raw response:', rawText?.substring(0, 500));
-        setLogs(prev => [...prev, 'Réponse invalide du serveur Gemini']);
+        setLogs(prev => [...prev, 'Réponse invalide du serveur']);
         throw new Error(`Réponse invalide de Gemini: ${rawText?.substring(0, 200)}`);
       }
-
-      console.log('[Gemini] Successfully parsed JSON response:', data);
 
       if (!data.success) {
         console.error('[Gemini] API indicated failure:', data.error);
@@ -2097,11 +2059,9 @@ const generateImageGemini = async () => {
           : data.output?.url || data.output?.image || data.output;
 
       if (!resultUrl) {
-        console.error('[Gemini] Missing image URL. Full output:', data.output);
         throw new Error("Aucune image générée");
       }
 
-      console.log('[Gemini] Final image URL:', resultUrl);
       setLogs(["Image générée avec succès !"]);
     }
     
@@ -2109,8 +2069,8 @@ const generateImageGemini = async () => {
       throw new Error("Aucune image générée par les services IA");
     }
     
-    console.log(`[AI] Final image URL from ${aiSource}:`, resultUrl);
-    setLogs(prev => [...prev, `URL d'image reçue avec succès!`]);
+    // Image prête
+    setLogs(prev => [...prev, `Image reçue avec succès!`]);
     localStorage.setItem("faceURLResult", resultUrl);
     localStorage.setItem("aiSource", aiSource); // Store which AI was used
 

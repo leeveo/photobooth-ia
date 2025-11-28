@@ -53,11 +53,11 @@ export async function POST(request) {
     }
     
     // Vérifier le token Gemini
-    if (!process.env.GEMINI) {
-      console.error("GEMINI API key is not set");
+    if (!process.env.GEMINI || process.env.GEMINI === 'REMPLACER_PAR_NOUVELLE_CLE_GEMINI') {
+      console.error("GEMINI API key is not set or is placeholder");
       return NextResponse.json({
         success: false,
-        error: "Configuration API manquante (GEMINI)"
+        error: "Configuration API manquante (GEMINI) - Clé API non configurée"
       }, { status: 500 });
     }
     

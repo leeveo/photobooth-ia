@@ -193,6 +193,13 @@ export default function Result({ params }) {
   });
   const [savingDataCapture, setSavingDataCapture] = useState(false);
   
+  // États pour l'impression
+  const [printing, setPrinting] = useState(false);
+  const [printSuccess, setPrintSuccess] = useState(false);
+  const [printError, setPrintError] = useState(false);
+  const [showPrintPopup, setShowPrintPopup] = useState(false);
+  const [printCopies, setPrintCopies] = useState(1);
+  
   const fetchProjectData = useCallback(async () => {
     try {
       // Fetch project data by slug
@@ -504,6 +511,64 @@ export default function Result({ params }) {
     // Clear result data
     localStorage.removeItem('faceURLResult');
     localStorage.removeItem('resulAIBase64');
+  };
+  
+  // Fonction pour ouvrir le popup d'impression
+  const handlePrint = () => {
+    if (!imageResultAI || !project?.printer_enabled) {
+      return;
+    }
+    setShowPrintPopup(true);
+    setPrintCopies(project.printer_copies || 1);
+  };
+  
+  // Fonction pour lancer l'impression
+  const handleConfirmPrint = async () => {
+    if (!imageResultAI || !project?.printer_enabled) {
+      return;
+    }
+    
+    setPrinting(true);
+    setPrintError(false);
+    setPrintSuccess(false);
+    
+    try {
+      const printerConfig = {
+        ip: project.printer_ip,
+        endpoint: project.printer_endpoint || '/print',
+        copies: printCopies,
+        format: project.printer_format || '10x15'
+      };
+      
+      const response = await fetch('/api/print-to-wcm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: imageResultAI,
+          printerConfig,
+          projectId: project.id
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'impression');
+      }
+      
+      setPrintSuccess(true);
+      setTimeout(() => {
+        setPrintSuccess(false);
+        setShowPrintPopup(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Erreur impression:', err);
+      setPrintError(true);
+    } finally {
+      setPrinting(false);
+    }
   };
   
   if (loading) {
@@ -954,7 +1019,59 @@ export default function Result({ params }) {
               </div>
             )}
 
-            {/* 2. Icône Recommencer */}
+            {/* 2. Icône Imprimer */}
+            {project?.printer_enabled && imageResultAI && (
+              <div className="flex flex-col items-center">
+                <motion.button
+                  onClick={handlePrint}
+                  disabled={printing}
+                  whileHover={{ scale: printing ? 1 : 1.1, y: printing ? 0 : -4 }}
+                  whileTap={{ scale: printing ? 1 : 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className="flex items-center justify-center p-6 rounded-full shadow-lg transition-all relative overflow-hidden"
+                  style={{
+                    background: printing 
+                      ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.5), rgba(168, 85, 247, 0.5))'
+                      : printSuccess
+                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(74, 222, 128, 0.9))'
+                      : 'linear-gradient(135deg, rgba(147, 51, 234, 0.9), rgba(168, 85, 247, 0.9))',
+                    color: '#fff',
+                    border: '3px solid rgba(255, 255, 255, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: printing 
+                      ? '0 4px 16px 0 rgba(147, 51, 234, 0.3)' 
+                      : printSuccess
+                      ? '0 4px 16px 0 rgba(34, 197, 94, 0.4)'
+                      : '0 4px 16px 0 rgba(147, 51, 234, 0.4)',
+                    width: '80px',
+                    height: '80px',
+                    cursor: printing ? 'not-allowed' : 'pointer',
+                    opacity: printing ? 0.7 : 1
+                  }}
+                  title="Imprimer la photo"
+                >
+                  {printing ? (
+                    <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : printSuccess ? (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                  )}
+                </motion.button>
+                <span className="mt-2 text-sm font-medium text-black">
+                  {printing ? 'Impression...' : printSuccess ? 'Envoyé!' : 'Imprimer'}
+                </span>
+              </div>
+            )}
+
+            {/* 3. Icône Recommencer */}
             <div className="flex flex-col items-center">
               <motion.div
                 whileHover={{ scale: 1.1, y: -4 }}
@@ -986,6 +1103,182 @@ export default function Result({ params }) {
           </div>
         )}
       </div>
+
+      {/* Popup d'impression avec glassmorphisme */}
+      {showPrintPopup && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)'
+          }}
+          onClick={() => !printing && setShowPrintPopup(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: "spring", duration: 0.3 }}
+            className="relative max-w-lg w-full rounded-3xl p-12 shadow-2xl"
+            style={{
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Bouton fermer */}
+            {!printing && (
+              <button
+                onClick={() => setShowPrintPopup(false)}
+                className="absolute top-6 right-6 p-3 rounded-full transition-all hover:bg-gray-100"
+                style={{
+                  background: 'rgba(107, 114, 128, 0.1)'
+                }}
+              >
+                <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+
+            {/* Contenu du popup */}
+            <div className="text-center">
+              {/* Icône imprimante */}
+              <div className="mx-auto w-24 h-24 mb-8 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'rgba(107, 114, 128, 0.15)'
+                }}
+              >
+                <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+              </div>
+
+              {printError ? (
+                // Message d'erreur
+                <>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                    Oops ! 😕
+                  </h3>
+                  <p className="text-gray-600 text-lg mb-4">
+                    L'imprimante a un problème
+                  </p>
+                  <p className="text-gray-700 font-semibold text-lg mb-8">
+                    Envoyez votre photo plutôt par email
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowPrintPopup(false);
+                      setPrintError(false);
+                    }}
+                    className="w-full py-5 px-8 rounded-xl font-semibold text-white text-lg transition-all shadow-lg hover:shadow-xl"
+                    style={{
+                      background: 'linear-gradient(135deg, #6B7280, #9CA3AF)'
+                    }}
+                  >
+                    Fermer
+                  </button>
+                </>
+              ) : printSuccess ? (
+                // Message de succès
+                <>
+                  <div className="mb-6">
+                    <svg className="w-20 h-20 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                    Impression envoyée ! ✨
+                  </h3>
+                  <p className="text-gray-600 text-lg">
+                    Votre photo est en cours d'impression
+                  </p>
+                </>
+              ) : printing ? (
+                // Animation impression en cours
+                <>
+                  <div className="mb-8">
+                    <svg className="animate-spin h-20 w-20 text-gray-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                    Impression en cours...
+                  </h3>
+                  <p className="text-gray-600 text-lg">
+                    Veuillez patienter quelques instants
+                  </p>
+                </>
+              ) : (
+                // Sélection du nombre de copies
+                <>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
+                    Imprimer votre photo
+                  </h3>
+                  <p className="text-gray-600 text-lg mb-8">
+                    Choisissez le nombre d'exemplaires
+                  </p>
+
+                  {/* Sélecteur de copies */}
+                  <div className="flex items-center justify-center gap-8 mb-10">
+                    <button
+                      onClick={() => setPrintCopies(Math.max(1, printCopies - 1))}
+                      className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{
+                        background: 'rgba(107, 114, 128, 0.1)',
+                        border: '2px solid rgba(107, 114, 128, 0.3)'
+                      }}
+                    >
+                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
+                      </svg>
+                    </button>
+
+                    <div className="text-7xl font-bold text-gray-700 w-32 text-center">
+                      {printCopies}
+                    </div>
+
+                    <button
+                      onClick={() => setPrintCopies(Math.min(5, printCopies + 1))}
+                      className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                      style={{
+                        background: 'rgba(107, 114, 128, 0.1)',
+                        border: '2px solid rgba(107, 114, 128, 0.3)'
+                      }}
+                    >
+                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Bouton imprimer */}
+                  <button
+                    onClick={handleConfirmPrint}
+                    className="w-full py-6 px-8 rounded-xl font-semibold text-white text-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(135deg, #6B7280, #9CA3AF)'
+                    }}
+                  >
+                    <span className="flex items-center justify-center gap-3">
+                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      </svg>
+                      Lancer l'impression
+                    </span>
+                  </button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </main>
   );
 }
