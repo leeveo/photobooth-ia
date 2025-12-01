@@ -6,14 +6,14 @@
 ALTER TABLE projects 
 ADD COLUMN IF NOT EXISTS printer_enabled BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS printer_ip VARCHAR(255),
-ADD COLUMN IF NOT EXISTS printer_endpoint VARCHAR(255) DEFAULT '/print',
+ADD COLUMN IF NOT EXISTS printer_endpoint VARCHAR(255) DEFAULT '/cgi-bin/print.cgi',
 ADD COLUMN IF NOT EXISTS printer_copies INTEGER DEFAULT 1,
 ADD COLUMN IF NOT EXISTS printer_format VARCHAR(50) DEFAULT '10x15';
 
 -- Ajouter un commentaire pour la documentation
 COMMENT ON COLUMN projects.printer_enabled IS 'Active ou désactive l''impression automatique pour ce projet';
 COMMENT ON COLUMN projects.printer_ip IS 'Adresse IP du module WCM (ex: http://192.168.1.100)';
-COMMENT ON COLUMN projects.printer_endpoint IS 'Endpoint d''impression sur le module WCM (par défaut: /print)';
+COMMENT ON COLUMN projects.printer_endpoint IS 'Endpoint d''impression sur le module WCM (par défaut: /cgi-bin/print.cgi)';
 COMMENT ON COLUMN projects.printer_copies IS 'Nombre de copies à imprimer par défaut';
 COMMENT ON COLUMN projects.printer_format IS 'Format d''impression (10x15, 15x20, 13x18)';
 

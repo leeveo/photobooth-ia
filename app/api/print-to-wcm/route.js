@@ -80,14 +80,18 @@ export async function POST(request) {
 
     // 2. Préparer la requête pour le module WCM
     const formData = new FormData();
-    formData.append('image', imageBlob, 'photo.jpg');
-    formData.append('copies', printerConfig.copies || 1);
-    if (printerConfig.format) {
-      formData.append('format', printerConfig.format);
-    }
+    // WCM Plus utilise 'file' comme nom de paramètre (pas 'image')
+    formData.append('file', imageBlob, 'photo.jpg');
+    formData.append('copies', String(printerConfig.copies || 1));
+    
+    // Paramètres optionnels selon le PDF WCM Plus
+    // Note: format n'est pas un paramètre de l'API, mais on peut l'ajouter si supporté
+    // formData.append('cuts', '1'); // Exemple d'autre paramètre
 
     // 3. Envoyer à l'imprimante
-    const printerUrl = `${printerConfig.ip}${printerConfig.endpoint || '/print'}`;
+    // L'endpoint correct pour WCM Plus est /cgi-bin/print.cgi
+    const endpoint = printerConfig.endpoint || '/cgi-bin/print.cgi';
+    const printerUrl = `${printerConfig.ip}${endpoint}`;
     console.log('📤 [Print API] Envoi vers:', printerUrl);
 
     const printResponse = await fetch(printerUrl, {

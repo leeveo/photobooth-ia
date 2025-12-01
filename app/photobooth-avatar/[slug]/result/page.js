@@ -194,7 +194,7 @@ export default function ResultPage({ params }) {
           projectId: project.id,
           printerConfig: {
             ip: project.printer_ip,
-            endpoint: project.printer_endpoint || '/print',
+            endpoint: project.printer_endpoint || '/cgi-bin/print.cgi',
             copies: printCopies,
             format: project.printer_format || '10x15'
           }
