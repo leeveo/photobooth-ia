@@ -171,16 +171,31 @@ export default function ResultPage({ params }) {
     setPrintError(false);
     
     try {
+      // Convertir l'image en base64
+      let imageBase64 = null;
+      try {
+        const imageResponse = await fetch(imageResultAI);
+        const imageBlob = await imageResponse.blob();
+        imageBase64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(imageBlob);
+        });
+      } catch (conversionError) {
+        console.error('Erreur conversion base64:', conversionError);
+      }
+
       const response = await fetch('/api/print-to-wcm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageUrl: resultImage,
+          imageBase64: imageBase64,
           projectId: project.id,
-          copies: printCopies,
           printerConfig: {
             ip: project.printer_ip,
             endpoint: project.printer_endpoint || '/print',
+            copies: printCopies,
             format: project.printer_format || '10x15'
           }
         }),

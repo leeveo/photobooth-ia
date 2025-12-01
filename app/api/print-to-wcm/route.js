@@ -7,18 +7,19 @@ import { NextResponse } from 'next/server';
  * @returns {NextResponse} - Résultat de l'impression
  */
 export async function POST(request) {
-  let imageUrl, printerConfig, projectId;
+  let imageUrl, imageBase64, printerConfig, projectId;
   
   try {
     const body = await request.json();
     imageUrl = body.imageUrl;
+    imageBase64 = body.imageBase64; // Nouvelle option: image en base64
     printerConfig = body.printerConfig;
     projectId = body.projectId;
 
     // Validation des données
-    if (!imageUrl) {
+    if (!imageUrl && !imageBase64) {
       return NextResponse.json(
-        { error: 'URL de l\'image manquante' },
+        { error: 'URL de l\'image ou base64 manquante' },
         { status: 400 }
       );
     }
@@ -31,35 +32,51 @@ export async function POST(request) {
     }
 
     console.log('🖨️ [Print API] Début impression:', {
-      imageUrl: imageUrl.substring(0, 100) + '...',
+      hasImageUrl: !!imageUrl,
+      hasImageBase64: !!imageBase64,
       printerIp: printerConfig.ip,
       endpoint: printerConfig.endpoint,
       copies: printerConfig.copies
     });
 
-    // 1. Récupérer l'image depuis l'URL
-    let imageResponse;
-    try {
-      imageResponse = await fetch(imageUrl, {
-        headers: {
-          'User-Agent': 'PhotoboothPrinter/1.0'
-        },
-        signal: AbortSignal.timeout(15000) // 15 secondes timeout
+    // 1. Récupérer l'image (depuis URL ou base64)
+    let imageBlob;
+    
+    if (imageBase64) {
+      // Convertir base64 en blob
+      console.log('📥 [Print API] Conversion base64 en blob...');
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      imageBlob = new Blob([buffer], { type: 'image/jpeg' });
+      console.log('📥 [Print API] Image base64 convertie:', {
+        size: imageBlob.size,
+        type: imageBlob.type
       });
-    } catch (fetchError) {
-      console.error('❌ Erreur fetch image:', fetchError);
-      throw new Error(`Impossible de récupérer l'image depuis S3: ${fetchError.message}`);
-    }
+    } else {
+      // Fetch depuis URL (fallback)
+      let imageResponse;
+      try {
+        imageResponse = await fetch(imageUrl, {
+          headers: {
+            'User-Agent': 'PhotoboothPrinter/1.0'
+          },
+          signal: AbortSignal.timeout(15000) // 15 secondes timeout
+        });
+      } catch (fetchError) {
+        console.error('❌ Erreur fetch image:', fetchError);
+        throw new Error(`Impossible de récupérer l'image depuis S3: ${fetchError.message}`);
+      }
 
-    if (!imageResponse.ok) {
-      throw new Error(`Erreur S3 ${imageResponse.status}: ${imageResponse.statusText}`);
-    }
+      if (!imageResponse.ok) {
+        throw new Error(`Erreur S3 ${imageResponse.status}: ${imageResponse.statusText}`);
+      }
 
-    const imageBlob = await imageResponse.blob();
-    console.log('📥 [Print API] Image récupérée:', {
-      size: imageBlob.size,
-      type: imageBlob.type
-    });
+      imageBlob = await imageResponse.blob();
+      console.log('📥 [Print API] Image récupérée:', {
+        size: imageBlob.size,
+        type: imageBlob.type
+      });
+    }
 
     // 2. Préparer la requête pour le module WCM
     const formData = new FormData();
