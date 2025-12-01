@@ -7,8 +7,13 @@ import { NextResponse } from 'next/server';
  * @returns {NextResponse} - Résultat de l'impression
  */
 export async function POST(request) {
+  let imageUrl, printerConfig, projectId;
+  
   try {
-    const { imageUrl, printerConfig, projectId } = await request.json();
+    const body = await request.json();
+    imageUrl = body.imageUrl;
+    printerConfig = body.printerConfig;
+    projectId = body.projectId;
 
     // Validation des données
     if (!imageUrl) {
@@ -114,7 +119,6 @@ export async function POST(request) {
     console.error('❌ [Print API] Erreur:', error);
 
     // Log de l'erreur dans la base (optionnel)
-    const { imageUrl, printerConfig, projectId } = await request.json().catch(() => ({}));
     if (projectId && printerConfig?.ip) {
       try {
         const { createClient } = await import('@supabase/supabase-js');
