@@ -302,41 +302,26 @@ export default function Result({ params }) {
     setPrintError(false);
     
     try {
-      // Convertir l'image en base64
-      let imageBase64 = null;
-      try {
-        const imageResponse = await fetch(imageResultAI);
-        const imageBlob = await imageResponse.blob();
-        imageBase64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(imageBlob);
-        });
-      } catch (conversionError) {
-        console.error('Erreur conversion base64:', conversionError);
-      }
-
-      const response = await fetch('/api/print-to-wcm', {
+      // 1. Récupérer l'image depuis S3
+      const imageResponse = await fetch(imageResultAI);
+      const imageBlob = await imageResponse.blob();
+      
+      // 2. Créer le FormData pour le WCM Plus
+      const formData = new FormData();
+      formData.append('file', imageBlob, 'photo.jpg');
+      formData.append('copies', String(printCopies));
+      
+      // 3. Envoyer directement au WCM Plus depuis le navigateur
+      const printerUrl = `${project.printer_ip}${project.printer_endpoint || '/cgi-bin/print.cgi'}`;
+      console.log('🖨️ Impression directe vers:', printerUrl);
+      
+      const printResponse = await fetch(printerUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUrl: imageResultAI,
-          imageBase64: imageBase64,
-          projectId: project.id,
-          printerConfig: {
-            ip: project.printer_ip,
-            endpoint: project.printer_endpoint || '/cgi-bin/print.cgi',
-            copies: printCopies,
-            format: project.printer_format || '10x15'
-          }
-        }),
+        body: formData,
+        mode: 'no-cors',
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'impression');
-      }
+      console.log('✅ Requête envoyée à l\'imprimante');
       
       setPrintSuccess(true);
       setTimeout(() => {

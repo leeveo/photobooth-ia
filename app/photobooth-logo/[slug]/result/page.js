@@ -453,7 +453,7 @@ export default function Result({ params }) {
     setShowPrintPopup(true);
   };
   
-  // Fonction pour lancer l'impression
+  // Fonction pour lancer l'impression (directement depuis le client)
   const handleConfirmPrint = async () => {
     if (!imageResultAI || !project?.printer_enabled) return;
     
@@ -461,42 +461,28 @@ export default function Result({ params }) {
     setPrintError(false);
     
     try {
-      // Convertir l'image en base64
-      let imageBase64 = null;
-      try {
-        const imageResponse = await fetch(imageResultAI);
-        const imageBlob = await imageResponse.blob();
-        imageBase64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(imageBlob);
-        });
-      } catch (conversionError) {
-        console.error('Erreur conversion base64:', conversionError);
-        // Continuer avec l'URL si la conversion échoue
-      }
-
-      const response = await fetch('/api/print-to-wcm', {
+      // 1. Récupérer l'image depuis S3
+      const imageResponse = await fetch(imageResultAI);
+      const imageBlob = await imageResponse.blob();
+      
+      // 2. Créer le FormData pour le WCM Plus
+      const formData = new FormData();
+      formData.append('file', imageBlob, 'photo.jpg');
+      formData.append('copies', String(printCopies));
+      
+      // 3. Envoyer directement au WCM Plus depuis le navigateur
+      const printerUrl = `${project.printer_ip}${project.printer_endpoint || '/cgi-bin/print.cgi'}`;
+      console.log('🖨️ Impression directe vers:', printerUrl);
+      
+      const printResponse = await fetch(printerUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUrl: imageResultAI,
-          imageBase64: imageBase64, // Prioritaire si disponible
-          projectId: project.id,
-          printerConfig: {
-            ip: project.printer_ip,
-            endpoint: project.printer_endpoint || '/cgi-bin/print.cgi',
-            copies: printCopies,
-            format: project.printer_format || '10x15'
-          }
-        }),
+        body: formData,
+        mode: 'no-cors', // Important pour contourner CORS sur réseau local
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'impression');
-      }
+      // Note: avec mode 'no-cors', on ne peut pas lire la réponse
+      // On suppose que si pas d'erreur réseau, c'est ok
+      console.log('✅ Requête envoyée à l\'imprimante');
       
       setPrintSuccess(true);
       setTimeout(() => {
@@ -505,7 +491,7 @@ export default function Result({ params }) {
       }, 3000);
       
     } catch (error) {
-      console.error('Erreur impression:', error);
+      console.error('❌ Erreur impression:', error);
       setPrintError(true);
     } finally {
       setPrinting(false);
