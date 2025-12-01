@@ -38,9 +38,21 @@ export async function POST(request) {
     });
 
     // 1. Récupérer l'image depuis l'URL
-    const imageResponse = await fetch(imageUrl);
+    let imageResponse;
+    try {
+      imageResponse = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'PhotoboothPrinter/1.0'
+        },
+        signal: AbortSignal.timeout(15000) // 15 secondes timeout
+      });
+    } catch (fetchError) {
+      console.error('❌ Erreur fetch image:', fetchError);
+      throw new Error(`Impossible de récupérer l'image depuis S3: ${fetchError.message}`);
+    }
+
     if (!imageResponse.ok) {
-      throw new Error(`Impossible de récupérer l'image: ${imageResponse.statusText}`);
+      throw new Error(`Erreur S3 ${imageResponse.status}: ${imageResponse.statusText}`);
     }
 
     const imageBlob = await imageResponse.blob();
