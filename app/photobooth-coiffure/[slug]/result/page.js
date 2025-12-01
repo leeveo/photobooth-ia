@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { printImageToAirPrint } from '../../../../utils/clientPrint';
 import Image from "next/image";
 import Link from 'next/link';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -522,7 +523,7 @@ export default function Result({ params }) {
     setPrintCopies(project.printer_copies || 1);
   };
   
-  // Fonction pour lancer l'impression
+  // Fonction pour lancer l'impression (via AirPrint / Kiosk Pro)
   const handleConfirmPrint = async () => {
     if (!imageResultAI || !project?.printer_enabled) {
       return;
@@ -537,23 +538,12 @@ export default function Result({ params }) {
       const imageResponse = await fetch(imageResultAI);
       const imageBlob = await imageResponse.blob();
       
-      // 2. Créer le FormData pour le WCM Plus
-      const formData = new FormData();
-      formData.append('file', imageBlob, 'photo.jpg');
-      formData.append('copies', String(printCopies));
+      // 2. Lancer l'impression via AirPrint (Client-side)
+      console.log('🖨️ Lancement impression AirPrint...');
       
-      // 3. Envoyer directement au WCM Plus depuis le navigateur
-      const printerUrl = `${project.printer_ip}${project.printer_endpoint || '/cgi-bin/print.cgi'}`;
-      console.log('🖨️ Impression directe vers:', printerUrl);
+      await printImageToAirPrint(imageResultAI, imageBlob);
       
-      const printResponse = await fetch(printerUrl, {
-        method: 'POST',
-        body: formData,
-        mode: 'no-cors',
-      });
-      
-      // Note: avec mode 'no-cors', on ne peut pas lire la réponse
-      console.log('✅ Requête envoyée à l\'imprimante');
+      console.log('✅ Dialogue d\'impression ouvert');
       
       setPrintSuccess(true);
       setTimeout(() => {

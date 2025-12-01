@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { printImageToAirPrint } from '../../../../utils/clientPrint';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -163,7 +164,7 @@ export default function ResultPage({ params }) {
     setShowPrintPopup(true);
   };
   
-  // Fonction pour lancer l'impression
+  // Fonction pour lancer l'impression (via AirPrint / Kiosk Pro)
   const handleConfirmPrint = async () => {
     if (!resultImage || !project?.printer_enabled) return;
     
@@ -175,22 +176,12 @@ export default function ResultPage({ params }) {
       const imageResponse = await fetch(resultImage);
       const imageBlob = await imageResponse.blob();
       
-      // 2. Créer le FormData pour le WCM Plus
-      const formData = new FormData();
-      formData.append('file', imageBlob, 'photo.jpg');
-      formData.append('copies', String(printCopies));
+      // 2. Lancer l'impression via AirPrint (Client-side)
+      console.log('🖨️ Lancement impression AirPrint...');
       
-      // 3. Envoyer directement au WCM Plus depuis le navigateur
-      const printerUrl = `${project.printer_ip}${project.printer_endpoint || '/cgi-bin/print.cgi'}`;
-      console.log('🖨️ Impression directe vers:', printerUrl);
+      await printImageToAirPrint(resultImage, imageBlob);
       
-      const printResponse = await fetch(printerUrl, {
-        method: 'POST',
-        body: formData,
-        mode: 'no-cors',
-      });
-      
-      console.log('✅ Requête envoyée à l\'imprimante');
+      console.log('✅ Dialogue d\'impression ouvert');
       
       setPrintSuccess(true);
       setTimeout(() => {
@@ -199,7 +190,7 @@ export default function ResultPage({ params }) {
       }, 3000);
       
     } catch (error) {
-      console.error('Erreur impression:', error);
+      console.error('❌ Erreur impression:', error);
       setPrintError(true);
     } finally {
       setPrinting(false);
