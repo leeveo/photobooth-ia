@@ -202,13 +202,13 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       try {
         if (navigator.permissions) {
           const permission = await navigator.permissions.query({ name: 'camera' });
-          console.log("📹 Camera permission status:", permission.state);
+          // console.log("📹 Camera permission status:", permission.state);
           return permission.state;
         }
-        console.log("⚠️ Navigator.permissions not available");
+        // console.log("⚠️ Navigator.permissions not available");
         return 'unknown';
       } catch (err) {
-        console.log("⚠️ Could not check camera permission:", err.message);
+        // console.log("⚠️ Could not check camera permission:", err.message);
         return 'unknown';
       }
     };
@@ -216,7 +216,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
     // Function to attempt camera initialization with different constraints
     const tryInitCamera = async (constraints) => {
       try {
-        console.log("📹 Requesting camera with constraints:", JSON.stringify(constraints, null, 2));
+        // console.log("📹 Requesting camera with constraints:", JSON.stringify(constraints, null, 2));
         
         // Add timeout to prevent hanging
         const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
@@ -236,13 +236,13 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log("✅ Camera access granted! Settings:", {
+          /* console.log("✅ Camera access granted! Settings:", {
             deviceId: settings.deviceId,
             facingMode: settings.facingMode,
             width: settings.width,
             height: settings.height,
             label: videoTrack.label
-          });
+          }); */
         }
         
         return stream;
@@ -259,7 +259,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
     
     // Main initialization function with fallbacks
     const initializeCamera = async () => {
-      console.log("🎥 Initializing camera...");
+      // console.log("🎥 Initializing camera...");
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setCameraError("Votre navigateur ne prend pas en charge l'accès à la caméra");
         return;
@@ -267,7 +267,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       
       // Check camera permission first
       const permissionStatus = await checkCameraPermission();
-      console.log("🔐 Camera permission check result:", permissionStatus);
+      // console.log("🔐 Camera permission check result:", permissionStatus);
       
       if (permissionStatus === 'denied') {
         setCameraError("L'accès à la caméra a été refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.");
@@ -277,27 +277,27 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       // Diagnostic: List all available cameras
       const listAvailableCameras = async () => {
         try {
-          console.log("📋 Listing all available media devices...");
+          // console.log("📋 Listing all available media devices...");
           const devices = await navigator.mediaDevices.enumerateDevices();
           const videoDevices = devices.filter(device => device.kind === 'videoinput');
           
-          console.log(`📹 Found ${videoDevices.length} video devices:`);
-          videoDevices.forEach((device, index) => {
+          // console.log(`📹 Found ${videoDevices.length} video devices:`);
+          /* videoDevices.forEach((device, index) => {
             console.log(`  Camera ${index + 1}: ${device.label || 'Unknown'} (ID: ${device.deviceId})`);
-          });
+          }); */
           
           // Test basic camera access capability
           if (videoDevices.length > 0) {
-            console.log("🧪 Testing basic camera access...");
+            // console.log("🧪 Testing basic camera access...");
             try {
               const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
               const videoTrack = testStream.getVideoTracks()[0];
               if (videoTrack) {
                 const settings = videoTrack.getSettings();
-                console.log("✅ Basic camera access works! Current settings:", settings);
+                // console.log("✅ Basic camera access works! Current settings:", settings);
                 
                 // ⭐ IMPORTANT: Si l'accès basique fonctionne, l'utiliser directement !
-                console.log("🎯 Using basic camera access since it works perfectly!");
+                // console.log("🎯 Using basic camera access since it works perfectly!");
                 return testStream;
               }
             } catch (testErr) {
@@ -319,7 +319,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
-      console.log(`🔍 Device detection DÉTAILLÉE:`);
+      /* console.log(`🔍 Device detection DÉTAILLÉE:`);
       console.log(`📱 Mobile: ${isMobile}`);
       console.log(`📲 Tablet: ${isTablet}`);
       console.log(`🍎 iPad: ${isIPad}`);
@@ -327,28 +327,28 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       console.log(`📱 iOS: ${isIOS}`);
       console.log(`🖥️ Platform: ${navigator.platform}`);
       console.log(`👆 MaxTouchPoints: ${navigator.maxTouchPoints}`);
-      console.log(`🌍 UserAgent: ${navigator.userAgent}`);
+      console.log(`🌍 UserAgent: ${navigator.userAgent}`); */
       
       let stream = null;
       
       // ✅ PRIORITÉ ABSOLUE: Si c'est un iPad/iOS avec Safari, utiliser la méthode spécialisée EN PREMIER
       if ((isIPad || isIOS) && isSafari) {
-        console.log("🍎 DÉTECTION iPad/iOS + Safari → Méthode spécialisée PRIORITAIRE");
+        // console.log("🍎 DÉTECTION iPad/iOS + Safari → Méthode spécialisée PRIORITAIRE");
         stream = await tryIPadSafariFrontCamera();
         
         if (stream) {
-          console.log("✅ SUCCÈS méthode spécialisée iPad/iOS Safari!");
+          // console.log("✅ SUCCÈS méthode spécialisée iPad/iOS Safari!");
         } else {
-          console.log("❌ Méthode spécialisée iPad/iOS Safari échouée, fallback vers méthode standard");
+          // console.log("❌ Méthode spécialisée iPad/iOS Safari échouée, fallback vers méthode standard");
         }
       } else {
-        console.log("📱 Appareil non-iPad ou non-Safari, utilisation méthode standard");
+        // console.log("📱 Appareil non-iPad ou non-Safari, utilisation méthode standard");
         
         // ⭐ Pour non-iPad : tester d'abord l'accès basique via le diagnostic
-        console.log("🧪 Test de l'accès basique avant configurations complexes...");
+        // console.log("🧪 Test de l'accès basique avant configurations complexes...");
         const basicStream = await listAvailableCameras();
         if (basicStream) {
-          console.log("✅ Diagnostic réussi - utilisation du stream basique!");
+          // console.log("✅ Diagnostic réussi - utilisation du stream basique!");
           stream = basicStream;
         }
       }
@@ -518,7 +518,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         }
       }
       
-      console.log("✅ Camera stream obtained successfully");
+      // console.log("✅ Camera stream obtained successfully");
       
       // Store the successful stream
       streamCam = stream;
@@ -527,7 +527,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       // Apply the stream to video element with retry logic
       const attachStreamToVideo = async (retryCount = 0) => {
         if (videoRef.current) {
-          console.log("📹 Attaching stream to video element");
+          // console.log("📹 Attaching stream to video element");
           videoRef.current.srcObject = stream;
           
           // Make sure the video element is visible
@@ -537,17 +537,22 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
           // Play video with error handling
           try {
             await videoRef.current.play();
-            console.log("▶️ Camera stream playing successfully");
+            // console.log("▶️ Camera stream playing successfully");
             
             // Set a timeout to allow the video to initialize before marking as loaded
             setTimeout(() => {
               if (isMounted) {
                 setCameraLoaded(true);
-                console.log("✅ Camera marked as loaded");
+                // console.log("✅ Camera marked as loaded");
               }
             }, 1000);
             
           } catch (playError) {
+            // Ignore AbortError which happens when video is interrupted by a new load
+            if (playError.name === 'AbortError') {
+              // console.log("⚠️ Video play interrupted (benign)");
+              return;
+            }
             console.error("❌ Error playing video stream:", playError);
             setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
           }
@@ -578,7 +583,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
     // Cleanup function
     return () => {
       isMounted = false;
-      console.log("🧹 Cleaning up camera resources...");
+      // console.log("🧹 Cleaning up camera resources...");
       
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -589,7 +594,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
           const tracks = streamCam.getTracks();
           tracks.forEach(track => {
             track.stop();
-            console.log(`🛑 Stopped track: ${track.kind}`);
+            // console.log(`🛑 Stopped track: ${track.kind}`);
           });
           streamCam = null;
           window.localStream = null;
@@ -1092,14 +1097,14 @@ export default function CameraCapture({ params }) {
           
           setProject(projectData);
           
-          // FIX: Use single() with separate query instead of filtering by project_id
+          // FIX: Use maybeSingle() to avoid 406 error if no settings found
           try {
             // First get the settings ID that matches the project
             const { data: settingsIdData } = await supabase
               .from('project_settings')
               .select('id', { head: false })
               .eq('project_id', projectData.id)
-              .single();
+              .maybeSingle();
               
             if (settingsIdData && settingsIdData.id) {
               // Then query for specific settings using the settings ID
@@ -1107,7 +1112,7 @@ export default function CameraCapture({ params }) {
                 .from('project_settings')
                 .select('show_countdown, max_processing_time', { head: false })
                 .eq('id', settingsIdData.id)
-                .single();
+                .maybeSingle();
               
               if (settingsData) {
                 setSettings(settingsData);
@@ -3313,11 +3318,11 @@ const generateImageGemini = async () => {
             autoPlay
             muted
             onLoadedMetadata={() => {
-              console.log("Video metadata loaded:", {
+              /* console.log("Video metadata loaded:", {
                 videoWidth: videoRef.current?.videoWidth,
                 videoHeight: videoRef.current?.videoHeight,
                 deviceType: deviceType
-              });
+              }); */
               setCameraLoaded(true);
             }}
             onError={(e) => {

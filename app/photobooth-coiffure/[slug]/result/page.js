@@ -557,11 +557,9 @@ export default function Result({ params }) {
       }
       
       // 2. Lancer l'impression via AirPrint (Client-side)
-      console.log(`🖨️ Lancement impression AirPrint (${printCopies} copies)...`);
       
       // Boucle pour imprimer le nombre de copies demandé
       for (let i = 0; i < printCopies; i++) {
-        console.log(`🖨️ Impression copie ${i + 1}/${printCopies}`);
         await printImageToAirPrint(imageResultAI, imageBlob);
         
         // Petit délai entre les impressions si plusieurs copies
@@ -569,8 +567,6 @@ export default function Result({ params }) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
-      
-      console.log('✅ Dialogue d\'impression ouvert');
       
       setPrintSuccess(true);
       setTimeout(() => {

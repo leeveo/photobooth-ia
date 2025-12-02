@@ -85,7 +85,7 @@ export default function PhotoboothProject({ params }) {
               .from('project_settings')
               .select('enable_fullscreen, default_gender')
               .eq('project_id', projectData.id)
-              .single();
+              .maybeSingle();
               
             setSettings(settingsData || {
               enable_fullscreen: true,

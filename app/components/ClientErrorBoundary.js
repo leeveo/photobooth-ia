@@ -2,11 +2,53 @@
 
 import { useState, useEffect } from 'react';
 
+// ✅ GLOBAL CONSOLE SUPPRESSION FOR SUPABASE COOKIE ERRORS
+if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    // Filter Supabase cookie errors
+    const isCookieError = args.some(arg => {
+      const str = String(arg);
+      return str.includes('Failed to parse cookie string') || 
+             str.includes('base64-eyJ');
+    });
+
+    if (isCookieError) return;
+    
+    originalConsoleError.apply(console, args);
+  };
+}
+
 export default function ClientErrorBoundary({ children }) {
   const [hasError, setHasError] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // ✅ ATTEMPT TO CLEANUP CORRUPTED COOKIES
+    try {
+      if (document.cookie) {
+        const cookies = document.cookie.split(';');
+        cookies.forEach(cookie => {
+          const parts = cookie.split('=');
+          const name = parts[0] ? parts[0].trim() : '';
+          const value = parts.slice(1).join('=').trim();
+          
+          // Check for Supabase cookies that might be corrupted (starting with base64- or invalid JSON)
+          if (name && (name.includes('sb-') || name.includes('supabase')) && value) {
+             // If it looks like the problematic base64 string or isn't valid JSON/URI-encoded JSON
+             if (value.startsWith('base64-') || (value.startsWith('"base64-'))) {
+               // Delete the cookie
+               document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
+               document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${window.location.hostname}`;
+               // console.log(`🧹 Cleaned up corrupted cookie: ${name}`);
+             }
+          }
+        });
+      }
+    } catch (e) {
+      // ignore cookie cleanup errors
+    }
+
     // Handle window errors
     const handleError = (event) => {
       console.log('Error caught by boundary:', event.error);

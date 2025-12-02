@@ -46,19 +46,41 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
   }
 
   // 2. Fallback: Impression navigateur standard (avec dialogue)
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      // Créer une URL locale pour l'image (évite les problèmes CORS et re-téléchargement)
-      const blobUrl = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+      // FIX: Utiliser Base64 au lieu de Blob URL pour éviter que la ressource ne soit inaccessible
+      // lors de l'envoi réel à l'imprimante (page blanche sur iPad)
+      let imageSrc = imageUrl;
+      if (imageBlob) {
+        try {
+          const reader = new FileReader();
+          imageSrc = await new Promise((res, rej) => {
+            reader.onloadend = () => res(reader.result);
+            reader.onerror = rej;
+            reader.readAsDataURL(imageBlob);
+          });
+        } catch (e) {
+          console.error("Erreur conversion blob vers base64:", e);
+          // Fallback sur l'URL si la conversion échoue
+          imageSrc = imageUrl;
+        }
+      }
+
+      // Nettoyer l'ancienne iframe si elle existe pour éviter l'accumulation
+      const oldIframe = document.getElementById('print-iframe-hidden');
+      if (oldIframe) {
+        document.body.removeChild(oldIframe);
+      }
 
       // Créer une iframe invisible mais avec des dimensions pour que le rendu fonctionne
       const iframe = document.createElement('iframe');
+      iframe.id = 'print-iframe-hidden';
       iframe.style.position = 'fixed';
       // Au lieu de 0x0, on la place hors écran avec une taille standard
       iframe.style.left = '-9999px';
       iframe.style.top = '0';
-      iframe.style.width = '4in'; // Taille approximative 10x15
-      iframe.style.height = '6in';
+      iframe.style.width = '100mm'; // Format 10x15cm
+      iframe.style.height = '150mm';
       iframe.style.border = '0';
       // Note: visibility: hidden peut empêcher le rendu du contenu dans certains navigateurs lors de l'impression
       // Le positionnement hors écran est plus sûr.
@@ -75,29 +97,32 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
             <title>Impression</title>
             <style>
               @page { 
-                size: 4in 6in; /* Format standard DNP 10x15 */
+                size: 100mm 150mm; /* Format standard DNP 10x15 */
                 margin: 0; 
               }
-              body { 
+              html, body { 
                 margin: 0; 
                 padding: 0;
                 width: 100%;
                 height: 100%;
+                overflow: hidden; /* Empêcher le débordement sur une 2ème page */
+              }
+              body {
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
                 background: white;
               }
               img { 
-                max-width: 100%; 
-                max-height: 100%; 
-                object-fit: contain; /* S'assurer que l'image est visible en entier */
+                width: 100%; 
+                height: 100%; 
+                object-fit: cover; /* Remplir tout l'espace */
                 display: block; 
               }
             </style>
           </head>
           <body>
-            <img src="${blobUrl}" id="printImage" />
+            <img src="${imageSrc}" id="printImage" />
             <script>
               // Attendre que l'image soit chargée avant d'imprimer
               const img = document.getElementById('printImage');
@@ -106,10 +131,14 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
                 // Focus nécessaire pour certains navigateurs
                 window.focus();
                 
-                // Lancer l'impression
-                window.print();
-                
-                // Signaler au parent que c'est fait (via postMessage si besoin, ou juste fermer)
+                // Petit délai supplémentaire pour garantir le rendu sur iPad
+                setTimeout(() => {
+                  try {
+                    window.print();
+                  } catch(e) {
+                    console.error('Print error:', e);
+                  }
+                }, 250);
               }
 
               if (img.complete) {
@@ -123,13 +152,11 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
       `);
       doc.close();
 
-      // 4. Nettoyage (après un délai suffisant pour que le dialogue s'ouvre)
-      // Sur iOS, le script s'arrête quand le dialogue d'impression est ouvert
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        if (imageBlob) URL.revokeObjectURL(blobUrl);
-        resolve(true);
-      }, 2000); // 2 secondes de délai
+      // 4. Nettoyage
+      // IMPORTANT: Sur iPad/iOS, ne PAS supprimer l'iframe immédiatement.
+      // Le spooler d'impression a besoin que le document existe encore.
+      // On laisse l'iframe, elle sera nettoyée au prochain appel via son ID.
+      resolve(true);
 
     } catch (error) {
       console.error("❌ Erreur lors de la préparation de l'impression:", error);

@@ -87,7 +87,7 @@ export default function PhotoboothStyles({ params }) {
             .from('project_settings')
             .select('default_gender')
             .eq('project_id', projectData.id)
-            .single();
+            .maybeSingle();
           
           const projectSettings = settingsData || { default_gender: 'g' };
           
@@ -343,7 +343,7 @@ export default function PhotoboothStyles({ params }) {
 
   // Flèches personnalisées pour react-slick (centrées, sans doublon visuel)
   function ArrowLeft(props) {
-    const { className, style, onClick } = props;
+    const { className, style, onClick, currentSlide, slideCount, ...rest } = props;
     return (
       <button
         type="button"
@@ -365,6 +365,7 @@ export default function PhotoboothStyles({ params }) {
         }}
         onClick={onClick}
         aria-label="Précédent"
+        {...rest}
       >
         <svg width="32" height="32" viewBox="8 0 24 24" fill="none" style={{display: "block"}}>
           <path d="M15.5 19L9.5 12L15.5 5" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -374,7 +375,7 @@ export default function PhotoboothStyles({ params }) {
   }
 
   function ArrowRight(props) {
-    const { className, style, onClick } = props;
+    const { className, style, onClick, currentSlide, slideCount, ...rest } = props;
     return (
       <button
         type="button"
@@ -396,6 +397,7 @@ export default function PhotoboothStyles({ params }) {
         }}
         onClick={onClick}
         aria-label="Suivant"
+        {...rest}
       >
         <svg width="32" height="32" viewBox="6 0 24 24" fill="none" style={{display: "block"}}>
           <path d="M8.5 5L14.5 12L8.5 19" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1948,15 +1950,15 @@ export default function PhotoboothStyles({ params }) {
                       style={{ 
                         backgroundColor: secondaryColor, 
                         color: primaryColor,
-                        boxShadow: `0 20px 40px ${secondaryColor}40`
+                        // BoxShadow handled by motion props to avoid animation errors
                       }}
                       whileHover={{ 
                         scale: 1.05,
                         boxShadow: `0 25px 50px ${secondaryColor}60`
                       }}
                       whileTap={{ scale: 0.95 }}
-                      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      initial={{ opacity: 0, y: 30, scale: 0.9, boxShadow: "0 0 0 0px transparent" }}
+                      animate={{ opacity: 1, y: 0, scale: 1, boxShadow: `0 20px 40px ${secondaryColor}40` }}
                       transition={{ 
                         delay: 1.7, 
                         duration: 0.6,
