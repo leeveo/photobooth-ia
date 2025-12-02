@@ -3,14 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 export default function HowToUse({ params }) {
   const slug = params.slug;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);

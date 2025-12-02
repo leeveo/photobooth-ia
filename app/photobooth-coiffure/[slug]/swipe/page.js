@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import Image from 'next/image';
 
@@ -105,7 +105,7 @@ const SwipeCard = React.forwardRef(({ children, onSwipe, onCardLeftScreen, class
 export default function SwipeGalleryPage() {
   const params = useParams();
   const slug = params?.slug;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

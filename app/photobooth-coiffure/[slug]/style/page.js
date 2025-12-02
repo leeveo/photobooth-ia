@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinnerCoiffure from '../../../components/ui/LoadingSpinnerCoiffure';
 import './style.css'; // Import CSS for masonry grid
@@ -17,7 +17,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 export default function PhotoboothStyles({ params }) {
   const { slug } = params;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   const router = useRouter();
   
   const [project, setProject] = useState(null);

@@ -5,7 +5,7 @@ import { printImageToAirPrint } from '../../../../utils/clientPrint';
 import Image from "next/image";
 import Link from 'next/link';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { useQRCode } from 'next-qrcode';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -172,7 +172,7 @@ const makeAbsoluteUrl = (pathOrUrl) => {
 
 export default function Result({ params }) {
   const slug = params.slug;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   const { Canvas } = useQRCode();
   
   const [loading, setLoading] = useState(true);
@@ -535,13 +535,40 @@ export default function Result({ params }) {
     
     try {
       // 1. Récupérer l'image depuis S3
-      const imageResponse = await fetch(imageResultAI);
-      const imageBlob = await imageResponse.blob();
+      let imageBlob;
+      
+      // Si c'est une Data URL, on peut la fetcher directement
+      if (imageResultAI.startsWith('data:')) {
+        const imageResponse = await fetch(imageResultAI);
+        imageBlob = await imageResponse.blob();
+      } else {
+        // Pour les URLs HTTP(S), on essaie d'abord en direct, puis via proxy si échec (CORS)
+        try {
+          const imageResponse = await fetch(imageResultAI);
+          if (!imageResponse.ok) throw new Error('Direct fetch failed');
+          imageBlob = await imageResponse.blob();
+        } catch (directError) {
+          console.log('⚠️ Direct fetch failed (CORS?), trying proxy...', directError);
+          const proxyUrl = `/api/download-image?url=${encodeURIComponent(imageResultAI)}`;
+          const proxyResponse = await fetch(proxyUrl);
+          if (!proxyResponse.ok) throw new Error('Proxy fetch failed');
+          imageBlob = await proxyResponse.blob();
+        }
+      }
       
       // 2. Lancer l'impression via AirPrint (Client-side)
-      console.log('🖨️ Lancement impression AirPrint...');
+      console.log(`🖨️ Lancement impression AirPrint (${printCopies} copies)...`);
       
-      await printImageToAirPrint(imageResultAI, imageBlob);
+      // Boucle pour imprimer le nombre de copies demandé
+      for (let i = 0; i < printCopies; i++) {
+        console.log(`🖨️ Impression copie ${i + 1}/${printCopies}`);
+        await printImageToAirPrint(imageResultAI, imageBlob);
+        
+        // Petit délai entre les impressions si plusieurs copies
+        if (i < printCopies - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       
       console.log('✅ Dialogue d\'impression ouvert');
       

@@ -468,9 +468,18 @@ export default function Result({ params }) {
       
       // 2. Lancer l'impression via AirPrint (Client-side)
       // Cela fonctionne nativement sur iPad (Safari/Chrome) et Kiosk Pro
-      console.log('🖨️ Lancement impression AirPrint...');
+      console.log(`🖨️ Lancement impression AirPrint (${printCopies} copies)...`);
       
-      await printImageToAirPrint(imageResultAI, imageBlob);
+      // Boucle pour imprimer le nombre de copies demandé
+      for (let i = 0; i < printCopies; i++) {
+        console.log(`🖨️ Impression copie ${i + 1}/${printCopies}`);
+        await printImageToAirPrint(imageResultAI, imageBlob);
+        
+        // Petit délai entre les impressions si plusieurs copies
+        if (i < printCopies - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       
       console.log('✅ Dialogue d\'impression ouvert');
       

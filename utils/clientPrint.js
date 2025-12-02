@@ -4,45 +4,64 @@
  */
 
 export const printImageToAirPrint = async (imageUrl, imageBlob) => {
-  return new Promise((resolve, reject) => {
+  // 1. Détection Kiosk Pro (pour impression silencieuse)
+  // Nécessite Kiosk Pro Plus ou Enterprise et une configuration correcte de l'imprimante dans l'app
+  if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
-      // 1. Détection Kiosk Pro (pour impression silencieuse)
-      // Nécessite Kiosk Pro Plus ou Enterprise et une configuration correcte de l'imprimante dans l'app
-      if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
-        console.log('📱 Kiosk Pro détecté, tentative d\'impression directe...');
-        
-        // Utiliser l'URL distante (S3)
-        // Note: Kiosk Pro doit avoir accès à internet pour télécharger l'image
-        const targetUrl = imageUrl; 
-        
-        // Appel API Kiosk Pro: print(url, printerId)
-        // On laisse printerId vide ("") pour utiliser l'imprimante par défaut configurée dans Kiosk Pro
-        // Si une imprimante spécifique est requise, il faudrait son ID (ex: "Brother QL-820NWB")
+      console.log('📱 Kiosk Pro détecté, tentative d\'impression directe...');
+      
+      // Utiliser l'URL distante (S3)
+      // Note: Kiosk Pro doit avoir accès à internet pour télécharger l'image
+      let targetUrl = imageUrl; 
+
+      // TENTATIVE DE FIX PAGE BLANCHE :
+      // Si on a un blob, on le convertit en Base64.
+      // Kiosk Pro gère souvent mieux les Data URLs que les URLs distantes (problèmes de cache, auth, ou téléchargement)
+      if (imageBlob) {
         try {
-          // Le résultat est généralement 1 (succès de l'envoi) ou 0 (échec)
-          const result = window.kioskpro.printing.print(targetUrl, "");
-          console.log('✅ Commande Kiosk Pro envoyée, code retour:', result);
-          resolve(true);
-          return;
-        } catch (kpError) {
-          console.error('⚠️ Erreur API Kiosk Pro, passage au fallback:', kpError);
-          // On continue vers le fallback standard si l'API échoue
+          const reader = new FileReader();
+          targetUrl = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageBlob);
+          });
+          console.log('📦 Image convertie en Base64 pour Kiosk Pro (taille:', targetUrl.length, ')');
+        } catch (b64Error) {
+          console.error('⚠️ Erreur conversion Base64, utilisation URL distante:', b64Error);
         }
       }
+      
+      // Appel API Kiosk Pro: print(url, printerId)
+      // On laisse printerId vide ("") pour utiliser l'imprimante par défaut configurée dans Kiosk Pro
+      // Si une imprimante spécifique est requise, il faudrait son ID (ex: "Brother QL-820NWB")
+      
+      // Le résultat est généralement 1 (succès de l'envoi) ou 0 (échec)
+      const result = window.kioskpro.printing.print(targetUrl, "");
+      console.log('✅ Commande Kiosk Pro envoyée, code retour:', result);
+      return true;
+    } catch (kpError) {
+      console.error('⚠️ Erreur API Kiosk Pro, passage au fallback:', kpError);
+      // On continue vers le fallback standard si l'API échoue
+    }
+  }
 
-      // 2. Fallback: Impression navigateur standard (avec dialogue)
+  // 2. Fallback: Impression navigateur standard (avec dialogue)
+  return new Promise((resolve, reject) => {
+    try {
       // Créer une URL locale pour l'image (évite les problèmes CORS et re-téléchargement)
       const blobUrl = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
 
-      // Créer une iframe invisible
+      // Créer une iframe invisible mais avec des dimensions pour que le rendu fonctionne
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
+      // Au lieu de 0x0, on la place hors écran avec une taille standard
+      iframe.style.left = '-9999px';
+      iframe.style.top = '0';
+      iframe.style.width = '4in'; // Taille approximative 10x15
+      iframe.style.height = '6in';
       iframe.style.border = '0';
-      iframe.style.visibility = 'hidden'; // Utiliser visibility hidden au lieu de display none pour que le rendu se fasse
+      // Note: visibility: hidden peut empêcher le rendu du contenu dans certains navigateurs lors de l'impression
+      // Le positionnement hors écran est plus sûr.
       
       document.body.appendChild(iframe);
 
@@ -62,16 +81,17 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
               body { 
                 margin: 0; 
                 padding: 0;
+                width: 100%;
+                height: 100%;
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
-                height: 100vh; 
                 background: white;
               }
               img { 
-                width: 100%; 
-                height: 100%; 
-                object-fit: cover; /* Remplir tout l'espace */
+                max-width: 100%; 
+                max-height: 100%; 
+                object-fit: contain; /* S'assurer que l'image est visible en entier */
                 display: block; 
               }
             </style>

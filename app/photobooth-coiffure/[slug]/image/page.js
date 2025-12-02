@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 
 export default function ImagePage({ params }) {
   const searchParams = useSearchParams();
   const imgUrl = searchParams.get('img');
   const slug = params?.slug;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
 
   // Contenu dynamique
   const [content, setContent] = useState({

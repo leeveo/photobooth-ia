@@ -232,8 +232,8 @@ const LoadingSpinnerCoiffure = ({
             className="absolute w-3 h-3 rounded-full"
             style={{
               backgroundColor: i % 2 === 0 ? secondaryColor : accentColor,
-              left: `${20 + Math.cos((i * 60) * Math.PI / 180) * (config.container * 0.4)}px`,
-              top: `${20 + Math.sin((i * 60) * Math.PI / 180) * (config.container * 0.4)}px`
+              left: `${(20 + Math.cos((i * 60) * Math.PI / 180) * (config.container * 0.4)).toFixed(2)}px`,
+              top: `${(20 + Math.sin((i * 60) * Math.PI / 180) * (config.container * 0.4)).toFixed(2)}px`
             }}
             animate={{
               scale: [0, 1.5, 0],

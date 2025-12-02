@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export default function SwipeResultsPage() {
   const params = useParams();
   const slug = params?.slug;
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

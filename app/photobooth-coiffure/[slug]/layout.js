@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 
 export default function PremiumPhotoboothLayout({ children, params }) {
   const [background, setBackground] = useState({
@@ -18,7 +18,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
   const videoRef = useRef(null);
   const slug = params.slug;
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
 
   // Check if we're on the main page (only show video on main page)
   // Main page: /photobooth-coiffure/[slug] 
@@ -27,6 +27,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
   const isMainPage = pathSegments.length === 2 && pathSegments[0] === 'photobooth-coiffure' && pathSegments[1] === slug;
   
   // Debug logging
+  /*
   if (process.env.NODE_ENV === 'development') {
     console.log('🔍 Page detection:', {
       pathname,
@@ -35,12 +36,15 @@ export default function PremiumPhotoboothLayout({ children, params }) {
       isMainPage
     });
   }
+  */
 
   // Function to log debug info to console
   const logDebug = (msg, data) => {
+    /*
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔍 ${msg}:`, data);
     }
+    */
   };
 
   // Detect mobile/desktop screen orientation
@@ -201,6 +205,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
         });
         
         // ENHANCED DEBUG LOGGING
+        /*
         console.log('🎬 FINAL BACKGROUND SETTINGS:', {
           imageUrl,
           videoUrl,
@@ -219,6 +224,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
         } else {
           console.log('❌ NO BACKGROUND AVAILABLE');
         }
+        */
         
         logDebug('Final background settings (orientation-aware)', {
           imageUrl,
@@ -264,6 +270,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
   }, [background.videoUrl]);
 
   // CONSOLE LOG CURRENT BACKGROUND STATE
+  /*
   console.log('🎯 CURRENT BACKGROUND STATE:', {
     loading: background.loading,
     isAnimated: background.isAnimated,
@@ -275,6 +282,7 @@ export default function PremiumPhotoboothLayout({ children, params }) {
     isMainPage,
     pathname
   });
+  */
 
   return (
     <>
@@ -331,11 +339,13 @@ export default function PremiumPhotoboothLayout({ children, params }) {
             loop
             muted
             playsInline
+            /*
             onLoadStart={() => console.log('🎬 Video loading started:', background.videoUrl)}
             onCanPlay={() => console.log('✅ Video can play:', background.videoUrl)}
             onPlaying={() => console.log('▶️ Video is playing:', background.videoUrl)}
             onError={(e) => console.error('❌ Video error:', e, background.videoUrl)}
             onLoadedData={() => console.log('📹 Video data loaded:', background.videoUrl)}
+            */
             style={{
               width: '100%',
               height: '100%',

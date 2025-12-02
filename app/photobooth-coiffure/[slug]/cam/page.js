@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -604,7 +604,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
 export default function CameraCapture({ params }) {
   const slug = params.slug;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   
   const videoRef = useRef(null);
   const previewRef = useRef(null);

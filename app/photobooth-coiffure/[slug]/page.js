@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import LoadingSpinnerCoiffure from '../../components/ui/LoadingSpinnerCoiffure';
@@ -11,7 +11,7 @@ import LoadingSpinnerCoiffure from '../../components/ui/LoadingSpinnerCoiffure';
 export default function PhotoboothProject({ params }) {
   const slug = params.slug;
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createSupabaseClient();
   
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
