@@ -76,14 +76,16 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
       const iframe = document.createElement('iframe');
       iframe.id = 'print-iframe-hidden';
       iframe.style.position = 'fixed';
-      // Au lieu de 0x0, on la place hors écran avec une taille standard
-      iframe.style.left = '-9999px';
+      // Utiliser opacity: 0 et z-index négatif au lieu de le sortir de l'écran
+      // Cela garantit que le navigateur effectue le rendu graphique (nécessaire pour l'impression d'images sur iOS)
       iframe.style.top = '0';
+      iframe.style.left = '0';
       iframe.style.width = '100mm'; // Format 10x15cm
       iframe.style.height = '150mm';
+      iframe.style.zIndex = '-9999';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
       iframe.style.border = '0';
-      // Note: visibility: hidden peut empêcher le rendu du contenu dans certains navigateurs lors de l'impression
-      // Le positionnement hors écran est plus sûr.
       
       document.body.appendChild(iframe);
 
@@ -97,27 +99,29 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
             <title>Impression</title>
             <style>
               @page { 
-                size: 100mm 150mm; /* Format standard DNP 10x15 */
+                size: 100mm 150mm; 
                 margin: 0; 
               }
               html, body { 
-                margin: 0; 
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                overflow: hidden; /* Empêcher le débordement sur une 2ème page */
+                width: 100mm;
+                height: 150mm;
+                margin: 0 !important; 
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: white;
               }
               body {
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
-                background: white;
               }
               img { 
                 width: 100%; 
                 height: 100%; 
-                object-fit: cover; /* Remplir tout l'espace */
+                object-fit: cover; 
                 display: block; 
+                margin: 0;
+                padding: 0;
               }
             </style>
           </head>
@@ -131,14 +135,14 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
                 // Focus nécessaire pour certains navigateurs
                 window.focus();
                 
-                // Petit délai supplémentaire pour garantir le rendu sur iPad
+                // Délai augmenté pour garantir le décodage de l'image sur iPad (évite page blanche)
                 setTimeout(() => {
                   try {
                     window.print();
                   } catch(e) {
                     console.error('Print error:', e);
                   }
-                }, 250);
+                }, 1000);
               }
 
               if (img.complete) {
