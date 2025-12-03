@@ -21,7 +21,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    const { prompt, image, input } = body;
+    const { prompt, image, input, reference_image } = body;
     
     // Vérifier les paramètres requis
     if (!prompt || typeof prompt !== 'string') {
@@ -43,7 +43,34 @@ export async function POST(request) {
         imageData = imageData[0];
       }
     }
+
+    // Extraire l'image de référence si disponible
+    let referenceImageData = reference_image;
+    if (!referenceImageData && input) {
+      referenceImageData = input.reference_image;
+    }
     
+    // Si l'image de référence est une URL, la télécharger et la convertir en base64
+    if (referenceImageData && referenceImageData.startsWith('http')) {
+      try {
+        console.log(`Downloading reference image from URL: ${referenceImageData}`);
+        const imageResponse = await fetch(referenceImageData);
+        if (!imageResponse.ok) {
+          console.error(`Failed to download reference image: ${imageResponse.status} ${imageResponse.statusText}`);
+        } else {
+          const arrayBuffer = await imageResponse.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+          referenceImageData = `data:${contentType};base64,${buffer.toString('base64')}`;
+          console.log(`Successfully converted reference image URL to base64 (${referenceImageData.length} chars)`);
+        }
+      } catch (downloadError) {
+        console.error("Error downloading reference image:", downloadError);
+        // On continue sans l'image de référence si le téléchargement échoue
+        referenceImageData = null;
+      }
+    }
+
     if (!imageData || !imageData.startsWith('data:image')) {
       console.error("Missing or invalid image data");
       return NextResponse.json({
@@ -66,7 +93,7 @@ export async function POST(request) {
       apiKey: process.env.GEMINI
     });
     
-    // Extraire les données base64 de l'image
+    // Extraire les données base64 de l'image principale
     const base64Match = imageData.match(/^data:image\/([a-zA-Z]*);base64,(.+)$/);
     if (!base64Match) {
       console.error("Invalid base64 image format");
@@ -82,18 +109,37 @@ export async function POST(request) {
     console.log(`Processing image with mime type: ${fullMimeType}`);
     console.log(`Prompt: ${prompt.substring(0, 100)}...`);
     console.log(`Image data length: ${base64Data.length}`);
-    
-    // Préparer le prompt pour Gemini selon l'exemple de la documentation
-    // L'ordre est important: d'abord l'image, puis le texte
-    const geminiPrompt = [
-      {
-        inlineData: {
-          mimeType: fullMimeType,
-          data: base64Data,
-        },
+
+    // Préparer le prompt pour Gemini
+    const geminiPrompt = [];
+
+    // Ajouter l'image principale (Utilisateur) en PREMIER
+    geminiPrompt.push({
+      inlineData: {
+        mimeType: fullMimeType,
+        data: base64Data,
       },
-      { text: prompt }
-    ];
+    });
+
+    // Ajouter l'image de référence (Style) en SECOND
+    if (referenceImageData && referenceImageData.startsWith('data:image')) {
+      const refBase64Match = referenceImageData.match(/^data:image\/([a-zA-Z]*);base64,(.+)$/);
+      if (refBase64Match) {
+        const [, refMimeType, refBase64Data] = refBase64Match;
+        const refFullMimeType = `image/${refMimeType}`;
+        console.log(`Adding reference image (second) with mime type: ${refFullMimeType}`);
+        
+        geminiPrompt.push({
+          inlineData: {
+            mimeType: refFullMimeType,
+            data: refBase64Data,
+          },
+        });
+      }
+    }
+
+    // Ajouter le texte du prompt
+    geminiPrompt.push({ text: prompt });
     
     try {
       console.log("Calling Gemini API...");

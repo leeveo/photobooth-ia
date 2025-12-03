@@ -71,6 +71,7 @@ export default function CameraCapture({ params }) {
   const previewRef = useRef(null);
   
   const [loading, setLoading] = useState(true);
+  const [orientationData, setOrientationData] = useState(null);
   const [project, setProject] = useState(null);
   const [settings, setSettings] = useState(null);
   const [enabled, setEnabled] = useState(false);
@@ -132,6 +133,39 @@ export default function CameraCapture({ params }) {
       setLoading(false);
     }
   }, [slug, supabase]);
+
+    // Fetch orientation data
+    useEffect(() => {
+        const fetchOrientation = async () => {
+            if (!project?.id) return;
+            
+            try {
+                const { data: layoutsData, error: layoutsError } = await supabase
+                    .from('canvas_layouts')
+                    .select('orientation_id')
+                    .eq('project_id', project.id)
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (layoutsError || !layoutsData) return;
+
+                const { data: orientationResult, error: orientationError } = await supabase
+                    .from('photobooth_orientation')
+                    .select('width, height')
+                    .eq('id_orientation', layoutsData.orientation_id)
+                    .single();
+
+                if (!orientationError && orientationResult) {
+                    setOrientationData(orientationResult);
+                }
+            } catch (e) {
+                console.error("Error fetching orientation:", e);
+            }
+        };
+
+        fetchOrientation();
+    }, [project?.id, supabase]);
   
   useEffect(() => {
     // Load project data and settings from localStorage
@@ -187,27 +221,42 @@ export default function CameraCapture({ params }) {
       return;
     }
     
-    // Calculate the aspect ratio and crop dimensions for a square
-    const aspectRatio = video.videoWidth / video.videoHeight;
-    let sourceX, sourceY, sourceWidth, sourceHeight;
+    // Get video dimensions
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
     
-    if (aspectRatio > 1) {
-      // Width is greater than height - crop width
-      sourceWidth = video.videoHeight;
-      sourceHeight = video.videoHeight;
-      sourceX = (video.videoWidth - video.videoHeight) / 2;
-      sourceY = 0;
+    // Set canvas size - Use orientation data if available, otherwise default to 512x512
+    const targetWidth = orientationData?.width || 512;
+    const targetHeight = orientationData?.height || 512;
+    
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    
+    // Calculate scaling to maintain aspect ratio while filling the canvas (cover)
+    const videoAspect = videoWidth / videoHeight;
+    const canvasAspect = targetWidth / targetHeight;
+    
+    let sx, sy, sWidth, sHeight;
+
+    if (videoAspect > canvasAspect) {
+        // Vidéo plus large que le canvas (en ratio)
+        // On garde toute la hauteur de la vidéo
+        sHeight = videoHeight;
+        // On calcule la largeur nécessaire pour respecter le ratio du canvas
+        sWidth = sHeight * canvasAspect;
+        // On centre horizontalement
+        sx = (videoWidth - sWidth) / 2;
+        sy = 0;
     } else {
-      // Height is greater than width - crop height
-      sourceWidth = video.videoWidth;
-      sourceHeight = video.videoWidth;
-      sourceX = 0;
-      sourceY = (video.videoHeight - video.videoWidth) / 2;
+        // Vidéo plus haute que le canvas (en ratio)
+        // On garde toute la largeur de la vidéo
+        sWidth = videoWidth;
+        // On calcule la hauteur nécessaire
+        sHeight = sWidth / canvasAspect;
+        // On centre verticalement
+        sy = (videoHeight - sHeight) / 2;
+        sx = 0;
     }
-    
-    // Set canvas dimensions to 512x512 for AI processing
-    canvas.width = 512;
-    canvas.height = 512;
     
     const context = canvas.getContext('2d');
     if (context === null) return;
@@ -215,14 +264,8 @@ export default function CameraCapture({ params }) {
     // Draw image to canvas
     context.drawImage(
       video,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      512,
-      512
+      sx, sy, sWidth, sHeight, // Source (crop)
+      0, 0, targetWidth, targetHeight // Destination (full canvas)
     );
     
     // Get the base64 data URL from the canvas

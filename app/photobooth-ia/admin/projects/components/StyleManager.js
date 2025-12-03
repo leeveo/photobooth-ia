@@ -33,6 +33,9 @@ const StyleManager = ({
   const [styleToDelete, setStyleToDelete] = useState(null);
   const [deleteStyleLoading, setDeleteStyleLoading] = useState(false);
   const [photoboothType, setPhotoboothType] = useState(initialPhotoboothType);
+  const [selectedStyles, setSelectedStyles] = useState([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   // Fetch photobooth_type from projects table on mount or when projectId changes
   useEffect(() => {
@@ -131,6 +134,64 @@ const StyleManager = ({
       setError('Erreur lors de l\'ajout du style');
     } finally {
       setAddingStyleLoading(false);
+    }
+  }
+
+  // Function to toggle style selection
+  const toggleStyleSelection = (styleId) => {
+    if (selectedStyles.includes(styleId)) {
+      setSelectedStyles(selectedStyles.filter(id => id !== styleId));
+    } else {
+      setSelectedStyles([...selectedStyles, styleId]);
+    }
+  };
+
+  // Function to select/deselect all styles
+  const handleSelectAll = () => {
+    if (selectedStyles.length === styles.length) {
+      setSelectedStyles([]);
+    } else {
+      setSelectedStyles(styles.map(s => s.id));
+    }
+  };
+
+  // Function to confirm bulk deletion
+  async function confirmBulkDelete() {
+    if (selectedStyles.length === 0) return;
+
+    setBulkDeleteLoading(true);
+
+    try {
+      console.log('Deleting styles with ids:', selectedStyles);
+
+      const { error } = await supabase
+        .from('styles')
+        .delete()
+        .in('id', selectedStyles);
+
+      if (error) throw error;
+
+      const { data: freshStyles, error: fetchError } = await supabase
+        .from('styles')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (fetchError) {
+        console.error('Error refreshing styles:', fetchError);
+        setError('Erreur lors de la mise à jour des styles');
+      } else {
+        setStyles(freshStyles || []);
+      }
+
+      setSuccess(`${selectedStyles.length} styles supprimés avec succès`);
+      setSelectedStyles([]);
+
+    } catch (error) {
+      console.error('Error deleting styles:', error);
+      setError(`Erreur lors de la suppression des styles: ${error.message}`);
+    } finally {
+      setBulkDeleteLoading(false);
+      setBulkDeleteConfirm(false);
     }
   }
 
@@ -530,22 +591,49 @@ const StyleManager = ({
       {styles.length > 0 && (
         <div className="mb-8">
           <div className="bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 rounded-2xl p-8 shadow-2xl border border-indigo-700/30 relative overflow-visible">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
               <h4 className="text-lg font-bold text-white flex items-center drop-shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-purple-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
                 </svg>
                 Galerie des styles sélectionnés ({styles.length})
               </h4>
-              <button
-                onClick={() => setShowStyleTemplates(true)}
-                className="inline-flex items-center px-4 py-2 border rounded-full border-transparent text-sm font-medium shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transition-all"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                Ajouter depuis une Catégorie
-              </button>
+              
+              <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+                {/* Select All Button */}
+                <button
+                  onClick={handleSelectAll}
+                  className="inline-flex items-center px-3 py-2 border border-indigo-400/50 rounded-lg text-xs font-medium text-indigo-100 bg-indigo-800/50 hover:bg-indigo-700/50 transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {selectedStyles.length === styles.length && styles.length > 0 ? 'Tout désélectionner' : 'Tout sélectionner'}
+                </button>
+
+                {/* Delete Selected Button */}
+                {selectedStyles.length > 0 && (
+                  <button
+                    onClick={() => setBulkDeleteConfirm(true)}
+                    className="inline-flex items-center px-3 py-2 border border-red-400/50 rounded-lg text-xs font-medium text-red-100 bg-red-800/50 hover:bg-red-700/50 transition-all"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer ({selectedStyles.length})
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowStyleTemplates(true)}
+                  className="inline-flex items-center px-4 py-2 border rounded-full border-transparent text-sm font-medium shadow-sm text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5m0 8a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  Ajouter depuis une Catégorie
+                </button>
+              </div>
             </div>
             {/* Modern 5-column grid with responsive design */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-7">
@@ -559,6 +647,31 @@ const StyleManager = ({
                   <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-purple-500/30 via-indigo-500/20 to-transparent blur-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-0"></div>
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="aspect-square bg-gray-900 relative overflow-hidden rounded-t-2xl border-b border-indigo-700/40">
+                      {/* Selection Checkbox */}
+                      <div className="absolute top-3 left-3 z-20">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStyleSelection(style.id);
+                          }}
+                          className={`p-1.5 rounded-full transition-all duration-200 ${
+                            selectedStyles.includes(style.id) 
+                              ? 'bg-indigo-600 text-white shadow-lg scale-110 ring-2 ring-white/50' 
+                              : 'bg-gray-900/60 text-gray-400 hover:bg-gray-800 hover:text-white backdrop-blur-sm'
+                          }`}
+                        >
+                          {selectedStyles.includes(style.id) ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      
                       {style.preview_image ? (
                         <Image
                           src={style.preview_image}
@@ -752,6 +865,75 @@ const StyleManager = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Supprimer
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Popup */}
+      {bulkDeleteConfirm && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4 delete-popup-container" 
+          role="dialog" 
+          aria-modal="true">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-md transform transition-all animate-success-popup"
+               onClick={(e) => e.stopPropagation()}>
+            {/* Header with RED gradient effect */}
+            <div className="h-28 bg-gradient-to-r from-red-500 to-red-700 relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+              
+              {/* Delete icon with animation */}
+              <div className="z-10 rounded-full bg-white bg-opacity-20 p-4 animate-success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6 text-center">
+              <h3 className="text-2xl font-bold text-white mb-3 animate-success-text">Confirmer la suppression</h3>
+              <p className="text-gray-300 mb-4 animate-success-text" style={{ animationDelay: "0.1s" }}>
+                Êtes-vous sûr de vouloir supprimer <span className="font-semibold text-red-400">{selectedStyles.length} styles</span> sélectionnés ?
+              </p>
+              
+              <div className="mt-6 text-sm text-gray-400 animate-success-text" style={{ animationDelay: "0.25s" }}>
+                Cette action ne peut pas être annulée.
+              </div>
+            </div>
+            
+            {/* Footer with buttons */}
+            <div className="bg-gray-900 px-6 py-4 flex justify-center space-x-4 animate-success-text" style={{ animationDelay: "0.3s" }}>
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirm(false)}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                disabled={bulkDeleteLoading}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmBulkDelete}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white text-sm font-medium rounded-lg transition-colors shadow-lg flex items-center"
+                disabled={bulkDeleteLoading}
+              >
+                {bulkDeleteLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer ({selectedStyles.length})
                   </>
                 )}
               </button>

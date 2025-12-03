@@ -170,8 +170,9 @@ export default function PhotoboothStyles({ params }) {
     // Store style prompt for image generation
     localStorage.setItem('stylePrompt', style.prompt);
     
-    // Store style image URL for potential reference
-    localStorage.setItem('styleFix', style.preview_image);
+    // Store style image URL for potential reference (Priority: reference_image > preview_image)
+    const referenceImage = style.reference_image || style.preview_image;
+    localStorage.setItem('styleFix', referenceImage);
     
     // Store style gender
     localStorage.setItem('styleGenderFix', style.gender || 'g');

@@ -487,6 +487,7 @@ export default function CameraCapture({ params }) {
   
   // Ajouter cet état pour gérer le ratio d'aspect
   const [aspectRatio, setAspectRatio] = useState('16/9');
+  const [orientationData, setOrientationData] = useState(null);
   
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
@@ -1887,6 +1888,39 @@ export default function CameraCapture({ params }) {
       setLoading(false);
     }
   }, [slug, supabase]);
+
+    // Fetch orientation data
+    useEffect(() => {
+        const fetchOrientation = async () => {
+            if (!project?.id) return;
+            
+            try {
+                const { data: layoutsData, error: layoutsError } = await supabase
+                    .from('canvas_layouts')
+                    .select('orientation_id')
+                    .eq('project_id', project.id)
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (layoutsError || !layoutsData) return;
+
+                const { data: orientationResult, error: orientationError } = await supabase
+                    .from('photobooth_orientation')
+                    .select('width, height')
+                    .eq('id_orientation', layoutsData.orientation_id)
+                    .single();
+
+                if (!orientationError && orientationResult) {
+                    setOrientationData(orientationResult);
+                }
+            } catch (e) {
+                console.error("Error fetching orientation:", e);
+            }
+        };
+
+        fetchOrientation();
+    }, [project?.id, supabase]);
   
   // Add effect to load project data
   useEffect(() => {
@@ -2242,7 +2276,7 @@ export default function CameraCapture({ params }) {
           style={{ 
             width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
             maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
-            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '16/9',
+            aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '16/9'),
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : `1px solid ${secondaryColor}30`,
             backgroundColor: 'black',
             minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : undefined,

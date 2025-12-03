@@ -155,9 +155,18 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
     if (!orientations.length || !selectedOrientationId) return;
     const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
     if (orientation) {
+      // Determine dimensions: use encart if available, else use full width/height
+      // Le client souhaite que le canvas s'adapte à la taille des pointillés rouges (encart photo)
+      const targetWidth = (orientation.width_encart_photo && orientation.width_encart_photo > 0) 
+        ? orientation.width_encart_photo 
+        : orientation.width;
+      const targetHeight = (orientation.height_encart_photo && orientation.height_encart_photo > 0) 
+        ? orientation.height_encart_photo 
+        : orientation.height;
+
       setStageSize(prevSize => ({
-        width: orientation.width,
-        height: orientation.height,
+        width: targetWidth,
+        height: targetHeight,
         scale: prevSize.scale // preserve current scale
       }));
       // Ajout : met à jour l'encart photo si les champs sont présents
@@ -350,7 +359,8 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
         const { data: layoutData, error: layoutError } = await supabase
           .from('canvas_layouts')
           .select('*')
-          .eq('project_id', projectId);
+          .eq('project_id', projectId)
+          .order('updated_at', { ascending: false });
           
         if (layoutError) {
           console.error('Erreur lors du chargement des layouts:', layoutError);
@@ -366,6 +376,50 @@ const CanvasEditor = ({ projectId, onSave, initialData = null, isTemplateMode = 
           setElements(initialData.elements);
           if (initialData.stageSize) {
             setStageSize(initialData.stageSize);
+          }
+        } else if (layoutData && layoutData.length > 0) {
+          // Automatically load the most recent layout if no initialData is provided
+          console.log('Chargement automatique du dernier layout sauvegardé');
+          const lastLayout = layoutData[0];
+          
+          try {
+            // Parse elements
+            let parsedElements = [];
+            if (typeof lastLayout.elements === 'string') {
+              parsedElements = JSON.parse(lastLayout.elements || '[]');
+            } else if (lastLayout.elements) {
+              parsedElements = lastLayout.elements;
+            }
+            
+            // Parse stage size
+            let parsedStageSize = {};
+            if (typeof lastLayout.stage_size === 'string') {
+              parsedStageSize = JSON.parse(lastLayout.stage_size || '{}');
+            } else if (lastLayout.stage_size && typeof lastLayout.stage_size === 'object') {
+              parsedStageSize = lastLayout.stage_size;
+            }
+            
+            setElements(parsedElements);
+            
+            // Apply stage size but preserve scale logic if needed
+            if (parsedStageSize.width && parsedStageSize.height) {
+               setStageSize(prev => ({
+                 ...prev,
+                 width: parsedStageSize.width,
+                 height: parsedStageSize.height
+               }));
+            }
+            
+            // Set orientation if saved
+            if (lastLayout.orientation_id) {
+              setSelectedOrientationId(lastLayout.orientation_id);
+            }
+            
+            // Switch tab to show elements so user sees the layout content
+            setActiveTab('elements');
+            
+          } catch (e) {
+            console.error('Erreur lors du parsing du layout automatique:', e);
           }
         }
         
@@ -709,20 +763,29 @@ useEffect(() => {
   }
 }, [orientations, selectedOrientationId]);
 
-// 2. checkSize: NE MODIFIE QUE LE SCALE, JAMAIS width/height
+// 2. checkSize: Met à jour le scale ET force les dimensions de l'orientation
 const checkSize = useCallback(() => {
   if (containerRef.current && orientations.length && selectedOrientationId) {
     const containerWidth = containerRef.current.offsetWidth;
     const containerHeight = window.innerHeight * 0.6;
     const orientation = orientations.find(o => o.id_orientation === selectedOrientationId);
     if (!orientation) return;
-    const scaleByWidth = containerWidth / orientation.width;
-    const scaleByHeight = containerHeight / orientation.height;
+
+    // Determine dimensions: use encart if available, else use full width/height
+    const targetWidth = (orientation.width_encart_photo && orientation.width_encart_photo > 0) 
+      ? orientation.width_encart_photo 
+      : orientation.width;
+    const targetHeight = (orientation.height_encart_photo && orientation.height_encart_photo > 0) 
+      ? orientation.height_encart_photo 
+      : orientation.height;
+
+    const scaleByWidth = containerWidth / targetWidth;
+    const scaleByHeight = containerHeight / targetHeight;
     const scale = Math.min(1, scaleByWidth, scaleByHeight);
 
     setStageSize(prevSize => ({
-      width: prevSize.width, // NE JAMAIS CHANGER width ici
-      height: prevSize.height, // NE JAMAIS CHANGER height ici
+      width: targetWidth, // Force la largeur de l'orientation (ou de l'encart)
+      height: targetHeight, // Force la hauteur de l'orientation (ou de l'encart)
       scale // update scale only
     }));
   }
@@ -1121,8 +1184,9 @@ const checkSize = useCallback(() => {
     if (!stageRef.current) return null;
 
     try {
-      // Sauvegarder l'échelle actuelle
-      const originalScale = stageSize.scale;
+      // Sauvegarder l'échelle actuelle du Stage (pas celle du CSS)
+      const originalScaleX = stageRef.current.scaleX();
+      const originalScaleY = stageRef.current.scaleY();
 
       // Mettre l'échelle à 1 pour l'export
       stageRef.current.scale({ x: 1, y: 1 });
@@ -1136,7 +1200,7 @@ const checkSize = useCallback(() => {
       });
 
       // Restaurer l'échelle d'origine IMMÉDIATEMENT
-      stageRef.current.scale({ x: originalScale, y: originalScale });
+      stageRef.current.scale({ x: originalScaleX, y: originalScaleY });
       stageRef.current.batchDraw();
 
       // Ne pas modifier stageSize ici !
@@ -1146,7 +1210,7 @@ const checkSize = useCallback(() => {
       console.error('Erreur lors de la génération de la miniature:', error);
       return null;
     }
-  }, [stageSize]);
+  }, []); // Remove stageSize dependency as we read from ref directly
 
   // Modifiez également la fonction saveLayout pour améliorer la gestion des erreurs
   const saveLayout = async () => {
@@ -1720,6 +1784,16 @@ const handleSaveLayoutConfirmed = async () => {
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5"
           >
             Sauvegarder Le Layout
+          </button>
+          
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+            title="Actualiser la page"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
           </button>
         </div>
       </div>

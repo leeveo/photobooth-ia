@@ -444,6 +444,9 @@ export default function CameraCapture({ params }) {
   const [quotaLoading, setQuotaLoading] = useState(true);
   const [quotaAtteint, setQuotaAtteint] = useState(false);
   const [quotaRestant, setQuotaRestant] = useState(null);
+  
+  // Orientation data state
+  const [orientationData, setOrientationData] = useState(null);
 
   // Function to reset state when retrying
   const reset2 = () => {
@@ -749,10 +752,18 @@ export default function CameraCapture({ params }) {
       const videoWidth = video.videoWidth || 1280;
       const videoHeight = video.videoHeight || 720;
       
-      // Set canvas dimensions to match the expected output dimensions (970x651)
-      // Ces dimensions doivent correspondre à la sortie attendue
-      canvas.width = 970;
-      canvas.height = 651;
+      // Determine target dimensions based on orientationData or default
+      let targetWidth = 1280;
+      let targetHeight = 720;
+      
+      if (orientationData) {
+           targetWidth = orientationData.width;
+           targetHeight = orientationData.height;
+      }
+
+      // Set canvas dimensions
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       
       const context = canvas.getContext('2d');
       if (!context) {
@@ -768,28 +779,27 @@ export default function CameraCapture({ params }) {
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
 
-      // Correction du calcul pour éviter la bande noire en haut sur mobile :
-      // On va remplir tout le canvas, quitte à rogner sur les côtés, en centrant verticalement ET horizontalement.
+      // Calculate crop to cover target aspect ratio
       const videoAspect = videoWidth / videoHeight;
-      const canvasAspect = canvas.width / canvas.height;
+      const targetAspect = targetWidth / targetHeight;
 
       let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
 
-      if (videoAspect > canvasAspect) {
-        // La vidéo est plus large que le canvas, on rogne sur la largeur
-        sWidth = videoHeight * canvasAspect;
+      if (videoAspect > targetAspect) {
+        // Video is wider than target -> Crop width
+        sWidth = videoHeight * targetAspect;
         sx = (videoWidth - sWidth) / 2;
       } else {
-        // La vidéo est plus haute que le canvas, on rogne sur la hauteur
-        sHeight = videoWidth / canvasAspect;
+        // Video is taller than target -> Crop height
+        sHeight = videoWidth / targetAspect;
         sy = (videoHeight - sHeight) / 2;
       }
 
-      // On dessine la partie centrale de la vidéo qui correspond au ratio du canvas
+      // Draw the cropped video
       context.drawImage(
         video,
-        sx, sy, sWidth, sHeight, // source rectangle (centré)
-        0, 0, canvas.width, canvas.height // destination rectangle (plein canvas)
+        sx, sy, sWidth, sHeight, // source rectangle (centered)
+        0, 0, canvas.width, canvas.height // destination rectangle (full canvas)
       );
 
       context.restore();
@@ -1222,6 +1232,19 @@ export default function CameraCapture({ params }) {
     }
   };
   
+  // Fetch orientation data when project is loaded
+  useEffect(() => {
+    if (project?.id) {
+      const loadOrientation = async () => {
+        const { orientationData } = await fetchProjectThumbnail(project.id);
+        if (orientationData) {
+          setOrientationData(orientationData);
+        }
+      };
+      loadOrientation();
+    }
+  }, [project?.id]);
+
   // Initialize state for image processing
   const [imageProcessing, setImageProcessing] = useState(false);
   

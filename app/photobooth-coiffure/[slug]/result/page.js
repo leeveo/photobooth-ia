@@ -183,6 +183,7 @@ export default function Result({ params }) {
   const [linkQR, setLinkQR] = useState(null);
   const [loadingUpload, setLoadingUpload] = useState(false);
   const [error, setError] = useState(null);
+  const [orientationData, setOrientationData] = useState(null);
   
   // États pour la capture de données
   const [showDataCapture, setShowDataCapture] = useState(false);
@@ -233,6 +234,32 @@ export default function Result({ params }) {
       
       const projectSettings = settingsData || { enable_qr_codes: true };
       setSettings(projectSettings);
+      
+      // Fetch orientation data from canvas_layouts
+      try {
+        const { data: layoutData } = await supabase
+          .from('canvas_layouts')
+          .select('orientation_id')
+          .eq('project_id', projectData.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+          
+        if (layoutData?.orientation_id) {
+          const { data: orientationResult } = await supabase
+            .from('photobooth_orientation')
+            .select('width, height')
+            .eq('id_orientation', layoutData.orientation_id)
+            .single();
+            
+          if (orientationResult) {
+            console.log('✅ Orientation data loaded:', orientationResult);
+            setOrientationData(orientationResult);
+          }
+        }
+      } catch (orientationError) {
+        console.warn('Could not fetch orientation data:', orientationError);
+      }
       
       // Store project info in localStorage
       localStorage.setItem('currentProjectId', projectData.id);
@@ -506,6 +533,28 @@ export default function Result({ params }) {
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+
+    // Kiosk Pro: Tenter de désactiver ou augmenter le timer d'inactivité pour éviter le retour accueil prématuré
+    if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.interface && window.kioskpro.interface.idleTimer) {
+      try {
+        console.log("📱 Kiosk Pro: Désactivation temporaire du timer d'inactivité sur la page résultat");
+        // 0 = désactivé (ou une valeur très longue comme 300s)
+        window.kioskpro.interface.idleTimer.set(0);
+        
+        return () => {
+          try {
+            // Réactivation à la sortie (valeur de sécurité : 60s)
+            // Cela permet de s'assurer que le photobooth ne reste pas bloqué si abandonné sur une autre page
+            console.log("📱 Kiosk Pro: Réactivation du timer d'inactivité (60s)");
+            window.kioskpro.interface.idleTimer.set(60);
+          } catch(err) {
+            console.warn("⚠️ Erreur réactivation timer Kiosk Pro:", err);
+          }
+        };
+      } catch (e) {
+        console.warn("⚠️ Impossible de contrôler le timer Kiosk Pro:", e);
+      }
+    }
   }, []);
   
   const handleStartOver = () => {
@@ -536,6 +585,7 @@ export default function Result({ params }) {
     try {
       // 1. Récupérer l'image depuis S3
       let imageBlob;
+      let orientation = 'portrait'; // Par défaut
       
       // Si c'est une Data URL, on peut la fetcher directement
       if (imageResultAI.startsWith('data:')) {
@@ -555,12 +605,27 @@ export default function Result({ params }) {
           imageBlob = await proxyResponse.blob();
         }
       }
+
+      // Déterminer l'orientation de l'image
+      if (imageBlob) {
+        try {
+          const imgBitmap = await createImageBitmap(imageBlob);
+          if (imgBitmap.width > imgBitmap.height) {
+            orientation = 'landscape';
+          } else if (imgBitmap.width === imgBitmap.height) {
+            orientation = 'square';
+          }
+          console.log(`🖨️ Orientation détectée pour impression: ${orientation} (${imgBitmap.width}x${imgBitmap.height})`);
+        } catch (e) {
+          console.warn("Impossible de détecter l'orientation de l'image, utilisation portrait par défaut", e);
+        }
+      }
       
       // 2. Lancer l'impression via AirPrint (Client-side)
       
       // Boucle pour imprimer le nombre de copies demandé
       for (let i = 0; i < printCopies; i++) {
-        await printImageToAirPrint(imageResultAI, imageBlob);
+        await printImageToAirPrint(imageResultAI, imageBlob, orientation);
         
         // Petit délai entre les impressions si plusieurs copies
         if (i < printCopies - 1) {
@@ -901,13 +966,14 @@ export default function Result({ params }) {
             {/^https?:\/\/(replicate\.delivery|leeveostockage\.s3|.*amazonaws\.com)/.test(imageResultAI) ? (
               <img
                 src={imageResultAI}
-                width={1200}
-                height={1600}
+                width={orientationData?.width || 1200}
+                height={orientationData?.height || 1600}
                 alt="Résultat"
                 className="w-auto h-auto rounded-lg shadow-2xl"
                 style={{
                   maxHeight: '75vh',
                   maxWidth: '100%',
+                  aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : 'auto',
                   objectFit: 'contain',
                   display: 'block'
                 }}
@@ -919,8 +985,8 @@ export default function Result({ params }) {
             ) : (
               <Image
                 src={imageResultAI}
-                width={1200}
-                height={1600}
+                width={orientationData?.width || 1200}
+                height={orientationData?.height || 1600}
                 alt="Résultat"
                 className="w-auto h-auto rounded-lg shadow-2xl"
                 priority
@@ -931,6 +997,7 @@ export default function Result({ params }) {
                 style={{
                   maxHeight: '75vh',
                   maxWidth: '100%',
+                  aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : 'auto',
                   objectFit: 'contain',
                   display: 'block'
                 }}

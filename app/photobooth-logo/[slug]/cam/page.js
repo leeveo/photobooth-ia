@@ -430,6 +430,9 @@ export default function CameraCapture({ params }) {
   const [quotaLoading, setQuotaLoading] = useState(true);
   const [quotaAtteint, setQuotaAtteint] = useState(false);
   const [quotaRestant, setQuotaRestant] = useState(null);
+  
+  // State pour stocker les dimensions de l'orientation
+  const [orientationData, setOrientationData] = useState(null);
 
   // Function to reset state when retrying
   const reset2 = () => {
@@ -735,10 +738,13 @@ export default function CameraCapture({ params }) {
       const videoWidth = video.videoWidth || 1280;
       const videoHeight = video.videoHeight || 720;
       
-      // Set canvas dimensions to match the expected output dimensions (970x651)
-      // These dimensions should match those used in the result page
-      canvas.width = 970;
-      canvas.height = 651;
+      // Set canvas dimensions to match the expected output dimensions
+      // Use orientation data if available, otherwise default to 970x651
+      const targetWidth = orientationData?.width || 970;
+      const targetHeight = orientationData?.height || 651;
+      
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       
       const context = canvas.getContext('2d');
       if (!context) {
@@ -753,29 +759,37 @@ export default function CameraCapture({ params }) {
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
       
-      // Calculate scaling to maintain aspect ratio while filling the canvas
+      // Calculate scaling to maintain aspect ratio while filling the canvas (cover)
       const videoAspect = videoWidth / videoHeight;
-      const canvasAspect = canvas.width / canvas.height;
+      const canvasAspect = targetWidth / targetHeight;
       
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-      
+      let sx, sy, sWidth, sHeight;
+
       if (videoAspect > canvasAspect) {
-        // Video is wider than canvas (relative to height)
-        drawHeight = canvas.height;
-        drawWidth = drawHeight * videoAspect;
-        offsetX = (canvas.width - drawWidth) / 2;
+        // Vidéo plus large que le canvas (en ratio)
+        // On garde toute la hauteur de la vidéo
+        sHeight = videoHeight;
+        // On calcule la largeur nécessaire pour respecter le ratio du canvas
+        sWidth = sHeight * canvasAspect;
+        // On centre horizontalement
+        sx = (videoWidth - sWidth) / 2;
+        sy = 0;
       } else {
-        // Video is taller than canvas (relative to width)
-        drawWidth = canvas.width;
-        drawHeight = drawWidth / videoAspect;
-        offsetY = (canvas.height - drawHeight) / 2;
+        // Vidéo plus haute que le canvas (en ratio)
+        // On garde toute la largeur de la vidéo
+        sWidth = videoWidth;
+        // On calcule la hauteur nécessaire
+        sHeight = sWidth / canvasAspect;
+        // On centre verticalement
+        sy = (videoHeight - sHeight) / 2;
+        sx = 0;
       }
-      
-      // Draw video to canvas with proper aspect ratio and centering
+
+      // Draw video to canvas with proper cropping
       context.drawImage(
         video, 
-        0, 0, videoWidth, videoHeight, 
-        offsetX, offsetY, drawWidth, drawHeight
+        sx, sy, sWidth, sHeight,  // Source (crop)
+        0, 0, targetWidth, targetHeight // Destination (full canvas)
       );
       
       // Reset transform
@@ -954,6 +968,45 @@ export default function CameraCapture({ params }) {
     }
   }, [slug, supabase]); // Only depend on slug and supabase
   
+  // Charger les données d'orientation
+  useEffect(() => {
+    const fetchOrientation = async () => {
+      if (!project?.id) return;
+      
+      try {
+        // 1. Récupérer le layout actif pour ce projet
+        const { data: layoutData, error: layoutError } = await supabase
+          .from('canvas_layouts')
+          .select('orientation_id')
+          .eq('project_id', project.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (layoutError || !layoutData?.orientation_id) {
+          console.log("Pas de layout ou orientation trouvée, utilisation défaut");
+          return;
+        }
+
+        // 2. Récupérer les détails de l'orientation
+        const { data: orientation, error: orientationError } = await supabase
+          .from('photobooth_orientation')
+          .select('width, height')
+          .eq('id_orientation', layoutData.orientation_id)
+          .single();
+          
+        if (orientation && !orientationError) {
+          console.log("Orientation chargée:", orientation);
+          setOrientationData(orientation);
+        }
+      } catch (err) {
+        console.error("Erreur chargement orientation:", err);
+      }
+    };
+    
+    fetchOrientation();
+  }, [project?.id, supabase]);
+
   // Fix the useEffect to avoid infinite loops and setState during render
   useEffect(() => {
     let isMounted = true;

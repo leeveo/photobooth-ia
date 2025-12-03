@@ -721,6 +721,9 @@ export default function CameraCapture({ params }) {
   // Add state for redirection handling
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
+  
+  // Orientation data state
+  const [orientationData, setOrientationData] = useState(null);
 
   // Function to reset state when retrying
   const reset2 = () => {
@@ -778,9 +781,18 @@ export default function CameraCapture({ params }) {
         const videoWidth = video.videoWidth || 1280;
         const videoHeight = video.videoHeight || 720;
         
+        // Determine target dimensions based on orientationData or default
+        let targetWidth = 1280;
+        let targetHeight = 720;
+        
+        if (orientationData) {
+             targetWidth = orientationData.width;
+             targetHeight = orientationData.height;
+        }
+
         // Set canvas dimensions
-        canvas.width = 1280;
-        canvas.height = 720;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         
         const context = canvas.getContext('2d');
         if (!context) {
@@ -788,11 +800,27 @@ export default function CameraCapture({ params }) {
           return;
         }
         
+        // Calculate crop to cover target aspect ratio
+        const videoAspect = videoWidth / videoHeight;
+        const targetAspect = targetWidth / targetHeight;
+        
+        let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
+
+        if (videoAspect > targetAspect) {
+            // Video is wider than target -> Crop width
+            sWidth = videoHeight * targetAspect;
+            sx = (videoWidth - sWidth) / 2;
+        } else {
+            // Video is taller than target -> Crop height
+            sHeight = videoWidth / targetAspect;
+            sy = (videoHeight - sHeight) / 2;
+        }
+        
         // Clear canvas and draw the image
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(canvas.width, 0);
         context.scale(-1, 1);
-        context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+        context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
         context.setTransform(1, 0, 0, 1, 0, 0);
         
         // Get the image data and update state
@@ -1424,6 +1452,19 @@ export default function CameraCapture({ params }) {
       return baseImageUrl;
     }
   };
+
+  // Fetch orientation data when project is loaded
+  useEffect(() => {
+    if (project?.id) {
+      const loadOrientation = async () => {
+        const { orientationData } = await fetchProjectThumbnail(project.id);
+        if (orientationData) {
+          setOrientationData(orientationData);
+        }
+      };
+      loadOrientation();
+    }
+  }, [project?.id]);
   
   // Function to redirect safely to result page
   const redirectToResult = useCallback(async () => {
@@ -1504,6 +1545,12 @@ export default function CameraCapture({ params }) {
     try {
       // Récupérer le prompt depuis localStorage au lieu d'une image cible
       const stylePrompt = localStorage.getItem('stylePrompt');
+      const styleFix = localStorage.getItem('styleFix'); // Récupérer l'image de référence
+
+      // 1. Fetch orientation data FIRST to get correct dimensions
+      setLogs(prevLogs => [...prevLogs, "Récupération de la configuration du format..."]);
+      const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
+
       if (!stylePrompt) {
         setError("Prompt de style manquant. Veuillez choisir un style.");
         setProcessing(false);
@@ -1514,6 +1561,7 @@ export default function CameraCapture({ params }) {
       console.group("[AI] Request Details (generateImageSwap)");
       console.log('Model:', "google/nano-banana");
       console.log('Prompt:', stylePrompt);
+      console.log('Reference Image:', styleFix ? "Present" : "Missing");
       console.log('Input image present:', !!imageFile);
       console.log('Input image size:', imageFile ? `${imageFile.length.toLocaleString()} chars` : 0);
       console.log('Project ID:', project?.id);
@@ -1553,11 +1601,11 @@ export default function CameraCapture({ params }) {
         model: "google/nano-banana",
         input: {
           prompt: stylePrompt,
-          image_input: [imageFile], // Array avec une seule image
+          image_input: styleFix ? [imageFile, styleFix] : [imageFile], // Array avec image utilisateur + référence si dispo
           output_format: "jpg",
           // Add width and height parameters to ensure the generated image has the correct dimensions
-          width: 970,
-          height: 651
+          width: orientationData?.width || 970,
+          height: orientationData?.height || 651
         }
       };
       
@@ -1665,8 +1713,8 @@ export default function CameraCapture({ params }) {
       setLogs(prevLogs => [...prevLogs, "URL d'image reçue avec succès !"]);
 
       // 2. Ajout du layout (watermark) si disponible
-      setLogs(logs => [...logs, "Récupération du layout du projet..."]);
-      const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
+      // setLogs(logs => [...logs, "Récupération du layout du projet..."]);
+      // const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id); // Déjà récupéré au début
 
       let finalImageUrl = resultImageUrl;
       let hasWatermark = false;
@@ -1853,78 +1901,100 @@ export default function CameraCapture({ params }) {
   };
   
 
-// Fonction avec fallback Azure - délai de 3 secondes
-const generateImageGemini = async () => {
-  setProcessing(true);
-  setError(null);
-  setLogs([]);
-  setElapsedTime(0);
+  // Fonction avec fallback Azure - délai de 3 secondes
+  const generateImageGemini = async () => {
+    // ✅ NOUVEAU SYSTÈME DE QUOTA AVANCÉ
+    const canProceed = await QuotaManager.checkAndAlertQuota(project?.id);
+    if (!canProceed) {
+      return; // L'utilisateur a été redirigé ou alerté
+    }
 
-  const start = Date.now();
-  let progressTimer;
-  
-  // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
-  progressTimer = setInterval(() => {
-      const elapsed = Date.now() - start;
-      setElapsedTime(elapsed);
-      
-      // Timer update silencieux
-      
-      // Progression continue basée sur le temps écoulé
-      const elapsedSeconds = Math.floor(elapsed / 1000);
-      const maxTime = (settings?.max_processing_time || 60) * 1000;
-      let timeBasedProgress;
-      
-      if (elapsedSeconds < 5) {
-        timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
-      } else if (elapsedSeconds < 10) {
-        timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
-      } else if (elapsedSeconds < 15) {
-        timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
-      } else if (elapsedSeconds < 20) {
-        timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
-      } else {
-        timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+    setProcessing(true);
+    setError(null);
+    setLogs([]);
+    setElapsedTime(0);
+
+    const start = Date.now();
+    let progressTimer;
+    
+    // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
+    progressTimer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        setElapsedTime(elapsed);
+        
+        // Timer update silencieux
+        
+        // Progression continue basée sur le temps écoulé
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        const maxTime = (settings?.max_processing_time || 60) * 1000;
+        let timeBasedProgress;
+        
+        if (elapsedSeconds < 5) {
+          timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
+        } else if (elapsedSeconds < 10) {
+          timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
+        } else if (elapsedSeconds < 15) {
+          timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
+        } else if (elapsedSeconds < 20) {
+          timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
+        } else {
+          timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+        }
+        
+        setLoadingProgress(timeBasedProgress);
+    }, 500);
+    
+    try {
+      // Génération d'image lancée
+
+      const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+      let styleFix = localStorage.getItem('styleFix'); // Récupérer l'image de référence
+      const image = imageFile; // base64
+
+      // Convertir l'URL de l'image de référence en base64 si nécessaire
+      if (styleFix && styleFix.startsWith('http')) {
+        try {
+          setLogs(prevLogs => [...prevLogs, "Téléchargement de l'image de référence..."]);
+          const base64 = await toDataURL(styleFix);
+          styleFix = base64;
+          console.log("Reference image converted to base64");
+        } catch (e) {
+          console.error("Error converting reference image to base64:", e);
+          setLogs(prevLogs => [...prevLogs, "Erreur conversion référence, envoi de l'URL..."]);
+          // On garde l'URL originale, le backend essaiera de la télécharger
+        }
       }
+
+      // Requête AI en cours (logs désactivés pour sécurité)
+
+      setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur IA..."]);
       
-      setLoadingProgress(timeBasedProgress);
-  }, 500);
-  
-  try {
-    // Génération d'image lancée
+      // Ajouter des messages de progression basés sur le temps écoulé
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+      }, 5000);
+      
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+      }, 10000);
+      
+      setTimeout(() => {
+        setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+      }, 15000);
 
-    const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
-    const image = imageFile; // base64
+      const reqBody = {
+        prompt,
+        image,
+        reference_image: styleFix // Ajout de l'image de référence
+      };
 
-    // Requête AI en cours (logs désactivés pour sécurité)
+      // Payload préparé (logs désactivés)
 
-    setLogs(["Envoi de la requête au serveur IA..."]);
-    
-    // Ajouter des messages de progression basés sur le temps écoulé
-    setTimeout(() => {
-      setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
-    }, 5000);
-    
-    setTimeout(() => {
-      setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
-    }, 10000);
-    
-    setTimeout(() => {
-      setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
-    }, 15000);
-
-    const reqBody = {
-      prompt,
-      image
-    };
-
-    // Payload préparé (logs désactivés)
-
-    let resultUrl = null;
-    let aiSource = 'gemini'; // Track which AI service was used
-    
-    // Requête vers serveur IA
-    setLogs(prev => [...prev, "Connexion au serveur IA..."]);
+      let resultUrl = null;
+      let aiSource = 'gemini'; // Track which AI service was used
+      
+      // Requête vers serveur IA
+      setLogs(prev => [...prev, "Connexion au serveur IA..."]);
 
     const fetchStart = Date.now();
     let response;
@@ -2186,6 +2256,7 @@ const generateImageGemini = async () => {
           gender: styleGender,
           result_image_url: finalImageUrl,
           result_s3_url: resultS3Url,
+          reference_image_url: styleFix || null, // Ajout de l'image de référence
           processing_time_ms: Date.now() - start,
           is_success: true,
           error_message: null,
@@ -2289,6 +2360,7 @@ const generateImageGemini = async () => {
         gender: styleGender,
         result_image_url: null,
         result_s3_url: null,
+        reference_image_url: styleFix || null, // Ajout de l'image de référence
         processing_time_ms: Date.now() - start,
         is_success: false,
         error_message: err.message,
@@ -3212,7 +3284,7 @@ const generateImageGemini = async () => {
             style={{ 
               width: deviceType === 'mobile' ? '82vw' : deviceType === 'tablet' ? '80vw' : '100%',
               maxWidth: deviceType === 'mobile' ? '320px' : deviceType === 'tablet' ? '600px' : '1400px',
-              aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
+              aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651'),
               border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
               backgroundColor: 'black',
               minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',

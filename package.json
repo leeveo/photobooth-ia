@@ -38,7 +38,6 @@
     "framer-motion": "^12.16.0",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
-    "jspdf": "^3.0.4",
     "konva": "^9.2.3",
     "mailersend": "^2.6.0",
     "mime-types": "^3.0.1",

@@ -2,6 +2,7 @@
 
 import * as fal from '@fal-ai/serverless-client';
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import TopLogoGG from '../../components/TopLogoGG';
 import Image from "next/image";
 import Link from 'next/link';
@@ -216,6 +217,7 @@ let FACE_URL_RESULT2 = ''
 let FACE_URL_RESULT3 = ''
 export default function Cam() {
     const router = useRouter();
+    const supabase = createClientComponentClient();
     const [enabled, setEnabled] = useState(false);
     const [captured, setCaptured] = useState(false);
     // const [countDown, setCoundown] = useState(5);
@@ -223,6 +225,52 @@ export default function Cam() {
     // const waktuBatasTake = useRef(null);
     const videoRef = useRef(null);
     const previewRef = useRef(null);
+    
+    // State pour stocker les dimensions de l'orientation
+    const [orientationData, setOrientationData] = useState(null);
+
+    // Charger les données d'orientation
+    useEffect(() => {
+        const fetchOrientation = async () => {
+            // Essayer de récupérer l'ID du projet depuis le localStorage
+            // car cette page n'a pas de slug dans l'URL
+            const projectId = typeof localStorage !== 'undefined' ? localStorage.getItem('currentProjectId') : null;
+            
+            if (!projectId) return;
+            
+            try {
+                // 1. Récupérer le layout actif pour ce projet
+                const { data: layoutData, error: layoutError } = await supabase
+                .from('canvas_layouts')
+                .select('orientation_id')
+                .eq('project_id', projectId)
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .single();
+                
+                if (layoutError || !layoutData?.orientation_id) {
+                console.log("Pas de layout ou orientation trouvée, utilisation défaut");
+                return;
+                }
+
+                // 2. Récupérer les détails de l'orientation
+                const { data: orientation, error: orientationError } = await supabase
+                .from('photobooth_orientation')
+                .select('width, height')
+                .eq('id_orientation', layoutData.orientation_id)
+                .single();
+                
+                if (orientation && !orientationError) {
+                console.log("Orientation chargée:", orientation);
+                setOrientationData(orientation);
+                }
+            } catch (err) {
+                console.error("Erreur chargement orientation:", err);
+            }
+        };
+        
+        fetchOrientation();
+    }, [supabase]);
 
     // Device detection state
     const [deviceType, setDeviceType] = useState('desktop');
@@ -413,10 +461,7 @@ export default function Cam() {
       }
     };
 
-    const captureVideo  = ({
-        width = 512,
-        height = 512,
-    }) => {
+    const captureVideo  = () => {
         setCaptured(true)
         setTimeout(() => {
             setEnabled(true)
@@ -428,44 +473,54 @@ export default function Cam() {
                 return;
             }
         
-            // Calculate the aspect ratio and crop dimensions
-            const aspectRatio = video.videoWidth / video.videoHeight;
-            let sourceX, sourceY, sourceWidth, sourceHeight;
-        
-            if (aspectRatio > 1) {
-                // If width is greater than height
-                sourceWidth = video.videoHeight;
-                sourceHeight = video.videoHeight;
-                sourceX = (video.videoWidth - video.videoHeight) / 2;
-                sourceY = 0;
-            } else {
-                // If height is greater than or equal to width
-                sourceWidth = video.videoWidth;
-                sourceHeight = video.videoWidth;
-                sourceX = 0;
-                sourceY = (video.videoHeight - video.videoWidth) / 2;
-            }
-        
-            // Resize the canvas to the target dimensions
-            canvas.width = width;
-            canvas.height = height;
+            // Get video dimensions
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            // Set canvas dimensions
+            // Use orientation data if available, otherwise default to 512x512
+            const targetWidth = orientationData?.width || 512;
+            const targetHeight = orientationData?.height || 512;
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
         
             const context = canvas.getContext('2d');
             if (context === null) {
                 return;
             }
+            
+            // Calculate scaling to maintain aspect ratio while filling the canvas (cover)
+            const videoAspect = videoWidth / videoHeight;
+            const canvasAspect = targetWidth / targetHeight;
+            
+            let sx, sy, sWidth, sHeight;
+
+            if (videoAspect > canvasAspect) {
+                // Vidéo plus large que le canvas (en ratio)
+                // On garde toute la hauteur de la vidéo
+                sHeight = videoHeight;
+                // On calcule la largeur nécessaire pour respecter le ratio du canvas
+                sWidth = sHeight * canvasAspect;
+                // On centre horizontalement
+                sx = (videoWidth - sWidth) / 2;
+                sy = 0;
+            } else {
+                // Vidéo plus haute que le canvas (en ratio)
+                // On garde toute la largeur de la vidéo
+                sWidth = videoWidth;
+                // On calcule la hauteur nécessaire
+                sHeight = sWidth / canvasAspect;
+                // On centre verticalement
+                sy = (videoHeight - sHeight) / 2;
+                sx = 0;
+            }
         
             // Draw the image on the canvas (cropped and resized)
             context.drawImage(
                 video,
-                sourceX,
-                sourceY,
-                sourceWidth,
-                sourceHeight,
-                0,
-                0,
-                width,
-                height
+                sx, sy, sWidth, sHeight, // Source (crop)
+                0, 0, targetWidth, targetHeight // Destination (full canvas)
             );
     
             let faceImage = canvas.toDataURL();

@@ -34,8 +34,9 @@ timeout /t 2 /nobreak >nul
 
 :: --- LANCEMENT ---
 :: --kiosk : Plein écran strict
+:: --auto-open-devtools-for-tabs : Ouvre la console F12 automatiquement pour le debug
 :: (J'ai RETIRE --kiosk-printing pour que vous voyiez la boite de dialogue)
 
-start chrome --kiosk --disable-infobars --no-first-run "%URL%"
+start chrome --kiosk --auto-open-devtools-for-tabs --disable-infobars --no-first-run "%URL%"
 
 :: Pour quitter le mode Kiosque : Appuyez sur ALT + F4
