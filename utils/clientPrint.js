@@ -150,25 +150,35 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       const pdfBlob = doc.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
       
-      // Créer un lien invisible et cliquer dessus (contourne parfois les bloqueurs)
-      // Ou ouvrir directement.
+      // Sur iOS, l'impression d'un PDF via iframe est souvent bloquée ou mal gérée (rendu vide).
+      // La méthode la plus fiable est d'ouvrir le PDF dans un nouvel onglet.
+      // L'utilisateur verra le PDF propre et pourra cliquer sur "Partager -> Imprimer".
+      // C'est la seule façon garantie d'éviter les headers/footers HTML.
       
-      // Sur iPad, l'expérience utilisateur la plus propre pour éviter les marges est d'afficher le PDF
-      // et laisser l'utilisateur imprimer via le bouton de partage natif.
-      // Mais pour l'automatisation, on peut essayer d'injecter le PDF dans l'iframe et print l'iframe.
+      // On essaie d'abord d'ouvrir une nouvelle fenêtre
+      const newWindow = window.open(blobUrl, '_blank');
       
-      iframe.src = blobUrl;
-      document.body.appendChild(iframe);
-      
-      iframe.onload = () => {
-        setTimeout(() => {
-          iframe.contentWindow.print();
-        }, 500);
-      };
-
-      // Fallback si l'iframe print ne marche pas (fréquent sur iOS pour les PDF dans iframe)
-      // On ouvre une nouvelle fenêtre après un court délai si l'utilisateur n'a rien vu
-      // (Optionnel, à voir selon les tests)
+      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+        // Si le popup blocker a bloqué l'ouverture, on fallback sur l'iframe
+        // mais on sait que ça risque de ne pas marcher parfaitement sur iOS
+        console.warn("Popup bloqué, tentative via iframe...");
+        iframe.src = blobUrl;
+        document.body.appendChild(iframe);
+        
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow.print();
+          }, 500);
+        };
+      } else {
+        // Si la fenêtre s'est ouverte, on essaie de lancer le print automatiquement
+        // (Fonctionne sur Desktop, pas toujours sur iOS)
+        newWindow.onload = () => {
+          setTimeout(() => {
+            newWindow.print();
+          }, 500);
+        };
+      }
 
       resolve(true);
 
