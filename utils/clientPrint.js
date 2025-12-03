@@ -1,25 +1,16 @@
+import { jsPDF } from "jspdf";
+
 /**
  * Service d'impression côté client (Browser / iPad)
  * Remplace l'API serveur qui ne peut pas accéder au réseau local.
  */
 
 export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portrait') => {
-  // Déterminer les dimensions CSS en fonction du format demandé
-  // Par défaut: portrait 10x15cm
-  let cssWidth = '100mm';
-  let cssHeight = '150mm';
-  let pageSize = '100mm 150mm'; // Portrait
-
-  if (format === 'landscape') {
-    cssWidth = '150mm';
-    cssHeight = '100mm';
-    pageSize = '150mm 100mm'; // Landscape
-  } else if (format === 'square') {
-    // Pour le carré, on imprime souvent sur du 10x15 avec des marges, ou sur du papier spécifique
-    // Ici on définit la zone d'impression comme carrée 10x10
-    cssWidth = '100mm';
-    cssHeight = '100mm';
-    pageSize = '100mm 100mm'; 
+  // 0. Mode Hot Folder (Serveur)
+  // Si activé via localStorage, on envoie au serveur au lieu d'imprimer via le navigateur
+  // Pour activer: ouvrir la console et taper: localStorage.setItem('useHotFolder', 'true')
+  if (typeof window !== 'undefined' && localStorage.getItem('useHotFolder') === 'true') {
+    return printViaHotFolder(imageUrl, imageBlob);
   }
 
   // 1. Détection Kiosk Pro (pour impression silencieuse)
@@ -63,201 +54,126 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
     }
   }
 
-  // 2. Fallback: Impression navigateur standard (avec dialogue)
+  // 2. Fallback: Impression PDF (pour éviter les marges Safari)
+  // Au lieu d'imprimer une page HTML (qui ajoute des headers/footers), on génère un PDF
+  // iOS imprime les PDF sans ajouter d'artefacts de navigateur.
   return new Promise(async (resolve, reject) => {
     try {
-      // FIX: Utiliser Base64 au lieu de Blob URL pour éviter que la ressource ne soit inaccessible
-      // lors de l'envoi réel à l'imprimante (page blanche sur iPad)
-      let imageSrc = imageUrl;
+      console.log('📄 Génération PDF pour impression AirPrint...');
       
-      // OPTIMISATION: Redimensionner et compresser l'image avant impression
-      // Cela réduit drastiquement le temps de transfert vers l'imprimante (3-4min -> quelques secondes)
-      try {
-        // Créer une image temporaire pour charger la source
-        const tempImg = new Image();
-        tempImg.crossOrigin = "Anonymous";
-        
-        await new Promise((resolveLoad, rejectLoad) => {
-          tempImg.onload = resolveLoad;
-          tempImg.onerror = rejectLoad;
-          // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
-          tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+      // Dimensions en mm pour 10x15cm (4x6 pouces)
+      // 4x6 pouces = 101.6 x 152.4 mm
+      let pdfWidth = 101.6;
+      let pdfHeight = 152.4;
+      let orientation = 'p'; // portrait
+
+      if (format === 'landscape') {
+        pdfWidth = 152.4;
+        pdfHeight = 101.6;
+        orientation = 'l'; // landscape
+      } else if (format === 'square') {
+        pdfWidth = 101.6;
+        pdfHeight = 101.6;
+        orientation = 'p';
+      }
+
+      // Créer le PDF avec les dimensions exactes
+      const doc = new jsPDF({
+        orientation: orientation,
+        unit: 'mm',
+        format: [pdfWidth, pdfHeight]
+      });
+
+      // Charger l'image
+      let imageData = imageUrl;
+      
+      // Si on a un blob ou une URL distante, il faut la convertir en base64 pour jsPDF
+      if (imageBlob) {
+        const reader = new FileReader();
+        imageData = await new Promise((res, rej) => {
+          reader.onload = () => res(reader.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(imageBlob);
         });
-
-        // Créer un canvas pour le redimensionnement
-        const canvas = document.createElement('canvas');
-        let width = tempImg.width;
-        let height = tempImg.height;
-        
-        // Limiter à 1800px (résolution max pour 10x15cm à 300dpi)
-        const MAX_DIMENSION = 1800;
-        
-        if (width > height) {
-          if (width > MAX_DIMENSION) {
-            height *= MAX_DIMENSION / width;
-            width = MAX_DIMENSION;
-          }
-        } else {
-          if (height > MAX_DIMENSION) {
-            width *= MAX_DIMENSION / height;
-            height = MAX_DIMENSION;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(tempImg, 0, 0, width, height);
-        
-        // Convertir en JPEG compressé (qualité 0.8 est largement suffisant pour l'impression thermique)
-        // Cela réduit la taille du fichier de plusieurs Mo à quelques centaines de Ko
-        imageSrc = canvas.toDataURL('image/jpeg', 0.80);
-        
-        console.log(`✅ Image optimisée pour impression: ${width}x${height}px`);
-        
-        // Nettoyage
-        if (imageBlob) URL.revokeObjectURL(tempImg.src);
-        
-      } catch (optError) {
-        console.error("⚠️ Erreur optimisation image, utilisation fallback:", optError);
-        // Fallback vers la méthode précédente si l'optimisation échoue
-        if (imageBlob) {
-          try {
-            const reader = new FileReader();
-            imageSrc = await new Promise((res, rej) => {
-              reader.onloadend = () => res(reader.result);
-              reader.onerror = rej;
-              reader.readAsDataURL(imageBlob);
-            });
-          } catch (e) {
-            imageSrc = imageUrl;
-          }
-        }
+      } else {
+        // Si c'est une URL, on la télécharge et convertit
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        imageData = await new Promise((res, rej) => {
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            res(canvas.toDataURL('image/jpeg'));
+          };
+          img.onerror = rej;
+          img.src = imageUrl;
+        });
       }
 
-      // Nettoyer l'ancienne iframe si elle existe pour éviter l'accumulation
+      // Ajouter l'image au PDF (remplit toute la page)
+      doc.addImage(imageData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+      // Sauvegarder/Ouvrir le PDF pour impression
+      // Sur iOS, doc.autoPrint() ne fonctionne pas toujours bien, 
+      // mais ouvrir le blob dans une nouvelle fenêtre déclenche souvent le viewer PDF natif qui a un bouton print propre.
+      
+      // Méthode 1: Ouvrir dans une nouvelle fenêtre (souvent bloqué par popup blocker)
+      // const pdfBlob = doc.output('bloburl');
+      // window.open(pdfBlob, '_blank');
+
+      // Méthode 2: Utiliser l'iframe existante pour charger le PDF
+      // C'est la méthode la plus fiable pour iOS sans popup
+      const pdfDataUri = doc.output('datauristring');
+      
       const oldIframe = document.getElementById('print-iframe-hidden');
-      if (oldIframe) {
-        document.body.removeChild(oldIframe);
-      }
+      if (oldIframe) document.body.removeChild(oldIframe);
 
-      // Créer une iframe invisible mais avec des dimensions pour que le rendu fonctionne
       const iframe = document.createElement('iframe');
       iframe.id = 'print-iframe-hidden';
       iframe.style.position = 'fixed';
-      // Utiliser opacity: 0 et z-index négatif au lieu de le sortir de l'écran
-      // Cela garantit que le navigateur effectue le rendu graphique (nécessaire pour l'impression d'images sur iOS)
       iframe.style.top = '0';
       iframe.style.left = '0';
-      iframe.style.width = cssWidth;
-      iframe.style.height = cssHeight;
-      iframe.style.zIndex = '-9999';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
       iframe.style.opacity = '0';
       iframe.style.pointerEvents = 'none';
-      iframe.style.border = '0';
       
+      // Sur iOS, pour imprimer un PDF sans dialogue, c'est complexe.
+      // Le mieux est d'ouvrir le PDF dans un nouvel onglet et laisser l'utilisateur faire "Partager -> Imprimer"
+      // OU utiliser une librairie comme print.js, mais jsPDF a sa propre méthode.
+      
+      // APPROCHE HYBRIDE : On utilise window.open avec le blob PDF.
+      // C'est le seul moyen fiable d'avoir un rendu "Document" et pas "Page Web" sur iOS.
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Créer un lien invisible et cliquer dessus (contourne parfois les bloqueurs)
+      // Ou ouvrir directement.
+      
+      // Sur iPad, l'expérience utilisateur la plus propre pour éviter les marges est d'afficher le PDF
+      // et laisser l'utilisateur imprimer via le bouton de partage natif.
+      // Mais pour l'automatisation, on peut essayer d'injecter le PDF dans l'iframe et print l'iframe.
+      
+      iframe.src = blobUrl;
       document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.print();
+        }, 500);
+      };
 
-      // 3. Définir le contenu de l'iframe
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>&nbsp;</title>
-            <style>
-              /* Reset global */
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
+      // Fallback si l'iframe print ne marche pas (fréquent sur iOS pour les PDF dans iframe)
+      // On ouvre une nouvelle fenêtre après un court délai si l'utilisateur n'a rien vu
+      // (Optionnel, à voir selon les tests)
 
-              /* Configuration spécifique pour l'impression sans marges */
-              @media print {
-                @page {
-                  size: ${pageSize};
-                  margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
-                }
-                
-                html, body {
-                  width: 100%;
-                  height: 100%;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  overflow: hidden !important;
-                }
-              }
-
-              /* Styles généraux */
-              html, body { 
-                width: 100%;
-                height: 100%;
-                margin: 0; 
-                padding: 0;
-                overflow: hidden;
-                background: white;
-              }
-              
-              body {
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-              }
-              
-              img { 
-                width: 100%; 
-                height: 100%; 
-                object-fit: cover;
-                object-position: center; 
-                display: block; 
-                /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
-                transform: scale(1.01); 
-                transform-origin: center;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${imageSrc}" id="printImage" />
-            <script>
-              // Attendre que l'image soit chargée avant d'imprimer
-              const img = document.getElementById('printImage');
-              
-              function doPrint() {
-                // Focus nécessaire pour certains navigateurs
-                window.focus();
-                
-                // Délai augmenté pour garantir le décodage de l'image sur iPad (évite page blanche)
-                setTimeout(() => {
-                  try {
-                    window.print();
-                  } catch(e) {
-                    console.error('Print error:', e);
-                  }
-                }, 1000);
-              }
-
-              if (img.complete) {
-                doPrint();
-              } else {
-                img.onload = doPrint;
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      doc.close();
-
-      // 4. Nettoyage
-      // IMPORTANT: Sur iPad/iOS, ne PAS supprimer l'iframe immédiatement.
-      // Le spooler d'impression a besoin que le document existe encore.
-      // On laisse l'iframe, elle sera nettoyée au prochain appel via son ID.
       resolve(true);
 
     } catch (error) {
-      console.error("❌ Erreur lors de la préparation de l'impression:", error);
+      console.error("❌ Erreur génération PDF:", error);
       reject(error);
     }
   });
@@ -268,4 +184,45 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
  */
 export const isKioskPro = () => {
   return typeof window !== 'undefined' && (window.kioskpro || /Kiosk Pro/.test(navigator.userAgent));
+};
+
+/**
+ * Envoie l'image vers le dossier surveillé (Hot Folder) sur le serveur
+ * Utile pour l'impression automatique via DNP Hot Folder Print
+ */
+export const printViaHotFolder = async (imageUrl, imageBlob) => {
+  console.log('🖨️ Tentative d\'impression via Hot Folder...');
+  try {
+    let body = { imageUrl };
+    
+    // Si on a un blob, on le convertit en base64 pour l'envoyer à l'API
+    if (imageBlob) {
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+      body.imageBase64 = base64;
+    }
+
+    const response = await fetch('/api/print-hotfolder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erreur lors de l\'envoi au Hot Folder');
+    }
+
+    console.log('✅ Impression Hot Folder réussie:', data.path);
+    return true;
+
+  } catch (error) {
+    console.error('❌ Erreur impression Hot Folder:', error);
+    return false;
+  }
 };
