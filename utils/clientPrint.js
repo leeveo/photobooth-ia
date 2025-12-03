@@ -141,8 +141,8 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
                 display: block; 
                 margin: 0;
                 padding: 0;
-                /* Agrandissement pour supprimer les marges blanches (bleed) */
-                transform: scale(1.05);
+                /* Agrandissement plus fort pour bien voir l'effet (10% de zoom) */
+                transform: scale(1.10);
                 transform-origin: center;
               }
             </style>
