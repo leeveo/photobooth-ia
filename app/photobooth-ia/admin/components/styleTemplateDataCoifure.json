@@ -8,420 +8,419 @@
       "photobooth-coiffure",
       "coiffure"
     ],
-  "styles": [
-    {
-      "name": "Short Hair",
-      "gender": "femme",
-      "style_key": "short_hair_style",
-      "description": "Cheveux courts",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Short hair style",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Medium-Length Hair",
-      "gender": "femme",
-      "style_key": "medium_length_hair_style",
-      "description": "Cheveux mi-longs",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/medium_length_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Medium-length hair style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Long Hair",
-      "gender": "femme",
-      "style_key": "long_hair_style",
-      "description": "Cheveux longs",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Long hair style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Very Long Hair",
-      "gender": "femme",
-      "style_key": "very_long_hair_style",
-      "description": "Cheveux très longs",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/very_long_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Very long hair style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Bob Cut",
-      "gender": "femme",
-      "style_key": "bob_cut_hair_style",
-      "description": "Carré classique",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bob_cut_hair_style.jpg",
-      "prompt": "While keeping exactly the same face and the same facial expression, transform the hairstyle into a bob cut style, with the hair cut evenly around the head at jaw level, creating a sleek, classic look that frames the face with clean lines.",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "A-Line / Inverted Bob",
-      "gender": "femme",
-      "style_key": "a_line_bob_hair_style",
-      "description": "Carré plongeant (inversé)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/a_line_bob_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into an A-line bob style, with the hair cut shorter at the back and gradually longer in the front, creating a sharp angled silhouette that frames the jawline elegantly.",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Buzz Cut",
-      "gender": "femme",
-      "style_key": "buzz_cut_hair_style",
-      "description": "Coupe très courte (tondeuse)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a buzz cut style, with the hair clipped very short and evenly across the entire scalp, creating a clean, minimalist look that emphasizes the shape of the head and facial features.",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Layered Cut",
-      "gender": "femme",
-      "style_key": "layered_cut_hair_style",
-      "description": "Coupe dégradée",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a layered cut style, with the hair trimmed into multiple layers of varying lengths to add movement, dimension, and natural volume, creating a soft and dynamic look around the face.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Bowl Cut",
-      "gender": "femme",
-      "style_key": "bowl_cut_hair_style",
-      "description": "Coupe bol",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bowl_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Bowl cut style",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Pixie Cut",
-      "gender": "femme",
-      "style_key": "pixie_cut_hair_style",
-      "description": "Coupe pixie courte",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixie_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Pixie cut style",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Boy Cut",
-      "gender": "femme",
-      "style_key": "boy_cut_hair_style",
-      "description": "Coupe courte façon boyish",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boy_cut_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a short boyish cut, with hair cropped close to the head for an androgynous, fresh look.",
-      "variations": 1,
-      "type": "cheveux courts"
-    },
-    {
-      "name": "Lob (Long Bob)",
-      "gender": "femme",
-      "style_key": "lob_hair_style",
-      "description": "Carré long (lob)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lob_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Lob (long bob) style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Shag Haircut",
-      "gender": "femme",
-      "style_key": "shag_haircut_style",
-      "description": "Shag texturé avec mouvement",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/shag_haircut_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Shag haircut style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Straight Bangs",
-      "gender": "femme",
-      "style_key": "straight_bangs_hair_style",
-      "description": "Frange droite pleine",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_bangs_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Straight bangs style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Curtain Bangs",
-      "gender": "femme",
-      "style_key": "curtain_bangs_hair_style",
-      "description": "Frange rideau",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curtain_bangs_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Curtain bangs style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Straight",
-      "gender": "femme",
-      "style_key": "straight_hair_style",
-      "description": "Cheveux lisses",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Straight style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Wavy",
-      "gender": "femme",
-      "style_key": "wavy_hair_style",
-      "description": "Cheveux ondulés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into a wavy style, with soft, flowing waves running through the hair to create gentle curves, added texture, and a relaxed, natural look that frames the face gracefully.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Curly",
-      "gender": "femme",
-      "style_key": "curly_hair_style",
-      "description": "Cheveux bouclés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curly_hair_style.jpg",
-      "prompt": "While keeping the same face and the same facial expression, transform the hairstyle into long curly hair, with defined, voluminous curls that flow naturally for a lively and textured look.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Frizzy",
-      "gender": "femme",
-      "style_key": "frizzy_hair_style",
-      "description": "Cheveux frisottés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_style.jpg",
-      "prompt": "While keeping exactlythe same face and the same facial expression, transform the hairstyle into frizzy hair, with a full head of tight, slightly unruly strands creating extra volume and a naturally textured, untamed look.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Kinky / Coily",
-      "gender": "femme",
-      "style_key": "kinky_coily_hair_style",
-      "description": "Cheveux crépus / très bouclés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/kinky_coily_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Kinky / coily style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Slicked Back",
-      "gender": "femme",
-      "style_key": "slicked_back_hair_style",
-      "description": "Cheveux plaqués en arrière",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/slicked_back_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Slicked back style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Middle Part",
-      "gender": "femme",
-      "style_key": "middle_part_hair_style",
-      "description": "Raie au milieu",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/middle_part_hair_style.jpg",
-      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a middle part style, with the hair evenly divided down the center, creating perfect symmetry and a clean, balanced frame around the face.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Side Part",
-      "gender": "femme",
-      "style_key": "side_part_hair_style",
-      "description": "Raie sur le côté",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/side_part_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Side part style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Voluminous Hair",
-      "gender": "femme",
-      "style_key": "voluminous_hair_style",
-      "description": "Chevelure volumineuse",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/voluminous_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Voluminous hair style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Bun",
-      "gender": "femme",
-      "style_key": "bun_hair_style",
-      "description": "Chignon",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bun_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Bun style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Low Bun",
-      "gender": "femme",
-      "style_key": "low_bun_hair_style",
-      "description": "Chignon bas",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/low_bun_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Low bun style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Top Bun",
-      "gender": "femme",
-      "style_key": "top_bun_hair_style",
-      "description": "Chignon haut",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/top_bun_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Top bun style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Ponytail",
-      "gender": "femme",
-      "style_key": "ponytail_hair_style",
-      "description": "Queue de cheval",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ponytail_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Ponytail style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Braid",
-      "gender": "femme",
-      "style_key": "braid_hair_style",
-      "description": "Tresse simple",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/braid_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Braid style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Fishtail Braid",
-      "gender": "femme",
-      "style_key": "fishtail_braid_hair_style",
-      "description": "Tresse épi (fishtail)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fishtail_braid_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Fishtail braid style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Space Buns",
-      "gender": "femme",
-      "style_key": "space_buns_hair_style",
-      "description": "Deux chignons (space buns)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/space_buns_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Space buns style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Messy Bun",
-      "gender": "femme",
-      "style_key": "messy_bun_hair_style",
-      "description": "Chignon flou, décoiffé",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/messy_bun_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Messy bun style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Mullet",
-      "gender": "femme",
-      "style_key": "mullet_hair_style",
-      "description": "Mulet (court devant, long derrière)",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_hair_style.jpg",
-      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a mullet style, with the hair cut short at the front and sides while left significantly longer at the back, creating a bold, retro look that emphasizes contrast and attitude.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Tousled / Messy Look",
-      "gender": "femme",
-      "style_key": "tousled_messy_hair_style",
-      "description": "Effet coiffé-décoiffé",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tousled_messy_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Tousled / messy look style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "High Ponytail",
-      "gender": "femme",
-      "style_key": "high_ponytail_hair_style",
-      "description": "Queue de cheval haute",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_ponytail_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a High ponytail style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Half Ponytail",
-      "gender": "femme",
-      "style_key": "half_ponytail_hair_style",
-      "description": "Demi-queue de cheval",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/half_ponytail_hair_style.jpg",
-      "prompt": "While keeping the same face and same facial expression Make the hair in a Half ponytail style",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Twists",
-      "gender": "femme",
-      "style_key": "twists_hair_style",
-      "description": "Twists définis",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/twists_hair_style.jpg",
-      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a twists style, with sections of hair carefully divided and twisted into rope-like strands, creating a neat, defined, and protective look that adds texture and structure while framing the face naturally.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-      "name": "Tied Hair",
-      "gender": "femme",
-      "style_key": "tied_hair_style",
-      "description": "Cheveux attachés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tied_hair_style.jpg",
-      "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a tied hair style, with the hair neatly gathered and secured back, creating a clean, polished look that highlights the face and emphasizes its natural features.",
-      "variations": 1,
-      "type": "cheveux longs"
-    },
-    {
-  "name": "Iroquois / Punk",
-  "gender": "femme",
-  "style_key": "iroquois_punk_hair_style",
-  "description": "Coupe iroquois punk, cheveux rasés sur les côtés avec une crête centrale",
-  "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/iroquois_punk_hair_style.jpg",
-  "prompt": "While keeping the same face and the same facial expression, make the hair in an Iroquois / punk style, with the sides shaved and a bold spiky strip of hair running down the center of the head.",
-  "variations": 1,
-  "type": "cheveux courts"
-},
-{
-  "name": "Mohawk with Colors",
-  "gender": "femme",
-  "style_key": "mohawk_colors_hair_style",
-  "description": "Coupe iroquois avec coloration vive",
-  "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mohawk_colors_hair_style.jpg",
-  "prompt": "While keeping the same face and the same facial expression, make the hair in a mohawk punk style, with shaved sides and a tall spiky crest dyed in vibrant colors.",
-  "variations": 1,
-  "type": "cheveux courts"
-},
-    {
-      "name": "Loose Hair",
-      "gender": "femme",
-      "style_key": "loose_hair_style",
-      "description": "Cheveux lâchés",
-      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/loose_hair_style.jpg",
-      "prompt": "While keeping exactly the same face and the same facial expression, transform the hairstyle into a loose hair style, with the hair left free, flowing naturally around the shoulders for a soft and relaxed look.",
-      "variations": 1,
-      "type": "cheveux longs"
-    }
-  ]
-},
-
+    "styles": [
+      {
+        "name": "Short Hair",
+        "gender": "femme",
+        "style_key": "short_hair_style",
+        "description": "Cheveux courts",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/short_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Medium-Length Hair",
+        "gender": "femme",
+        "style_key": "medium_length_hair_style",
+        "description": "Cheveux mi-longs",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/medium_length_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Long Hair",
+        "gender": "femme",
+        "style_key": "long_hair_style",
+        "description": "Cheveux longs",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/long_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Very Long Hair",
+        "gender": "femme",
+        "style_key": "very_long_hair_style",
+        "description": "Cheveux très longs",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/very_long_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Bob Cut",
+        "gender": "femme",
+        "style_key": "bob_cut_hair_style",
+        "description": "Carré classique",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bob_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "A-Line / Inverted Bob",
+        "gender": "femme",
+        "style_key": "a_line_bob_hair_style",
+        "description": "Carré plongeant (inversé)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/a_line_bob_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Buzz Cut",
+        "gender": "femme",
+        "style_key": "buzz_cut_hair_style",
+        "description": "Coupe très courte (tondeuse)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/buzz_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Layered Cut",
+        "gender": "femme",
+        "style_key": "layered_cut_hair_style",
+        "description": "Coupe dégradée",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/layered_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Bowl Cut",
+        "gender": "femme",
+        "style_key": "bowl_cut_hair_style",
+        "description": "Coupe bol",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bowl_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Pixie Cut",
+        "gender": "femme",
+        "style_key": "pixie_cut_hair_style",
+        "description": "Coupe pixie courte",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/pixie_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Boy Cut",
+        "gender": "femme",
+        "style_key": "boy_cut_hair_style",
+        "description": "Coupe courte façon boyish",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/boy_cut_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Lob (Long Bob)",
+        "gender": "femme",
+        "style_key": "lob_hair_style",
+        "description": "Carré long (lob)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/lob_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Shag Haircut",
+        "gender": "femme",
+        "style_key": "shag_haircut_style",
+        "description": "Shag texturé avec mouvement",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/shag_haircut_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Straight Bangs",
+        "gender": "femme",
+        "style_key": "straight_bangs_hair_style",
+        "description": "Frange droite pleine",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_bangs_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Curtain Bangs",
+        "gender": "femme",
+        "style_key": "curtain_bangs_hair_style",
+        "description": "Frange rideau",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curtain_bangs_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Straight",
+        "gender": "femme",
+        "style_key": "straight_hair_style",
+        "description": "Cheveux lisses",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/straight_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Wavy",
+        "gender": "femme",
+        "style_key": "wavy_hair_style",
+        "description": "Cheveux ondulés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/wavy_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Curly",
+        "gender": "femme",
+        "style_key": "curly_hair_style",
+        "description": "Cheveux bouclés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curly_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Frizzy",
+        "gender": "femme",
+        "style_key": "frizzy_hair_style",
+        "description": "Cheveux frisottés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/frizzy_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Kinky / Coily",
+        "gender": "femme",
+        "style_key": "kinky_coily_hair_style",
+        "description": "Cheveux crépus / très bouclés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/kinky_coily_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Slicked Back",
+        "gender": "femme",
+        "style_key": "slicked_back_hair_style",
+        "description": "Cheveux plaqués en arrière",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/slicked_back_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Middle Part",
+        "gender": "femme",
+        "style_key": "middle_part_hair_style",
+        "description": "Raie au milieu",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/middle_part_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Side Part",
+        "gender": "femme",
+        "style_key": "side_part_hair_style",
+        "description": "Raie sur le côté",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/side_part_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Voluminous Hair",
+        "gender": "femme",
+        "style_key": "voluminous_hair_style",
+        "description": "Chevelure volumineuse",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/voluminous_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Bun",
+        "gender": "femme",
+        "style_key": "bun_hair_style",
+        "description": "Chignon",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bun_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Low Bun",
+        "gender": "femme",
+        "style_key": "low_bun_hair_style",
+        "description": "Chignon bas",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/low_bun_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Top Bun",
+        "gender": "femme",
+        "style_key": "top_bun_hair_style",
+        "description": "Chignon haut",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/top_bun_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Ponytail",
+        "gender": "femme",
+        "style_key": "ponytail_hair_style",
+        "description": "Queue de cheval",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ponytail_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Braid",
+        "gender": "femme",
+        "style_key": "braid_hair_style",
+        "description": "Tresse simple",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/braid_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Fishtail Braid",
+        "gender": "femme",
+        "style_key": "fishtail_braid_hair_style",
+        "description": "Tresse épi (fishtail)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/fishtail_braid_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Space Buns",
+        "gender": "femme",
+        "style_key": "space_buns_hair_style",
+        "description": "Deux chignons (space buns)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/space_buns_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Messy Bun",
+        "gender": "femme",
+        "style_key": "messy_bun_hair_style",
+        "description": "Chignon flou, décoiffé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/messy_bun_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Mullet",
+        "gender": "femme",
+        "style_key": "mullet_hair_style",
+        "description": "Mulet (court devant, long derrière)",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mullet_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Tousled / Messy Look",
+        "gender": "femme",
+        "style_key": "tousled_messy_hair_style",
+        "description": "Effet coiffé-décoiffé",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tousled_messy_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "High Ponytail",
+        "gender": "femme",
+        "style_key": "high_ponytail_hair_style",
+        "description": "Queue de cheval haute",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/high_ponytail_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Half Ponytail",
+        "gender": "femme",
+        "style_key": "half_ponytail_hair_style",
+        "description": "Demi-queue de cheval",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/half_ponytail_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Twists",
+        "gender": "femme",
+        "style_key": "twists_hair_style",
+        "description": "Twists définis",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/twists_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Tied Hair",
+        "gender": "femme",
+        "style_key": "tied_hair_style",
+        "description": "Cheveux attachés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tied_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      },
+      {
+        "name": "Iroquois / Punk",
+        "gender": "femme",
+        "style_key": "iroquois_punk_hair_style",
+        "description": "Coupe iroquois punk, cheveux rasés sur les côtés avec une crête centrale",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/iroquois_punk_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Mohawk with Colors",
+        "gender": "femme",
+        "style_key": "mohawk_colors_hair_style",
+        "description": "Coupe iroquois avec coloration vive",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mohawk_colors_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux courts"
+      },
+      {
+        "name": "Loose Hair",
+        "gender": "femme",
+        "style_key": "loose_hair_style",
+        "description": "Cheveux lâchés",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/loose_hair_style.jpg",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
+        "variations": 1,
+        "type": "cheveux longs"
+      }
+    ]
+  },
   {
     "id": "mens_hairstyles",
     "name": "Coupes de Cheveux Masculines",
@@ -438,7 +437,7 @@
         "style_key": "mens_buzz_cut",
         "description": "Coupe très courte à la tondeuse",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_buzz_cut.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into an ultra short buzz cut style, with the hair clipped extremely close to the scalp in a uniform length, creating a sharp, minimalist look that fully emphasizes the natural shape of the head and facial features.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -448,7 +447,7 @@
         "style_key": "mens_crew_cut",
         "description": "Coupe classique avec côtés courts",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_crew_cut.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a classic crew cut style with short sides, where the hair is cut very short on the sides and back while left slightly longer and neatly trimmed on top, creating a clean, sharp, and timeless look that emphasizes the facial features.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -458,7 +457,7 @@
         "style_key": "mens_fade_cut",
         "description": "Fondu moderne avec contours nets",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_fade_cut.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a modern fade with sharp edges style, where the hair gradually fades from very short on the sides and back to longer on top, combined with clean, precise lines and sharp edges around the hairline for a bold and well-defined look.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -468,7 +467,7 @@
         "style_key": "mens_pompadour",
         "description": "Pompadour volumineux",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_pompadour.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a voluminous pompadour style, with the hair swept upward and backward from the forehead into a high, full shape that adds height and volume, creating a bold, elegant, and vintage-inspired look.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -478,7 +477,7 @@
         "style_key": "mens_undercut",
         "description": "Undercut avec dessus long et côtés rasés",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_undercut.jpg",
-        "prompt": "While keeping the same face and same facial expression Make the hair in a undercut with long top and shaved sides style.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -488,7 +487,7 @@
         "style_key": "mens_quiff",
         "description": "Banane stylisée avec du volume",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_quiff.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a styled quiff with volume, where the hair at the front is lifted upward and swept back with fullness, creating height and texture, while the sides remain shorter for a balanced, polished, and modern look.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -498,7 +497,7 @@
         "style_key": "mens_slick_back",
         "description": "Cheveux plaqués en arrière avec du gel",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_slick_back.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a slicked back with gel style, where the hair is combed straight back and held firmly in place with gel, creating a shiny, sleek, and controlled look that emphasizes the shape of the face and jawline.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -508,7 +507,7 @@
         "style_key": "mens_side_part",
         "description": "Style classique avec raie sur le côté",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ultra_side_part.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a side-parted classic style, where the hair is neatly parted to one side and combed smoothly, creating a timeless, polished look that emphasizes symmetry, elegance, and refined facial framing.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -518,7 +517,7 @@
         "style_key": "mens_curly_top",
         "description": "Côtés courts avec boucles naturelles sur le dessus",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_curly_top.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short sides with natural curls on top style.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -528,7 +527,7 @@
         "style_key": "mens_messy_textured",
         "description": "Look décoiffé texturé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_messy_textured.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a textured messy look style, where the hair is styled with uneven lengths and tousled layers, creating natural movement and a deliberately unkempt appearance for a casual, modern, and effortlessly stylish look.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -538,7 +537,7 @@
         "style_key": "mens_mullet",
         "description": "Mulet rétro avec devant court et arrière long",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_mullet.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a retro mullet with short front and long back style, where the hair is cut short around the front and sides while left noticeably longer at the back, creating a bold, vintage-inspired look with strong contrast that emphasizes attitude and individuality.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -548,7 +547,7 @@
         "style_key": "mens_man_bun",
         "description": "Chignon masculin attaché",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_man_bun.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a tied back man bun style, where the hair is grown long and pulled back smoothly, then tied into a rounded bun at the back of the head, creating a clean, modern, and stylish look that emphasizes the facial features.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -558,7 +557,7 @@
         "style_key": "mens_top_knot",
         "description": "Chignon haut avec côtés rasés",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_top_knot.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a top knot with undercut style, where the sides and back are shaved or clipped very short while the longer hair on top is gathered and tied into a knot at the crown, creating a bold, modern, and stylish look with strong contrast.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -568,7 +567,7 @@
         "style_key": "mens_french_crop",
         "description": "Coupe courte avec frange",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_french_crop.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short fringe crop style, where the hair is kept very short on the sides and back with a slightly longer top, finished with a straight, blunt fringe across the forehead, creating a sharp, modern, and edgy look that highlights the eyes and facial structure.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -578,18 +577,17 @@
         "style_key": "mens_long_layered",
         "description": "Cheveux mi-longs en dégradé",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_long_layered.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a shoulder-length layered hair style, where the hair falls to the shoulders and is cut into multiple layers of varying lengths, adding natural movement, volume, and dimension for a soft and dynamic look that frames the face beautifully.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
-   
       {
         "name": "Cornrows",
         "gender": "homme",
         "style_key": "mens_cornrows",
         "description": "Tresses collées au cuir chevelu",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_cornrows.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into braided cornrows close to the scalp, where the hair is tightly braided in neat, parallel rows lying flat against the head, creating a sleek, defined, and culturally rich look that emphasizes precision and structure.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -599,7 +597,7 @@
         "style_key": "mens_dreadlocks",
         "description": "Dreadlocks longues et épaisses",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_dreadlocks.jpg",
-        "prompt": "WWhile keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a thick long dreadlocks style, where the hair is sectioned and locked into dense, rope-like strands that flow down over the shoulders, creating a bold, textured, and natural look full of character..",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux longs"
       },
@@ -609,7 +607,7 @@
         "style_key": "mens_spiky",
         "description": "Cheveux courts coiffés en pics avec du gel",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_spiky.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a short and spiked with gel style, where the hair is cut short and styled upward into defined spikes using gel, creating a sharp, edgy, and energetic look that highlights the face with bold texture.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       },
@@ -619,7 +617,7 @@
         "style_key": "mens_ivy_league",
         "description": "Coiffure chic style Ivy League",
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mens_ivy_league.jpg",
-        "prompt": "While keeping exactly the same face without any change and maintaining the same facial expression, transform the hairstyle into a preppy Ivy League style, where the hair is kept short on the sides and back while slightly longer on top, neatly combed with a subtle side part, creating a clean, polished, and sophisticated look that emphasizes elegance and refinement.",
+        "prompt": "Create a photorealistic portrait. Take the hairstyle from the second image and let the person from the first image wear it. Generate a realistic portrait of the person from the first image with this new hairstyle. The face and facial features must remain exactly those of the person in the first image. The background, environment, lighting, focus, and depth of field must remain exactly the same as the first image. Do not change the background.",
         "variations": 1,
         "type": "cheveux courts"
       }
