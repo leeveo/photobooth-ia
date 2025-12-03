@@ -3,7 +3,25 @@
  * Remplace l'API serveur qui ne peut pas accéder au réseau local.
  */
 
-export const printImageToAirPrint = async (imageUrl, imageBlob) => {
+export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portrait') => {
+  // Déterminer les dimensions CSS en fonction du format demandé
+  // Par défaut: portrait 10x15cm
+  let cssWidth = '100mm';
+  let cssHeight = '150mm';
+  let pageSize = '100mm 150mm'; // Portrait
+
+  if (format === 'landscape') {
+    cssWidth = '150mm';
+    cssHeight = '100mm';
+    pageSize = '150mm 100mm'; // Landscape
+  } else if (format === 'square') {
+    // Pour le carré, on imprime souvent sur du 10x15 avec des marges, ou sur du papier spécifique
+    // Ici on définit la zone d'impression comme carrée 10x10
+    cssWidth = '100mm';
+    cssHeight = '100mm';
+    pageSize = '100mm 100mm'; 
+  }
+
   // 1. Détection Kiosk Pro (pour impression silencieuse)
   // Nécessite Kiosk Pro Plus ou Enterprise et une configuration correcte de l'imprimante dans l'app
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
@@ -80,8 +98,8 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
       // Cela garantit que le navigateur effectue le rendu graphique (nécessaire pour l'impression d'images sur iOS)
       iframe.style.top = '0';
       iframe.style.left = '0';
-      iframe.style.width = '100mm'; // Format 10x15cm
-      iframe.style.height = '150mm';
+      iframe.style.width = cssWidth;
+      iframe.style.height = cssHeight;
       iframe.style.zIndex = '-9999';
       iframe.style.opacity = '0';
       iframe.style.pointerEvents = 'none';
@@ -99,12 +117,12 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
             <title>Impression</title>
             <style>
               @page { 
-                size: 100mm 150mm; 
+                size: ${pageSize}; 
                 margin: 0; 
               }
               html, body { 
-                width: 100mm;
-                height: 150mm;
+                width: ${cssWidth};
+                height: ${cssHeight};
                 margin: 0 !important; 
                 padding: 0 !important;
                 overflow: hidden !important;
@@ -118,10 +136,14 @@ export const printImageToAirPrint = async (imageUrl, imageBlob) => {
               img { 
                 width: 100%; 
                 height: 100%; 
-                object-fit: cover; 
+                object-fit: cover;
+                object-position: center; 
                 display: block; 
                 margin: 0;
                 padding: 0;
+                /* Agrandissement pour supprimer les marges blanches (bleed) */
+                transform: scale(1.05);
+                transform-origin: center;
               }
             </style>
           </head>
