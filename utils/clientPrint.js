@@ -69,18 +69,70 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       // FIX: Utiliser Base64 au lieu de Blob URL pour éviter que la ressource ne soit inaccessible
       // lors de l'envoi réel à l'imprimante (page blanche sur iPad)
       let imageSrc = imageUrl;
-      if (imageBlob) {
-        try {
-          const reader = new FileReader();
-          imageSrc = await new Promise((res, rej) => {
-            reader.onloadend = () => res(reader.result);
-            reader.onerror = rej;
-            reader.readAsDataURL(imageBlob);
-          });
-        } catch (e) {
-          console.error("Erreur conversion blob vers base64:", e);
-          // Fallback sur l'URL si la conversion échoue
-          imageSrc = imageUrl;
+      
+      // OPTIMISATION: Redimensionner et compresser l'image avant impression
+      // Cela réduit drastiquement le temps de transfert vers l'imprimante (3-4min -> quelques secondes)
+      try {
+        // Créer une image temporaire pour charger la source
+        const tempImg = new Image();
+        tempImg.crossOrigin = "Anonymous";
+        
+        await new Promise((resolveLoad, rejectLoad) => {
+          tempImg.onload = resolveLoad;
+          tempImg.onerror = rejectLoad;
+          // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
+          tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+        });
+
+        // Créer un canvas pour le redimensionnement
+        const canvas = document.createElement('canvas');
+        let width = tempImg.width;
+        let height = tempImg.height;
+        
+        // Limiter à 1800px (résolution max pour 10x15cm à 300dpi)
+        const MAX_DIMENSION = 1800;
+        
+        if (width > height) {
+          if (width > MAX_DIMENSION) {
+            height *= MAX_DIMENSION / width;
+            width = MAX_DIMENSION;
+          }
+        } else {
+          if (height > MAX_DIMENSION) {
+            width *= MAX_DIMENSION / height;
+            height = MAX_DIMENSION;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(tempImg, 0, 0, width, height);
+        
+        // Convertir en JPEG compressé (qualité 0.8 est largement suffisant pour l'impression thermique)
+        // Cela réduit la taille du fichier de plusieurs Mo à quelques centaines de Ko
+        imageSrc = canvas.toDataURL('image/jpeg', 0.80);
+        
+        console.log(`✅ Image optimisée pour impression: ${width}x${height}px`);
+        
+        // Nettoyage
+        if (imageBlob) URL.revokeObjectURL(tempImg.src);
+        
+      } catch (optError) {
+        console.error("⚠️ Erreur optimisation image, utilisation fallback:", optError);
+        // Fallback vers la méthode précédente si l'optimisation échoue
+        if (imageBlob) {
+          try {
+            const reader = new FileReader();
+            imageSrc = await new Promise((res, rej) => {
+              reader.onloadend = () => res(reader.result);
+              reader.onerror = rej;
+              reader.readAsDataURL(imageBlob);
+            });
+          } catch (e) {
+            imageSrc = imageUrl;
+          }
         }
       }
 
@@ -114,35 +166,55 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Impression</title>
+            <title>&nbsp;</title>
             <style>
-              @page { 
-                size: ${pageSize}; 
-                margin: 0; 
+              /* Reset global */
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
+
+              /* Configuration spécifique pour l'impression sans marges */
+              @media print {
+                @page {
+                  size: ${pageSize};
+                  margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
+                }
+                
+                html, body {
+                  width: 100%;
+                  height: 100%;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  overflow: hidden !important;
+                }
+              }
+
+              /* Styles généraux */
               html, body { 
-                width: ${cssWidth};
-                height: ${cssHeight};
-                margin: 0 !important; 
-                padding: 0 !important;
-                overflow: hidden !important;
+                width: 100%;
+                height: 100%;
+                margin: 0; 
+                padding: 0;
+                overflow: hidden;
                 background: white;
               }
+              
               body {
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
               }
+              
               img { 
                 width: 100%; 
                 height: 100%; 
                 object-fit: cover;
                 object-position: center; 
                 display: block; 
-                margin: 0;
-                padding: 0;
-                /* Agrandissement plus fort pour bien voir l'effet (10% de zoom) */
-                transform: scale(1.10);
+                /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
+                transform: scale(1.01); 
                 transform-origin: center;
               }
             </style>
