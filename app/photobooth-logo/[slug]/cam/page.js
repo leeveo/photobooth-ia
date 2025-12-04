@@ -2318,14 +2318,14 @@ const generateImageReplicate = async () => {
               : 'mx-auto'
           }`}
           style={{ 
-            width: deviceType === 'mobile' ? '90vw' : deviceType === 'tablet' ? '80vw' : '100%',
-            maxWidth: deviceType === 'mobile' ? '400px' : deviceType === 'tablet' ? '600px' : '1400px',
-            aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
+            width: 'auto',
+            height: 'auto',
+            maxWidth: '100%',
+            maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
+            aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : '970/651'),
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
             backgroundColor: 'black',
-            minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : undefined,
-            maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
-            margin: deviceType === 'mobile' || deviceType === 'tablet' ? '0 auto' : '0 auto'
+            margin: '0 auto'
           }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

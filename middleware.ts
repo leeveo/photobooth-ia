@@ -41,6 +41,19 @@ export async function middleware(req: NextRequest) {
   // Ajouter un log pour voir toutes les requêtes qui passent par le middleware
   console.log(`Middleware: ${req.method} ${path}`);
 
+  // Bypass explicit pour les routes publiques des photobooths
+  if (
+    path.startsWith('/photobooth-coiffure') ||
+    path.startsWith('/photobooth-simple') ||
+    path.startsWith('/photobooth-premium') ||
+    path.startsWith('/photobooth-logo') ||
+    path.startsWith('/photobooth-boomerang') ||
+    path.startsWith('/photobooth-avatar') ||
+    path.startsWith('/photobooth2')
+  ) {
+    return NextResponse.next();
+  }
+
   // Permettre le bypass de l'auth en local (localhost ou 127.0.0.1)
   const isLocalhost =
     hostname === 'localhost' ||

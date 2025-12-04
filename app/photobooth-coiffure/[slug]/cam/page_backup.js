@@ -623,12 +623,12 @@ export default function CameraCapture({ params }) {
   const [styleFix, setStyleFix] = useState(null);
   const [styleGender, setStyleGender] = useState(null);
   const [processing, setProcessing] = useState(false);
-
+  const [processingStep, setProcessingStep] = useState(0);
   const [error, setError] = useState(null);
   const [logs, setLogs] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
-
-
+  const [resultFaceSwap, setResultFaceSwap] = useState(null);
+  const [numProses, setNumProses] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Restore camera error display for better debugging
@@ -721,9 +721,6 @@ export default function CameraCapture({ params }) {
   // Add state for redirection handling
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
-  
-  // Orientation data state
-  const [orientationData, setOrientationData] = useState(null);
 
   // Function to reset state when retrying
   const reset2 = () => {
@@ -781,18 +778,9 @@ export default function CameraCapture({ params }) {
         const videoWidth = video.videoWidth || 1280;
         const videoHeight = video.videoHeight || 720;
         
-        // Determine target dimensions based on orientationData or default
-        let targetWidth = 1280;
-        let targetHeight = 720;
-        
-        if (orientationData) {
-             targetWidth = orientationData.width;
-             targetHeight = orientationData.height;
-        }
-
         // Set canvas dimensions
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        canvas.width = 1280;
+        canvas.height = 720;
         
         const context = canvas.getContext('2d');
         if (!context) {
@@ -800,27 +788,11 @@ export default function CameraCapture({ params }) {
           return;
         }
         
-        // Calculate crop to cover target aspect ratio
-        const videoAspect = videoWidth / videoHeight;
-        const targetAspect = targetWidth / targetHeight;
-        
-        let sx = 0, sy = 0, sWidth = videoWidth, sHeight = videoHeight;
-
-        if (videoAspect > targetAspect) {
-            // Video is wider than target -> Crop width
-            sWidth = videoHeight * targetAspect;
-            sx = (videoWidth - sWidth) / 2;
-        } else {
-            // Video is taller than target -> Crop height
-            sHeight = videoWidth / targetAspect;
-            sy = (videoHeight - sHeight) / 2;
-        }
-        
         // Clear canvas and draw the image
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(canvas.width, 0);
         context.scale(-1, 1);
-        context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+        context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
         context.setTransform(1, 0, 0, 1, 0, 0);
         
         // Get the image data and update state
@@ -1452,19 +1424,6 @@ export default function CameraCapture({ params }) {
       return baseImageUrl;
     }
   };
-
-  // Fetch orientation data when project is loaded
-  useEffect(() => {
-    if (project?.id) {
-      const loadOrientation = async () => {
-        const { orientationData } = await fetchProjectThumbnail(project.id);
-        if (orientationData) {
-          setOrientationData(orientationData);
-        }
-      };
-      loadOrientation();
-    }
-  }, [project?.id]);
   
   // Function to redirect safely to result page
   const redirectToResult = useCallback(async () => {
@@ -1492,18 +1451,20 @@ export default function CameraCapture({ params }) {
     }
   }, [router, slug]);
 
-
+  // Initialize state for image processing
+  const [imageProcessing, setImageProcessing] = useState(false);
   
-
-  // Fonction avec fallback Azure - délai de 3 secondes
-  const generateImageGemini = async () => {
+  const generateImageSwap = async () => {
     // ✅ NOUVEAU SYSTÈME DE QUOTA AVANCÉ
     const canProceed = await QuotaManager.checkAndAlertQuota(project?.id);
     if (!canProceed) {
       return; // L'utilisateur a été redirigé ou alerté
     }
 
+    setNumProses(2);
+    reset2();
     setProcessing(true);
+    setProcessingStep(1);
     setError(null);
     setLogs([]);
     setElapsedTime(0);
@@ -1516,7 +1477,8 @@ export default function CameraCapture({ params }) {
         const elapsed = Date.now() - start;
         setElapsedTime(elapsed);
         
-        // Timer update silencieux
+        // Debug: vérifier que les valeurs se mettent à jour
+        console.log(`[DEBUG] Timer update: ${Math.floor(elapsed / 1000)}s, Progress: ${loadingProgress}%`);
         
         // Progression continue basée sur le temps écoulé
         const elapsedSeconds = Math.floor(elapsed / 1000);
@@ -1536,36 +1498,39 @@ export default function CameraCapture({ params }) {
         }
         
         setLoadingProgress(timeBasedProgress);
-    }, 500);
+        console.log(`[DEBUG] Continuous progress set to ${timeBasedProgress}%`);
+    }, 500); // Mettre à jour toutes les 500ms pour plus de fluidité
     
     try {
-      // Génération d'image lancée
-
-      const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
-      let styleFix = localStorage.getItem('styleFix'); // Récupérer l'image de référence
-      const image = imageFile; // base64
-
-      // Convertir l'URL de l'image de référence en base64 si nécessaire
-      /* 
-      // DÉSACTIVÉ : Le mode "Text-to-Image" (sans image de référence) donne de meilleurs résultats
-      // selon les retours utilisateurs. On ne convertit donc plus l'image de référence.
-      if (styleFix && styleFix.startsWith('http')) {
-        try {
-          setLogs(prevLogs => [...prevLogs, "Téléchargement de l'image de référence..."]);
-          const base64 = await toDataURL(styleFix);
-          styleFix = base64;
-          console.log("Reference image converted to base64");
-        } catch (e) {
-          console.error("Error converting reference image to base64:", e);
-          setLogs(prevLogs => [...prevLogs, "Erreur conversion référence, envoi de l'URL..."]);
-          // On garde l'URL originale, le backend essaiera de la télécharger
-        }
+      // Récupérer le prompt depuis localStorage au lieu d'une image cible
+      const stylePrompt = localStorage.getItem('stylePrompt');
+      if (!stylePrompt) {
+        setError("Prompt de style manquant. Veuillez choisir un style.");
+        setProcessing(false);
+        return;
       }
-      */
-
-      // Requête AI en cours (logs désactivés pour sécurité)
-
-      setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur IA..."]);
+      
+      // Log pour débogage des variables d'entrée
+      console.group("[AI] Request Details (generateImageSwap)");
+      console.log('Model:', "google/nano-banana");
+      console.log('Prompt:', stylePrompt);
+      console.log('Input image present:', !!imageFile);
+      console.log('Input image size:', imageFile ? `${imageFile.length.toLocaleString()} chars` : 0);
+      console.log('Project ID:', project?.id);
+      console.log('Slug:', slug);
+      console.log('Image header:', imageFile ? imageFile.substring(0, 50) + '...' : 'N/A');
+      console.groupEnd();
+      
+      // Ajouter à la liste des logs
+      setLogs(prevLogs => [...prevLogs, "Préparation de l'image..."]);
+      
+      // Vérifier que l'image base64 est correctement formée
+      if (!imageFile || !imageFile.startsWith('data:image')) {
+          throw new Error("L'image capturée n'est pas valide. Veuillez réessayer.");
+      }
+      
+      // Ajouter un log pour suivre la progression
+      setLogs(prevLogs => [...prevLogs, "Initialisation de la requête API..."]);
       
       // Ajouter des messages de progression basés sur le temps écoulé
       setTimeout(() => {
@@ -1579,20 +1544,387 @@ export default function CameraCapture({ params }) {
       setTimeout(() => {
         setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
       }, 15000);
-
-      const reqBody = {
-        prompt,
-        image,
-        // reference_image: styleFix // DÉSACTIVÉ : On utilise uniquement le prompt textuel pour une meilleure fusion
-      };
-
-      // Payload préparé (logs désactivés)
-
-      let resultUrl = null;
-      let aiSource = 'gemini'; // Track which AI service was used
       
-      // Requête vers serveur IA
-      setLogs(prev => [...prev, "Connexion au serveur IA..."]);
+      // Utiliser l'API proxy Next.js au lieu d'appeler directement
+      setLogs(prevLogs => [...prevLogs, "Envoi de la requête au serveur..."]);
+      
+      // Ensure the model parameter is correct and data is well-formatted
+      const requestBody = {
+        model: "google/nano-banana",
+        input: {
+          prompt: stylePrompt,
+          image_input: [imageFile], // Array avec une seule image
+          output_format: "jpg",
+          // Add width and height parameters to ensure the generated image has the correct dimensions
+          width: 970,
+          height: 651
+        }
+      };
+      
+      // Exposer une version safe du payload pour debug (sans le base64 complet)
+      window.debugPayload = {
+        ...requestBody,
+        input: {
+          ...requestBody.input,
+          image_input: imageFile ? [`${imageFile.substring(0, 30)}... (length: ${imageFile.length})`] : null
+        }
+      };
+      console.log('[AI] Payload summary:', window.debugPayload);
+      
+      console.log('[AI] Starting request to /api/replicate...');
+      setLogs(prevLogs => [...prevLogs, "Connexion au serveur IA ."]);
+      
+      const fetchStart = Date.now();
+      let response;
+      try {
+        response = await fetch('/api/replicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } catch (networkErr) {
+        console.error('[AI] Network error during fetch:', networkErr);
+        setLogs(prevLogs => [...prevLogs, `Erreur réseau: ${networkErr.message}`]);
+        throw new Error(`Erreur réseau: ${networkErr.message}`);
+      }
+      
+      const responseTime = Date.now() - fetchStart;
+      console.log(`[AI] Response received after ${responseTime}ms`);
+      console.log(`[AI] Status: ${response.status} ${response.statusText}`);
+      
+      // Log response headers
+      try {
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log('[AI] Response headers:', headers);
+      } catch (headerErr) {
+        console.warn('[AI] Could not log headers:', headerErr);
+      }
+      
+      // Check if the request was successful
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch (textErr) {
+          console.error('[AI] Could not read error text:', textErr);
+        }
+        
+        console.error('[AI] HTTP Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText?.substring(0, 500)
+        });
+        
+        setLogs(prevLogs => [...prevLogs, `Erreur HTTP ${response.status}: ${errorText?.substring(0, 100)}`]);
+        throw new Error(`Erreur du serveur: ${response.status} ${errorText}`);
+      }
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[AI] JSON parse error:', parseErr);
+        let rawText = '';
+        try {
+          rawText = await response.text();
+        } catch (textErr) {
+          console.error('[AI] Could not read response as text:', textErr);
+        }
+        console.log('[AI] Raw response:', rawText?.substring(0, 500));
+        setLogs(prevLogs => [...prevLogs, 'Réponse invalide du serveur']);
+        throw new Error(`Réponse invalide du serveur: ${rawText?.substring(0, 200)}`);
+      }
+      
+      console.log('[AI] Successfully parsed JSON response:', data);
+      
+      if (!data.success) {
+        console.error('[AI] API indicated failure:', data.error);
+        setLogs(prevLogs => [...prevLogs, `Erreur API: ${data.error || "Erreur inconnue"}`]);
+        throw new Error(data.error || "Erreur lors de la génération de l'image");
+      }
+      
+      const result = data.output;
+      console.log('[AI] Output received:', typeof result, result ? 'present' : 'missing');
+      setLogs(prevLogs => [...prevLogs, "Image générée par Intelligence Artificielle !"]);
+
+      let resultImageUrl = typeof result === 'string' ? result : 
+        Array.isArray(result) ? result[0] : 
+        result?.url || result?.image || result;
+
+      if (!resultImageUrl) {
+        console.error('[AI] Missing image URL in response. Full output:', result);
+        throw new Error("URL d'image non trouvée dans la réponse");
+      }
+      
+      console.log('[AI] Final image URL:', resultImageUrl);
+      setLogs(prevLogs => [...prevLogs, "URL d'image reçue avec succès !"]);
+
+      // 2. Ajout du layout (watermark) si disponible
+      setLogs(logs => [...logs, "Récupération du layout du projet..."]);
+      const { thumbnailUrl, orientationData } = await fetchProjectThumbnail(project?.id);
+
+      let finalImageUrl = resultImageUrl;
+      let hasWatermark = false;
+
+      if (thumbnailUrl) {
+        setLogs(logs => [...logs, "Fusion de l'image avec le layout..."]);
+        setLogs(logs => [...logs, orientationData 
+          ? "Dimensions d'encart détectées, adaptation de l'image..." 
+          : "Pas de dimensions spécifiques, utilisation des valeurs par défaut..."]);
+        try {
+          const combinedImageDataUrl = await combineImagesWithTransparentOverlay(
+            resultImageUrl, 
+            thumbnailUrl, 
+            orientationData
+          );
+          if (combinedImageDataUrl && combinedImageDataUrl !== resultImageUrl) {
+            finalImageUrl = combinedImageDataUrl;
+            hasWatermark = true;
+            setLogs(logs => [...logs, "Fusion réussie avec le layout !"]);
+          } else {
+            setLogs(logs => [...logs, "Fusion échouée, utilisation de l'image originale."]);
+          }
+        } catch (watermarkError) {
+          setLogs(logs => [...logs, "Erreur lors de la fusion du layout."]);
+        }
+      } else {
+        setLogs(logs => [...logs, "Aucun layout trouvé pour ce projet."]);
+      }
+      
+      // 3. Upload S3 si besoin
+      let resultS3Url = null;
+      let uploadableImage = finalImageUrl;
+      if (finalImageUrl.startsWith('http')) {
+        setLogs(logs => [...logs, "Conversion de l'image pour l'upload S3..."]);
+        try {
+          uploadableImage = await toDataURL(finalImageUrl);
+        } catch (convError) {
+          setLogs(logs => [...logs, "Erreur conversion base64, upload direct."]);
+        }
+      }
+
+      if (uploadableImage && uploadableImage.startsWith('data:')) {
+        setLogs(logs => [...logs, "Envoi de l'image fusionnée vers le cloud..."]);
+        const uniqueFilename = `result_${Date.now()}_${project?.id || 'unknown'}.jpg`;
+        const uploadFile = dataURLtoFile(uploadableImage, uniqueFilename);
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        formData.append('projectId', project?.id || 'unknown');
+
+        const uploadResponse = await fetch('/api/upload-to-s3', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!uploadResponse.ok) {
+          setLogs(logs => [...logs, "Erreur lors de l'upload S3."]);
+          throw new Error("Erreur upload S3");
+        }
+        const uploadData = await uploadResponse.json();
+        if (uploadData && uploadData.url) {
+          setLogs(logs => [...logs, "Image stockée dans le cloud !"]);
+          localStorage.setItem("faceURLResult", uploadData.url);
+          localStorage.setItem("faceURLResultS3", uploadData.url);
+          resultS3Url = uploadData.url;
+          setLogs(logs => [...logs, "Image prête à être affichée !"]);
+          
+          // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD S3 RÉUSSI
+          if (progressTimer) {
+            clearInterval(progressTimer);
+            progressTimer = null;
+            console.log('[DEBUG] Timer arrêté après upload S3 réussi');
+          }
+        } else {
+          throw new Error("Réponse S3 invalide");
+        }
+      } else {
+        setLogs(logs => [...logs, "Upload direct de l'image sans conversion."]);
+        localStorage.setItem("faceURLResult", finalImageUrl);
+        
+        // ✅ ARRÊTER LE TIMER APRÈS L'UPLOAD DIRECT
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+          console.log('[DEBUG] Timer arrêté après upload direct');
+        }
+      }
+
+      // Gestion de la redirection après succès
+      setLogs(logs => [...logs, "Préparation de la redirection..."]);
+      setLoadingProgress(100);
+      
+      // Démarrer le countdown de redirection
+      setIsRedirecting(true);
+      setRedirectCountdown(3);
+      
+      // ✅ REDIRECTION DIRECTE AVEC ROUTER.PUSH APRÈS COUNTDOWN
+      const countdownInterval = setInterval(() => {
+        setRedirectCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            // Effectuer la redirection immédiatement avec router.push
+            console.log("🚀 Redirection vers /result...");
+            setProcessing(false); // Fermer le popup avant redirection
+            router.push(`/photobooth-coiffure/${slug}/result`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (err) {
+      console.error("Erreur dans generateImageSwap:", err);
+      setError(err.message || "Erreur lors de la génération");
+      setLogs([err.message]);
+      setLoadingProgress(0);
+      setProcessing(false); // Arrêter le processing en cas d'erreur
+      
+      // ✅ ARRÊTER LE TIMER EN CAS D'ERREUR IMMÉDIATEMENT
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+        console.log('[DEBUG] Timer arrêté à cause d\'une erreur');
+      }
+      
+      // Enregistre l'échec dans sessions pour garder la cohérence du quota
+      try {
+        // Récupérer l'admin ID du projet pour les sessions
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('created_by')
+          .eq('id', project?.id)
+          .single();
+        const adminUserId = projectData?.created_by;
+        
+        const sessionPayload = {
+          user_email: null,
+          style_id: localStorage.getItem('selectedStyleId'),
+          style_key: localStorage.getItem('selectedStyleKey') || null,
+          gender: styleGender,
+          result_image_url: null,
+          result_s3_url: null,
+          processing_time_ms: Date.now() - start,
+          is_success: false,
+          error_message: err.message,
+          project_id: project?.id,
+          created_by: adminUserId,
+          has_watermark: false,
+          moderation: null,
+          created_at: new Date().toISOString()
+        };
+
+        console.log("===> [DEBUG] Tentative d'insertion d'une session en échec avec payload :", sessionPayload);
+
+        const { data: sessionInsertData, error: sessionInsertError, status, statusText } = await supabase
+          .from('sessions')
+          .insert(sessionPayload)
+          .select();
+
+        console.log("===> [DEBUG] Résultat insertion session (échec) :", {
+          sessionInsertData,
+          sessionInsertError,
+          status,
+          statusText
+        });
+
+        if (sessionInsertError) {
+          console.error("===> [DEBUG] Erreur lors de l'insertion (échec) dans sessions:", sessionInsertError);
+        } else {
+          console.log("===> [DEBUG] Insertion session (échec) réussie:", sessionInsertData);
+        }
+      } catch (e) {
+        console.error("===> [DEBUG] Erreur insertion session (échec, catch):", e);
+      }
+    } finally {
+      // ✅ SÉCURITÉ : Arrêter le timer s'il n'a pas encore été arrêté
+      if (progressTimer) {
+        clearInterval(progressTimer);
+        console.log('[DEBUG] Timer arrêté en sécurité dans finally');
+      }
+      
+      // Mettre à jour le temps final
+      setElapsedTime(Date.now() - start);
+    }
+  };
+  
+
+// Fonction avec fallback Azure - délai de 3 secondes
+const generateImageGemini = async () => {
+  setProcessing(true);
+  setError(null);
+  setLogs([]);
+  setElapsedTime(0);
+
+  const start = Date.now();
+  let progressTimer;
+  
+  // ✅ DÉMARRER LE TIMER DÈS L'OUVERTURE DU POPUP
+  progressTimer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setElapsedTime(elapsed);
+      
+      // Timer update silencieux
+      
+      // Progression continue basée sur le temps écoulé
+      const elapsedSeconds = Math.floor(elapsed / 1000);
+      const maxTime = (settings?.max_processing_time || 60) * 1000;
+      let timeBasedProgress;
+      
+      if (elapsedSeconds < 5) {
+        timeBasedProgress = Math.min(20, (elapsed / 5000) * 20);
+      } else if (elapsedSeconds < 10) {
+        timeBasedProgress = 25 + Math.min(25, ((elapsed - 5000) / 5000) * 25);
+      } else if (elapsedSeconds < 15) {
+        timeBasedProgress = 50 + Math.min(25, ((elapsed - 10000) / 5000) * 25);
+      } else if (elapsedSeconds < 20) {
+        timeBasedProgress = 75 + Math.min(15, ((elapsed - 15000) / 5000) * 15);
+      } else {
+        timeBasedProgress = Math.min(95, 90 + ((elapsed - 20000) / (maxTime - 20000)) * 5);
+      }
+      
+      setLoadingProgress(timeBasedProgress);
+  }, 500);
+  
+  try {
+    // Génération d'image lancée
+
+    const prompt = localStorage.getItem('stylePrompt') || "portrait photo";
+    const image = imageFile; // base64
+
+    // Requête AI en cours (logs désactivés pour sécurité)
+
+    setLogs(["Envoi de la requête au serveur IA..."]);
+    
+    // Ajouter des messages de progression basés sur le temps écoulé
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Traitement de l'image en cours..."]);
+    }, 5000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Application du style sur votre photo..."]);
+    }, 10000);
+    
+    setTimeout(() => {
+      setLogs(prevLogs => [...prevLogs, "Fusion avec le layout (watermark)..."]);
+    }, 15000);
+
+    const reqBody = {
+      prompt,
+      image
+    };
+
+    // Payload préparé (logs désactivés)
+
+    let resultUrl = null;
+    let aiSource = 'gemini'; // Track which AI service was used
+    
+    // Requête vers serveur IA
+    setLogs(prev => [...prev, "Connexion au serveur IA..."]);
 
     const fetchStart = Date.now();
     let response;
@@ -1820,7 +2152,7 @@ export default function CameraCapture({ params }) {
         if (progressTimer) {
           clearInterval(progressTimer);
           progressTimer = null;
-          console.log('[DEBUG] Timer arrêté après upload S3 réussi (Gemini)');
+          console.log('[DEBUG] Timer arrêté après upload S3 réussi (Replicate)');
         }
       } else {
         throw new Error("Réponse S3 invalide");
@@ -1833,7 +2165,7 @@ export default function CameraCapture({ params }) {
       if (progressTimer) {
         clearInterval(progressTimer);
         progressTimer = null;
-        console.log('[DEBUG] Timer arrêté après upload direct (Gemini)');
+        console.log('[DEBUG] Timer arrêté après upload direct (Replicate)');
       }
     }
 
@@ -1854,7 +2186,6 @@ export default function CameraCapture({ params }) {
           gender: styleGender,
           result_image_url: finalImageUrl,
           result_s3_url: resultS3Url,
-          reference_image_url: styleFix || null, // Ajout de l'image de référence
           processing_time_ms: Date.now() - start,
           is_success: true,
           error_message: null,
@@ -1939,7 +2270,7 @@ export default function CameraCapture({ params }) {
     if (progressTimer) {
       clearInterval(progressTimer);
       progressTimer = null;
-      console.log('[DEBUG] Timer arrêté à cause d\'une erreur (Gemini)');
+      console.log('[DEBUG] Timer arrêté à cause d\'une erreur (Replicate)');
     }
     // Enregistre l'échec dans sessions pour garder la cohérence du quota
     try {
@@ -1958,7 +2289,6 @@ export default function CameraCapture({ params }) {
         gender: styleGender,
         result_image_url: null,
         result_s3_url: null,
-        reference_image_url: styleFix || null, // Ajout de l'image de référence
         processing_time_ms: Date.now() - start,
         is_success: false,
         error_message: err.message,
@@ -1995,7 +2325,7 @@ export default function CameraCapture({ params }) {
     // ✅ SÉCURITÉ : Arrêter le timer s'il n'a pas encore été arrêté
     if (progressTimer) {
       clearInterval(progressTimer);
-      console.log('[DEBUG] Timer arrêté en sécurité dans finally (Gemini)');
+      console.log('[DEBUG] Timer arrêté en sécurité dans finally (Replicate)');
     }
     
     // Mettre à jour le temps final
@@ -2876,24 +3206,18 @@ export default function CameraCapture({ params }) {
         </div>
         
         {/* Camera viewfinder with responsive dimensions and centering */}
-        <div className={`${deviceType === 'mobile' ? 'w-full flex justify-center' : 'w-full flex justify-center'}`}>
+        <div className={`${deviceType === 'mobile' ? 'w-full flex justify-center' : ''}`}>
           <motion.div 
             className={`relative overflow-hidden rounded-lg shadow-2xl`}
             style={{ 
-              // Gestion dynamique de la taille pour respecter le ratio
-              width: 'auto',
-              height: 'auto',
-              
-              // Contraintes pour rester dans l'écran
-              maxWidth: '100%',
-              maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
-              
-              // Le ratio d'aspect est prioritaire
-              aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651'),
-              
+              width: deviceType === 'mobile' ? '82vw' : deviceType === 'tablet' ? '80vw' : '100%',
+              maxWidth: deviceType === 'mobile' ? '320px' : deviceType === 'tablet' ? '600px' : '1400px',
+              aspectRatio: deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651',
               border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',
               backgroundColor: 'black',
-              margin: '0 auto'
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
+              margin: deviceType === 'mobile' ? '0' : '0 auto'
             }}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -2985,6 +3309,8 @@ export default function CameraCapture({ params }) {
               transform: 'scaleX(-1)',
               display: enabled && !videoVisible ? 'none' : 'block',
               visibility: enabled && !videoVisible ? 'hidden' : 'visible',
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '70vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '85vh' : '80vh',
               backgroundColor: '#000',
               objectPosition: 'center center'
             }} 
@@ -3011,6 +3337,8 @@ export default function CameraCapture({ params }) {
             className="w-full h-full"
             style={{ 
               display: enabled ? 'block' : 'none',
+              minHeight: deviceType === 'mobile' ? '50vh' : deviceType === 'tablet' ? '60vh' : '400px',
+              maxHeight: deviceType === 'mobile' ? '70vh' : deviceType === 'tablet' ? '80vh' : '80vh',
               objectFit: 'cover',
               backgroundColor: '#222',
               objectPosition: 'center center'

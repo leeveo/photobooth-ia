@@ -239,6 +239,36 @@ export default function CameraCapture({ params }) {
   
   // State pour stocker les dimensions de l'orientation
   const [orientationData, setOrientationData] = useState(null);
+
+  // Détecter le type d'appareil pour l'affichage - basé sur la largeur d'écran
+  const [deviceType, setDeviceType] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const screenWidth = window.innerWidth;
+      
+      if (screenWidth <= 768) return 'mobile';  // Écrans mobiles
+      if (screenWidth <= 1024) return 'tablet'; // Écrans tablettes
+      return 'desktop'; // Écrans desktop
+    }
+    return 'desktop';
+  });
+
+  useEffect(() => {
+    const detectDevice = () => {
+      const screenWidth = window.innerWidth;
+      
+      if (screenWidth <= 768) {
+        setDeviceType('mobile');   // Format smartphone/mobile
+      } else if (screenWidth <= 1024) {
+        setDeviceType('tablet');   // Format tablette
+      } else {
+        setDeviceType('desktop');  // Format desktop
+      }
+    };
+    
+    detectDevice();
+    window.addEventListener('resize', detectDevice);
+    return () => window.removeEventListener('resize', detectDevice);
+  }, []);
   
   // Initialize webcam
   useWebcam({ videoRef, previewRef });
@@ -1333,7 +1363,25 @@ export default function CameraCapture({ params }) {
           {enabled ? 'Vérifiez votre photo' : 'Prenez une photo de votre visage'}
         </h2>
         
-        <div className="relative aspect-square w-full max-w-md mx-auto">
+        <div className={`${deviceType === 'mobile' ? 'w-full flex justify-center' : 'w-full flex justify-center'}`}>
+          <motion.div 
+            className={`relative overflow-hidden rounded-lg shadow-2xl`}
+            style={{ 
+              // Gestion dynamique de la taille pour respecter le ratio
+              width: 'auto',
+              height: 'auto',
+              
+              // Contraintes pour rester dans l'écran
+              maxWidth: '100%',
+              maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
+              
+              // Le ratio d'aspect est prioritaire
+              aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '970/651'),
+              
+              backgroundColor: 'black',
+              margin: '0 auto'
+            }}
+          >
           {/* Countdown overlay */}
           {captured && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50 text-white text-8xl font-bold">
@@ -1344,14 +1392,23 @@ export default function CameraCapture({ params }) {
           {/* Video element for camera preview */}
           <video 
             ref={videoRef} 
-            className={`w-full h-full object-cover rounded-lg ${enabled ? 'hidden' : 'block'}`} 
+            className="w-full h-full object-cover"
+            style={{ 
+              display: enabled ? 'none' : 'block',
+              objectPosition: 'center center'
+            }} 
             playsInline
           />
           
           {/* Canvas element for captured photo */}
           <canvas 
             ref={previewRef} 
-            className={`w-full h-full object-cover rounded-lg ${enabled ? 'block' : 'hidden'}`}
+            className="w-full h-full"
+            style={{ 
+              display: enabled ? 'block' : 'none',
+              objectFit: 'cover',
+              objectPosition: 'center center'
+            }}
           />
           
           {/* Outline for camera viewfinder */}
@@ -1385,6 +1442,7 @@ export default function CameraCapture({ params }) {
               )}
             </motion.button>
           )}
+          </motion.div>
         </div>
 
         <div className="mt-8 flex flex-col items-center">

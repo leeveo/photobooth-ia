@@ -139,7 +139,47 @@ export async function POST(request) {
     }
 
     // Ajouter le texte du prompt
-    geminiPrompt.push({ text: prompt });
+    // ✅ OPTIMISATION DU PROMPT POUR GEMINI (V2 - Focus Fusion & Géométrie)
+    let finalPrompt = prompt;
+    
+    if (referenceImageData && referenceImageData.startsWith('data:image')) {
+      finalPrompt = `[ROLE]
+You are an expert professional hair stylist and digital artist specialized in virtual makeovers.
+
+[INPUTS]
+Image 1: The USER (Target Face).
+Image 2: The HAIRSTYLE (Reference Style).
+
+[TASK]
+Generate a hyper-realistic photo of the person in Image 1 wearing the hairstyle from Image 2.
+
+[CRITICAL EXECUTION STEPS]
+1. **ANALYZE** the head shape and lighting of the User (Image 1).
+2. **EXTRACT** the hairstyle structure, texture, and color from the Style (Image 2).
+3. **ADAPT & MORPH** the hairstyle to perfectly fit the User's head shape. The hair must wrap naturally around the skull.
+4. **BLEND** the hairline seamlessly. There should be no visible "cutout" lines.
+5. **PRESERVE** the User's facial identity (eyes, nose, mouth, skin texture) 100%.
+6. **MATCH** the lighting and shadows of the hair to the face.
+
+[OUTPUT REQUIREMENT]
+A single, seamless, photorealistic portrait. No artifacts, no collage effect.`;
+    } else {
+      finalPrompt = `[ROLE]
+You are an expert digital artist.
+
+[INPUT]
+Image 1: The USER.
+
+[TASK]
+${prompt}
+
+[CONSTRAINTS]
+1. Preserve the user's facial identity perfectly.
+2. Ensure photorealistic quality.`;
+    }
+
+    console.log("Final Enhanced Prompt V2:", finalPrompt);
+    geminiPrompt.push({ text: finalPrompt });
     
     try {
       console.log("Calling Gemini API...");
