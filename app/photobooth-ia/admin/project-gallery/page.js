@@ -697,8 +697,19 @@ export default function ProjectGallery() {
       ) : (
         <>
            <div className="p-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg text-white mb-6">
-        <h1 className="text-2xl font-bold mb-2">Galerie des Photobooths</h1>
-        <p className="text-white text-opacity-80 text-sm">Gérez vos Photobooths, consultez les photos des utilisateurs et diffusez-les sur grands écrans.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Galerie des Photobooths</h1>
+            <p className="text-white text-opacity-80 text-sm">Gérez vos Photobooths, consultez les photos des utilisateurs et diffusez-les sur grands écrans.</p>
+          </div>
+          <Link
+            href="/photobooth-ia/admin/print-monitor"
+            className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <RiSettings3Line className="w-5 h-5" />
+            Monitoring Impression
+          </Link>
+        </div>
       </div>
 
           
