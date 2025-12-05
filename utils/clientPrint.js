@@ -175,23 +175,30 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         printStyle.id = 'print-style-global';
         printStyle.innerHTML = `
           @media print {
-            /* Cacher tout le contenu normal */
-            body > *:not(#print-container-main) {
-              display: none !important;
+            /* 
+               FIX: Utiliser visibility: hidden au lieu de display: none 
+               pour le body, car display: none retire les éléments du flux
+               et peut empêcher l'impression de fonctionner correctement sur iOS.
+               visibility: visible sur l'enfant surcharge visibility: hidden du parent.
+            */
+            body {
+              visibility: hidden !important;
+              background: white !important;
             }
             
             /* Afficher uniquement le conteneur d'impression */
             #print-container-main {
-              display: block !important;
-              position: fixed !important;
+              visibility: visible !important;
+              position: absolute !important;
               top: 0 !important;
               left: 0 !important;
               width: 100% !important;
               height: 100% !important;
-              z-index: 999999 !important;
+              z-index: 2147483647 !important; /* Max z-index */
               background: white !important;
               margin: 0 !important;
               padding: 0 !important;
+              overflow: hidden !important;
             }
 
             /* Configuration de la page */
@@ -219,29 +226,83 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         document.head.appendChild(printStyle);
       } else {
         // Mettre à jour la taille de page si elle a changé (ex: portrait vs landscape)
-        printStyle.innerHTML = printStyle.innerHTML.replace(/size: .*?;/, `size: ${pageSize};`);
+        // On recrée le style pour être sûr que la regex fonctionne
+        printStyle.innerHTML = `
+          @media print {
+            body {
+              visibility: hidden !important;
+              background: white !important;
+            }
+            #print-container-main {
+              visibility: visible !important;
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+              z-index: 2147483647 !important;
+              background: white !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+            }
+            @page {
+              size: ${pageSize};
+              margin: 0 !important;
+            }
+            #print-container-main img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            }
+          }
+          @media screen {
+            #print-container-main {
+              display: none !important;
+            }
+          }
+        `;
       }
 
       // 3. Mettre l'image dans le conteneur
-      printContainer.innerHTML = `<img src="${imageSrc}" alt="Print" />`;
+      // Utiliser une promesse pour attendre le chargement de l'image
+      const img = new Image();
+      img.src = imageSrc;
+      img.alt = "Print";
+      
+      printContainer.innerHTML = ''; // Nettoyer
+      printContainer.appendChild(img);
 
       // 4. Lancer l'impression sur la fenêtre principale
-      // C'est ce que Kiosk Pro attend pour intercepter l'appel
-      setTimeout(() => {
-        try {
-          console.log('🖨️ Lancement impression fenêtre principale...');
-          window.print();
-          
-          // Nettoyage optionnel après délai (pour laisser le temps au spooler)
-          // On vide juste le conteneur pour libérer la mémoire de l'image Base64
-          setTimeout(() => {
-            printContainer.innerHTML = '';
-          }, 5000);
-          
-        } catch (e) {
-          console.error('Print error:', e);
-        }
-      }, 500);
+      // Attendre que l'image soit chargée
+      const performPrint = () => {
+        setTimeout(() => {
+          try {
+            console.log('🖨️ Lancement impression fenêtre principale...');
+            window.print();
+            
+            // Nettoyage optionnel après délai
+            setTimeout(() => {
+              printContainer.innerHTML = '';
+            }, 5000);
+            
+          } catch (e) {
+            console.error('Print error:', e);
+          }
+        }, 500); // Petit délai supplémentaire pour le rendu
+      };
+
+      if (img.complete) {
+        performPrint();
+      } else {
+        img.onload = performPrint;
+        img.onerror = (e) => {
+            console.error("Erreur chargement image print:", e);
+            // Tenter d'imprimer quand même
+            performPrint();
+        };
+      }
 
       resolve(true);
       return; // Fin de la nouvelle méthode
