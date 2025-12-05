@@ -44,7 +44,10 @@ export async function POST(request) {
       }
     }
 
-    // Extraire l'image de référence si disponible
+    // Extraire l'image de référence si disponible - DÉSACTIVÉ SUR DEMANDE
+    // L'utilisateur souhaite utiliser uniquement le prompt dynamique sans image de référence
+    let referenceImageData = null;
+    /*
     let referenceImageData = reference_image;
     if (!referenceImageData && input) {
       referenceImageData = input.reference_image;
@@ -70,7 +73,8 @@ export async function POST(request) {
         referenceImageData = null;
       }
     }
-
+    */
+    
     if (!imageData || !imageData.startsWith('data:image')) {
       console.error("Missing or invalid image data");
       return NextResponse.json({
@@ -93,7 +97,7 @@ export async function POST(request) {
       apiKey: process.env.GEMINI
     });
     
-    // Extraire les données base64 de l'image principale
+    // Extraire les données base64 de l'image
     const base64Match = imageData.match(/^data:image\/([a-zA-Z]*);base64,(.+)$/);
     if (!base64Match) {
       console.error("Invalid base64 image format");
@@ -109,85 +113,43 @@ export async function POST(request) {
     console.log(`Processing image with mime type: ${fullMimeType}`);
     console.log(`Prompt: ${prompt.substring(0, 100)}...`);
     console.log(`Image data length: ${base64Data.length}`);
-
+    
     // Préparer le prompt pour Gemini
-    const geminiPrompt = [];
+    // Structure correcte pour @google/genai: un seul objet Content avec plusieurs Parts
+    const parts = [];
 
-    // Ajouter l'image principale (Utilisateur) en PREMIER
-    geminiPrompt.push({
+    // Ajouter l'image principale (Utilisateur)
+    parts.push({
       inlineData: {
         mimeType: fullMimeType,
         data: base64Data,
       },
     });
 
-    // Ajouter l'image de référence (Style) en SECOND
-    if (referenceImageData && referenceImageData.startsWith('data:image')) {
-      const refBase64Match = referenceImageData.match(/^data:image\/([a-zA-Z]*);base64,(.+)$/);
-      if (refBase64Match) {
-        const [, refMimeType, refBase64Data] = refBase64Match;
-        const refFullMimeType = `image/${refMimeType}`;
-        console.log(`Adding reference image (second) with mime type: ${refFullMimeType}`);
-        
-        geminiPrompt.push({
-          inlineData: {
-            mimeType: refFullMimeType,
-            data: refBase64Data,
-          },
-        });
-      }
-    }
-
-    // Ajouter le texte du prompt
-    // ✅ OPTIMISATION DU PROMPT POUR GEMINI (V2 - Focus Fusion & Géométrie)
-    let finalPrompt = prompt;
-    
-    if (referenceImageData && referenceImageData.startsWith('data:image')) {
-      finalPrompt = `[ROLE]
-You are an expert professional hair stylist and digital artist specialized in virtual makeovers.
-
-[INPUTS]
-Image 1: The USER (Target Face).
-Image 2: The HAIRSTYLE (Reference Style).
-
-[TASK]
-Generate a hyper-realistic photo of the person in Image 1 wearing the hairstyle from Image 2.
-
-[CRITICAL EXECUTION STEPS]
-1. **ANALYZE** the head shape and lighting of the User (Image 1).
-2. **EXTRACT** the hairstyle structure, texture, and color from the Style (Image 2).
-3. **ADAPT & MORPH** the hairstyle to perfectly fit the User's head shape. The hair must wrap naturally around the skull.
-4. **BLEND** the hairline seamlessly. There should be no visible "cutout" lines.
-5. **PRESERVE** the User's facial identity (eyes, nose, mouth, skin texture) 100%.
-6. **MATCH** the lighting and shadows of the hair to the face.
-
-[OUTPUT REQUIREMENT]
-A single, seamless, photorealistic portrait. No artifacts, no collage effect.`;
-    } else {
-      finalPrompt = `[ROLE]
-You are an expert digital artist.
-
-[INPUT]
-Image 1: The USER.
-
-[TASK]
-${prompt}
-
-[CONSTRAINTS]
-1. Preserve the user's facial identity perfectly.
-2. Ensure photorealistic quality.`;
-    }
-
-    console.log("Final Enhanced Prompt V2:", finalPrompt);
-    geminiPrompt.push({ text: finalPrompt });
+    // Ajouter le texte du prompt (Dynamique depuis la DB, sans modification)
+    console.log("Using dynamic prompt:", prompt);
+    parts.push({ text: prompt });
     
     try {
-      console.log("Calling Gemini API...");
+      console.log("Calling Gemini API with model: gemini-2.5-flash-image");
       
       // Faire l'appel à l'API Gemini
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-image-preview",
-        contents: geminiPrompt,
+        model: "gemini-2.5-flash-image",
+        contents: [
+          {
+            role: 'user',
+            parts: parts
+          }
+        ],
+        config: {
+          safetySettings: [
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+          ]
+        }
       });
       
       console.log(`Gemini API success in ${Date.now() - startTime}ms`);

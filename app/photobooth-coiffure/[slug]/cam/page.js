@@ -657,6 +657,7 @@ export default function CameraCapture({ params }) {
   const [error, setError] = useState(null);
   const [logs, setLogs] = useState([]);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [adminUserId, setAdminUserId] = useState(null); // ✅ Stocker l'ID admin pour le quota
 
 
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -1534,7 +1535,8 @@ export default function CameraCapture({ params }) {
   // Fonction avec fallback Azure - délai de 3 secondes
   const generateImageGemini = async () => {
     // ✅ NOUVEAU SYSTÈME DE QUOTA AVANCÉ
-    const canProceed = await QuotaManager.checkAndAlertQuota(project?.id);
+    // On passe l'adminUserId explicitement car le visiteur n'est pas connecté
+    const canProceed = await QuotaManager.checkAndAlertQuota(project?.id, adminUserId);
     if (!canProceed) {
       return; // L'utilisateur a été redirigé ou alerté
     }
@@ -1619,7 +1621,7 @@ export default function CameraCapture({ params }) {
       const reqBody = {
         prompt,
         image,
-        // reference_image: styleFix // DÉSACTIVÉ : On utilise uniquement le prompt textuel pour une meilleure fusion
+        reference_image: styleFix // Réactivé pour le support V2
       };
 
       // Payload préparé (logs désactivés)
@@ -2058,6 +2060,11 @@ export default function CameraCapture({ params }) {
         .eq('id', project.id)
         .single();
       const adminUserId = projectData?.created_by;
+      
+      // ✅ Sauvegarder l'ID admin dans le state pour l'utiliser plus tard (ex: génération IA)
+      if (adminUserId) {
+        setAdminUserId(adminUserId);
+      }
 
       // Récupérer le dernier paiement pour le quota et la date de reset
       let quotaValue = 3; // Quota gratuit par défaut
