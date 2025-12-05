@@ -155,7 +155,9 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       printContainer.style.left = '0';
       printContainer.style.width = '100vw';
       printContainer.style.height = '100vh';
-      printContainer.style.zIndex = '999999';
+      printContainer.style.zIndex = '-1'; // Caché visuellement mais dans le DOM
+      printContainer.style.opacity = '0'; // Invisible pour l'utilisateur
+      printContainer.style.pointerEvents = 'none';
       printContainer.style.backgroundColor = 'white';
       printContainer.style.display = 'flex';
       printContainer.style.justifyContent = 'center';
@@ -177,11 +179,17 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       printStyles.id = 'print-styles-kiosk';
       printStyles.textContent = `
         @media print {
+          /* Masquer tout le contenu de la page sauf le conteneur d'impression */
           body > *:not(#print-container-kiosk) {
             display: none !important;
+            visibility: hidden !important;
           }
           
+          /* Forcer l'affichage du conteneur d'impression */
           #print-container-kiosk {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -189,13 +197,16 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
             height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            display: flex !important;
+            z-index: 999999 !important;
             justify-content: center !important;
             align-items: center !important;
             background: white !important;
           }
           
           #print-container-kiosk img {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             max-width: 100% !important;
             max-height: 100% !important;
             width: auto !important;
