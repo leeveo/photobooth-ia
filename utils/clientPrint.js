@@ -3,6 +3,73 @@
  * Remplace l'API serveur qui ne peut pas accéder au réseau local.
  */
 
+// Helper pour optimiser l'image (redimensionnement + compression)
+const optimizeImageForPrint = async (imageUrl, imageBlob) => {
+  try {
+    // Créer une image temporaire pour charger la source
+    const tempImg = new Image();
+    tempImg.crossOrigin = "Anonymous";
+    
+    await new Promise((resolveLoad, rejectLoad) => {
+      tempImg.onload = resolveLoad;
+      tempImg.onerror = rejectLoad;
+      // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
+      tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+    });
+
+    // Créer un canvas pour le redimensionnement
+    const canvas = document.createElement('canvas');
+    let width = tempImg.width;
+    let height = tempImg.height;
+    
+    // Limiter à 1800px (résolution max pour 10x15cm à 300dpi)
+    const MAX_DIMENSION = 1800;
+    
+    if (width > height) {
+      if (width > MAX_DIMENSION) {
+        height *= MAX_DIMENSION / width;
+        width = MAX_DIMENSION;
+      }
+    } else {
+      if (height > MAX_DIMENSION) {
+        width *= MAX_DIMENSION / height;
+        height = MAX_DIMENSION;
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    // Fond blanc pour éviter la transparence noire
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(tempImg, 0, 0, width, height);
+    
+    // Convertir en JPEG compressé (qualité 0.8 est largement suffisant pour l'impression thermique)
+    const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+    
+    console.log(`✅ Image optimisée pour impression: ${width}x${height}px`);
+    
+    // Nettoyage
+    if (imageBlob) URL.revokeObjectURL(tempImg.src);
+    
+    return optimizedDataUrl;
+    
+  } catch (error) {
+    console.error("⚠️ Erreur optimisation image:", error);
+    // En cas d'erreur, retourner l'original (converti en base64 si blob)
+    if (imageBlob) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(imageBlob);
+      });
+    }
+    return imageUrl;
+  }
+};
+
 export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portrait') => {
   // 0. Mode Hot Folder (Serveur)
   // Si activé via localStorage, on envoie au serveur au lieu d'imprimer via le navigateur
@@ -29,38 +96,29 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
     pageSize = '100mm 100mm'; 
   }
 
+  // Préparer l'image optimisée (utilisée pour Kiosk Pro ET Fallback)
+  // Cela résout souvent les problèmes de page blanche dus à des images trop lourdes
+  let optimizedImageSrc = imageUrl;
+  try {
+    optimizedImageSrc = await optimizeImageForPrint(imageUrl, imageBlob);
+  } catch (e) {
+    console.error("Echec optimisation, utilisation original", e);
+  }
+
   // 1. Détection Kiosk Pro (pour impression silencieuse)
   // Nécessite Kiosk Pro Plus ou Enterprise et une configuration correcte de l'imprimante dans l'app
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
       console.log('📱 Kiosk Pro détecté, tentative d\'impression directe...');
       
-      // Utiliser l'URL distante (S3)
-      // Note: Kiosk Pro doit avoir accès à internet pour télécharger l'image
-      let targetUrl = imageUrl; 
-
-      // TENTATIVE DE FIX PAGE BLANCHE :
-      // Si on a un blob, on le convertit en Base64.
-      // Kiosk Pro gère souvent mieux les Data URLs que les URLs distantes (problèmes de cache, auth, ou téléchargement)
-      if (imageBlob) {
-        try {
-          const reader = new FileReader();
-          targetUrl = await new Promise((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(imageBlob);
-          });
-          console.log('📦 Image convertie en Base64 pour Kiosk Pro (taille:', targetUrl.length, ')');
-        } catch (b64Error) {
-          console.error('⚠️ Erreur conversion Base64, utilisation URL distante:', b64Error);
-        }
-      }
+      // Utiliser l'image optimisée (Base64)
+      // Kiosk Pro gère mieux les Base64 optimisés que les URLs distantes ou les blobs bruts
+      const targetUrl = optimizedImageSrc;
+      
+      console.log('📦 Envoi image optimisée à Kiosk Pro (taille:', targetUrl.length, ')');
       
       // Appel API Kiosk Pro: print(url, printerId)
       // On laisse printerId vide ("") pour utiliser l'imprimante par défaut configurée dans Kiosk Pro
-      // Si une imprimante spécifique est requise, il faudrait son ID (ex: "Brother QL-820NWB")
-      
-      // Le résultat est généralement 1 (succès de l'envoi) ou 0 (échec)
       const result = window.kioskpro.printing.print(targetUrl, "");
       console.log('✅ Commande Kiosk Pro envoyée, code retour:', result);
       return true;
@@ -73,75 +131,8 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   // 2. Fallback: Impression navigateur standard (avec dialogue)
   return new Promise(async (resolve, reject) => {
     try {
-      // FIX: Utiliser Base64 au lieu de Blob URL pour éviter que la ressource ne soit inaccessible
-      // lors de l'envoi réel à l'imprimante (page blanche sur iPad)
-      let imageSrc = imageUrl;
-      
-      // OPTIMISATION: Redimensionner et compresser l'image avant impression
-      // Cela réduit drastiquement le temps de transfert vers l'imprimante (3-4min -> quelques secondes)
-      try {
-        // Créer une image temporaire pour charger la source
-        const tempImg = new Image();
-        tempImg.crossOrigin = "Anonymous";
-        
-        await new Promise((resolveLoad, rejectLoad) => {
-          tempImg.onload = resolveLoad;
-          tempImg.onerror = rejectLoad;
-          // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
-          tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
-        });
-
-        // Créer un canvas pour le redimensionnement
-        const canvas = document.createElement('canvas');
-        let width = tempImg.width;
-        let height = tempImg.height;
-        
-        // Limiter à 1800px (résolution max pour 10x15cm à 300dpi)
-        const MAX_DIMENSION = 1800;
-        
-        if (width > height) {
-          if (width > MAX_DIMENSION) {
-            height *= MAX_DIMENSION / width;
-            width = MAX_DIMENSION;
-          }
-        } else {
-          if (height > MAX_DIMENSION) {
-            width *= MAX_DIMENSION / height;
-            height = MAX_DIMENSION;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(tempImg, 0, 0, width, height);
-        
-        // Convertir en JPEG compressé (qualité 0.8 est largement suffisant pour l'impression thermique)
-        // Cela réduit la taille du fichier de plusieurs Mo à quelques centaines de Ko
-        imageSrc = canvas.toDataURL('image/jpeg', 0.80);
-        
-        console.log(`✅ Image optimisée pour impression: ${width}x${height}px`);
-        
-        // Nettoyage
-        if (imageBlob) URL.revokeObjectURL(tempImg.src);
-        
-      } catch (optError) {
-        console.error("⚠️ Erreur optimisation image, utilisation fallback:", optError);
-        // Fallback vers la méthode précédente si l'optimisation échoue
-        if (imageBlob) {
-          try {
-            const reader = new FileReader();
-            imageSrc = await new Promise((res, rej) => {
-              reader.onloadend = () => res(reader.result);
-              reader.onerror = rej;
-              reader.readAsDataURL(imageBlob);
-            });
-          } catch (e) {
-            imageSrc = imageUrl;
-          }
-        }
-      }
+      // Utiliser l'image optimisée calculée plus haut
+      const imageSrc = optimizedImageSrc;
 
       // Nettoyer l'ancienne iframe si elle existe pour éviter l'accumulation
       const oldIframe = document.getElementById('print-iframe-hidden');
