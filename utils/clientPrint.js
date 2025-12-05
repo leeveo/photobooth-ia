@@ -30,10 +30,46 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   }
 
   // 1. Détection Kiosk Pro (pour impression silencieuse)
-  // NOTE: Si "Automatic Kiosk Print Mode" est activé dans les réglages Kiosk Pro,
-  // il vaut mieux utiliser window.print() standard (fallback) plutôt que l'API JS.
-  // L'API JS nécessite une configuration "Allowed Domains" complexe qui échoue souvent.
-  // On désactive donc ce bloc pour privilégier le mode natif automatique.
+  // NOTE: On réactive l'API JS car c'est la méthode la plus fiable si le mode automatique échoue.
+  // IMPORTANT: Pour que cela fonctionne, le domaine DOIT être ajouté dans "Allowed Domains" dans les réglages Kiosk Pro.
+  if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
+    try {
+      console.log('📱 Kiosk Pro détecté, tentative d\'impression directe via API JS...');
+      
+      // Utiliser l'URL distante (S3)
+      // Note: Kiosk Pro doit avoir accès à internet pour télécharger l'image
+      let targetUrl = imageUrl; 
+
+      // TENTATIVE DE FIX PAGE BLANCHE :
+      // Si on a un blob, on le convertit en Base64.
+      // Kiosk Pro gère souvent mieux les Data URLs que les URLs distantes (problèmes de cache, auth, ou téléchargement)
+      if (imageBlob) {
+        try {
+          const reader = new FileReader();
+          targetUrl = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageBlob);
+          });
+          console.log('📦 Image convertie en Base64 pour Kiosk Pro (taille:', targetUrl.length, ')');
+        } catch (b64Error) {
+          console.error('⚠️ Erreur conversion Base64, utilisation URL distante:', b64Error);
+        }
+      }
+      
+      // Appel API Kiosk Pro: print(url, printerId)
+      // On laisse printerId vide ("") pour utiliser l'imprimante par défaut configurée dans Kiosk Pro
+      // Si une imprimante spécifique est requise, il faudrait son ID (ex: "Brother QL-820NWB")
+      
+      // Le résultat est généralement 1 (succès de l'envoi) ou 0 (échec)
+      const result = window.kioskpro.printing.print(targetUrl, "");
+      console.log('✅ Commande Kiosk Pro envoyée, code retour:', result);
+      return true;
+    } catch (kpError) {
+      console.error('⚠️ Erreur API Kiosk Pro, passage au fallback:', kpError);
+      // On continue vers le fallback standard si l'API échoue
+    }
+  }
   /*
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
