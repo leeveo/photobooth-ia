@@ -154,119 +154,104 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         document.body.removeChild(oldIframe);
       }
 
+      // --- NOUVELLE STRATÉGIE POUR KIOSK PRO ---
+      // L'utilisation d'une iframe empêche souvent Kiosk Pro de détecter correctement l'appel window.print()
+      // pour son mode "Automatic Kiosk Print Mode".
+      // On va donc injecter l'image directement dans le body principal, et utiliser @media print
+      // pour masquer tout le reste. C'est la méthode recommandée pour les kiosques.
+
+      // 1. Créer le conteneur d'impression s'il n'existe pas
+      let printContainer = document.getElementById('print-container-main');
+      if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'print-container-main';
+        document.body.appendChild(printContainer);
+      }
+      
+      // 2. Injecter le style d'impression global
+      let printStyle = document.getElementById('print-style-global');
+      if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'print-style-global';
+        printStyle.innerHTML = `
+          @media print {
+            /* Cacher tout le contenu normal */
+            body > *:not(#print-container-main) {
+              display: none !important;
+            }
+            
+            /* Afficher uniquement le conteneur d'impression */
+            #print-container-main {
+              display: block !important;
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+              z-index: 999999 !important;
+              background: white !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            /* Configuration de la page */
+            @page {
+              size: ${pageSize};
+              margin: 0 !important;
+            }
+            
+            /* Image pleine page */
+            #print-container-main img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            }
+          }
+          
+          /* Masquer le conteneur d'impression à l'écran */
+          @media screen {
+            #print-container-main {
+              display: none !important;
+            }
+          }
+        `;
+        document.head.appendChild(printStyle);
+      } else {
+        // Mettre à jour la taille de page si elle a changé (ex: portrait vs landscape)
+        printStyle.innerHTML = printStyle.innerHTML.replace(/size: .*?;/, `size: ${pageSize};`);
+      }
+
+      // 3. Mettre l'image dans le conteneur
+      printContainer.innerHTML = `<img src="${imageSrc}" alt="Print" />`;
+
+      // 4. Lancer l'impression sur la fenêtre principale
+      // C'est ce que Kiosk Pro attend pour intercepter l'appel
+      setTimeout(() => {
+        try {
+          console.log('🖨️ Lancement impression fenêtre principale...');
+          window.print();
+          
+          // Nettoyage optionnel après délai (pour laisser le temps au spooler)
+          // On vide juste le conteneur pour libérer la mémoire de l'image Base64
+          setTimeout(() => {
+            printContainer.innerHTML = '';
+          }, 5000);
+          
+        } catch (e) {
+          console.error('Print error:', e);
+        }
+      }, 500);
+
+      resolve(true);
+      return; // Fin de la nouvelle méthode
+
+      /* ANCIENNE MÉTHODE IFRAME (Désactivée pour Kiosk Pro)
       // Créer une iframe invisible mais avec des dimensions pour que le rendu fonctionne
       const iframe = document.createElement('iframe');
       iframe.id = 'print-iframe-hidden';
-      iframe.style.position = 'fixed';
-      // Utiliser opacity: 0 et z-index négatif au lieu de le sortir de l'écran
-      // Cela garantit que le navigateur effectue le rendu graphique (nécessaire pour l'impression d'images sur iOS)
-      iframe.style.top = '0';
-      iframe.style.left = '0';
-      iframe.style.width = cssWidth;
-      iframe.style.height = cssHeight;
-      iframe.style.zIndex = '-9999';
-      iframe.style.opacity = '0';
-      iframe.style.pointerEvents = 'none';
-      iframe.style.border = '0';
-      
-      document.body.appendChild(iframe);
-
-      // 3. Définir le contenu de l'iframe
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>&nbsp;</title>
-            <style>
-              /* Reset global */
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              /* Configuration spécifique pour l'impression sans marges */
-              @media print {
-                @page {
-                  size: ${pageSize};
-                  margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
-                }
-                
-                html, body {
-                  width: 100%;
-                  height: 100%;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  overflow: hidden !important;
-                }
-              }
-
-              /* Styles généraux */
-              html, body { 
-                width: 100%;
-                height: 100%;
-                margin: 0; 
-                padding: 0;
-                overflow: hidden;
-                background: white;
-              }
-              
-              body {
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-              }
-              
-              img { 
-                width: 100%; 
-                height: 100%; 
-                object-fit: cover;
-                object-position: center; 
-                display: block; 
-                /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
-                transform: scale(1.01); 
-                transform-origin: center;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${imageSrc}" id="printImage" />
-            <script>
-              // Attendre que l'image soit chargée avant d'imprimer
-              const img = document.getElementById('printImage');
-              
-              function doPrint() {
-                // Focus nécessaire pour certains navigateurs
-                window.focus();
-                
-                // Délai augmenté pour garantir le décodage de l'image sur iPad (évite page blanche)
-                setTimeout(() => {
-                  try {
-                    window.print();
-                  } catch(e) {
-                    console.error('Print error:', e);
-                  }
-                }, 1000);
-              }
-
-              if (img.complete) {
-                doPrint();
-              } else {
-                img.onload = doPrint;
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      doc.close();
-
-      // 4. Nettoyage
-      // IMPORTANT: Sur iPad/iOS, ne PAS supprimer l'iframe immédiatement.
-      // Le spooler d'impression a besoin que le document existe encore.
-      // On laisse l'iframe, elle sera nettoyée au prochain appel via son ID.
-      resolve(true);
+      // ... (reste du code iframe)
+      */
 
     } catch (error) {
       console.error("❌ Erreur lors de la préparation de l'impression:", error);
