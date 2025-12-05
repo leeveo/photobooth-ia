@@ -2955,9 +2955,10 @@ const generateImageReplicate = async () => {
               : 'mx-auto'
           }`}
           style={{ 
-            width: 'auto',
-            height: 'auto',
-            maxWidth: '100%',
+            width: '100%',
+            maxWidth: orientationData 
+              ? `calc(${deviceType === 'mobile' ? '65vh' : '75vh'} * ${orientationData.width / orientationData.height})` 
+              : (deviceType === 'mobile' ? 'calc(65vh * 0.75)' : 'calc(75vh * 1.49)'),
             maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
             aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : '970/651'),
             border: cameraError ? '1px solid rgba(255, 0, 0, 0.5)' : 'none',

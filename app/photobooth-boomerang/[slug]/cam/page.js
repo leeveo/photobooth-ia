@@ -2275,12 +2275,11 @@ export default function CameraCapture({ params }) {
           }`}
           style={{ 
             // Gestion dynamique de la taille pour respecter le ratio
-            width: 'auto',
-            height: 'auto',
+            width: '100%',
             
             // Contraintes pour rester dans l'écran
-            maxWidth: '100%',
             maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
+            maxWidth: `calc(${deviceType === 'mobile' ? '65vh' : '75vh'} * ${orientationData ? orientationData.width / orientationData.height : (deviceType === 'mobile' ? 3/4 : deviceType === 'tablet' ? 4/3 : 16/9)})`,
             
             // Le ratio d'aspect est prioritaire
             aspectRatio: orientationData ? `${orientationData.width}/${orientationData.height}` : (deviceType === 'mobile' ? '3/4' : deviceType === 'tablet' ? '4/3' : '16/9'),

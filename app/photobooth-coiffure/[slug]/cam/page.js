@@ -2881,11 +2881,13 @@ export default function CameraCapture({ params }) {
             className={`relative overflow-hidden rounded-lg shadow-2xl`}
             style={{ 
               // Gestion dynamique de la taille pour respecter le ratio
-              width: 'auto',
-              height: 'auto',
+              width: '100%',
               
-              // Contraintes pour rester dans l'écran
-              maxWidth: '100%',
+              // Contraintes pour rester dans l'écran - Calculer la largeur max basée sur la hauteur max et le ratio
+              maxWidth: orientationData 
+                ? `calc(${deviceType === 'mobile' ? '65vh' : '75vh'} * ${orientationData.width / orientationData.height})` 
+                : (deviceType === 'mobile' ? 'calc(65vh * 0.75)' : 'calc(75vh * 1.33)'),
+              
               maxHeight: deviceType === 'mobile' ? '65vh' : '75vh',
               
               // Le ratio d'aspect est prioritaire
