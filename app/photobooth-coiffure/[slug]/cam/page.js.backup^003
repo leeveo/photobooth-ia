@@ -228,9 +228,6 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         
         if (!isMounted) {
           // Component unmounted during async call, clean up
-          // DO NOT STOP TRACKS HERE IF WE WANT PERSISTENCE, BUT HERE IT'S A NEW STREAM
-          // If we are unmounting, we probably don't want to keep this new stream if we haven't saved it yet
-          // But let's be safe and stop it if we are unmounting during init
           stream.getTracks().forEach(track => track.stop());
           return null;
         }
@@ -263,18 +260,6 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
     // Main initialization function with fallbacks
     const initializeCamera = async () => {
       // console.log("🎥 Initializing camera...");
-      
-      // 1. Check for existing persistent stream first
-      if (window.persistentCameraStream && window.persistentCameraStream.active) {
-        const tracks = window.persistentCameraStream.getVideoTracks();
-        if (tracks.length > 0 && tracks[0].readyState === 'live') {
-          console.log("♻️ Using existing persistent camera stream");
-          streamCam = window.persistentCameraStream;
-          await attachStreamToVideo();
-          return;
-        }
-      }
-
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setCameraError("Votre navigateur ne prend pas en charge l'accès à la caméra");
         return;
@@ -538,67 +523,58 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
       // Store the successful stream
       streamCam = stream;
       window.localStream = stream;
-      window.persistentCameraStream = stream; // Store in persistent global variable
+      
+      // Apply the stream to video element with retry logic
+      const attachStreamToVideo = async (retryCount = 0) => {
+        if (videoRef.current) {
+          // console.log("📹 Attaching stream to video element");
+          videoRef.current.srcObject = stream;
+          
+          // Make sure the video element is visible
+          videoRef.current.style.display = 'block';
+          videoRef.current.style.visibility = 'visible';
+          
+          // Play video with error handling
+          try {
+            await videoRef.current.play();
+            // console.log("▶️ Camera stream playing successfully");
+            
+            // Set a timeout to allow the video to initialize before marking as loaded
+            setTimeout(() => {
+              if (isMounted) {
+                setCameraLoaded(true);
+                // console.log("✅ Camera marked as loaded");
+              }
+            }, 1000);
+            
+          } catch (playError) {
+            // Ignore AbortError which happens when video is interrupted by a new load
+            if (playError.name === 'AbortError') {
+              // console.log("⚠️ Video play interrupted (benign)");
+              return;
+            }
+            console.error("❌ Error playing video stream:", playError);
+            setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
+          }
+        } else {
+          console.warn("❌ Video element not found when trying to initialize camera");
+          
+          // Retry logic - video element might not be mounted yet
+          if (retryCount < 5) {
+            console.log(`🔄 Retrying to find video element... (attempt ${retryCount + 1}/5)`);
+            setTimeout(() => {
+              if (isMounted) {
+                attachStreamToVideo(retryCount + 1);
+              }
+            }, 100); // Wait 100ms before retry
+          } else {
+            console.error("❌ Failed to find video element after 5 attempts");
+            setCameraError("Impossible de trouver l'élément vidéo");
+          }
+        }
+      };
       
       await attachStreamToVideo();
-    };
-
-    // Apply the stream to video element with retry logic
-    const attachStreamToVideo = async (retryCount = 0) => {
-      // Use streamCam which should be set by now (either from new init or persistent)
-      const stream = streamCam || window.persistentCameraStream;
-      
-      if (!stream) {
-        console.warn("❌ No stream available to attach");
-        return;
-      }
-
-      if (videoRef.current) {
-        // console.log("📹 Attaching stream to video element");
-        videoRef.current.srcObject = stream;
-        
-        // Make sure the video element is visible
-        videoRef.current.style.display = 'block';
-        videoRef.current.style.visibility = 'visible';
-        
-        // Play video with error handling
-        try {
-          await videoRef.current.play();
-          // console.log("▶️ Camera stream playing successfully");
-          
-          // Set a timeout to allow the video to initialize before marking as loaded
-          setTimeout(() => {
-            if (isMounted) {
-              setCameraLoaded(true);
-              // console.log("✅ Camera marked as loaded");
-            }
-          }, 1000);
-          
-        } catch (playError) {
-          // Ignore AbortError which happens when video is interrupted by a new load
-          if (playError.name === 'AbortError') {
-            // console.log("⚠️ Video play interrupted (benign)");
-            return;
-          }
-          console.error("❌ Error playing video stream:", playError);
-          setCameraError("Erreur lors du démarrage de la vidéo: " + playError.message);
-        }
-      } else {
-        console.warn("❌ Video element not found when trying to initialize camera");
-        
-        // Retry logic - video element might not be mounted yet
-        if (retryCount < 5) {
-          console.log(`🔄 Retrying to find video element... (attempt ${retryCount + 1}/5)`);
-          setTimeout(() => {
-            if (isMounted) {
-              attachStreamToVideo(retryCount + 1);
-            }
-          }, 100); // Wait 100ms before retry
-        } else {
-          console.error("❌ Failed to find video element after 5 attempts");
-          setCameraError("Impossible de trouver l'élément vidéo");
-        }
-      }
     };
     
     // Start the initialization process
@@ -613,9 +589,6 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
         videoRef.current.srcObject = null;
       }
       
-      // MODIFICATION: Ne PAS arrêter les tracks pour garder la permission active sur iPad
-      // On garde le stream actif dans window.persistentCameraStream
-      /*
       if (streamCam) {
         try {
           const tracks = streamCam.getTracks();
@@ -629,10 +602,7 @@ const useWebcam = ({ videoRef, setCameraError, setCameraLoaded }) => {
           console.error("Error during camera cleanup:", cleanupError);
         }
       }
-      */
-     console.log("⚠️ Camera cleanup skipped to maintain permission on iPad");
     };
-
   }, [videoRef, setCameraError, setCameraLoaded]);
 };
 
@@ -981,13 +951,10 @@ export default function CameraCapture({ params }) {
     setCameraLoaded(false);
     
     // Stop any existing stream
-    const streamToStop = streamCam || window.persistentCameraStream;
-    if (streamToStop) {
+    if (streamCam) {
       try {
-        streamToStop.getTracks().forEach(track => track.stop());
+        streamCam.getTracks().forEach(track => track.stop());
         streamCam = null;
-        window.persistentCameraStream = null;
-        window.localStream = null;
       } catch (e) {
         console.error("Error stopping camera tracks:", e);
       }
@@ -1010,11 +977,9 @@ export default function CameraCapture({ params }) {
     
     try {
       // Arrêter la caméra actuelle
-      const streamToStop = streamCam || window.persistentCameraStream;
-      if (streamToStop) {
-        streamToStop.getTracks().forEach(track => track.stop());
+      if (streamCam) {
+        streamCam.getTracks().forEach(track => track.stop());
         streamCam = null;
-        window.persistentCameraStream = null;
         window.localStream = null;
       }
       
@@ -1093,7 +1058,6 @@ export default function CameraCapture({ params }) {
         // Appliquer le nouveau stream
         streamCam = newStream;
         window.localStream = newStream;
-        window.persistentCameraStream = newStream; // Update persistent stream
         
         if (videoRef.current) {
           videoRef.current.srcObject = newStream;
