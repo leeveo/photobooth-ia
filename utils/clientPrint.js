@@ -3,9 +3,110 @@
  * Remplace l'API serveur qui ne peut pas accéder au réseau local.
  */
 
+// Panneau de debug visible sur iPad
+let debugPanel = null;
+let debugLogs = [];
+
+function createDebugPanel() {
+  if (debugPanel) return;
+  
+  debugPanel = document.createElement('div');
+  debugPanel.id = 'print-debug-panel';
+  debugPanel.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 350px;
+    max-height: 80vh;
+    background: rgba(0, 0, 0, 0.9);
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    z-index: 9999999;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  `;
+  
+  const title = document.createElement('div');
+  title.style.cssText = 'color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 14px;';
+  title.textContent = '🐛 DEBUG IMPRESSION';
+  debugPanel.appendChild(title);
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ Fermer';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+  `;
+  closeBtn.onclick = () => {
+    debugPanel.style.display = 'none';
+  };
+  debugPanel.appendChild(closeBtn);
+  
+  const logContainer = document.createElement('div');
+  logContainer.id = 'debug-logs';
+  logContainer.style.cssText = 'margin-top: 10px;';
+  debugPanel.appendChild(logContainer);
+  
+  document.body.appendChild(debugPanel);
+}
+
+function debugLog(message, type = 'info') {
+  const timestamp = new Date().toLocaleTimeString();
+  const colors = {
+    info: '#00ff00',
+    error: '#ff4444',
+    warn: '#ffaa00',
+    success: '#00ff88'
+  };
+  
+  const log = { timestamp, message, type, color: colors[type] || colors.info };
+  debugLogs.push(log);
+  
+  // Garder seulement les 50 derniers logs
+  if (debugLogs.length > 50) {
+    debugLogs.shift();
+  }
+  
+  // Afficher dans la console standard aussi
+  console.log(`[${timestamp}] ${message}`);
+  
+  // Mettre à jour le panneau
+  if (!debugPanel) {
+    createDebugPanel();
+  }
+  
+  const logContainer = document.getElementById('debug-logs');
+  if (logContainer) {
+    const logDiv = document.createElement('div');
+    logDiv.style.cssText = `
+      color: ${log.color};
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid ${log.color};
+      padding-left: 8px;
+      background: rgba(255,255,255,0.05);
+    `;
+    logDiv.textContent = `[${timestamp}] ${message}`;
+    logContainer.insertBefore(logDiv, logContainer.firstChild);
+  }
+}
+
 // Helper pour optimiser l'image (redimensionnement + compression)
 const optimizeImageForPrint = async (imageUrl, imageBlob) => {
   try {
+    debugLog('🔄 Début optimisation image...', 'info');
+    
     // Créer une image temporaire pour charger la source
     const tempImg = new Image();
     tempImg.crossOrigin = "Anonymous";
@@ -16,6 +117,8 @@ const optimizeImageForPrint = async (imageUrl, imageBlob) => {
       // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
       tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
     });
+
+    debugLog(`📐 Image source: ${tempImg.width}x${tempImg.height}px`, 'info');
 
     // Créer un canvas pour le redimensionnement
     const canvas = document.createElement('canvas');
@@ -49,7 +152,7 @@ const optimizeImageForPrint = async (imageUrl, imageBlob) => {
     // Convertir en JPEG compressé (qualité 0.8 est largement suffisant pour l'impression thermique)
     const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
     
-    console.log(`✅ Image optimisée pour impression: ${width}x${height}px`);
+    debugLog(`✅ Image optimisée: ${width}x${height}px (${Math.round(optimizedDataUrl.length / 1024)}KB)`, 'success');
     
     // Nettoyage
     if (imageBlob) URL.revokeObjectURL(tempImg.src);
@@ -57,6 +160,7 @@ const optimizeImageForPrint = async (imageUrl, imageBlob) => {
     return optimizedDataUrl;
     
   } catch (error) {
+    debugLog(`⚠️ Erreur optimisation: ${error.message}`, 'error');
     console.error("⚠️ Erreur optimisation image:", error);
     // En cas d'erreur, retourner l'original (converti en base64 si blob)
     if (imageBlob) {
@@ -141,6 +245,9 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       // Détecter iOS/iPad
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       
+      debugLog(`🖨️ Plateforme: ${isIOS ? 'iOS/iPad' : 'Desktop'}`, 'info');
+      debugLog(`📄 Format: ${format}`, 'info');
+      debugLog(`📏 Page size: ${pageSize}`, 'info');
       console.log('🖨️ Plateforme détectée:', isIOS ? 'iOS/iPad' : 'Desktop');
 
       // Créer un HTML complet avec l'image en base64
@@ -215,6 +322,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
 
       if (isIOS) {
         // MÉTHODE iOS: Utiliser un iframe (les popups sont bloquées sur iOS)
+        debugLog('📱 Méthode: iframe (iOS)', 'info');
         console.log('📱 Méthode iOS: iframe');
         
         // Créer un iframe caché
@@ -230,6 +338,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
           printFrame.style.border = 'none';
           printFrame.style.zIndex = '999999';
           document.body.appendChild(printFrame);
+          debugLog('✅ Iframe créé', 'success');
         }
         
         // Écrire le HTML dans l'iframe
@@ -238,22 +347,27 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         iframeDoc.write(printHTML);
         iframeDoc.close();
         
+        debugLog('✅ HTML injecté dans iframe', 'success');
         console.log('✅ Iframe créé et HTML injecté');
         
         // Attendre que l'image soit chargée puis lancer l'impression
         setTimeout(() => {
           try {
+            debugLog('🖨️ Appel contentWindow.print()...', 'info');
             printFrame.contentWindow.print();
+            debugLog('✅ window.print() appelé', 'success');
             console.log('📱 window.print() appelé sur iframe');
             
             // Masquer l'iframe après impression
             setTimeout(() => {
               if (printFrame && printFrame.parentNode) {
                 printFrame.style.display = 'none';
+                debugLog('🚫 Iframe masqué', 'info');
               }
               resolve(true);
             }, 1000);
           } catch (e) {
+            debugLog(`❌ ERREUR: ${e.message}`, 'error');
             console.error('❌ Erreur impression iframe:', e);
             if (printFrame && printFrame.parentNode) {
               printFrame.style.display = 'none';
@@ -264,6 +378,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         
       } else {
         // MÉTHODE DESKTOP: Utiliser window.open()
+        debugLog('🖥️ Méthode: window.open (Desktop)', 'info');
         console.log('🖥️ Méthode Desktop: window.open()');
         
         const blob = new Blob([printHTML], { type: 'text/html' });
@@ -272,20 +387,24 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');
         
         if (!printWindow) {
+          debugLog('❌ Popup bloqué!', 'error');
           console.error('❌ Impossible d\'ouvrir la fenêtre (popup bloqué)');
           reject(new Error('Popup bloqué'));
           return;
         }
         
+        debugLog('✅ Fenêtre popup ouverte', 'success');
         console.log('✅ Fenêtre d\'impression ouverte');
         
         setTimeout(() => {
           URL.revokeObjectURL(blobURL);
+          debugLog('🧹 Nettoyage effectué', 'info');
           resolve(true);
         }, 2000);
       }
 
     } catch (error) {
+      debugLog(`❌ ERREUR FATALE: ${error.message}`, 'error');
       console.error("❌ Erreur lors de la préparation de l'impression:", error);
       reject(error);
     }
