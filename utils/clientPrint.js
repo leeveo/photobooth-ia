@@ -133,151 +133,94 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   */
 
   // 2. Fallback: Impression navigateur standard (avec dialogue)
-  // NOUVELLE APPROCHE KIOSK PRO: Popup visible temporaire
-  // Kiosk Pro WebView ne capture QUE ce qui est réellement visible dans le viewport
+  // APPROCHE FINALE KIOSK PRO: Créer une page HTML simple avec juste l'image
+  // Kiosk Pro ne capture pas correctement les overlays dynamiques
   return new Promise(async (resolve, reject) => {
     try {
       const imageSrc = optimizedImageSrc;
+      
+      console.log('🖨️ Méthode: Création HTML simple pour Kiosk Pro');
 
-      // Créer ou récupérer le conteneur d'impression
-      let printContainer = document.getElementById('kiosk-print-overlay');
-      
-      if (!printContainer) {
-        printContainer = document.createElement('div');
-        printContainer.id = 'kiosk-print-overlay';
-        document.body.appendChild(printContainer);
-        console.log('📦 Conteneur d\'impression créé');
+      // Créer un HTML complet avec l'image en base64
+      const printHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Impression Photo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+    }
+    
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    @media print {
+      @page {
+        size: ${pageSize};
+        margin: 0;
       }
       
-      // Style: Overlay en plein écran VISIBLE (essentiel pour Kiosk Pro)
-      Object.assign(printContainer.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100vw',
-        height: '100vh',
-        zIndex: '999999',
-        backgroundColor: 'white',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden'
-      });
-      
-      // Nettoyer le contenu précédent
-      printContainer.innerHTML = '';
-      
-      // Créer l'image
-      const img = document.createElement('img');
-      img.src = imageSrc;
-      img.id = 'kiosk-print-image';
-      img.style.maxWidth = '100%';
-      img.style.maxHeight = '100%';
-      img.style.objectFit = 'contain';
-      img.style.display = 'block';
-      
-      printContainer.appendChild(img);
-      
-      // Créer les styles d'impression
-      let printStyles = document.getElementById('kiosk-print-styles');
-      if (!printStyles) {
-        printStyles = document.createElement('style');
-        printStyles.id = 'kiosk-print-styles';
-        printStyles.textContent = `
-          @media screen {
-            /* En mode écran normal: cacher temporairement l'overlay */
-            #kiosk-print-overlay {
-              display: flex !important;
-            }
-          }
-          
-          @media print {
-            /* En mode impression: afficher SEULEMENT l'image */
-            body * {
-              visibility: hidden !important;
-            }
-            
-            #kiosk-print-overlay,
-            #kiosk-print-overlay * {
-              visibility: visible !important;
-            }
-            
-            #kiosk-print-overlay {
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              width: 100% !important;
-              height: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              display: flex !important;
-              justify-content: center !important;
-              align-items: center !important;
-              background: white !important;
-            }
-            
-            #kiosk-print-image {
-              max-width: 100% !important;
-              max-height: 100% !important;
-              width: auto !important;
-              height: auto !important;
-              display: block !important;
-            }
-            
-            @page {
-              size: ${pageSize};
-              margin: 0 !important;
-            }
-          }
-        `;
-        document.head.appendChild(printStyles);
-        console.log('🎨 Styles d\'impression créés');
+      body {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: white;
       }
       
-      // Attendre que l'image soit chargée
-      img.onload = () => {
-        console.log('✅ Image chargée:', img.naturalWidth, 'x', img.naturalHeight);
-        
-        // Forcer le rendu
-        void img.offsetHeight;
-        
-        // Lancer l'impression après un court délai (Kiosk Pro a besoin que le DOM soit stable)
-        setTimeout(() => {
-          try {
-            console.log('📱 Ouverture du dialogue d\'impression...');
-            window.print();
-            
-            // Masquer l'overlay après l'impression (délai pour laisser le dialogue s'ouvrir)
-            setTimeout(() => {
-              if (printContainer) {
-                printContainer.style.display = 'none';
-              }
-              console.log('✅ Overlay masqué');
-              resolve(true);
-            }, 500);
-            
-          } catch (e) {
-            console.error('❌ Erreur impression:', e);
-            if (printContainer) {
-              printContainer.style.display = 'none';
-            }
-            reject(e);
-          }
-        }, 800); // Délai plus long pour Kiosk Pro
-      };
-      
-      img.onerror = (e) => {
-        console.error('❌ Erreur chargement image:', e);
-        if (printContainer) {
-          printContainer.style.display = 'none';
-        }
-        reject(new Error('Erreur de chargement de l\'image'));
-      };
-      
-      // Si l'image est déjà en cache
-      if (img.complete && img.naturalWidth > 0) {
-        img.onload();
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
       }
+    }
+  </style>
+</head>
+<body>
+  <img src="${imageSrc}" onload="setTimeout(function(){window.print(); setTimeout(function(){window.close();}, 500);}, 100);" />
+</body>
+</html>`;
+
+      console.log('📄 HTML créé, ouverture de la fenêtre d\'impression...');
+      
+      // Créer un Blob avec le HTML
+      const blob = new Blob([printHTML], { type: 'text/html' });
+      const blobURL = URL.createObjectURL(blob);
+      
+      // Ouvrir dans une nouvelle fenêtre
+      const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');
+      
+      if (!printWindow) {
+        console.error('❌ Impossible d\'ouvrir la fenêtre d\'impression (popup bloqué?)');
+        reject(new Error('Popup bloqué - impossible d\'ouvrir la fenêtre d\'impression'));
+        return;
+      }
+      
+      console.log('✅ Fenêtre d\'impression ouverte');
+      
+      // Nettoyer l'URL après un délai
+      setTimeout(() => {
+        URL.revokeObjectURL(blobURL);
+        console.log('🧹 Blob URL nettoyé');
+        resolve(true);
+      }, 2000);
 
     } catch (error) {
       console.error("❌ Erreur lors de la préparation de l'impression:", error);
