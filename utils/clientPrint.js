@@ -133,13 +133,15 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   */
 
   // 2. Fallback: Impression navigateur standard (avec dialogue)
-  // APPROCHE FINALE KIOSK PRO: Créer une page HTML simple avec juste l'image
-  // Kiosk Pro ne capture pas correctement les overlays dynamiques
+  // APPROCHE HYBRIDE: Popup pour desktop, iframe pour iOS/iPad
   return new Promise(async (resolve, reject) => {
     try {
       const imageSrc = optimizedImageSrc;
       
-      console.log('🖨️ Méthode: Création HTML simple pour Kiosk Pro');
+      // Détecter iOS/iPad
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      console.log('🖨️ Plateforme détectée:', isIOS ? 'iOS/iPad' : 'Desktop');
 
       // Créer un HTML complet avec l'image en base64
       const printHTML = `
@@ -147,6 +149,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Impression Photo</title>
   <style>
     * {
@@ -194,33 +197,93 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   </style>
 </head>
 <body>
-  <img src="${imageSrc}" onload="setTimeout(function(){window.print(); setTimeout(function(){window.close();}, 500);}, 100);" />
+  <img src="${imageSrc}" id="printImg" />
+  <script>
+    // Auto-print après chargement de l'image
+    document.getElementById('printImg').onload = function() {
+      setTimeout(function() {
+        window.print();
+        // Sur desktop, fermer après impression (pas sur iOS car ça ne fonctionne pas)
+        if (!/(iPad|iPhone|iPod)/.test(navigator.userAgent)) {
+          setTimeout(function() { window.close(); }, 500);
+        }
+      }, 100);
+    };
+  </script>
 </body>
 </html>`;
 
-      console.log('📄 HTML créé, ouverture de la fenêtre d\'impression...');
-      
-      // Créer un Blob avec le HTML
-      const blob = new Blob([printHTML], { type: 'text/html' });
-      const blobURL = URL.createObjectURL(blob);
-      
-      // Ouvrir dans une nouvelle fenêtre
-      const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');
-      
-      if (!printWindow) {
-        console.error('❌ Impossible d\'ouvrir la fenêtre d\'impression (popup bloqué?)');
-        reject(new Error('Popup bloqué - impossible d\'ouvrir la fenêtre d\'impression'));
-        return;
+      if (isIOS) {
+        // MÉTHODE iOS: Utiliser un iframe (les popups sont bloquées sur iOS)
+        console.log('📱 Méthode iOS: iframe');
+        
+        // Créer un iframe caché
+        let printFrame = document.getElementById('print-iframe');
+        if (!printFrame) {
+          printFrame = document.createElement('iframe');
+          printFrame.id = 'print-iframe';
+          printFrame.style.position = 'fixed';
+          printFrame.style.top = '0';
+          printFrame.style.left = '0';
+          printFrame.style.width = '100%';
+          printFrame.style.height = '100%';
+          printFrame.style.border = 'none';
+          printFrame.style.zIndex = '999999';
+          document.body.appendChild(printFrame);
+        }
+        
+        // Écrire le HTML dans l'iframe
+        const iframeDoc = printFrame.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(printHTML);
+        iframeDoc.close();
+        
+        console.log('✅ Iframe créé et HTML injecté');
+        
+        // Attendre que l'image soit chargée puis lancer l'impression
+        setTimeout(() => {
+          try {
+            printFrame.contentWindow.print();
+            console.log('📱 window.print() appelé sur iframe');
+            
+            // Masquer l'iframe après impression
+            setTimeout(() => {
+              if (printFrame && printFrame.parentNode) {
+                printFrame.style.display = 'none';
+              }
+              resolve(true);
+            }, 1000);
+          } catch (e) {
+            console.error('❌ Erreur impression iframe:', e);
+            if (printFrame && printFrame.parentNode) {
+              printFrame.style.display = 'none';
+            }
+            reject(e);
+          }
+        }, 500);
+        
+      } else {
+        // MÉTHODE DESKTOP: Utiliser window.open()
+        console.log('🖥️ Méthode Desktop: window.open()');
+        
+        const blob = new Blob([printHTML], { type: 'text/html' });
+        const blobURL = URL.createObjectURL(blob);
+        
+        const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');
+        
+        if (!printWindow) {
+          console.error('❌ Impossible d\'ouvrir la fenêtre (popup bloqué)');
+          reject(new Error('Popup bloqué'));
+          return;
+        }
+        
+        console.log('✅ Fenêtre d\'impression ouverte');
+        
+        setTimeout(() => {
+          URL.revokeObjectURL(blobURL);
+          resolve(true);
+        }, 2000);
       }
-      
-      console.log('✅ Fenêtre d\'impression ouverte');
-      
-      // Nettoyer l'URL après un délai
-      setTimeout(() => {
-        URL.revokeObjectURL(blobURL);
-        console.log('🧹 Blob URL nettoyé');
-        resolve(true);
-      }, 2000);
 
     } catch (error) {
       console.error("❌ Erreur lors de la préparation de l'impression:", error);
