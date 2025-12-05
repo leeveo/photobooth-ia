@@ -107,6 +107,9 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
 
   // 1. Détection Kiosk Pro (pour impression silencieuse)
   // Nécessite Kiosk Pro Plus ou Enterprise et une configuration correcte de l'imprimante dans l'app
+  // NOTE: Désactivé temporairement car l'API native produit des écrans blancs sur certaines versions.
+  // On privilégie la méthode standard (iframe + window.print) qui fonctionne correctement dans le WebView (comme Safari).
+  /* 
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
       console.log('📱 Kiosk Pro détecté, tentative d\'impression directe...');
@@ -127,6 +130,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       // On continue vers le fallback standard si l'API échoue
     }
   }
+  */
 
   // 2. Fallback: Impression navigateur standard (avec dialogue)
   return new Promise(async (resolve, reject) => {
