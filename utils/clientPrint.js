@@ -138,166 +138,132 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       // Utiliser l'image optimisée calculée plus haut
       const imageSrc = optimizedImageSrc;
 
-      // Nettoyer l'ancienne iframe si elle existe pour éviter l'accumulation
-      const oldIframe = document.getElementById('print-iframe-hidden');
-      if (oldIframe) {
-        document.body.removeChild(oldIframe);
+      // FIX KIOSK PRO: Au lieu d'une iframe, créer un conteneur visible dans le DOM
+      // Kiosk Pro capture mieux le contenu DOM direct que les iframes
+      
+      // Nettoyer l'ancien conteneur s'il existe
+      const oldContainer = document.getElementById('print-container-kiosk');
+      if (oldContainer) {
+        document.body.removeChild(oldContainer);
       }
 
-      // Créer une iframe pour l'impression
-      const iframe = document.createElement('iframe');
-      iframe.id = 'print-iframe-hidden';
-      iframe.style.position = 'fixed';
-      iframe.style.top = '0';
-      iframe.style.left = '0';
-      iframe.style.width = cssWidth;
-      iframe.style.height = cssHeight;
-      iframe.style.border = '0';
+      // Créer un conteneur d'impression dans le DOM principal
+      const printContainer = document.createElement('div');
+      printContainer.id = 'print-container-kiosk';
+      printContainer.style.position = 'fixed';
+      printContainer.style.top = '0';
+      printContainer.style.left = '0';
+      printContainer.style.width = '100vw';
+      printContainer.style.height = '100vh';
+      printContainer.style.zIndex = '999999';
+      printContainer.style.backgroundColor = 'white';
+      printContainer.style.display = 'flex';
+      printContainer.style.justifyContent = 'center';
+      printContainer.style.alignItems = 'center';
+      printContainer.style.overflow = 'hidden';
       
-      // FIX KIOSK PRO: Rendre l'iframe brièvement visible pour forcer le rendu dans le WebView
-      // Kiosk Pro Enterprise a besoin que l'iframe soit visible pour effectuer le rendu de l'image
-      iframe.style.zIndex = '9999';
-      iframe.style.opacity = '1';
-      iframe.style.pointerEvents = 'none';
-      iframe.style.backgroundColor = 'white';
+      // Créer l'élément image
+      const img = document.createElement('img');
+      img.src = imageSrc;
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '100%';
+      img.style.objectFit = 'contain';
+      img.style.display = 'block';
       
-      document.body.appendChild(iframe);
-
-      // 3. Attendre que l'iframe soit prête avant d'injecter le contenu
-      iframe.onload = () => {
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>&nbsp;</title>
-              <style>
-                /* Reset global */
-                * {
-                  box-sizing: border-box;
-                  -webkit-print-color-adjust: exact !important;
-                  print-color-adjust: exact !important;
-                }
-
-                /* Configuration spécifique pour l'impression sans marges */
-                @media print {
-                  @page {
-                    size: ${pageSize};
-                    margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
+      printContainer.appendChild(img);
+      
+      // Créer une zone de styles d'impression
+      const printStyles = document.createElement('style');
+      printStyles.id = 'print-styles-kiosk';
+      printStyles.textContent = `
+        @media print {
+          body > *:not(#print-container-kiosk) {
+            display: none !important;
+          }
+          
+          #print-container-kiosk {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            background: white !important;
+          }
+          
+          #print-container-kiosk img {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            width: auto !important;
+            height: auto !important;
+            object-fit: contain !important;
+          }
+          
+          @page {
+            size: ${pageSize};
+            margin: 0 !important;
+          }
+        }
+      `;
+      
+      document.head.appendChild(printStyles);
+      document.body.appendChild(printContainer);
+      
+      // Attendre que l'image soit chargée
+      img.onload = () => {
+        console.log('✅ Image chargée pour impression:', img.naturalWidth, 'x', img.naturalHeight);
+        
+        // Forcer un reflow
+        img.offsetHeight;
+        
+        // Utiliser RAF pour garantir le rendu
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              try {
+                console.log('📄 Appel window.print()...');
+                window.print();
+                
+                // Nettoyer après l'impression (délai pour laisser le dialogue s'ouvrir)
+                setTimeout(() => {
+                  if (printContainer && printContainer.parentNode) {
+                    document.body.removeChild(printContainer);
                   }
-                  
-                  html, body {
-                    width: 100%;
-                    height: 100%;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    overflow: hidden !important;
+                  if (printStyles && printStyles.parentNode) {
+                    document.head.removeChild(printStyles);
                   }
-                }
-
-                /* Styles généraux */
-                html, body { 
-                  width: 100%;
-                  height: 100%;
-                  margin: 0; 
-                  padding: 0;
-                  overflow: hidden;
-                  background: white;
-                }
-                
-                body {
-                  display: flex; 
-                  justify-content: center; 
-                  align-items: center; 
-                }
-                
-                img { 
-                  width: 100%; 
-                  height: 100%; 
-                  object-fit: cover;
-                  object-position: center; 
-                  display: block; 
-                  /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
-                  transform: scale(1.01); 
-                  transform-origin: center;
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${imageSrc}" id="printImage" />
-              <script>
-                // FIX KIOSK PRO: Attendre que l'image soit complètement chargée ET rendue
-                const img = document.getElementById('printImage');
-                
-                function waitForImageAndPrint() {
-                  // Vérifier que l'image est chargée avec des dimensions valides
-                  if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
-                    console.log('Image ready:', img.naturalWidth, 'x', img.naturalHeight);
-                    
-                    // Forcer un reflow/repaint pour garantir le rendu dans Kiosk Pro
-                    img.style.display = 'none';
-                    img.offsetHeight; // Force reflow
-                    img.style.display = 'block';
-                    
-                    // Attendre un cycle de rendu supplémentaire (requestAnimationFrame)
-                    requestAnimationFrame(() => {
-                      requestAnimationFrame(() => {
-                        // Double RAF pour garantir le rendu complet
-                        setTimeout(() => {
-                          try {
-                            console.log('Calling window.print()...');
-                            window.focus();
-                            window.print();
-                            
-                            // Masquer l'iframe après ouverture du dialogue
-                            setTimeout(() => {
-                              const parentIframe = window.frameElement;
-                              if (parentIframe) {
-                                parentIframe.style.opacity = '0';
-                                parentIframe.style.zIndex = '-9999';
-                              }
-                            }, 500);
-                          } catch(e) {
-                            console.error('Print error:', e);
-                          }
-                        }, 500); // Délai final de sécurité
-                      });
-                    });
-                  } else {
-                    // Image pas encore prête, réessayer
-                    console.log('Image not ready, waiting... complete:', img.complete, 'width:', img.naturalWidth);
-                    setTimeout(waitForImageAndPrint, 100);
-                  }
-                }
-                
-                // Démarrer la vérification
-                img.onload = () => {
-                  console.log('Image onload triggered');
-                  waitForImageAndPrint();
-                };
-                
-                img.onerror = (e) => {
-                  console.error('Image failed to load:', e);
-                };
-                
-                // Lancer immédiatement au cas où l'image serait déjà en cache
-                if (img.complete) {
-                  console.log('Image already in cache');
-                  waitForImageAndPrint();
-                }
-              </script>
-            </body>
-          </html>
-        `);
-        doc.close();
+                  console.log('🧹 Nettoyage effectué');
+                  resolve(true);
+                }, 1000);
+              } catch (e) {
+                console.error('❌ Erreur impression:', e);
+                reject(e);
+              }
+            }, 500);
+          });
+        });
       };
-
-      // 4. Nettoyage
-      // IMPORTANT: Sur iPad/iOS, ne PAS supprimer l'iframe immédiatement.
-      // Le spooler d'impression a besoin que le document existe encore.
-      // On laisse l'iframe, elle sera nettoyée au prochain appel via son ID.
-      resolve(true);
+      
+      img.onerror = (e) => {
+        console.error('❌ Erreur chargement image:', e);
+        // Nettoyer en cas d'erreur
+        if (printContainer && printContainer.parentNode) {
+          document.body.removeChild(printContainer);
+        }
+        if (printStyles && printStyles.parentNode) {
+          document.head.removeChild(printStyles);
+        }
+        reject(new Error('Erreur de chargement de l\'image'));
+      };
+      
+      // Si l'image est déjà en cache
+      if (img.complete && img.naturalWidth > 0) {
+        img.onload();
+      }
 
     } catch (error) {
       console.error("❌ Erreur lors de la préparation de l'impression:", error);
