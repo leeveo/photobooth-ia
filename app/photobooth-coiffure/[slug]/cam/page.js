@@ -807,18 +807,35 @@ export default function CameraCapture({ params }) {
           setCameraError("Élément vidéo ou canvas non trouvé");
           return;
         }
+
+        // Check if video is ready
+        if (video.readyState < 2) { // HAVE_CURRENT_DATA
+            console.warn("Video not ready (readyState=" + video.readyState + "), attempting to capture anyway");
+        }
         
-        // Get video dimensions
-        const videoWidth = video.videoWidth || 1280;
-        const videoHeight = video.videoHeight || 720;
+        // Get video dimensions with robust fallback
+        let videoWidth = video.videoWidth;
+        let videoHeight = video.videoHeight;
+        
+        console.log(`Capture dimensions: Video=${videoWidth}x${videoHeight}, ReadyState=${video.readyState}`);
+
+        // If video dimensions are missing (common on some mobile browsers if not fully playing)
+        if (!videoWidth || !videoHeight) {
+            console.warn("Video dimensions missing, using defaults 1280x720");
+            videoWidth = 1280;
+            videoHeight = 720;
+        }
         
         // Determine target dimensions based on orientationData or default
         let targetWidth = 1280;
         let targetHeight = 720;
         
-        if (orientationData) {
+        if (orientationData && orientationData.width > 0 && orientationData.height > 0) {
              targetWidth = orientationData.width;
              targetHeight = orientationData.height;
+             console.log(`Using orientation data: ${targetWidth}x${targetHeight}`);
+        } else {
+             console.log("Using default dimensions: 1280x720");
         }
 
         // Set canvas dimensions
@@ -847,15 +864,35 @@ export default function CameraCapture({ params }) {
             sy = (videoHeight - sHeight) / 2;
         }
         
+        console.log(`Crop calculation: sx=${sx}, sy=${sy}, sWidth=${sWidth}, sHeight=${sHeight}`);
+
         // Clear canvas and draw the image
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(canvas.width, 0);
         context.scale(-1, 1);
-        context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+        
+        try {
+            context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+        } catch (drawError) {
+            console.error("drawImage failed:", drawError);
+            // Fallback: fill with a color or pattern if drawImage fails
+            context.fillStyle = "#CCCCCC";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = "#000000";
+            context.font = "30px Arial";
+            context.fillText("Erreur Capture", 50, 50);
+        }
+        
         context.setTransform(1, 0, 0, 1, 0, 0);
         
         // Get the image data and update state
         const imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+        
+        // Verify if image data is not empty/transparent (simple check)
+        if (imageDataURL.length < 1000) {
+            console.warn("Captured image seems too small (" + imageDataURL.length + " bytes)");
+        }
+        
         setImageFile(imageDataURL);
         localStorage.setItem("faceImage", imageDataURL);
         
