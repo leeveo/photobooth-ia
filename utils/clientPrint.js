@@ -30,8 +30,9 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   }
 
   // 1. Détection Kiosk Pro (pour impression silencieuse)
-  // NOTE: On réactive l'API JS car c'est la méthode la plus fiable si le mode automatique échoue.
-  // IMPORTANT: Pour que cela fonctionne, le domaine DOIT être ajouté dans "Allowed Domains" dans les réglages Kiosk Pro.
+  // NOTE: On désactive l'API JS car elle cause des problèmes d'autorisation et de page blanche.
+  // On force l'utilisation de window.print() avec une stratégie CSS robuste.
+  /*
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
       console.log('📱 Kiosk Pro détecté, tentative d\'impression directe via API JS...');
@@ -70,6 +71,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       // On continue vers le fallback standard si l'API échoue
     }
   }
+  */
   /*
   if (typeof window !== 'undefined' && window.kioskpro && window.kioskpro.printing && window.kioskpro.printing.print) {
     try {
