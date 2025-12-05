@@ -773,6 +773,7 @@ export default function CameraCapture({ params }) {
   // Replace the current captureVideo function with a direct implementation
   // This version directly implements the functionality without relying on other functions
   const captureVideo = () => {
+    // Fix for iPad white screen
     // Don't proceed if countdown is already showing or camera isn't loaded
     if (showCountdown || !cameraLoaded || cameraError) {
       return;
