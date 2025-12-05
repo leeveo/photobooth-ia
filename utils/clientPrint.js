@@ -163,118 +163,135 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       
       document.body.appendChild(iframe);
 
-      // 3. Définir le contenu de l'iframe
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>&nbsp;</title>
-            <style>
-              /* Reset global */
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-
-              /* Configuration spécifique pour l'impression sans marges */
-              @media print {
-                @page {
-                  size: ${pageSize};
-                  margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
+      // 3. Attendre que l'iframe soit prête avant d'injecter le contenu
+      iframe.onload = () => {
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>&nbsp;</title>
+              <style>
+                /* Reset global */
+                * {
+                  box-sizing: border-box;
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
                 }
-                
-                html, body {
+
+                /* Configuration spécifique pour l'impression sans marges */
+                @media print {
+                  @page {
+                    size: ${pageSize};
+                    margin: 0 !important; /* Essentiel pour supprimer les headers/footers */
+                  }
+                  
+                  html, body {
+                    width: 100%;
+                    height: 100%;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                  }
+                }
+
+                /* Styles généraux */
+                html, body { 
                   width: 100%;
                   height: 100%;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  overflow: hidden !important;
+                  margin: 0; 
+                  padding: 0;
+                  overflow: hidden;
+                  background: white;
                 }
-              }
-
-              /* Styles généraux */
-              html, body { 
-                width: 100%;
-                height: 100%;
-                margin: 0; 
-                padding: 0;
-                overflow: hidden;
-                background: white;
-              }
-              
-              body {
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-              }
-              
-              img { 
-                width: 100%; 
-                height: 100%; 
-                object-fit: cover;
-                object-position: center; 
-                display: block; 
-                /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
-                transform: scale(1.01); 
-                transform-origin: center;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${imageSrc}" id="printImage" />
-            <script>
-              // Attendre que l'image soit chargée avant d'imprimer
-              const img = document.getElementById('printImage');
-              
-              function doPrint() {
-                // Focus nécessaire pour certains navigateurs
-                window.focus();
                 
-                // FIX KIOSK PRO: Délai plus long (2 secondes) pour garantir le rendu complet
-                // dans le WebView de Kiosk Pro Enterprise qui peut être plus lent que Safari
-                setTimeout(() => {
-                  try {
-                    window.print();
+                body {
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                }
+                
+                img { 
+                  width: 100%; 
+                  height: 100%; 
+                  object-fit: cover;
+                  object-position: center; 
+                  display: block; 
+                  /* Légère échelle pour garantir le bord à bord (bleed) et éviter les liserés blancs */
+                  transform: scale(1.01); 
+                  transform-origin: center;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${imageSrc}" id="printImage" />
+              <script>
+                // FIX KIOSK PRO: Attendre que l'image soit complètement chargée ET rendue
+                const img = document.getElementById('printImage');
+                
+                function waitForImageAndPrint() {
+                  // Vérifier que l'image est chargée avec des dimensions valides
+                  if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+                    console.log('Image ready:', img.naturalWidth, 'x', img.naturalHeight);
                     
-                    // Après l'impression, masquer l'iframe pour améliorer l'UX
-                    // (l'utilisateur ne verra qu'un flash rapide)
-                    setTimeout(() => {
-                      const parentIframe = window.frameElement;
-                      if (parentIframe) {
-                        parentIframe.style.opacity = '0';
-                        parentIframe.style.zIndex = '-9999';
-                      }
-                    }, 500);
-                  } catch(e) {
-                    console.error('Print error:', e);
-                  }
-                }, 2000); // Augmenté de 1000ms à 2000ms pour Kiosk Pro
-              }
-
-              if (img.complete && img.naturalWidth > 0) {
-                // Image déjà chargée et valide
-                doPrint();
-              } else {
-                // Attendre le chargement de l'image
-                img.onload = () => {
-                  if (img.naturalWidth > 0) {
-                    doPrint();
+                    // Forcer un reflow/repaint pour garantir le rendu dans Kiosk Pro
+                    img.style.display = 'none';
+                    img.offsetHeight; // Force reflow
+                    img.style.display = 'block';
+                    
+                    // Attendre un cycle de rendu supplémentaire (requestAnimationFrame)
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        // Double RAF pour garantir le rendu complet
+                        setTimeout(() => {
+                          try {
+                            console.log('Calling window.print()...');
+                            window.focus();
+                            window.print();
+                            
+                            // Masquer l'iframe après ouverture du dialogue
+                            setTimeout(() => {
+                              const parentIframe = window.frameElement;
+                              if (parentIframe) {
+                                parentIframe.style.opacity = '0';
+                                parentIframe.style.zIndex = '-9999';
+                              }
+                            }, 500);
+                          } catch(e) {
+                            console.error('Print error:', e);
+                          }
+                        }, 500); // Délai final de sécurité
+                      });
+                    });
                   } else {
-                    console.error('Image loaded but has no dimensions');
+                    // Image pas encore prête, réessayer
+                    console.log('Image not ready, waiting... complete:', img.complete, 'width:', img.naturalWidth);
+                    setTimeout(waitForImageAndPrint, 100);
                   }
+                }
+                
+                // Démarrer la vérification
+                img.onload = () => {
+                  console.log('Image onload triggered');
+                  waitForImageAndPrint();
                 };
-                img.onerror = () => {
-                  console.error('Image failed to load');
+                
+                img.onerror = (e) => {
+                  console.error('Image failed to load:', e);
                 };
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      doc.close();
+                
+                // Lancer immédiatement au cas où l'image serait déjà en cache
+                if (img.complete) {
+                  console.log('Image already in cache');
+                  waitForImageAndPrint();
+                }
+              </script>
+            </body>
+          </html>
+        `);
+        doc.close();
+      };
 
       // 4. Nettoyage
       // IMPORTANT: Sur iPad/iOS, ne PAS supprimer l'iframe immédiatement.
