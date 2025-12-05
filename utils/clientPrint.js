@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Service d'impression côté client (Browser / iPad)
  * Remplace l'API serveur qui ne peut pas accéder au réseau local.
  */
@@ -133,38 +133,98 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   */
 
   // 2. Fallback: Impression navigateur standard (avec dialogue)
+  // FIX KIOSK PRO: Utiliser un conteneur PERMANENT dans le DOM (selon doc Kiosk Pro)
+  // Kiosk Pro capture mieux les éléments présents dès le chargement de la page
   return new Promise(async (resolve, reject) => {
     try {
-      // Utiliser l'image optimisée calculée plus haut
       const imageSrc = optimizedImageSrc;
 
-      // FIX KIOSK PRO: Au lieu d'une iframe, créer un conteneur visible dans le DOM
-      // Kiosk Pro capture mieux le contenu DOM direct que les iframes
+      // Créer ou récupérer le conteneur PERMANENT (créé une seule fois)
+      let printContainer = document.getElementById('printable-section');
+      let printStyles = document.getElementById('print-styles-kiosk');
       
-      // Nettoyer l'ancien conteneur s'il existe
-      const oldContainer = document.getElementById('print-container-kiosk');
-      if (oldContainer) {
-        document.body.removeChild(oldContainer);
+      if (!printContainer) {
+        // PREMIÈRE FOIS: Créer le conteneur permanent avec classe printable-section
+        printContainer = document.createElement('div');
+        printContainer.id = 'printable-section';
+        printContainer.className = 'printable-section';
+        
+        // Style normal: complètement caché de l'utilisateur
+        Object.assign(printContainer.style, {
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          width: '100vw',
+          height: '100vh',
+          zIndex: '-9999',
+          opacity: '0',
+          visibility: 'hidden',
+          pointerEvents: 'none',
+          backgroundColor: 'white',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden'
+        });
+        
+        document.body.appendChild(printContainer);
+        console.log('📦 Conteneur permanent créé (Kiosk Pro compatible)');
       }
-
-      // Créer un conteneur d'impression dans le DOM principal
-      const printContainer = document.createElement('div');
-      printContainer.id = 'print-container-kiosk';
-      printContainer.style.position = 'fixed';
-      printContainer.style.top = '0';
-      printContainer.style.left = '0';
-      printContainer.style.width = '100vw';
-      printContainer.style.height = '100vh';
-      printContainer.style.zIndex = '-1'; // Caché visuellement mais dans le DOM
-      printContainer.style.opacity = '0'; // Invisible pour l'utilisateur
-      printContainer.style.pointerEvents = 'none';
-      printContainer.style.backgroundColor = 'white';
-      printContainer.style.display = 'flex';
-      printContainer.style.justifyContent = 'center';
-      printContainer.style.alignItems = 'center';
-      printContainer.style.overflow = 'hidden';
       
-      // Créer l'élément image
+      if (!printStyles) {
+        // PREMIÈRE FOIS: Créer les styles d'impression (selon doc Kiosk Pro)
+        printStyles = document.createElement('style');
+        printStyles.id = 'print-styles-kiosk';
+        printStyles.textContent = `
+          @media print {
+            /* Masquer TOUT sauf la section imprimable (doc Kiosk Pro) */
+            body > *:not(#printable-section) {
+              display: none !important;
+            }
+            
+            /* Afficher UNIQUEMENT la section imprimable */
+            #printable-section {
+              display: flex !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              z-index: 999999 !important;
+              justify-content: center !important;
+              align-items: center !important;
+              background: white !important;
+            }
+            
+            #printable-section img {
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
+              width: auto !important;
+              height: auto !important;
+              object-fit: contain !important;
+            }
+            
+            @page {
+              size: ${pageSize};
+              margin: 0 !important;
+            }
+          }
+        `;
+        document.head.appendChild(printStyles);
+        console.log('🎨 Styles @media print créés (Kiosk Pro compatible)');
+      }
+      
+      // Nettoyer le contenu précédent
+      printContainer.innerHTML = '';
+      
+      // Créer la nouvelle image
       const img = document.createElement('img');
       img.src = imageSrc;
       img.style.maxWidth = '100%';
@@ -174,100 +234,36 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       
       printContainer.appendChild(img);
       
-      // Créer une zone de styles d'impression
-      const printStyles = document.createElement('style');
-      printStyles.id = 'print-styles-kiosk';
-      printStyles.textContent = `
-        @media print {
-          /* Masquer tout le contenu de la page sauf le conteneur d'impression */
-          body > *:not(#print-container-kiosk) {
-            display: none !important;
-            visibility: hidden !important;
-          }
-          
-          /* Forcer l'affichage du conteneur d'impression */
-          #print-container-kiosk {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: 999999 !important;
-            justify-content: center !important;
-            align-items: center !important;
-            background: white !important;
-          }
-          
-          #print-container-kiosk img {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            width: auto !important;
-            height: auto !important;
-            object-fit: contain !important;
-          }
-          
-          @page {
-            size: ${pageSize};
-            margin: 0 !important;
-          }
-        }
-      `;
-      
-      document.head.appendChild(printStyles);
-      document.body.appendChild(printContainer);
-      
       // Attendre que l'image soit chargée
       img.onload = () => {
-        console.log('✅ Image chargée pour impression:', img.naturalWidth, 'x', img.naturalHeight);
+        console.log('✅ Image chargée:', img.naturalWidth, 'x', img.naturalHeight);
         
-        // Forcer un reflow
-        img.offsetHeight;
+        // Forcer un reflow pour Kiosk Pro
+        void printContainer.offsetHeight;
+        void img.offsetHeight;
         
-        // Utiliser RAF pour garantir le rendu
+        // Double RAF + délai pour garantir le rendu avant window.print()
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             setTimeout(() => {
               try {
-                console.log('📄 Appel window.print()...');
+                console.log('📱 Appel window.print()...');
                 window.print();
                 
-                // Nettoyer après l'impression (délai pour laisser le dialogue s'ouvrir)
-                setTimeout(() => {
-                  if (printContainer && printContainer.parentNode) {
-                    document.body.removeChild(printContainer);
-                  }
-                  if (printStyles && printStyles.parentNode) {
-                    document.head.removeChild(printStyles);
-                  }
-                  console.log('🧹 Nettoyage effectué');
-                  resolve(true);
-                }, 1000);
+                console.log('✅ Dialogue d\'impression ouvert');
+                resolve(true);
+                
               } catch (e) {
                 console.error('❌ Erreur impression:', e);
                 reject(e);
               }
-            }, 500);
+            }, 300);
           });
         });
       };
       
       img.onerror = (e) => {
         console.error('❌ Erreur chargement image:', e);
-        // Nettoyer en cas d'erreur
-        if (printContainer && printContainer.parentNode) {
-          document.body.removeChild(printContainer);
-        }
-        if (printStyles && printStyles.parentNode) {
-          document.head.removeChild(printStyles);
-        }
         reject(new Error('Erreur de chargement de l\'image'));
       };
       
@@ -282,7 +278,6 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
     }
   });
 };
-
 /**
  * Détecte si l'application tourne dans Kiosk Pro
  */
