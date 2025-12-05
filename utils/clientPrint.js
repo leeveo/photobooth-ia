@@ -144,20 +144,22 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         document.body.removeChild(oldIframe);
       }
 
-      // Créer une iframe invisible mais avec des dimensions pour que le rendu fonctionne
+      // Créer une iframe pour l'impression
       const iframe = document.createElement('iframe');
       iframe.id = 'print-iframe-hidden';
       iframe.style.position = 'fixed';
-      // Utiliser opacity: 0 et z-index négatif au lieu de le sortir de l'écran
-      // Cela garantit que le navigateur effectue le rendu graphique (nécessaire pour l'impression d'images sur iOS)
       iframe.style.top = '0';
       iframe.style.left = '0';
       iframe.style.width = cssWidth;
       iframe.style.height = cssHeight;
-      iframe.style.zIndex = '-9999';
-      iframe.style.opacity = '0';
-      iframe.style.pointerEvents = 'none';
       iframe.style.border = '0';
+      
+      // FIX KIOSK PRO: Rendre l'iframe brièvement visible pour forcer le rendu dans le WebView
+      // Kiosk Pro Enterprise a besoin que l'iframe soit visible pour effectuer le rendu de l'image
+      iframe.style.zIndex = '9999';
+      iframe.style.opacity = '1';
+      iframe.style.pointerEvents = 'none';
+      iframe.style.backgroundColor = 'white';
       
       document.body.appendChild(iframe);
 
@@ -231,20 +233,42 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
                 // Focus nécessaire pour certains navigateurs
                 window.focus();
                 
-                // Délai augmenté pour garantir le décodage de l'image sur iPad (évite page blanche)
+                // FIX KIOSK PRO: Délai plus long (2 secondes) pour garantir le rendu complet
+                // dans le WebView de Kiosk Pro Enterprise qui peut être plus lent que Safari
                 setTimeout(() => {
                   try {
                     window.print();
+                    
+                    // Après l'impression, masquer l'iframe pour améliorer l'UX
+                    // (l'utilisateur ne verra qu'un flash rapide)
+                    setTimeout(() => {
+                      const parentIframe = window.frameElement;
+                      if (parentIframe) {
+                        parentIframe.style.opacity = '0';
+                        parentIframe.style.zIndex = '-9999';
+                      }
+                    }, 500);
                   } catch(e) {
                     console.error('Print error:', e);
                   }
-                }, 1000);
+                }, 2000); // Augmenté de 1000ms à 2000ms pour Kiosk Pro
               }
 
-              if (img.complete) {
+              if (img.complete && img.naturalWidth > 0) {
+                // Image déjà chargée et valide
                 doPrint();
               } else {
-                img.onload = doPrint;
+                // Attendre le chargement de l'image
+                img.onload = () => {
+                  if (img.naturalWidth > 0) {
+                    doPrint();
+                  } else {
+                    console.error('Image loaded but has no dimensions');
+                  }
+                };
+                img.onerror = () => {
+                  console.error('Image failed to load');
+                };
               }
             </script>
           </body>
