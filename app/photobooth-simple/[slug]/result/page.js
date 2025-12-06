@@ -507,13 +507,6 @@ export default function Result({ params }) {
   // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
   
   if (loading) {
-      setPrintError(true);
-    } finally {
-      setPrinting(false);
-    }
-  };
-  
-  if (loading) {
     return (
       <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
