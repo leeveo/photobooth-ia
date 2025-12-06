@@ -452,28 +452,6 @@ export default function Result({ params }) {
   };
   
   // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
-        
-        // Petit délai entre les impressions si plusieurs copies
-        if (i < printCopies - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-      
-      console.log('✅ Dialogue d\'impression ouvert');
-      
-      setPrintSuccess(true);
-      setTimeout(() => {
-        setShowPrintPopup(false);
-        setPrintSuccess(false);
-      }, 3000);
-      
-    } catch (error) {
-      console.error('❌ Erreur impression:', error);
-      setPrintError(true);
-    } finally {
-      setPrinting(false);
-    }
-  };
   
   if (loading) {
     return (

@@ -505,9 +505,8 @@ export default function Result({ params }) {
   };
   
   // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
-      
-    } catch (error) {
-      console.error('❌ Erreur impression:', error);
+  
+  if (loading) {
       setPrintError(true);
     } finally {
       setPrinting(false);
