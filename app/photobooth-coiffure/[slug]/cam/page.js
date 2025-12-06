@@ -1930,7 +1930,6 @@ export default function CameraCapture({ params }) {
           gender: styleGender,
           result_image_url: finalImageUrl,
           result_s3_url: resultS3Url,
-          reference_image_url: styleFix || null, // Ajout de l'image de référence
           processing_time_ms: Date.now() - start,
           is_success: true,
           error_message: null,
@@ -1962,6 +1961,10 @@ export default function CameraCapture({ params }) {
         
         // ✅ NOUVEAU : Consommer le quota APRÈS le succès de la session
         if (sessionInsertData && sessionInsertData[0]?.id) {
+          // 🔑 SAUVEGARDER L'ID DE SESSION DANS LOCALSTORAGE
+          localStorage.setItem('currentSessionId', sessionInsertData[0].id);
+          console.log("✅ Session ID sauvegardé:", sessionInsertData[0].id);
+          
           try {
             const quotaResult = await QuotaManager.consumeAfterSuccess(
               sessionInsertData[0].id, 

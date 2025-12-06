@@ -22,8 +22,18 @@ export default function AdminLoginPage() {
       sessionStorage.removeItem('last_registered_email'); // Nettoyer après utilisation
     }
 
-    // Vérifier si l'utilisateur est déjà connecté
+    // Vérifier si l'utilisateur est déjà connecté (SEULEMENT si on accède directement à /login)
     const checkExistingSession = () => {
+      // Ne PAS rediriger si on vient d'être redirigé par le middleware
+      // (évite la boucle infinie login -> dashboard -> login -> dashboard)
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromMiddleware = urlParams.get('from') === 'middleware';
+      
+      if (fromMiddleware) {
+        console.log("🚫 Redirection depuis middleware détectée, pas de check de session");
+        return;
+      }
+      
       // Fonction pour lire les cookies
       const getCookie = (name: string) => {
         const value = `; ${document.cookie}`;

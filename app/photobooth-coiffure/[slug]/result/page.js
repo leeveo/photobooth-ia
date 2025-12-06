@@ -54,6 +54,16 @@ const dataURLtoFile = async (dataurl, filename) => {
   if (dataurl && (dataurl.startsWith('http://') || dataurl.startsWith('https://'))) {
     try {
       console.log('🌐 Attempting to fetch image from URL:', dataurl);
+      
+      // ⚠️ Si l'image est déjà sur S3, on la retourne directement sans fetch
+      // Cela évite les problèmes CORS en localhost
+      if (dataurl.includes('s3.eu-west-3.amazonaws.com') || dataurl.includes('leeveostockage')) {
+        console.log('✅ Image already on S3, skipping fetch');
+        // Retourner un fichier factice - l'upload sera skippé de toute façon
+        const blob = new Blob([''], { type: 'image/jpeg' });
+        return new File([blob], filename, { type: 'image/jpeg' });
+      }
+      
       const response = await fetch(dataurl, {
         mode: 'cors', // Explicitement demander CORS
         credentials: 'omit' // Ne pas envoyer de cookies
@@ -88,7 +98,7 @@ const dataURLtoFile = async (dataurl, filename) => {
       // Fallback: créer une image temporaire et la convertir via canvas
       console.log('🔄 Trying fallback method with canvas...');
       return new Promise((resolve, reject) => {
-        const img = new Image();
+        const img = document.createElement('img');
         img.crossOrigin = 'anonymous'; // Essayer d'activer CORS
         
         img.onload = function() {
@@ -504,24 +514,9 @@ export default function Result({ params }) {
       const { url } = await serverUploadResponse.json();
       logWithTimestamp('Upload successful, S3 URL:', url);
       
-      // Enregistrer dans project_images
-      try {
-        const insertResult = await supabase.from('project_images').insert([{
-          project_id: fullProjectId,
-          image_url: url,
-          created_at: new Date().toISOString(),
-          metadata: {
-            fileName: fileName,
-            projectName: project?.name,
-            projectSlug: params.slug
-          }
-        }]);
-        
-        logWithTimestamp('Résultat insertion project_images:', insertResult);
-      } catch (dbError) {
-        console.error("Error saving image reference to database:", dbError);
-        // Continue even if DB insertion fails, as we still have the S3 URL
-      }
+      // Note: On n'enregistre PAS dans project_images car cette table ne fonctionne pas
+      // Les images sont déjà dans sessions via result_s3_url
+      console.log('✅ Upload S3 réussi, URL sera mise à jour dans sessions');
       
       return url;
     } catch (error) {
@@ -530,6 +525,107 @@ export default function Result({ params }) {
     }
   };
   
+  // Upload automatique vers S3 dès que l'image est générée
+  useEffect(() => {
+    const autoUploadToS3 = async () => {
+      if (!imageResultAI || !project?.id) {
+        console.log('⏭️ AUTO-UPLOAD: Pas d\'image ou de projet, skip');
+        return;
+      }
+
+      // ⚠️ Si l'image est déjà sur S3, pas besoin de re-upload
+      if (imageResultAI.includes('s3.eu-west-3.amazonaws.com') || imageResultAI.includes('leeveostockage')) {
+        console.log('✅ AUTO-UPLOAD: Image déjà sur S3, skip upload:', imageResultAI.substring(0, 100));
+        return;
+      }
+
+      console.log('🚀 AUTO-UPLOAD: Démarrage upload automatique vers S3...');
+      console.log('   ↳ Project ID:', project.id);
+      console.log('   ↳ Project Name:', project.name);
+      console.log('   ↳ Image URL (début):', imageResultAI.substring(0, 100));
+      
+      try {
+        const s3Url = await uploadToS3(imageResultAI);
+        
+        if (s3Url) {
+          console.log('✅ AUTO-UPLOAD: Upload S3 réussi:', s3Url);
+          
+          // Mettre à jour la session dans la base de données
+          try {
+            // 🔑 UTILISER L'ID DE SESSION AU LIEU DE L'URL IMAGE
+            const sessionId = localStorage.getItem('currentSessionId');
+            
+            if (sessionId) {
+              console.log('🔑 AUTO-UPLOAD: Utilisation session ID:', sessionId);
+              
+              const { error: updateError } = await supabase
+                .from('sessions')
+                .update({ 
+                  result_s3_url: s3Url
+                })
+                .eq('id', sessionId);
+              
+              if (updateError) {
+                console.error('❌ AUTO-UPLOAD: Erreur mise à jour session:', updateError);
+              } else {
+                console.log('✅ AUTO-UPLOAD: Session mise à jour avec result_s3_url');
+              }
+            } else {
+              console.warn('⚠️ AUTO-UPLOAD: Pas de session ID, fallback intelligent');
+              
+              // Fallback: Chercher la session la plus récente SANS result_s3_url pour ce projet
+              const projectId = project?.id || localStorage.getItem('currentProjectId');
+              
+              if (projectId) {
+                console.log('🔍 Recherche session récente sans S3 URL pour projet:', projectId);
+                
+                // Trouver la session la plus récente qui n'a pas encore de result_s3_url
+                const { data: recentSessions, error: searchError } = await supabase
+                  .from('sessions')
+                  .select('id, result_image_url, created_at')
+                  .eq('project_id', projectId)
+                  .is('result_s3_url', null)
+                  .order('created_at', { ascending: false })
+                  .limit(1);
+                
+                if (searchError) {
+                  console.error('❌ AUTO-UPLOAD: Erreur recherche session:', searchError);
+                } else if (recentSessions && recentSessions.length > 0) {
+                  const targetSession = recentSessions[0];
+                  console.log('🎯 Session trouvée:', targetSession.id, '- Création:', targetSession.created_at);
+                  
+                  const { error: updateError } = await supabase
+                    .from('sessions')
+                    .update({ result_s3_url: s3Url })
+                    .eq('id', targetSession.id);
+                  
+                  if (updateError) {
+                    console.error('❌ AUTO-UPLOAD: Erreur mise à jour session trouvée:', updateError);
+                  } else {
+                    console.log('✅ AUTO-UPLOAD: Session mise à jour avec result_s3_url (fallback intelligent)');
+                  }
+                } else {
+                  console.warn('⚠️ AUTO-UPLOAD: Aucune session récente sans S3 URL trouvée');
+                }
+              } else {
+                console.error('❌ AUTO-UPLOAD: Pas de project ID disponible');
+              }
+            }
+          } catch (dbError) {
+            console.error('❌ AUTO-UPLOAD: Erreur DB session:', dbError);
+          }
+        } else {
+          console.error('❌ AUTO-UPLOAD: s3Url est null ou undefined');
+        }
+      } catch (error) {
+        console.error('❌ AUTO-UPLOAD: Erreur générale:', error);
+        console.error('   ↳ Stack:', error.stack);
+      }
+    };
+
+    autoUploadToS3();
+  }, [imageResultAI, project, supabase]);
+
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);

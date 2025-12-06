@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test project_images Table</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test project_images Table</h1>
+    <div id="results"></div>
+    
+    <script>
+        const SUPABASE_URL = 'https://gyohqmahwntkmebayeej.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b2hxbWFod250a21lYmF5ZWVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMyMTI2MjAsImV4cCI6MjAzODc4ODYyMH0.YABEugPtQf6gZz3LQEYVPiSwNzSjfZVFXgCNi7iMLCI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        async function testTable() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Test en cours...</h2>';
+            
+            // Test 1: Vérifier si la table existe
+            results.innerHTML += '<h3>1. Test SELECT sur project_images</h3>';
+            const { data: selectData, error: selectError } = await supabase
+                .from('project_images')
+                .select('*')
+                .limit(1);
+            
+            if (selectError) {
+                results.innerHTML += `<p style="color: red;">❌ ERREUR SELECT: ${selectError.message}</p>`;
+                results.innerHTML += `<pre>${JSON.stringify(selectError, null, 2)}</pre>`;
+            } else {
+                results.innerHTML += `<p style="color: green;">✅ SELECT fonctionne! Nombre de lignes: ${selectData?.length || 0}</p>`;
+                results.innerHTML += `<pre>${JSON.stringify(selectData, null, 2)}</pre>`;
+            }
+            
+            // Test 2: Test INSERT
+            results.innerHTML += '<h3>2. Test INSERT dans project_images</h3>';
+            const testProjectId = 'a11f8c3a-b082-4c85-bec8-ca9865a7e01d';
+            const testImageUrl = 'https://test.example.com/test-' + Date.now() + '.jpg';
+            
+            const { data: insertData, error: insertError } = await supabase
+                .from('project_images')
+                .insert([{
+                    project_id: testProjectId,
+                    image_url: testImageUrl,
+                    created_at: new Date().toISOString()
+                }])
+                .select();
+            
+            if (insertError) {
+                results.innerHTML += `<p style="color: red;">❌ ERREUR INSERT: ${insertError.message}</p>`;
+                results.innerHTML += `<pre>${JSON.stringify(insertError, null, 2)}</pre>`;
+            } else {
+                results.innerHTML += `<p style="color: green;">✅ INSERT réussi!</p>`;
+                results.innerHTML += `<pre>${JSON.stringify(insertData, null, 2)}</pre>`;
+            }
+            
+            // Test 3: Vérifier les colonnes de la table
+            results.innerHTML += '<h3>3. Structure de la table</h3>';
+            const { data: tableInfo, error: tableError } = await supabase
+                .from('project_images')
+                .select('*')
+                .limit(0);
+            
+            results.innerHTML += `<p>Colonnes disponibles: vérifier dans la réponse ci-dessus</p>`;
+        }
+        
+        testTable();
+    </script>
+</body>
+</html>

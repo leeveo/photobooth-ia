@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { FiGrid, FiMusic, FiHelpCircle, FiRotateCcw, FiFilm } from 'react-icons/fi';
+import { FiGrid, FiMusic, FiHelpCircle, FiRotateCcw, FiFilm, FiPrinter } from 'react-icons/fi';
 
 const photoboothLinks = [
   { href: '/photobooth-ia/admin/dashboard', label: 'Dashboard' },
   { href: '/photobooth-ia/admin/projet', label: 'Projet' },
-
   { href: '/photobooth-ia/admin/galerie', label: 'Galerie' },
   { href: '/photobooth-ia/admin/statistiques', label: 'Statistiques' },
+  { href: '/photobooth-ia/admin/print-monitor', label: 'Monitoring Impression' },
 ];
 
 // Ajout d'icônes et couleurs pour chaque application externe
