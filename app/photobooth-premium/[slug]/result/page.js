@@ -435,31 +435,23 @@ export default function Result({ params }) {
   
   // Fonction pour ouvrir le popup d'impression
   const handlePrint = () => {
-    setPrintCopies(1);
-    setPrintSuccess(false);
-    setPrintError(false);
+    // Afficher le popup d'impression en cours
     setShowPrintPopup(true);
-  };
-  
-  // Fonction pour lancer l'impression (via AirPrint / Kiosk Pro)
-  const handleConfirmPrint = async () => {
-    if (!imageResultAI || !project?.printer_enabled) return;
-    
     setPrinting(true);
     setPrintError(false);
     
-    try {
-      // 1. Récupérer l'image depuis S3
-      const imageResponse = await fetch(imageResultAI);
-      const imageBlob = await imageResponse.blob();
-      
-      // 2. Lancer l'impression via AirPrint (Client-side)
-      console.log(`🖨️ Lancement impression AirPrint (${printCopies} copies)...`);
-      
-      // Boucle pour imprimer le nombre de copies demandé
-      for (let i = 0; i < printCopies; i++) {
-        console.log(`🖨️ Impression copie ${i + 1}/${printCopies}`);
-        await printImageToAirPrint(imageResultAI, imageBlob);
+    console.log('🖨️ Impression en cours via le serveur print-monitor...');
+    
+    // Fermer automatiquement le popup après 5 secondes et rediriger vers l'accueil
+    setTimeout(() => {
+      setShowPrintPopup(false);
+      setPrinting(false);
+      // Redirection vers la page d'accueil du photobooth
+      window.location.href = `/photobooth-premium/${slug}/`;
+    }, 5000);
+  };
+  
+  // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
         
         // Petit délai entre les impressions si plusieurs copies
         if (i < printCopies - 1) {

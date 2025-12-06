@@ -433,11 +433,75 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         }, 800);
         
       } else {
-        // MÉTHODE DESKTOP: Utiliser window.open()
+        // MÉTHODE DESKTOP: Utiliser window.open() avec HTML simplifié pour impression directe
         debugLog('🖥️ Méthode: window.open (Desktop)', 'info');
         console.log('🖥️ Méthode Desktop: window.open()');
         
-        const blob = new Blob([printHTML], { type: 'text/html' });
+        // HTML simplifié sans preview pour desktop
+        const desktopPrintHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Impression Photo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+    }
+    
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    @media print {
+      @page {
+        size: ${pageSize};
+        margin: 0;
+      }
+      
+      body {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+    }
+  </style>
+</head>
+<body>
+  <img src="${imageSrc}" id="printImg" />
+  <script>
+    document.getElementById('printImg').onload = function() {
+      setTimeout(function() {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }, 100);
+    };
+  </script>
+</body>
+</html>`;
+        
+        const blob = new Blob([desktopPrintHTML], { type: 'text/html' });
         const blobURL = URL.createObjectURL(blob);
         
         const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');

@@ -664,83 +664,23 @@ export default function Result({ params }) {
     if (!imageResultAI || !project?.printer_enabled) {
       return;
     }
+    // Afficher le popup d'impression en cours
     setShowPrintPopup(true);
-    setPrintCopies(project.printer_copies || 1);
-  };
-  
-  // Fonction pour lancer l'impression (via AirPrint / Kiosk Pro)
-  const handleConfirmPrint = async () => {
-    if (!imageResultAI || !project?.printer_enabled) {
-      return;
-    }
-    
     setPrinting(true);
     setPrintError(false);
-    setPrintSuccess(false);
     
-    try {
-      // 1. Récupérer l'image depuis S3
-      let imageBlob;
-      let orientation = 'portrait'; // Par défaut
-      
-      // Si c'est une Data URL, on peut la fetcher directement
-      if (imageResultAI.startsWith('data:')) {
-        const imageResponse = await fetch(imageResultAI);
-        imageBlob = await imageResponse.blob();
-      } else {
-        // Pour les URLs HTTP(S), on essaie d'abord en direct, puis via proxy si échec (CORS)
-        try {
-          const imageResponse = await fetch(imageResultAI);
-          if (!imageResponse.ok) throw new Error('Direct fetch failed');
-          imageBlob = await imageResponse.blob();
-        } catch (directError) {
-          console.log('⚠️ Direct fetch failed (CORS?), trying proxy...', directError);
-          const proxyUrl = `/api/download-image?url=${encodeURIComponent(imageResultAI)}`;
-          const proxyResponse = await fetch(proxyUrl);
-          if (!proxyResponse.ok) throw new Error('Proxy fetch failed');
-          imageBlob = await proxyResponse.blob();
-        }
-      }
-
-      // Déterminer l'orientation de l'image
-      if (imageBlob) {
-        try {
-          const imgBitmap = await createImageBitmap(imageBlob);
-          if (imgBitmap.width > imgBitmap.height) {
-            orientation = 'landscape';
-          } else if (imgBitmap.width === imgBitmap.height) {
-            orientation = 'square';
-          }
-          console.log(`🖨️ Orientation détectée pour impression: ${orientation} (${imgBitmap.width}x${imgBitmap.height})`);
-        } catch (e) {
-          console.warn("Impossible de détecter l'orientation de l'image, utilisation portrait par défaut", e);
-        }
-      }
-      
-      // 2. Lancer l'impression via AirPrint (Client-side)
-      
-      // Boucle pour imprimer le nombre de copies demandé
-      for (let i = 0; i < printCopies; i++) {
-        await printImageToAirPrint(imageResultAI, imageBlob, orientation);
-        
-        // Petit délai entre les impressions si plusieurs copies
-        if (i < printCopies - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-      
-      setPrintSuccess(true);
-      setTimeout(() => {
-        setPrintSuccess(false);
-        setShowPrintPopup(false);
-      }, 3000);
-    } catch (err) {
-      console.error('Erreur impression:', err);
-      setPrintError(true);
-    } finally {
+    console.log('🖨️ Impression en cours via le serveur print-monitor...');
+    
+    // Fermer automatiquement le popup après 5 secondes et rediriger vers l'accueil
+    setTimeout(() => {
+      setShowPrintPopup(false);
       setPrinting(false);
-    }
+      // Redirection vers la page d'accueil du photobooth
+      window.location.href = `/photobooth-coiffure/${slug}/`;
+    }, 5000);
   };
+  
+  // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
   
   if (loading) {
     return (
@@ -1357,21 +1297,6 @@ export default function Result({ params }) {
                     Fermer
                   </button>
                 </>
-              ) : printSuccess ? (
-                // Message de succès
-                <>
-                  <div className="mb-6">
-                    <svg className="w-20 h-20 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
-                    Impression envoyée ! ✨
-                  </h3>
-                  <p className="text-gray-600 text-lg">
-                    Votre photo est en cours d'impression
-                  </p>
-                </>
               ) : printing ? (
                 // Animation impression en cours
                 <>
@@ -1388,66 +1313,7 @@ export default function Result({ params }) {
                     Veuillez patienter quelques instants
                   </p>
                 </>
-              ) : (
-                // Sélection du nombre de copies
-                <>
-                  <h3 className="text-3xl font-bold text-gray-800 mb-4">
-                    Imprimer votre photo
-                  </h3>
-                  <p className="text-gray-600 text-lg mb-8">
-                    Choisissez le nombre d'exemplaires
-                  </p>
-
-                  {/* Sélecteur de copies */}
-                  <div className="flex items-center justify-center gap-8 mb-10">
-                    <button
-                      onClick={() => setPrintCopies(Math.max(1, printCopies - 1))}
-                      className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                      style={{
-                        background: 'rgba(107, 114, 128, 0.1)',
-                        border: '2px solid rgba(107, 114, 128, 0.3)'
-                      }}
-                    >
-                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
-                      </svg>
-                    </button>
-
-                    <div className="text-7xl font-bold text-gray-700 w-32 text-center">
-                      {printCopies}
-                    </div>
-
-                    <button
-                      onClick={() => setPrintCopies(Math.min(5, printCopies + 1))}
-                      className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                      style={{
-                        background: 'rgba(107, 114, 128, 0.1)',
-                        border: '2px solid rgba(107, 114, 128, 0.3)'
-                      }}
-                    >
-                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Bouton imprimer */}
-                  <button
-                    onClick={handleConfirmPrint}
-                    className="w-full py-6 px-8 rounded-xl font-semibold text-white text-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                    style={{
-                      background: 'linear-gradient(135deg, #6B7280, #9CA3AF)'
-                    }}
-                  >
-                    <span className="flex items-center justify-center gap-3">
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                      </svg>
-                      Lancer l'impression
-                    </span>
-                  </button>
-                </>
-              )}
+              ) : null}
             </div>
           </motion.div>
         </motion.div>

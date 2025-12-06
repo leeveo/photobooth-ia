@@ -98,7 +98,8 @@ export async function middleware(req: NextRequest) {
     // Bypass auth en local
     if (isLocalhost) {
       // Log pour debug
-      console.log('Bypass admin_session check en local');
+      console.log('✅ Bypass admin_session check en local - accès autorisé');
+      return NextResponse.next(); // IMPORTANT: Autoriser l'accès en local
     } else {
       const customAuthCookie = req.cookies.get('admin_session')?.value;
 
@@ -168,7 +169,8 @@ export async function middleware(req: NextRequest) {
   if (path === '/admin' || path.startsWith('/admin/')) {
     // Bypass auth en local
     if (isLocalhost) {
-      console.log('Bypass /admin auth en local');
+      console.log('✅ Bypass /admin auth en local - accès autorisé');
+      return NextResponse.next(); // IMPORTANT: Autoriser l'accès en local
     } else {
       if (!isAuthenticated(req)) {
         console.log('Not authenticated, redirecting to login');

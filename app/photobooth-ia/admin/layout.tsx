@@ -217,6 +217,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Statistiques', path: '/photobooth-ia/admin/stats', icon: <FiBarChart2 className="w-5 h-5" /> },
     { name: 'Données', path: '/photobooth-ia/admin/donnees', icon: <FiGrid className="w-5 h-5" /> },
     { name: 'Historique de commande', path: '/photobooth-ia/admin/parametre', icon: <FiShoppingCart className="w-5 h-5" /> },
+    { name: 'Impression Serveur', path: '/photobooth-ia/admin/print-monitor', icon: <FiFilm className="w-5 h-5" /> },
   ];
 
   // const externalApps = [
