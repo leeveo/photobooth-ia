@@ -256,28 +256,58 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Impression Photo</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
     }
     
     body {
-      width: 100vw;
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      background: #f0f0f0;
+      position: relative;
+    }
+    
+    .preview-container {
+      width: 90%;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      padding: 20px;
+    }
+    
+    .preview-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
     }
     
     img {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
+      border: 2px solid #ddd;
+      border-radius: 5px;
     }
     
     @media print {
@@ -286,35 +316,50 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         margin: 0;
       }
       
+      html, body {
+        background: white;
+      }
+      
       body {
         width: 100%;
         height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
+      }
+      
+      .preview-container {
+        width: 100%;
+        height: 100%;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
         background: white;
+      }
+      
+      .preview-label {
+        display: none;
       }
       
       img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+        border: none;
       }
     }
   </style>
 </head>
 <body>
-  <img src="${imageSrc}" id="printImg" />
+  <div class="preview-container">
+    <div class="preview-label">📸 Aperçu avant impression</div>
+    <img src="${imageSrc}" id="printImg" alt="Photo" />
+  </div>
   <script>
-    // Auto-print après chargement de l'image
+    // Ne PAS auto-print - laisser l'iframe gérer manuellement
+    console.log('🖼️ Preview HTML chargé');
     document.getElementById('printImg').onload = function() {
-      setTimeout(function() {
-        window.print();
-        // Sur desktop, fermer après impression (pas sur iOS car ça ne fonctionne pas)
-        if (!/(iPad|iPhone|iPod)/.test(navigator.userAgent)) {
-          setTimeout(function() { window.close(); }, 500);
-        }
-      }, 100);
+      console.log('✅ Image chargée dans preview');
     };
   </script>
 </body>
@@ -325,20 +370,28 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         debugLog('📱 Méthode: iframe (iOS)', 'info');
         console.log('📱 Méthode iOS: iframe');
         
-        // Créer un iframe caché
+        // Créer un iframe VISIBLE pour le preview sur iPad
         let printFrame = document.getElementById('print-iframe');
         if (!printFrame) {
           printFrame = document.createElement('iframe');
           printFrame.id = 'print-iframe';
-          printFrame.style.position = 'fixed';
-          printFrame.style.top = '0';
-          printFrame.style.left = '0';
-          printFrame.style.width = '100%';
-          printFrame.style.height = '100%';
-          printFrame.style.border = 'none';
-          printFrame.style.zIndex = '999999';
+          printFrame.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 999999;
+            background: white;
+            display: block;
+          `;
           document.body.appendChild(printFrame);
-          debugLog('✅ Iframe créé', 'success');
+          debugLog('✅ Iframe créé et visible', 'success');
+        } else {
+          // Réafficher l'iframe si elle était cachée
+          printFrame.style.display = 'block';
+          printFrame.style.background = 'white';
         }
         
         // Écrire le HTML dans l'iframe
@@ -354,18 +407,21 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         setTimeout(() => {
           try {
             debugLog('🖨️ Appel contentWindow.print()...', 'info');
-            printFrame.contentWindow.print();
-            debugLog('✅ window.print() appelé', 'success');
-            console.log('📱 window.print() appelé sur iframe');
+            debugLog('👁️ Preview visible - Vérifiez l\'image à l\'écran', 'warn');
+            console.log('📱 window.print() sur iframe - Preview affiché');
             
-            // Masquer l'iframe après impression
+            // Appel de l'impression
+            printFrame.contentWindow.print();
+            debugLog('✅ Dialogue d\'impression ouvert', 'success');
+            
+            // Masquer l'iframe après un délai plus long (laisser le temps de voir)
             setTimeout(() => {
               if (printFrame && printFrame.parentNode) {
                 printFrame.style.display = 'none';
                 debugLog('🚫 Iframe masqué', 'info');
               }
               resolve(true);
-            }, 1000);
+            }, 3000);
           } catch (e) {
             debugLog(`❌ ERREUR: ${e.message}`, 'error');
             console.error('❌ Erreur impression iframe:', e);
@@ -374,7 +430,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
             }
             reject(e);
           }
-        }, 500);
+        }, 800);
         
       } else {
         // MÉTHODE DESKTOP: Utiliser window.open()
