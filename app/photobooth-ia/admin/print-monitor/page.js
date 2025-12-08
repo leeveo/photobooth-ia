@@ -1027,23 +1027,23 @@ export default function PrintMonitor() {
               <ol className="space-y-2 text-sm text-green-800 mb-3">
                 <li className="flex items-start gap-2">
                   <span className="font-bold">1.</span>
-                  <span>Téléchargez le script <code className="bg-green-100 px-2 py-1 rounded font-mono text-xs">start-photobooth-silent.bat</code></span>
+                  <span>Téléchargez le script <code className="bg-green-100 px-2 py-1 rounded font-mono text-xs">start-photobooth-silent.bat</code> ci-dessous</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">2.</span>
-                  <span>Ouvrez le fichier avec un éditeur de texte (Bloc-notes)</span>
+                  <span>Enregistrez-le sur le bureau ou dans un dossier accessible</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">3.</span>
-                  <span>Modifiez la ligne <code className="bg-green-100 px-2 py-1 rounded font-mono text-xs">set &quot;URL=...&quot;</code> avec l&apos;adresse de cette page</span>
+                  <span>Fermez toutes les fenêtres Chrome, puis double-cliquez sur le script</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">4.</span>
-                  <span>Fermez Chrome complètement, puis double-cliquez sur le script</span>
+                  <span>Chrome s&apos;ouvrira automatiquement en mode kiosque avec cette page</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">5.</span>
-                  <span>Chrome s&apos;ouvrira en mode kiosque plein écran avec impression automatique</span>
+                  <span>L&apos;impression sera désormais 100% automatique et silencieuse !</span>
                 </li>
               </ol>
               <div className="flex items-center gap-3">
@@ -1058,15 +1058,16 @@ export default function PrintMonitor() {
                   Télécharger le script Kiosque
                 </a>
                 <span className="text-xs text-green-700">
+                  ✓ Prêt à l'emploi<br/>
                   ✓ Impression silencieuse<br/>
-                  ✓ Un seul site affecté<br/>
                   ✓ Plein écran automatique
                 </span>
               </div>
               <div className="mt-3 p-3 bg-white rounded-lg border border-green-200">
                 <p className="text-xs text-green-800">
-                  <strong>💡 Comment ça marche ?</strong> Le script lance Chrome en mode kiosque uniquement pour l&apos;URL configurée. 
-                  Vos autres sites et fenêtres Chrome ne sont pas affectés. Pour quitter le mode kiosque, appuyez sur <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">ALT + F4</kbd>.
+                  <strong>💡 Comment ça marche ?</strong> Le script est déjà configuré pour ouvrir cette page en mode kiosque. 
+                  Il lance Chrome uniquement pour cette URL. Vos autres sites et fenêtres Chrome ne sont pas affectés. 
+                  Pour quitter le mode kiosque, appuyez sur <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">ALT + F4</kbd>.
                 </p>
               </div>
             </div>
