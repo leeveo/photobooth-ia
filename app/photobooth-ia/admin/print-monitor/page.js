@@ -596,21 +596,29 @@ export default function PrintMonitor() {
               )}
             </button>
 
-            {/* Alerte mode kiosque */}
-            {kioskModeWarning && autoprint && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 border-2 border-yellow-400 rounded-lg">
-                <RiErrorWarningLine className="w-5 h-5 text-yellow-700 flex-shrink-0" />
+            {/* Indicateur mode kiosque - TOUJOURS VISIBLE */}
+            {kioskModeWarning ? (
+              <div className="flex items-center gap-2 px-4 py-2 bg-red-100 border-2 border-red-400 rounded-lg animate-pulse">
+                <RiErrorWarningLine className="w-5 h-5 text-red-700 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-yellow-900">Mode kiosque non détecté</p>
-                  <p className="text-xs text-yellow-800">Les popups d&apos;impression seront bloqués</p>
+                  <p className="text-sm font-bold text-red-900">⚠️ Mode STANDARD détecté</p>
+                  <p className="text-xs text-red-800">Impression automatique NON fonctionnelle</p>
                 </div>
                 <a
                   href="/start-photobooth-silent.bat"
                   download
-                  className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded font-medium transition-colors whitespace-nowrap"
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded font-bold transition-colors whitespace-nowrap"
                 >
-                  📥 Script .bat
+                  📥 Télécharger .bat
                 </a>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-100 border-2 border-green-400 rounded-lg">
+                <RiCheckLine className="w-5 h-5 text-green-700 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-green-900">✅ Mode KIOSQUE actif</p>
+                  <p className="text-xs text-green-800">Impression automatique fonctionnelle</p>
+                </div>
               </div>
             )}
           </div>
