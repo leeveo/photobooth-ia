@@ -49,6 +49,10 @@ export default function PrintMonitor() {
   const [loadingAllImages, setLoadingAllImages] = useState(false);
   const [lastMonitoredImage, setLastMonitoredImage] = useState(null); // Dernière image détectée
   const [previewImage, setPreviewImage] = useState(null); // Image en prévisualisation pop-up
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const [totalValidImages, setTotalValidImages] = useState(0);
+  const ITEMS_PER_PAGE = 10;
   
   // Réinitialiser lastImageId quand on change de projet
   useEffect(() => {
@@ -59,6 +63,8 @@ export default function PrintMonitor() {
       setLastImageTimestamp(null);
       setNewImages([]);
       setLastMonitoredImage(null);
+      setCurrentPage(1);
+      setTotalValidImages(0);
     }
   }, [selectedProject]);
   
@@ -151,34 +157,30 @@ export default function PrintMonitor() {
       try {
         const projectIdToQuery = String(selectedProject).trim();
         
-        console.log('🔍 Recherche images pour projet:', projectIdToQuery);
+        console.log('🔍 Recherche images pour projet:', projectIdToQuery, '- Page:', currentPage);
         
-        // Charger uniquement depuis sessions
-        const { data: sessionsData, error: sessionsError } = await supabase
+        // ÉTAPE 1: Charger TOUTES les sessions (sans limite) pour avoir le total
+        const { data: allSessionsData, error: allSessionsError } = await supabase
           .from('sessions')
           .select('id, result_s3_url, result_image_url, created_at, moderation')
           .eq('project_id', projectIdToQuery)
-          .order('created_at', { ascending: false })
-          .limit(100);
+          .order('created_at', { ascending: false });
 
-        if (sessionsError) {
-          console.warn('⚠️ Erreur sessions:', sessionsError);
+        if (allSessionsError) {
+          console.warn('⚠️ Erreur chargement sessions:', allSessionsError);
           setError('Erreur lors du chargement des images');
           return;
         }
 
-        console.log('📊 Résultats bruts: sessions:', sessionsData?.length || 0);
+        console.log('📊 Total sessions récupérées:', allSessionsData?.length || 0);
 
-        // Compteurs pour diagnostics
+        // ÉTAPE 2: Filtrer et compter les images valides
+        const validImages = [];
         let moderatedCount = 0;
         let noUrlCount = 0;
-        let validCount = 0;
-
-        // Charger les images depuis sessions
-        const allImages = [];
         
-        if (sessionsData && sessionsData.length > 0) {
-          sessionsData.forEach(session => {
+        if (allSessionsData && allSessionsData.length > 0) {
+          allSessionsData.forEach(session => {
             // Skip les modérées
             if (session.moderation === 'M') {
               moderatedCount++;
@@ -187,8 +189,7 @@ export default function PrintMonitor() {
             
             const url = session.result_s3_url || session.result_image_url;
             if (url && url.trim() !== '' && url !== 'null' && url !== 'undefined') {
-              validCount++;
-              allImages.push({
+              validImages.push({
                 id: `s_${session.id}`,
                 image_url: url,
                 created_at: session.created_at,
@@ -202,24 +203,37 @@ export default function PrintMonitor() {
         }
         
         console.log('📊 Filtrage détaillé:');
-        console.log('  ✅ Images valides:', validCount);
+        console.log('  ✅ Images valides:', validImages.length);
         console.log('  🚫 Images modérées:', moderatedCount);
         console.log('  ⚠️ Sans URL:', noUrlCount);
-        console.log('  📈 Total brut:', sessionsData?.length || 0);
+        console.log('  📈 Total brut:', allSessionsData?.length || 0);
 
-        // Trier par date (plus récent en premier)
-        allImages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        setAllProjectImages(allImages);
-        console.log(`✅ Chargé ${allImages.length} images pour le projet ${selectedProject}`);
+        // ÉTAPE 3: Définir le total d'images valides
+        setTotalValidImages(validImages.length);
+        console.log('📊 TOTAL VALIDÉ:', validImages.length);
+        console.log('📄 Nombre de pages:', Math.ceil(validImages.length / ITEMS_PER_PAGE));
         
-        // Initialiser la dernière image monitorée avec la plus récente du projet
-        if (allImages.length > 0) {
-          setLastMonitoredImage(allImages[0]);
-          console.log('📸 Dernière image du projet définie:', allImages[0].id);
+        // ÉTAPE 4: Extraire uniquement les images pour la page actuelle
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const pageImages = validImages.slice(startIndex, endIndex);
+        
+        console.log('🔢 Page', currentPage, '- Images:', startIndex, 'à', endIndex - 1, '(', pageImages.length, 'images)');
+
+        // ÉTAPE 5: Mettre à jour l'état avec les images de la page
+        setAllProjectImages(pageImages);
+        
+        console.log(`✅ Affichage page ${currentPage}/${Math.ceil(validImages.length / ITEMS_PER_PAGE)}`);
+        console.log(`📊 Total: ${validImages.length} images - Affichées: ${pageImages.length}`);
+        console.log(`🎯 Condition pagination: totalValidImages (${validImages.length}) > ITEMS_PER_PAGE (${ITEMS_PER_PAGE}) = ${validImages.length > ITEMS_PER_PAGE}`);
+        
+        // Initialiser la dernière image monitorée avec la plus récente du projet (uniquement page 1)
+        if (currentPage === 1 && validImages.length > 0) {
+          setLastMonitoredImage(validImages[0]);
+          console.log('📸 Dernière image du projet définie:', validImages[0].id);
         }
         
-        if (allImages.length === 0) {
+        if (validImages.length === 0) {
           console.log('⚠️ Aucune image trouvée. Vérifiez:');
           console.log('  - Le project_id est correct:', projectIdToQuery);
           console.log('  - Les colonnes result_s3_url/result_image_url existent');
@@ -234,7 +248,7 @@ export default function PrintMonitor() {
     }
 
     loadAllProjectImages();
-  }, [selectedProject]); // ✅ Retirer supabase des dépendances (client stable)
+  }, [selectedProject, currentPage]); // ✅ Recharger lors du changement de page
 
   // Actualiser automatiquement la liste des images toutes les minutes
   useEffect(() => {
@@ -247,12 +261,15 @@ export default function PrintMonitor() {
         try {
           const projectIdToQuery = String(selectedProject).trim();
           
+          const startRange = (currentPage - 1) * ITEMS_PER_PAGE;
+          const endRange = startRange + ITEMS_PER_PAGE - 1;
+          
           const { data: sessionsData, error: sessionsError } = await supabase
             .from('sessions')
             .select('id, result_s3_url, result_image_url, created_at, moderation')
             .eq('project_id', projectIdToQuery)
             .order('created_at', { ascending: false })
-            .limit(100);
+            .range(startRange, endRange);
 
           if (sessionsError) {
             console.warn('⚠️ Erreur refresh sessions:', sessionsError);
@@ -288,7 +305,7 @@ export default function PrintMonitor() {
     }, 60000); // 60 secondes = 1 minute
 
     return () => clearInterval(refreshInterval);
-  }, [selectedProject, supabase]);
+  }, [selectedProject, currentPage, supabase]);
 
   // Fonction de notification sonore
   const playNotificationSound = useCallback(() => {
@@ -706,18 +723,45 @@ export default function PrintMonitor() {
         {/* Tableau de TOUTES les images du projet */}
         {selectedProject && (
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <RiImageLine className="w-6 h-6 text-indigo-600" />
-              Toutes les photos du projet {loadingAllImages ? (
-                <span className="text-sm font-normal text-gray-500 animate-pulse">
-                  Chargement...
-                </span>
-              ) : (
-                <span className="text-sm font-normal text-gray-500">
-                  ({allProjectImages.length})
-                </span>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <RiImageLine className="w-6 h-6 text-indigo-600" />
+                  Toutes les photos du projet {loadingAllImages ? (
+                    <span className="text-sm font-normal text-gray-500 animate-pulse">
+                      Chargement...
+                    </span>
+                  ) : (
+                    <span className="text-sm font-normal text-gray-500">
+                      ({totalValidImages} {totalValidImages > 1 ? 'photos' : 'photo'})
+                    </span>
+                  )}
+                </h2>
+              </div>
+              
+              {/* Contrôles de pagination EN HAUT */}
+              {!loadingAllImages && totalValidImages > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-center gap-3 mt-4 p-4 bg-gray-50 rounded-lg">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md disabled:bg-gray-400"
+                  >
+                    ← Précédent
+                  </button>
+                  <span className="text-base text-gray-700 font-bold px-4 py-2 bg-white rounded-lg shadow-sm">
+                    Page {currentPage} / {Math.ceil(totalValidImages / ITEMS_PER_PAGE)}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalValidImages / ITEMS_PER_PAGE), prev + 1))}
+                    disabled={currentPage >= Math.ceil(totalValidImages / ITEMS_PER_PAGE)}
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md disabled:bg-gray-400"
+                  >
+                    Suivant →
+                  </button>
+                </div>
               )}
-            </h2>
+            </div>
             
             {loadingAllImages ? (
               <div className="flex justify-center items-center py-16">
@@ -855,6 +899,29 @@ export default function PrintMonitor() {
                 </table>
               </div>
             )}
+            
+            {/* Contrôles de pagination EN BAS */}
+            {!loadingAllImages && totalValidImages > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-center gap-3 mt-6 p-4 bg-gray-50 rounded-lg">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md disabled:bg-gray-400"
+                >
+                  ← Précédent
+                </button>
+                <span className="text-base text-gray-700 font-bold px-4 py-2 bg-white rounded-lg shadow-sm">
+                  Page {currentPage} / {Math.ceil(totalValidImages / ITEMS_PER_PAGE)}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalValidImages / ITEMS_PER_PAGE), prev + 1))}
+                  disabled={currentPage >= Math.ceil(totalValidImages / ITEMS_PER_PAGE)}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md disabled:bg-gray-400"
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -912,32 +979,101 @@ export default function PrintMonitor() {
             <h3 className="text-lg font-semibold text-blue-900 mb-3">
               📖 Instructions d&apos;utilisation
             </h3>
-            <ol className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-start gap-2">
-                <span className="font-bold">1.</span>
-                <span>Sélectionnez le projet à surveiller dans la liste déroulante</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">2.</span>
-                <span>Cliquez sur &quot;Démarrer le monitoring&quot; pour commencer la surveillance</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">3.</span>
-                <span>Activez &quot;Impression auto&quot; pour imprimer automatiquement chaque nouvelle photo</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">4.</span>
-                <span>Les nouvelles photos apparaîtront en temps réel avec une notification sonore</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">5.</span>
-                <span>Vous pouvez aussi imprimer manuellement en survolant une photo et en cliquant sur l&apos;icône</span>
-              </li>
-            </ol>
+            
+            {/* Mode Standard */}
+            <div className="mb-6">
+              <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">MODE STANDARD</span>
+                Surveillance manuelle
+              </h4>
+              <ol className="space-y-2 text-sm text-blue-800">
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">1.</span>
+                  <span>Sélectionnez le projet à surveiller dans la liste déroulante</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">2.</span>
+                  <span>Cliquez sur &quot;Démarrer le monitoring&quot; pour commencer la surveillance</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">3.</span>
+                  <span>Activez &quot;Impression auto&quot; pour imprimer automatiquement chaque nouvelle photo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">4.</span>
+                  <span>Les nouvelles photos apparaîtront en temps réel avec une notification sonore</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">5.</span>
+                  <span>Vous pouvez aussi imprimer manuellement en cliquant sur le bouton &quot;Imprimer&quot;</span>
+                </li>
+              </ol>
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Limitation :</strong> En mode standard, vous devez valider manuellement chaque impression dans la boîte de dialogue Windows.
+                </p>
+              </div>
+            </div>
+
+            {/* Mode Kiosque */}
+            <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                <span className="bg-green-600 text-white px-2 py-1 rounded text-xs">MODE KIOSQUE (RECOMMANDÉ)</span>
+                Impression 100% automatique et silencieuse
+              </h4>
+              <p className="text-sm text-green-800 mb-3">
+                Pour une impression totalement automatique <strong>sans aucune confirmation</strong>, utilisez le script de lancement en mode kiosque :
+              </p>
+              <ol className="space-y-2 text-sm text-green-800 mb-3">
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">1.</span>
+                  <span>Téléchargez le script <code className="bg-green-100 px-2 py-1 rounded font-mono text-xs">start-photobooth-silent.bat</code></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">2.</span>
+                  <span>Ouvrez le fichier avec un éditeur de texte (Bloc-notes)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">3.</span>
+                  <span>Modifiez la ligne <code className="bg-green-100 px-2 py-1 rounded font-mono text-xs">set &quot;URL=...&quot;</code> avec l&apos;adresse de cette page</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">4.</span>
+                  <span>Fermez Chrome complètement, puis double-cliquez sur le script</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">5.</span>
+                  <span>Chrome s&apos;ouvrira en mode kiosque plein écran avec impression automatique</span>
+                </li>
+              </ol>
+              <div className="flex items-center gap-3">
+                <a
+                  href="/start-photobooth-silent.bat"
+                  download
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-md hover:shadow-lg font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Télécharger le script Kiosque
+                </a>
+                <span className="text-xs text-green-700">
+                  ✓ Impression silencieuse<br/>
+                  ✓ Un seul site affecté<br/>
+                  ✓ Plein écran automatique
+                </span>
+              </div>
+              <div className="mt-3 p-3 bg-white rounded-lg border border-green-200">
+                <p className="text-xs text-green-800">
+                  <strong>💡 Comment ça marche ?</strong> Le script lance Chrome en mode kiosque uniquement pour l&apos;URL configurée. 
+                  Vos autres sites et fenêtres Chrome ne sont pas affectés. Pour quitter le mode kiosque, appuyez sur <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">ALT + F4</kbd>.
+                </p>
+              </div>
+            </div>
+
             <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
               <p className="text-sm text-blue-900">
-                💡 <strong>Astuce :</strong> Connectez votre imprimante à ce PC avant de démarrer.
-                L&apos;impression se fera via le dialogue d&apos;impression standard de Windows.
+                💡 <strong>Astuce :</strong> Connectez votre imprimante à ce PC et définissez-la comme imprimante par défaut dans Windows avant de démarrer.
               </p>
             </div>
           </div>
