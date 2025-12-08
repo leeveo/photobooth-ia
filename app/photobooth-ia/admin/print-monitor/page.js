@@ -23,14 +23,6 @@ import {
 import Loader from '@/app/components/ui/Loader';
 
 export default function PrintMonitor() {
-  // 🔍 DEBUG: Tracer les remontages du composant
-  useEffect(() => {
-    console.log('🏗️ [MOUNT] PrintMonitor component mounted/remounted');
-    return () => {
-      console.log('🔥 [UNMOUNT] PrintMonitor component unmounting');
-    };
-  }, []);
-
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -58,8 +50,6 @@ export default function PrintMonitor() {
   // Réinitialiser lastImageId quand on change de projet
   useEffect(() => {
     if (selectedProject) {
-      console.log('🔄 Changement de projet surveillé:', selectedProject);
-      console.log('   ↳ Réinitialisation de lastImageId et lastImageTimestamp');
       setLastImageId(null);
       setLastImageTimestamp(null);
       setNewImages([]);
@@ -80,12 +70,8 @@ export default function PrintMonitor() {
       const isKioskMode = window.matchMedia('(display-mode: fullscreen)').matches;
       const hasKioskFlag = window.location.search.includes('kiosk=true');
       
-      console.log('🔍 Vérification mode kiosque:', { isKioskMode, hasKioskFlag });
-      
-      // Afficher l'alerte seulement si l'autoprint est activé ET on n'est pas en kiosque
       if (!isKioskMode && !hasKioskFlag) {
         setKioskModeWarning(true);
-        console.warn('⚠️ Mode kiosque non détecté - Les popups d\'impression peuvent être bloqués');
       }
     }
   }, []);
@@ -122,7 +108,6 @@ export default function PrintMonitor() {
           return;
         }
 
-        console.log('✅ Session admin valide:', userEmail);
         setCurrentAdminId(userId);
       } catch (err) {
         console.error('Error getting admin session:', err);
@@ -163,18 +148,13 @@ export default function PrintMonitor() {
   useEffect(() => {
     async function loadAllProjectImages() {
       if (!selectedProject) {
-        console.log('⏸️ Pas de projet sélectionné, skip chargement images');
         setAllProjectImages([]);
         return;
       }
 
-      console.log('🔄 [useEffect] loadAllProjectImages déclenché pour projet:', selectedProject);
-
       setLoadingAllImages(true);
       try {
         const projectIdToQuery = String(selectedProject).trim();
-        
-        console.log('🔍 Recherche images pour projet:', projectIdToQuery, '- Page:', currentPage);
         
         // ÉTAPE 1: Charger TOUTES les sessions (sans limite) pour avoir le total
         const { data: allSessionsData, error: allSessionsError } = await supabase
@@ -188,8 +168,6 @@ export default function PrintMonitor() {
           setError('Erreur lors du chargement des images');
           return;
         }
-
-        console.log('📊 Total sessions récupérées:', allSessionsData?.length || 0);
 
         // ÉTAPE 2: Filtrer et compter les images valides
         const validImages = [];
@@ -219,42 +197,20 @@ export default function PrintMonitor() {
           });
         }
         
-        console.log('📊 Filtrage détaillé:');
-        console.log('  ✅ Images valides:', validImages.length);
-        console.log('  🚫 Images modérées:', moderatedCount);
-        console.log('  ⚠️ Sans URL:', noUrlCount);
-        console.log('  📈 Total brut:', allSessionsData?.length || 0);
-
         // ÉTAPE 3: Définir le total d'images valides
         setTotalValidImages(validImages.length);
-        console.log('📊 TOTAL VALIDÉ:', validImages.length);
-        console.log('📄 Nombre de pages:', Math.ceil(validImages.length / ITEMS_PER_PAGE));
         
         // ÉTAPE 4: Extraire uniquement les images pour la page actuelle
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
         const pageImages = validImages.slice(startIndex, endIndex);
         
-        console.log('🔢 Page', currentPage, '- Images:', startIndex, 'à', endIndex - 1, '(', pageImages.length, 'images)');
-
         // ÉTAPE 5: Mettre à jour l'état avec les images de la page
         setAllProjectImages(pageImages);
-        
-        console.log(`✅ Affichage page ${currentPage}/${Math.ceil(validImages.length / ITEMS_PER_PAGE)}`);
-        console.log(`📊 Total: ${validImages.length} images - Affichées: ${pageImages.length}`);
-        console.log(`🎯 Condition pagination: totalValidImages (${validImages.length}) > ITEMS_PER_PAGE (${ITEMS_PER_PAGE}) = ${validImages.length > ITEMS_PER_PAGE}`);
         
         // Initialiser la dernière image monitorée avec la plus récente du projet (uniquement page 1)
         if (currentPage === 1 && validImages.length > 0) {
           setLastMonitoredImage(validImages[0]);
-          console.log('📸 Dernière image du projet définie:', validImages[0].id);
-        }
-        
-        if (validImages.length === 0) {
-          console.log('⚠️ Aucune image trouvée. Vérifiez:');
-          console.log('  - Le project_id est correct:', projectIdToQuery);
-          console.log('  - Les colonnes result_s3_url/result_image_url existent');
-          console.log('  - Les images ne sont pas modérées (moderation != "M")');
         }
       } catch (err) {
         console.error('❌ Erreur chargement images:', err);
@@ -272,7 +228,6 @@ export default function PrintMonitor() {
     if (!selectedProject) return;
 
     const refreshInterval = setInterval(() => {
-      console.log('🔄 [AUTO-REFRESH] Actualisation automatique des images du projet');
       // Recharger les images du projet
       (async () => {
         try {
@@ -640,6 +595,24 @@ export default function PrintMonitor() {
                 </>
               )}
             </button>
+
+            {/* Alerte mode kiosque */}
+            {kioskModeWarning && autoprint && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 border-2 border-yellow-400 rounded-lg">
+                <RiErrorWarningLine className="w-5 h-5 text-yellow-700 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-yellow-900">Mode kiosque non détecté</p>
+                  <p className="text-xs text-yellow-800">Les popups d&apos;impression seront bloqués</p>
+                </div>
+                <a
+                  href="/start-photobooth-silent.bat"
+                  download
+                  className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded font-medium transition-colors whitespace-nowrap"
+                >
+                  📥 Script .bat
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Status indicators */}
@@ -660,48 +633,6 @@ export default function PrintMonitor() {
             </div>
           </div>
         </div>
-
-        {/* ⚠️ ALERTE MODE KIOSQUE */}
-        {kioskModeWarning && autoprint && (
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl shadow-lg p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <RiErrorWarningLine className="w-10 h-10 text-yellow-600 animate-bounce" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-yellow-900 mb-2 flex items-center gap-2">
-                  ⚠️ Mode kiosque non détecté
-                </h3>
-                <p className="text-yellow-800 mb-3">
-                  Votre navigateur n&apos;est pas en mode kiosque. Les popups d&apos;impression seront <strong>probablement bloqués</strong>.
-                </p>
-                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mb-3">
-                  <p className="text-sm text-yellow-900 font-semibold mb-2">
-                    📋 Solution : Utilisez le script de lancement automatique
-                  </p>
-                  <p className="text-xs text-yellow-800">
-                    Fermez toutes les fenêtres Chrome et double-cliquez sur le fichier <code className="bg-yellow-200 px-1 rounded">start-photobooth-silent.bat</code>
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setKioskModeWarning(false)}
-                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors text-sm"
-                  >
-                    J&apos;ai compris
-                  </button>
-                  <a
-                    href="/start-photobooth-silent.bat"
-                    download
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center gap-2"
-                  >
-                    📥 Télécharger le script
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Dernière photo monitorée */}
         {lastMonitoredImage && (
