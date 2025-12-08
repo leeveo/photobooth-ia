@@ -507,9 +507,19 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         const printWindow = window.open(blobURL, '_blank', 'width=800,height=600');
         
         if (!printWindow) {
+          const isKioskMode = window.matchMedia('(display-mode: fullscreen)').matches;
+          
           debugLog('❌ Popup bloqué!', 'error');
           console.error('❌ Impossible d\'ouvrir la fenêtre (popup bloqué)');
-          reject(new Error('Popup bloqué'));
+          
+          if (!isKioskMode) {
+            debugLog('⚠️ MODE KIOSQUE NON DÉTECTÉ', 'error');
+            debugLog('📋 Solution: Lancez le script start-photobooth-silent.bat', 'info');
+            console.warn('⚠️ ATTENTION: Vous devez utiliser Chrome en mode kiosque pour l\'impression automatique!');
+            console.warn('📋 Téléchargez et lancez le script: start-photobooth-silent.bat');
+          }
+          
+          reject(new Error('Popup bloqué - Mode kiosque requis'));
           return;
         }
         

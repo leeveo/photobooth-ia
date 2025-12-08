@@ -53,6 +53,7 @@ export default function PrintMonitor() {
   const [totalImages, setTotalImages] = useState(0);
   const [totalValidImages, setTotalValidImages] = useState(0);
   const ITEMS_PER_PAGE = 10;
+  const [kioskModeWarning, setKioskModeWarning] = useState(false); // Alerte mode kiosque
   
   // Réinitialiser lastImageId quand on change de projet
   useEffect(() => {
@@ -72,6 +73,22 @@ export default function PrintMonitor() {
   const router = useRouter();
   const pollingRef = useRef(null);
   const audioRef = useRef(null);
+
+  // ⚠️ Détecter le mode kiosque au chargement
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isKioskMode = window.matchMedia('(display-mode: fullscreen)').matches;
+      const hasKioskFlag = window.location.search.includes('kiosk=true');
+      
+      console.log('🔍 Vérification mode kiosque:', { isKioskMode, hasKioskFlag });
+      
+      // Afficher l'alerte seulement si l'autoprint est activé ET on n'est pas en kiosque
+      if (!isKioskMode && !hasKioskFlag) {
+        setKioskModeWarning(true);
+        console.warn('⚠️ Mode kiosque non détecté - Les popups d\'impression peuvent être bloqués');
+      }
+    }
+  }, []);
 
   // Récupérer l'ID de l'admin connecté depuis le système custom
   useEffect(() => {
@@ -644,6 +661,48 @@ export default function PrintMonitor() {
           </div>
         </div>
 
+        {/* ⚠️ ALERTE MODE KIOSQUE */}
+        {kioskModeWarning && autoprint && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl shadow-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <RiErrorWarningLine className="w-10 h-10 text-yellow-600 animate-bounce" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-yellow-900 mb-2 flex items-center gap-2">
+                  ⚠️ Mode kiosque non détecté
+                </h3>
+                <p className="text-yellow-800 mb-3">
+                  Votre navigateur n&apos;est pas en mode kiosque. Les popups d&apos;impression seront <strong>probablement bloqués</strong>.
+                </p>
+                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mb-3">
+                  <p className="text-sm text-yellow-900 font-semibold mb-2">
+                    📋 Solution : Utilisez le script de lancement automatique
+                  </p>
+                  <p className="text-xs text-yellow-800">
+                    Fermez toutes les fenêtres Chrome et double-cliquez sur le fichier <code className="bg-yellow-200 px-1 rounded">start-photobooth-silent.bat</code>
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setKioskModeWarning(false)}
+                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors text-sm"
+                  >
+                    J&apos;ai compris
+                  </button>
+                  <a
+                    href="/start-photobooth-silent.bat"
+                    download
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center gap-2"
+                  >
+                    📥 Télécharger le script
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Dernière photo monitorée */}
         {lastMonitoredImage && (
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-indigo-200">
@@ -1035,17 +1094,24 @@ export default function PrintMonitor() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">3.</span>
-                  <span>Fermez toutes les fenêtres Chrome, puis double-cliquez sur le script</span>
+                  <span>Fermez toutes les fenêtres Chrome</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">4.</span>
-                  <span>Chrome s&apos;ouvrira automatiquement en mode kiosque avec cette page</span>
+                  <span><strong>Double-cliquez sur le fichier .bat</strong> (ne l&apos;ouvrez PAS avec un éditeur)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold">5.</span>
-                  <span>L&apos;impression sera désormais 100% automatique et silencieuse !</span>
+                  <span>Chrome s&apos;ouvrira automatiquement en mode kiosque avec cette page</span>
                 </li>
               </ol>
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-800">
+                  <strong>⚠️ Important :</strong> Si le fichier s&apos;ouvre dans un éditeur au lieu de s&apos;exécuter, 
+                  faites un <strong>clic droit sur le fichier .bat</strong> → <strong>&quot;Exécuter en tant qu&apos;administrateur&quot;</strong> ou 
+                  vérifiez que Windows n&apos;associe pas les fichiers .bat à Chrome.
+                </p>
+              </div>
               <div className="flex items-center gap-3">
                 <a
                   href="/start-photobooth-silent.bat"
