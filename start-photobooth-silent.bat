@@ -37,12 +37,14 @@ echo.
 echo Preparation en cours...
 echo.
 
-:: --- NETTOYAGE ---
-:: Force la fermeture de toutes les instances de Chrome existantes
-:: C'est OBLIGATOIRE pour que le flag --kiosk-printing soit pris en compte
-echo [1/2] Fermeture de Chrome...
-taskkill /F /IM chrome.exe /T >nul 2>&1
-timeout /t 3 /nobreak >nul
+:: --- PREPARATION PROFIL DEDIE ---
+:: Création d'un profil Chrome dédié pour le kiosque
+:: Cela permet de garder Chrome normal ouvert en parallèle
+set "PROFILE_DIR=%TEMP%\ChromeKioskPhotobooth"
+if not exist "%PROFILE_DIR%" mkdir "%PROFILE_DIR%"
+
+echo [1/2] Preparation du profil Chrome dedie pour le kiosque...
+:: On ne ferme PAS Chrome, on utilise un profil séparé
 
 :: --- LANCEMENT ---
 :: --kiosk-printing : Imprime sans confirmation (le popup s'ouvre et se valide seul)
@@ -59,7 +61,27 @@ echo   Pour quitter le mode Kiosque : Appuyez sur ALT + F4
 echo =========================================================================
 echo.
 
-start chrome --kiosk-printing --kiosk --disable-infobars --no-first-run --disable-extensions "%URL%"
+:: Recherche automatique de Chrome dans les emplacements courants
+set "CHROME_PATH="
+if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
+    set "CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe"
+) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (
+    set "CHROME_PATH=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+) else if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
+    set "CHROME_PATH=%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
+) else (
+    echo ERREUR : Chrome n'a pas ete trouve sur ce systeme !
+    echo Veuillez installer Google Chrome ou modifier le chemin dans le script.
+    pause
+    exit /b 1
+)
+
+echo Chrome trouve : %CHROME_PATH%
+echo.
+
+:: Lancement avec profil dédié (user-data-dir) pour ne pas interférer avec Chrome normal
+:: --disable-popup-blocking : ESSENTIEL pour autoriser les popups d'impression automatique
+start "" "%CHROME_PATH%" --user-data-dir="%PROFILE_DIR%" --kiosk-printing --kiosk --disable-infobars --no-first-run --disable-extensions --disable-session-crashed-bubble --disable-features=TranslateUI --disable-popup-blocking --autoplay-policy=no-user-gesture-required "%URL%"
 
 :: Script terminé
 echo Lancement termine. Chrome est maintenant en mode Kiosque.
