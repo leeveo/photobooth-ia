@@ -219,21 +219,22 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
   }
 
   // Déterminer les dimensions CSS en fonction du format demandé
-  // Par défaut: portrait 10x15cm
-  let cssWidth = '100mm';
-  let cssHeight = '150mm';
-  let pageSize = '100mm 150mm'; // Portrait
+  // DNP DS620 utilise des formats en pouces (4x6" = 10x15cm)
+  // On utilise 'in' pour être précis avec le driver d'imprimante
+  let cssWidth = '4in';
+  let cssHeight = '6in';
+  let pageSize = '4in 6in'; // Portrait
 
   if (format === 'landscape') {
-    cssWidth = '150mm';
-    cssHeight = '100mm';
-    pageSize = '150mm 100mm'; // Landscape
+    cssWidth = '6in';
+    cssHeight = '4in';
+    pageSize = '6in 4in'; // Landscape
   } else if (format === 'square') {
     // Pour le carré, on imprime souvent sur du 10x15 avec des marges, ou sur du papier spécifique
-    // Ici on définit la zone d'impression comme carrée 10x10
-    cssWidth = '100mm';
-    cssHeight = '100mm';
-    pageSize = '100mm 100mm'; 
+    // Ici on définit la zone d'impression comme carrée 4x4" (sur papier 4x6" avec marges blanches auto)
+    cssWidth = '4in';
+    cssHeight = '4in';
+    pageSize = '4in 4in'; 
   }
 
   // Préparer l'image optimisée (utilisée pour Kiosk Pro ET Fallback)
@@ -364,11 +365,11 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       
       html, body {
         background: white;
-        width: 99%;
-        height: 99%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
       }
       
       body {
@@ -391,8 +392,9 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         align-items: center;
         overflow: hidden;
         page-break-inside: avoid;
-        transform: scale(0.98);
-        transform-origin: center;
+        /* Force le contenu à rester dans une seule page */
+        max-width: 100vw;
+        max-height: 100vh;
       }
       
       .preview-label {
