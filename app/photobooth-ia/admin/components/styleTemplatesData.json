@@ -1656,7 +1656,24 @@
       "prompt": "Garder exactement le visage de la personne. La personne est au premier plan, habillée dans le thème du décor. Décor : cabaret années 30, ambiance Music-Hall & fête, avec des personnes en arrière-plan en train de danser. Style photoréaliste.",
       "variations": 1
     },
-  
+     {
+      "name": "Cabaret Années 30",
+      "gender": "g",
+      "style_key": "themed_cabaret_2s",
+      "description": "Ambiance cabaret années 30, Music-Hall festif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_cabaret_30_002.jpg",
+      "prompt": "Garder exactement les visages et le même nombre de personnes que sur la photo d’origine (solo ou groupe). Personnes au premier plan. Transformer uniquement les vêtements et le décor en cabaret années 30, ambiance Music-Hall & fête, avec des danseurs flous en arrière-plan. Style photoréaliste, lumière réaliste. Ne pas modifier les visages, l’âge des personnes.",
+      "variations": 1
+    },
+       {
+      "name": "Cabaret Année 30",
+      "gender": "g",
+      "style_key": "themed_cabaret_3s",
+      "description": "Ambiance cabaret années 30, Music-Hall festif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/themed_cabaret_30_003.jpg",
+      "prompt": "Prompt :  Garder exactement les visages et le même nombre de personnes que sur la photo d’origine (solo ou groupe). Personnes au premier plan. Transformer uniquement les vêtements et le décor en années folles / années 20, ambiance jazz, fête et charleston. Style photoréaliste, lumière réaliste. Ne pas modifier les visages, l’âge des personnes.",
+      "variations": 1
+    },
     {
       "name": "Belle Époque",
       "gender": "g",

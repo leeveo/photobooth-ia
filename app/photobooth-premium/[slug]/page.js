@@ -156,13 +156,7 @@ export default function PhotoboothProject({ params }) {
   };
 
   const handleStartExperience = () => {
-    if (project?.photobooth_type === 'standard') {
-      router.push(`/photobooth-premium/${slug}/cam`);
-    } else if (project?.photobooth_type === 'premium') {
-      router.push(`/photobooth-premium/${slug}/style`);
-    } else {
-      router.push(`/photobooth-premium/${slug}/how`);
-    }
+    router.push(`/photobooth-premium/${slug}/style`);
   };
 
   // Show error state
@@ -300,13 +294,13 @@ export default function PhotoboothProject({ params }) {
                 }}
               ></div>
               <button 
-                className="relative px-16 py-5 text-xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
+                className="relative px-24 py-8 text-5xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor 
                 }}
               >
-                TOUCHER L&apos;ÉCRAN POUR COMMENCER
+                START
               </button>
             </div>
           </motion.div>

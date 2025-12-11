@@ -244,8 +244,8 @@ export default function PhotoboothStyles({ params }) {
     localStorage.setItem('styleGenderFix', style.gender || 'g');
     localStorage.setItem('styleGender', style.gender || 'g');
     
-    // Show confirmation modal
-    setShowConfirmModal(true);
+    // Navigate directly to camera page
+    router.push(`/photobooth-premium/${slug}/cam`);
   };
   
   const handleStartClick = () => {
@@ -492,7 +492,7 @@ export default function PhotoboothStyles({ params }) {
             <motion.h2 
               className="text-3xl sm:text-5xl font-bold text-center relative z-10"
               style={{ 
-                color: secondaryColor,
+                color: '#FFFFFF',
                 textShadow: `0 0 30px ${secondaryColor}50`
               }}
               initial={{ opacity: 0, y: 20 }}

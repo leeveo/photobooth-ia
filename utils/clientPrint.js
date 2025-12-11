@@ -111,11 +111,47 @@ const optimizeImageForPrint = async (imageUrl, imageBlob) => {
     const tempImg = new Image();
     tempImg.crossOrigin = "Anonymous";
     
-    await new Promise((resolveLoad, rejectLoad) => {
+    await new Promise(async (resolveLoad, rejectLoad) => {
       tempImg.onload = resolveLoad;
-      tempImg.onerror = rejectLoad;
+      tempImg.onerror = (e) => {
+        // Si erreur de chargement direct (souvent CORS), on essaie via fetch
+        console.warn("⚠️ Échec chargement direct image (probablement CORS), tentative via fetch...");
+        
+        if (!imageBlob && imageUrl && imageUrl.startsWith('http')) {
+          // Cache busting pour le fetch aussi
+          const urlWithCacheBust = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'cors_bust=' + new Date().getTime();
+          fetch(urlWithCacheBust, { mode: 'cors' })
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              return res.blob();
+            })
+            .then(blob => {
+              const blobUrl = URL.createObjectURL(blob);
+              tempImg.onload = () => {
+                resolveLoad();
+                // Nettoyage du blob url après chargement
+                // URL.revokeObjectURL(blobUrl); // On le garde un peu pour le drawImage
+              };
+              tempImg.onerror = rejectLoad; // Si ça échoue encore, c'est fini
+              tempImg.src = blobUrl;
+            })
+            .catch(fetchErr => {
+              console.error("❌ Échec fetch image:", fetchErr);
+              rejectLoad(new Error(`Impossible de charger l'image (CORS/Network): ${e.type}`));
+            });
+        } else {
+          rejectLoad(new Error(`Erreur chargement image: ${e.type}`));
+        }
+      };
+      
       // Si on a un blob, on crée une URL temporaire, sinon on utilise l'URL directe
-      tempImg.src = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+      const srcBase = imageBlob ? URL.createObjectURL(imageBlob) : imageUrl;
+      // AJOUT: Cache busting pour forcer le rechargement des headers CORS (évite le cache navigateur pollué)
+      if (!imageBlob && srcBase.startsWith('http')) {
+         tempImg.src = srcBase + (srcBase.includes('?') ? '&' : '?') + 'cors_bust=' + new Date().getTime();
+      } else {
+         tempImg.src = srcBase;
+      }
     });
 
     debugLog(`📐 Image source: ${tempImg.width}x${tempImg.height}px`, 'info');
@@ -264,12 +300,16 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     
     html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
     
     body {
@@ -316,16 +356,26 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         margin: 0;
       }
       
+      * {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+        page-break-before: avoid;
+      }
+      
       html, body {
         background: white;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
       }
       
       body {
-        width: 100%;
-        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
       }
       
       .preview-container {
@@ -334,7 +384,13 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         box-shadow: none;
         border-radius: 0;
         padding: 0;
+        margin: 0;
         background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        page-break-inside: avoid;
       }
       
       .preview-label {
@@ -342,10 +398,13 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       }
       
       img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
         border: none;
+        display: block;
+        page-break-inside: avoid;
       }
     }
   </style>
@@ -472,9 +531,15 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         margin: 0;
       }
       
-      body {
+      html, body {
         width: 100%;
         height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      
+      body {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -484,6 +549,7 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+        display: block;
       }
     }
   </style>

@@ -2698,7 +2698,7 @@ const generateImageReplicate = async () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.8 }}
               >
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-hidden">
                   {logs.length > 0 ? (
                     logs.map((log, index) => (
                       <motion.div 
@@ -2939,7 +2939,7 @@ const generateImageReplicate = async () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {enabled ? 'Vérifiez votre photo' : 'Prenez une photo'}
+          {enabled ? '' : 'Prenez une photo'}
         </motion.h2>
         
         {/* Invisible retry button that can be triggered programmatically */}
@@ -3221,7 +3221,7 @@ const generateImageReplicate = async () => {
                     processCapture();
                   }, 3000);
                 }}
-                className="relative px-12 py-6 rounded-2xl font-black text-2xl overflow-hidden group shadow-2xl"
+                className="relative px-12 py-6 rounded-2xl font-black text-4xl overflow-hidden group shadow-2xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor,
@@ -3368,11 +3368,11 @@ const generateImageReplicate = async () => {
 
                 {/* Button text */}
                 <span className="relative z-10 flex items-center gap-3">
-                  📸
+                  
                   {showCountdown
                     ? 'PRISE DE PHOTO...'
                     : cameraLoaded
-                      ? 'PRENDRE UNE PHOTO'
+                      ? 'SHOOT'
                       : 'ATTENTE DE LA CAMÉRA...'}
                 </span>
 
