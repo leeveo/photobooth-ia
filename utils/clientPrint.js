@@ -364,8 +364,8 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
       
       html, body {
         background: white;
-        width: 100%;
-        height: 100%;
+        width: 99%;
+        height: 99%;
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -391,6 +391,8 @@ export const printImageToAirPrint = async (imageUrl, imageBlob, format = 'portra
         align-items: center;
         overflow: hidden;
         page-break-inside: avoid;
+        transform: scale(0.98);
+        transform-origin: center;
       }
       
       .preview-label {
