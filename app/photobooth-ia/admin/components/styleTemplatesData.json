@@ -1651,7 +1651,7 @@
       "name": "no_ia",
       "gender": "g",
       "style_key": "Sans IA",
-      "description": "Conserver la photo originale sans modification IA",
+      "description": "AUCUNE MODIFICATION. Retourner la photo originale strictement identique (copie conforme).",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/no_IA.jpg",
       "prompt": "Garder exactement le visage de la personne. ",
       "variations": 1
