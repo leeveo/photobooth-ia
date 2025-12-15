@@ -2402,7 +2402,7 @@ Aucun template disponible.
                       y={photoFrame.y}
                       width={photoFrame.width}
                       height={photoFrame.height}
-                      stroke="#e11d48"
+                      stroke="transparent"
                       strokeWidth={4}
                       dash={[12, 8]}
                       listening={false}
