@@ -1665,6 +1665,15 @@
       "prompt": "Garder exactement le visage de la personne. La personne est au premier plan, habillée dans le thème du décor. Décor : cabaret années 30, ambiance Music-Hall & fête, avec des personnes en arrière-plan en train de danser. Style photoréaliste.",
       "variations": 1
     },
+      {
+      "name": "Années Folles N&B",
+      "gender": "g",
+      "style_key": "themed_annees_folles_NetB",
+      "description": "Ambiance cabaret années 30, Music-Hall festif",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/anneefolle_nb.jpg",
+      "prompt": "Garder exactement les traits du visage, l’expression et l’apparence des personnes,strict ement identiques à la photo de base, sans aucune modification. Les personnes sont intégrées dans une scène Années folles (années 30), ambiance festive et élégante, style noir et blanc. Vêtements et posture fidèles au thème des années folles, sans aucun accessoire sur la tête (pas de chapeau, pas de bandeau, pas de coiffes). Décor cohérent avec l’époque : atmosphère rétro, soirée élégante des années 30. Les personnes sont à la bonne échelle, proportions naturelles, parfaitement intégrées dans la scène. Style photoréaliste, visages ultra-réalistes, textures de peau naturelles, éclairage crédible, ombres réalistes, rendu authentique comme une véritable photographie ancienne restaurée, sans altération des visages.",
+      "variations": 1
+    },
      {
       "name": "Cabaret Années 30",
       "gender": "g",
