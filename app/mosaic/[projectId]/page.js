@@ -1,17 +1,15 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import Image from "next/image";
-import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useQRCode } from 'next-qrcode';
 
-export default function ProjectMosaic() {
-  const searchParams = useSearchParams();
-  const projectId = searchParams.get('projectId');
-  const wantsFullscreen = searchParams.get('fullscreen') === 'true';
+export default function PublicMosaic() {
+  const params = useParams();
+  const projectId = params.projectId;
   const { Canvas } = useQRCode();
   
   // États existants du slider
@@ -20,11 +18,11 @@ export default function ProjectMosaic() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0); // Pour le slider
-  const [singleImage, setSingleImage] = useState(null); // Pour le mode slider
-  const [autoPlay, setAutoPlay] = useState(false); // Pour l'auto-play du slider
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [singleImage, setSingleImage] = useState(null);
+  const [autoPlay, setAutoPlay] = useState(false);
 
-  // Nouveaux états pour les fonctionnalités avancées
+  // États pour les fonctionnalités
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showFullscreenButton, setShowFullscreenButton] = useState(false);
   const [projectDetails, setProjectDetails] = useState(null);
@@ -41,10 +39,10 @@ export default function ProjectMosaic() {
 
   const supabase = createClientComponentClient();
   const realtimeChannel = useRef(null);
-  const IMAGES_PER_PAGE = 18; // 6 colonnes x 3 lignes = 18 images
-  const HUGE_PROJECT_LIMIT = 6; // Pour le gros projet, seulement 6 images
+  const IMAGES_PER_PAGE = 18;
+  const HUGE_PROJECT_LIMIT = 6;
 
-  // URL de la mosaïque pour le QR code - pointe vers la page PUBLIQUE sans sidebar
+  // URL de la mosaïque pour le QR code (page publique)
   const mosaicUrl = typeof window !== 'undefined' ? 
     `${window.location.origin}/mosaic/${projectId}` : '';
   
@@ -55,7 +53,7 @@ export default function ProjectMosaic() {
         backgroundImage: `url(${mosaicSettings.bg_image_url})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundColor: mosaicSettings.bg_color // Fallback color
+        backgroundColor: mosaicSettings.bg_color
       };
     }
     return { backgroundColor: mosaicSettings.bg_color };
@@ -137,22 +135,17 @@ export default function ProjectMosaic() {
     } catch (error) {
       console.error('Erreur:', error);
       
-      const maxRetries = isHugeProject ? 3 : 2;
+      const maxRetries = 2;
       if (retryCount < maxRetries && (error.message.includes('500') || error.message.includes('timeout') || error.name === 'AbortError')) {
-        const retryDelay = isHugeProject ? 5000 : 2000;
-        console.log(`Retry dans ${retryDelay}ms... (tentative ${retryCount + 1}/${maxRetries})`);
+        console.log(`Retry dans 2000ms... (tentative ${retryCount + 1}/${maxRetries})`);
         setTimeout(() => {
           loadSessionImages(page, retryCount + 1);
-        }, retryDelay);
+        }, 2000);
         return;
       }
       
       setError(`Erreur de chargement: ${error.message}${retryCount > 0 ? ` (après ${retryCount + 1} tentatives)` : ''}`);
-      if (isHugeProject) {
-        setSingleImage(null);
-      } else {
-        setProjectImages([]);
-      }
+      setProjectImages([]);
     } finally {
       setLoading(false);
     }
@@ -235,9 +228,7 @@ export default function ProjectMosaic() {
   // Gestion du mode plein écran
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      // Find the best element to make fullscreen
-      const mosaicContainer = document.querySelector('.mosaic-container-standalone') || 
-                             document.querySelector('.mosaic-container') ||
+      const mosaicContainer = document.querySelector('.mosaic-public-container') || 
                              document.documentElement;
       
       mosaicContainer.requestFullscreen().then(() => {
@@ -252,14 +243,6 @@ export default function ProjectMosaic() {
       }
     }
   };
-
-  // Gérer le mode plein écran
-  useEffect(() => {
-    if (wantsFullscreen) {
-      setShowFullscreenButton(true);
-      console.log("Fullscreen mode requested via URL, showing button");
-    }
-  }, [wantsFullscreen]);
 
   // Détection de la touche Échap pour quitter le plein écran
   useEffect(() => {
@@ -282,7 +265,6 @@ export default function ProjectMosaic() {
     
     setShowFullscreenButton(!!fullscreenSupported);
     
-    // Listen for fullscreen change
     const onFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -311,8 +293,8 @@ export default function ProjectMosaic() {
     
     const items = [...projectImages];
     
-    // Si le QR code est activé et qu'on n'est pas en mode gros projet, l'insérer
-    if (mosaicSettings.show_qr_code && projectId !== 'b492a7b4-de73-4401-aa53-d98be285d07b') {
+    // Si le QR code est activé, l'insérer
+    if (mosaicSettings.show_qr_code) {
       const position = getQRCodePosition();
       
       const qrCodeItem = {
@@ -327,6 +309,36 @@ export default function ProjectMosaic() {
     return items;
   };
 
+  // Abonnement realtime pour les nouvelles images
+  useEffect(() => {
+    if (!projectId) return;
+
+    // S'abonner aux changements en temps réel
+    realtimeChannel.current = supabase
+      .channel(`mosaic-public-${projectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sessions',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log('Nouvelle image détectée:', payload.new);
+          // Recharger les images
+          loadSessionImages(currentPage);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current);
+      }
+    };
+  }, [projectId, currentPage, supabase]);
+
   useEffect(() => {
     if (projectId) {
       setCurrentImageIndex(0);
@@ -334,7 +346,7 @@ export default function ProjectMosaic() {
       setProjectImages([]);
       setCurrentPage(1);
       setTotalPages(1);
-      setAutoPlay(false); // Réinitialiser l'auto-play
+      setAutoPlay(false);
       loadSessionImages();
     }
   }, [projectId]);
@@ -354,27 +366,19 @@ export default function ProjectMosaic() {
     if (isHugeProject && autoPlay && !loading) {
       const interval = setInterval(() => {
         setCurrentImageIndex(prev => prev + 1);
-      }, 10000); // 10 secondes
+      }, 10000);
 
       return () => clearInterval(interval);
     }
   }, [autoPlay, loading, projectId]);
 
   if (loading) {
-    const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
     return (
-      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      <div className="mosaic-public-container min-h-screen" style={getBackgroundStyle()}>
         <div className="flex justify-center items-center min-h-screen">
           <div className="text-center bg-white/10 backdrop-blur-sm rounded-lg p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white text-lg">
-              {isHugeProject ? 'Chargement optimisé...' : 'Chargement...'}
-            </p>
-            {isHugeProject && (
-              <p className="text-sm text-white/80 mt-2">
-                Mode slider détecté - Patience recommandée
-              </p>
-            )}
+            <p className="text-white text-lg">Chargement de la mosaïque...</p>
           </div>
         </div>
       </div>
@@ -383,7 +387,7 @@ export default function ProjectMosaic() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      <div className="mosaic-public-container min-h-screen" style={getBackgroundStyle()}>
         <div className="flex justify-center items-center min-h-screen">
           <div className="text-center max-w-md mx-auto p-6 bg-white/10 backdrop-blur-sm rounded-lg">
             <h2 className="text-xl font-semibold text-white mb-2">Erreur</h2>
@@ -392,7 +396,7 @@ export default function ProjectMosaic() {
               onClick={() => loadSessionImages(currentPage)}
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
             >
-              Reessayer
+              Réessayer
             </button>
           </div>
         </div>
@@ -403,24 +407,15 @@ export default function ProjectMosaic() {
   const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
 
   return (
-    <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
-      {/* Bouton plein écran - Toujours visible quand supporté */}
+    <div className="mosaic-public-container min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      {/* Bouton plein écran */}
       {showFullscreenButton && (
         <motion.button
           onClick={toggleFullscreen}
           className={`fixed ${isFullscreen ? 'top-6 right-6' : 'top-4 right-4'} z-40 p-3 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all`}
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: wantsFullscreen ? [0, 1, 0.8, 1] : 1, 
-            scale: wantsFullscreen ? [0.8, 1.2, 1] : 1,
-            y: wantsFullscreen ? [-10, 0] : 0
-          }}
-          transition={{ 
-            duration: wantsFullscreen ? 1.5 : 0.3,
-            repeat: wantsFullscreen ? 2 : 0,
-            repeatType: "reverse",
-            repeatDelay: 0.5
-          }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
           title={isFullscreen ? "Quitter le mode plein écran" : "Activer le mode plein écran"}
         >
           {isFullscreen ? (
@@ -433,24 +428,6 @@ export default function ProjectMosaic() {
             </svg>
           )}
         </motion.button>
-      )}
-      
-      {/* Message d'aide pour le mode plein écran */}
-      {wantsFullscreen && !isFullscreen && (
-        <motion.div
-          className="fixed top-16 inset-x-0 flex justify-center z-30"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg flex items-center shadow-lg">
-            <span className="mr-2">Cliquez sur</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-            </svg>
-            <span className="ml-2">pour activer le mode plein écran</span>
-          </div>
-        </motion.div>
       )}
 
       {/* Titre et description personnalisés */}
@@ -467,48 +444,6 @@ export default function ProjectMosaic() {
               {mosaicSettings.description}
             </p>
           )}
-        </div>
-      )}
-
-      {/* En-tête admin pour les gros projets */}
-      {isHugeProject && (
-        <div className="bg-white/10 backdrop-blur-sm shadow-sm border-b mb-6 rounded-lg">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-white">Mode slider optimisé</h1>
-                <p className="text-sm text-white/80 mt-1">
-                  Image ${currentImageIndex + 1} - Navigation une par une${autoPlay ? ' - Auto-play activé' : ''}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={toggleAutoPlay}
-                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                    autoPlay 
-                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                      : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
-                >
-                  {autoPlay ? '⏸️ Pause' : '▶️ Auto-play (10s)'}
-                </button>
-                <button
-                  onClick={() => loadSessionImages()}
-                  disabled={loading}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-                >
-                  Actualiser
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Gestion des erreurs avec style personnalisé */}
-      {error && !loading && (
-        <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 bg-opacity-90 rounded-lg max-w-4xl mx-auto">
-          {error}
         </div>
       )}
 
@@ -534,7 +469,7 @@ export default function ProjectMosaic() {
                   />
                 </div>
                 
-                {/* Navigation slider avec style adapté */}
+                {/* Navigation slider */}
                 <div className="flex justify-between items-center mt-6">
                   <button
                     onClick={goToPreviousImage}
@@ -548,6 +483,16 @@ export default function ProjectMosaic() {
                     <span className="px-4 py-2 bg-blue-500 text-white rounded-lg backdrop-blur-sm">
                       Image {currentImageIndex + 1}
                     </span>
+                    <button
+                      onClick={toggleAutoPlay}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        autoPlay 
+                          ? 'bg-green-500 text-white hover:bg-green-600' 
+                          : 'bg-white/20 text-white hover:bg-white/30'
+                      }`}
+                    >
+                      {autoPlay ? '⏸️ Pause' : '▶️ Auto-play'}
+                    </button>
                     {autoPlay && (
                       <div className="flex items-center text-green-400 text-sm bg-black/20 backdrop-blur-sm rounded-lg px-3 py-1">
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
@@ -564,16 +509,11 @@ export default function ProjectMosaic() {
                     Suivante →
                   </button>
                 </div>
-                
-                <p className="text-center text-sm text-white/80 mt-4 bg-black/20 backdrop-blur-sm rounded-lg p-3">
-                  Mode optimisé pour gros projet - Une image à la fois
-                  {autoPlay && <span className="block text-green-400 mt-1">⏰ Changement automatique toutes les 10 secondes</span>}
-                </p>
               </motion.div>
             ) : (
               <div className="text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg">
                 <h3 className="text-xl font-semibold text-white mb-2">Aucune image trouvée</h3>
-                <p className="text-white/80">Ce projet ne contient pas d'images ou l'index est incorrect.</p>
+                <p className="text-white/80">Ce projet ne contient pas encore d'images.</p>
               </div>
             )}
           </div>
@@ -582,7 +522,8 @@ export default function ProjectMosaic() {
           <>
             {projectImages.length === 0 ? (
               <div className="bg-white/10 backdrop-blur-sm shadow rounded-lg p-12 text-center text-white max-w-4xl mx-auto">
-                Aucune image trouvée pour ce projet
+                <h3 className="text-xl font-semibold mb-2">Aucune image trouvée</h3>
+                <p className="text-white/80">Ce projet ne contient pas encore d'images.</p>
               </div>
             ) : (
               <motion.div 
@@ -655,8 +596,8 @@ export default function ProjectMosaic() {
               </motion.div>
             )}
 
-            {/* Navigation pagination stylisée pour projets normaux */}
-            {projectImages.length > 0 && !isHugeProject && (
+            {/* Navigation pagination */}
+            {projectImages.length > 0 && (
               <div className="flex justify-center items-center mt-8 space-x-4">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -682,6 +623,15 @@ export default function ProjectMosaic() {
           </>
         )}
       </div>
+
+      {/* Footer discret avec nom du projet */}
+      {projectDetails?.name && (
+        <div className="fixed bottom-4 left-0 right-0 text-center">
+          <span className="text-white/50 text-sm bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full">
+            {projectDetails.name}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
