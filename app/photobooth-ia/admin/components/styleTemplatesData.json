@@ -1651,7 +1651,7 @@
       "name": "no_ia",
       "gender": "g",
       "style_key": "Sans IA",
-      "description": "AUCUNE MODIFICATION. Retourner la photo originale strictement identique (copie conforme).",
+      "description": "Mode NO IA / ZERO EDIT. Ne pas générer d’image. Ne pas styliser. Ne pas retoucher. Ne pas recadrer. Ne pas modifier le visage, la peau, les vêtements, l’arrière-plan, les couleurs ou la lumière. Ne rien ajouter/supprimer. Résultat attendu : image identique à l’entrée, pixel pour pixel autant que possible.",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/no_IA.jpg",
       "prompt": "Garder exactement le visage de la personne. ",
       "variations": 1

@@ -13,7 +13,8 @@ import {
   RiArrowLeftLine, 
   RiImageLine, 
   RiSettings3Line,
-  RiDeleteBin6Line // Ajout de l'icône de suppression
+  RiDeleteBin6Line, // Ajout de l'icône de suppression
+  RiFolderZipLine // Icône pour le téléchargement ZIP
 } from 'react-icons/ri';
 
 export default function ProjectGallery() {
@@ -53,6 +54,8 @@ export default function ProjectGallery() {
   const [savingMosaicSettings, setSavingMosaicSettings] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // Ajout de l'état pour la confirmation de suppression
   const [failedImages, setFailedImages] = useState(new Set()); // Add this new state
+  const [downloadingZip, setDownloadingZip] = useState(false); // État pour le téléchargement ZIP
+  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 }); // Progression du téléchargement
   
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -664,9 +667,11 @@ export default function ProjectGallery() {
       // Désélectionner si déjà sélectionné
       setSelectedRowProject(null);
       setRowProjectImages([]);
+      setSelectedProject(null); // Désélectionner aussi le projet principal
     } else {
       // Sélectionner et charger les images
       setSelectedRowProject(projectId);
+      setSelectedProject(projectId); // Mettre à jour aussi le projet principal pour activer les boutons
       loadRowProjectImages(projectId);
     }
   }, [selectedRowProject, loadRowProjectImages]);
@@ -683,6 +688,69 @@ export default function ProjectGallery() {
     return trimmedUrl !== '' && trimmedUrl !== 'null' && trimmedUrl !== 'undefined' && 
            (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('/'));
   }, []);
+
+  // Fonction pour télécharger toutes les images en ZIP (via API serveur pour éviter CORS)
+  const downloadAllImagesAsZip = useCallback(async () => {
+    if (!selectedProject) {
+      setError('Veuillez sélectionner un projet');
+      return;
+    }
+
+    console.log('📦 Début téléchargement ZIP pour projet:', selectedProject);
+    setDownloadingZip(true);
+    setDownloadProgress({ current: 0, total: 100 }); // Progression estimée
+
+    try {
+      // Appeler l'API qui génère le ZIP côté serveur (évite les problèmes CORS)
+      console.log('📦 Appel API download-images-zip...');
+      setDownloadProgress({ current: 10, total: 100 });
+      
+      const response = await fetch(`/api/download-images-zip?projectId=${selectedProject}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erreur serveur: ${response.status}`);
+      }
+
+      setDownloadProgress({ current: 80, total: 100 });
+
+      // Récupérer les infos du header
+      const successCount = response.headers.get('X-Success-Count') || '?';
+      const errorCount = response.headers.get('X-Error-Count') || '0';
+
+      // Télécharger le blob
+      const blob = await response.blob();
+      setDownloadProgress({ current: 95, total: 100 });
+
+      // Créer le lien de téléchargement
+      const projectName = projects.find(p => p.id === selectedProject)?.name || 'projet';
+      const folderName = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_photos`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${folderName}_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setDownloadProgress({ current: 100, total: 100 });
+
+      if (parseInt(errorCount) > 0) {
+        setSuccess(`ZIP téléchargé avec succès ! (${successCount} images, ${errorCount} erreurs)`);
+      } else {
+        setSuccess(`ZIP téléchargé avec succès ! (${successCount} images)`);
+      }
+      setTimeout(() => setSuccess(null), 5000);
+
+    } catch (err) {
+      console.error('Erreur téléchargement ZIP:', err);
+      setError(`Erreur lors du téléchargement: ${err.message}`);
+    } finally {
+      setDownloadingZip(false);
+      setDownloadProgress({ current: 0, total: 0 });
+    }
+  }, [selectedProject, projects]);
 
   return (
     <div className="space-y-6">
@@ -951,6 +1019,32 @@ export default function ProjectGallery() {
                 >
                   <RiSettings3Line className="h-5 w-5 mr-2" />
                   Personnaliser la mosaïque
+                </button>
+                
+                {/* Bouton télécharger toutes les images en ZIP */}
+                <button
+                  onClick={downloadAllImagesAsZip}
+                  className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
+                    selectedProject && !downloadingZip
+                      ? 'text-white bg-gradient-to-br from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 border-transparent' 
+                      : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
+                  }`}
+                  disabled={!selectedProject || downloadingZip}
+                  title="Télécharger toutes les images du projet dans un fichier ZIP"
+                >
+                  {downloadingZip ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 mr-2 border-2 border-white border-t-transparent"></div>
+                      {downloadProgress.total > 0 
+                        ? `${downloadProgress.current}%` 
+                        : 'Préparation...'}
+                    </>
+                  ) : (
+                    <>
+                      <RiFolderZipLine className="h-5 w-5 mr-2" />
+                      Télécharger ZIP
+                    </>
+                  )}
                 </button>
               </div>
             </div>
