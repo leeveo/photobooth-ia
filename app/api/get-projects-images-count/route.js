@@ -1,6 +1,20 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+
+// Créer un client Supabase avec la clé service role
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    db: { schema: 'public' },
+    auth: { persistSession: false },
+    global: {
+      fetch: (url, options = {}) => {
+        return fetch(url, { ...options, signal: AbortSignal.timeout(4000) }); // Timeout 4s
+      }
+    }
+  }
+);
 
 export async function GET(request) {
   try {
@@ -13,31 +27,39 @@ export async function GET(request) {
     
     const projectIdArray = projectIds.split(',').map(id => id.trim());
     
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
-    // Requête optimisée pour compter toutes les images en une fois
-    const { data, error } = await supabase
-      .from('sessions')
-      .select('project_id')
-      .in('project_id', projectIdArray)
-      .not('result_s3_url', 'is', null)
-      .not('result_image_url', 'is', null);
-    
-    if (error) {
-      console.error('Error fetching image counts:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    
-    // Compter manuellement les occurrences par projet_id
+    // Initialiser les compteurs à 0
     const photoCounts = {};
     projectIdArray.forEach(id => photoCounts[id] = 0);
     
-    data?.forEach(session => {
-      if (photoCounts[session.project_id] !== undefined) {
-        photoCounts[session.project_id]++;
+    // Exécuter les comptages en parallèle avec Promise.allSettled pour ne pas bloquer si un échoue
+    const countPromises = projectIdArray.map(async (projectId) => {
+      try {
+        // Utiliser une requête RPC si disponible, sinon count classique
+        const { count, error } = await supabaseAdmin
+          .from('sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('project_id', projectId)
+          .not('result_s3_url', 'is', null);
+        
+        if (!error && count !== null) {
+          return { projectId, count };
+        }
+        return { projectId, count: 0 };
+      } catch (err) {
+        console.warn(`Timeout counting for ${projectId}`);
+        return { projectId, count: 0 };
       }
     });
+    
+    const results = await Promise.allSettled(countPromises);
+    
+    results.forEach(result => {
+      if (result.status === 'fulfilled') {
+        photoCounts[result.value.projectId] = result.value.count;
+      }
+    });
+    
+    console.log('📊 Photo counts:', photoCounts);
     
     return NextResponse.json({ 
       success: true, 

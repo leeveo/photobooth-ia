@@ -56,6 +56,10 @@ export default function ProjectGallery() {
   const [failedImages, setFailedImages] = useState(new Set()); // Add this new state
   const [downloadingZip, setDownloadingZip] = useState(false); // État pour le téléchargement ZIP
   const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 }); // Progression du téléchargement
+  const [showZipModal, setShowZipModal] = useState(false); // Modal pour choix téléchargement ZIP
+  const [zipBatchInfo, setZipBatchInfo] = useState({ total: 0, downloaded: 0, allImages: [] }); // Info sur les lots téléchargés + cache des images
+  const [zipLoadingMessage, setZipLoadingMessage] = useState(''); // Message de chargement ZIP
+  const [zipLoadingProgress, setZipLoadingProgress] = useState({ loaded: 0, total: 0 }); // Progression chargement images
   
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -237,28 +241,59 @@ export default function ProjectGallery() {
 
         setProjects(projectsData || []);
 
-        // 2. ULTRA-OPTIMISATION: Utiliser notre nouvelle API pour compter toutes les images
+        // 2. Compter les photos pour chaque projet
         if (projectsData && projectsData.length > 0) {
           const projectIds = projectsData.map(p => p.id);
+          const photoCounts = {};
           
+          // Initialiser à 0
+          projectIds.forEach(id => photoCounts[id] = 0);
+          
+          // Essayer d'abord l'API
+          let apiSuccess = false;
           try {
             const response = await fetch(`/api/get-projects-images-count?projectIds=${projectIds.join(',')}`);
             const result = await response.json();
             
-            if (result.success) {
-              setProjectsWithPhotoCount(result.data);
-            } else {
-              // Fallback en cas d'erreur API
-              const photoCounts = {};
-              projectIds.forEach(id => photoCounts[id] = 0);
-              setProjectsWithPhotoCount(photoCounts);
+            if (result.success && result.data) {
+              // Vérifier si les données sont valides (au moins une valeur > 0)
+              const hasValidData = Object.values(result.data).some(count => count > 0);
+              if (hasValidData) {
+                Object.assign(photoCounts, result.data);
+                apiSuccess = true;
+              }
             }
           } catch (apiError) {
-            // Fallback local en cas d'erreur API
-            const photoCounts = {};
-            projectIds.forEach(id => photoCounts[id] = 0);
-            setProjectsWithPhotoCount(photoCounts);
+            console.warn('API count failed, using client-side count');
           }
+          
+          // Fallback: comptage côté client si l'API a échoué ou renvoyé tous 0
+          if (!apiSuccess) {
+            console.log('📊 Comptage côté client en cours...');
+            // Compter en parallèle pour chaque projet
+            const countPromises = projectIds.map(async (projectId) => {
+              try {
+                const { count, error } = await supabase
+                  .from('sessions')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('project_id', projectId)
+                  .not('result_s3_url', 'is', null);
+                
+                if (!error && count !== null) {
+                  return { projectId, count };
+                }
+                return { projectId, count: 0 };
+              } catch (err) {
+                return { projectId, count: 0 };
+              }
+            });
+            
+            const results = await Promise.all(countPromises);
+            results.forEach(r => photoCounts[r.projectId] = r.count);
+          }
+          
+          console.log('📊 Photo counts:', photoCounts);
+          setProjectsWithPhotoCount(photoCounts);
         }
       } catch (err) {
         setError('Impossible de charger les projets');
@@ -689,23 +724,188 @@ export default function ProjectGallery() {
            (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('/'));
   }, []);
 
-  // Fonction pour télécharger toutes les images en ZIP (via API serveur pour éviter CORS)
-  const downloadAllImagesAsZip = useCallback(async () => {
+  // Fonction pour charger toutes les images d'un projet avec pagination par curseur (évite timeout)
+  const loadAllProjectImages = useCallback(async (projectId) => {
+    const allImages = [];
+    let lastCreatedAt = null;
+    let hasMore = true;
+    const batchSize = 30; // Lots plus petits pour éviter timeout
+    let totalLoaded = 0;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    console.log('📦 Chargement de toutes les images du projet...');
+    
+    while (hasMore) {
+      try {
+        let query = supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at, moderation')
+          .eq('project_id', projectId)
+          .not('result_s3_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(batchSize);
+
+        // Pagination par curseur au lieu de offset
+        if (lastCreatedAt) {
+          query = query.lt('created_at', lastCreatedAt);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Erreur chargement lot:', error);
+          // Retry logic
+          retryCount++;
+          if (retryCount <= maxRetries) {
+            console.log(`🔄 Retry ${retryCount}/${maxRetries} après pause...`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Pause 2s
+            continue;
+          }
+          break;
+        }
+
+        // Reset retry count on success
+        retryCount = 0;
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        // Filtrer et ajouter les images
+        const validImages = data
+          .filter(session => {
+            if (session.moderation === 'M') return false;
+            const url = session.result_s3_url || session.result_image_url;
+            return url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
+          })
+          .map((session, index) => ({
+            url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at,
+            id: session.id
+          }));
+
+        allImages.push(...validImages);
+        totalLoaded += data.length;
+        
+        // Mettre à jour le curseur pour le prochain lot
+        lastCreatedAt = data[data.length - 1].created_at;
+        
+        // Si moins de résultats que demandé, c'est la fin
+        if (data.length < batchSize) {
+          hasMore = false;
+        }
+
+        console.log(`📦 Chargé ${totalLoaded} sessions, ${allImages.length} images valides`);
+        
+        // Mettre à jour la progression pour l'UI
+        setZipLoadingProgress({ loaded: allImages.length, total: allImages.length });
+        setZipLoadingMessage(`${allImages.length} images trouvées...`);
+        
+        // Petite pause entre les requêtes pour éviter de surcharger la DB
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      } catch (err) {
+        console.error('Erreur inattendue:', err);
+        retryCount++;
+        if (retryCount <= maxRetries) {
+          console.log(`🔄 Retry ${retryCount}/${maxRetries} après erreur...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+        break;
+      }
+    }
+
+    // Ajouter les noms de fichiers
+    return allImages.map((img, index) => ({
+      ...img,
+      filename: `photo_${String(index + 1).padStart(4, '0')}_${new Date(img.created_at).toISOString().replace(/[:.]/g, '-').substring(0, 19)}.jpg`
+    }));
+  }, [supabase]);
+
+  // Fonction pour ouvrir le modal de téléchargement ZIP
+  const openZipModal = useCallback(async () => {
+    if (!selectedProject) {
+      setError('Veuillez sélectionner un projet');
+      return;
+    }
+    
+    const projectName = projects.find(p => p.id === selectedProject)?.name || 'Projet';
+    
+    setDownloadingZip(true);
+    setDownloadProgress({ current: 0, total: 100 });
+    setZipLoadingMessage(`Préparation du téléchargement pour "${projectName}"...`);
+    setZipLoadingProgress({ loaded: 0, total: 0 });
+    
+    try {
+      // Charger toutes les images avec pagination par curseur
+      setZipLoadingMessage('Recherche des images du projet...');
+      const allImages = await loadAllProjectImages(selectedProject);
+      
+      console.log('📦 Total images chargées:', allImages.length);
+      
+      if (allImages.length === 0) {
+        setError('Aucune image trouvée dans ce projet');
+        return;
+      }
+      
+      setZipLoadingMessage(`${allImages.length} images prêtes !`);
+      
+      setZipBatchInfo({ 
+        total: allImages.length, 
+        downloaded: 0,
+        allImages: allImages 
+      });
+      setShowZipModal(true);
+    } catch (err) {
+      setError('Erreur lors du chargement des images');
+    } finally {
+      setDownloadingZip(false);
+      setDownloadProgress({ current: 0, total: 0 });
+      setZipLoadingMessage('');
+      setZipLoadingProgress({ loaded: 0, total: 0 });
+    }
+  }, [selectedProject, loadAllProjectImages]);
+
+  // Fonction pour télécharger un lot d'images en ZIP (utilise les images déjà chargées)
+  const downloadZipBatch = useCallback(async (batchNumber, batchSize = 100) => {
     if (!selectedProject) {
       setError('Veuillez sélectionner un projet');
       return;
     }
 
-    console.log('📦 Début téléchargement ZIP pour projet:', selectedProject);
+    // Utiliser les images déjà chargées dans zipBatchInfo
+    const allImages = zipBatchInfo.allImages || [];
+    const offset = batchNumber * batchSize;
+    const images = allImages.slice(offset, offset + batchSize);
+
+    console.log('📦 Téléchargement lot', batchNumber + 1, '- Images:', images.length, '(offset:', offset, ')');
+    
+    if (images.length === 0) {
+      setError('Aucune image dans ce lot');
+      return;
+    }
+
     setDownloadingZip(true);
-    setDownloadProgress({ current: 0, total: 100 }); // Progression estimée
+    setDownloadProgress({ current: 0, total: 100 });
 
     try {
-      // Appeler l'API qui génère le ZIP côté serveur (évite les problèmes CORS)
-      console.log('📦 Appel API download-images-zip...');
       setDownloadProgress({ current: 10, total: 100 });
+
+      // Envoyer les URLs à l'API pour générer le ZIP (évite CORS)
+      const projectName = projects.find(p => p.id === selectedProject)?.name || 'projet';
       
-      const response = await fetch(`/api/download-images-zip?projectId=${selectedProject}`);
+      const response = await fetch('/api/download-images-zip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          images, 
+          projectName: `${projectName}_lot${batchNumber + 1}`
+        })
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -714,34 +914,36 @@ export default function ProjectGallery() {
 
       setDownloadProgress({ current: 80, total: 100 });
 
-      // Récupérer les infos du header
-      const successCount = response.headers.get('X-Success-Count') || '?';
+      const successCount = response.headers.get('X-Success-Count') || images.length.toString();
       const errorCount = response.headers.get('X-Error-Count') || '0';
 
-      // Télécharger le blob
       const blob = await response.blob();
       setDownloadProgress({ current: 95, total: 100 });
 
-      // Créer le lien de téléchargement
-      const projectName = projects.find(p => p.id === selectedProject)?.name || 'projet';
       const folderName = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_photos`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${folderName}_${new Date().toISOString().split('T')[0]}.zip`;
+      a.download = `${folderName}_lot${batchNumber + 1}_${new Date().toISOString().split('T')[0]}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
       setDownloadProgress({ current: 100, total: 100 });
+      
+      // Mettre à jour le compteur de téléchargements
+      setZipBatchInfo(prev => ({
+        ...prev,
+        downloaded: prev.downloaded + parseInt(successCount)
+      }));
 
       if (parseInt(errorCount) > 0) {
-        setSuccess(`ZIP téléchargé avec succès ! (${successCount} images, ${errorCount} erreurs)`);
+        setSuccess(`Lot ${batchNumber + 1} téléchargé ! (${successCount} images, ${errorCount} erreurs)`);
       } else {
-        setSuccess(`ZIP téléchargé avec succès ! (${successCount} images)`);
+        setSuccess(`Lot ${batchNumber + 1} téléchargé ! (${successCount} images)`);
       }
-      setTimeout(() => setSuccess(null), 5000);
+      setTimeout(() => setSuccess(null), 3000);
 
     } catch (err) {
       console.error('Erreur téléchargement ZIP:', err);
@@ -750,7 +952,7 @@ export default function ProjectGallery() {
       setDownloadingZip(false);
       setDownloadProgress({ current: 0, total: 0 });
     }
-  }, [selectedProject, projects]);
+  }, [selectedProject, projects, zipBatchInfo.allImages]);
 
   return (
     <div className="space-y-6">
@@ -1021,16 +1223,16 @@ export default function ProjectGallery() {
                   Personnaliser la mosaïque
                 </button>
                 
-                {/* Bouton télécharger toutes les images en ZIP */}
+                {/* Bouton télécharger les images en ZIP */}
                 <button
-                  onClick={downloadAllImagesAsZip}
+                  onClick={openZipModal}
                   className={`inline-flex items-center px-4 py-2 h-12 border text-sm font-medium rounded-lg shadow-sm ${
                     selectedProject && !downloadingZip
                       ? 'text-white bg-gradient-to-br from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 border-transparent' 
                       : 'text-gray-400 bg-gray-200 cursor-not-allowed border-gray-300'
                   }`}
                   disabled={!selectedProject || downloadingZip}
-                  title="Télécharger toutes les images du projet dans un fichier ZIP"
+                  title="Télécharger toutes les images du projet en plusieurs lots ZIP"
                 >
                   {downloadingZip ? (
                     <>
@@ -1043,6 +1245,11 @@ export default function ProjectGallery() {
                     <>
                       <RiFolderZipLine className="h-5 w-5 mr-2" />
                       Télécharger ZIP
+                      {selectedProject && projectsWithPhotoCount[selectedProject] > 0 && (
+                        <span className="ml-2 px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-xs">
+                          {projectsWithPhotoCount[selectedProject]} photos
+                        </span>
+                      )}
                     </>
                   )}
                 </button>
@@ -1527,6 +1734,176 @@ export default function ProjectGallery() {
                       className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                       Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Overlay de chargement ZIP */}
+          {downloadingZip && !showZipModal && (
+            <div className="fixed z-50 inset-0 overflow-y-auto">
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                
+                <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+                  {/* Animation de chargement */}
+                  <div className="mb-6">
+                    <div className="relative w-24 h-24 mx-auto">
+                      {/* Cercle extérieur animé */}
+                      <div className="absolute inset-0 border-4 border-orange-200 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-transparent border-t-orange-500 rounded-full animate-spin"></div>
+                      
+                      {/* Icône centrale */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <RiFolderZipLine className="h-10 w-10 text-orange-500 animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Message principal */}
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    Préparation du téléchargement
+                  </h3>
+                  
+                  {/* Message dynamique */}
+                  <p className="text-gray-600 mb-4">
+                    {zipLoadingMessage || 'Veuillez patienter...'}
+                  </p>
+                  
+                  {/* Barre de progression si on a des infos */}
+                  {zipLoadingProgress.loaded > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-2xl font-bold text-orange-600">{zipLoadingProgress.loaded}</span>
+                        <span className="text-gray-500">images trouvées</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: '100%' }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Animation de points */}
+                  <div className="flex justify-center space-x-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-400 mt-4">
+                    Cela peut prendre quelques instants selon le nombre d'images...
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de téléchargement ZIP par lots */}
+          {showZipModal && (
+            <div className="fixed z-50 inset-0 overflow-y-auto">
+              <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => !downloadingZip && setShowZipModal(false)}></div>
+                
+                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                
+                <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                  <div className="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg leading-6 font-semibold text-white flex items-center">
+                        <RiFolderZipLine className="h-6 w-6 mr-2" />
+                        Télécharger les images
+                      </h3>
+                      {!downloadingZip && (
+                        <button onClick={() => setShowZipModal(false)} className="text-white hover:text-gray-200">
+                          <RiCloseFill className="h-6 w-6" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white px-6 py-5">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Total d'images dans le projet :</span>
+                        <span className="text-lg font-bold text-orange-600">{zipBatchInfo.total}</span>
+                      </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Images déjà téléchargées :</span>
+                        <span className="text-lg font-bold text-green-600">{zipBatchInfo.downloaded}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Restantes :</span>
+                        <span className="text-lg font-bold text-blue-600">{Math.max(0, zipBatchInfo.total - zipBatchInfo.downloaded)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-blue-700">
+                        💡 <strong>Conseil :</strong> Les images sont téléchargées par lots de 100 pour éviter les erreurs de timeout. Cliquez sur chaque lot pour le télécharger.
+                      </p>
+                    </div>
+
+                    {downloadingZip && (
+                      <div className="mb-4">
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-4 border-orange-200 border-t-orange-600"></div>
+                          <span className="ml-3 text-sm text-gray-600">Téléchargement en cours... {downloadProgress.current}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-orange-500 to-red-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${downloadProgress.current}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Télécharger par lots de 100 :</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                        {Array.from({ length: Math.ceil(zipBatchInfo.total / 100) }, (_, i) => {
+                          const start = i * 100 + 1;
+                          const end = Math.min((i + 1) * 100, zipBatchInfo.total);
+                          const isDownloaded = zipBatchInfo.downloaded >= end;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => downloadZipBatch(i, 100)}
+                              disabled={downloadingZip}
+                              className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                                isDownloaded
+                                  ? 'bg-green-100 text-green-700 border border-green-300'
+                                  : downloadingZip
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200'
+                              }`}
+                            >
+                              {isDownloaded ? '✓ ' : ''}Lot {i + 1}
+                              <br />
+                              <span className="text-xs opacity-75">{start}-{end}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">
+                      {Math.ceil(zipBatchInfo.total / 100)} lot(s) à télécharger
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowZipModal(false)}
+                      disabled={downloadingZip}
+                      className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+                    >
+                      Fermer
                     </button>
                   </div>
                 </div>
