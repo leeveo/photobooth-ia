@@ -2096,6 +2096,7 @@
       "prompt": "While keeping exactly the same facial features, make it with pastel clown makeup and heart-shaped blush.",
       "variations": 1
     },
+  
     {
       "name": "Vampire pale skin and gothic makeup",
       "gender": "g",
@@ -4702,6 +4703,15 @@
       "description": "Maquillage blanc, nez rouge, yeux colorés, style cirque traditionnel",
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/clown_classic.jpg",
       "prompt": "Use the attached image as accurate reference for all faces. Maintain exact facial features, expression, skin tone, and hairstyle for each individual in the group. Do not change the position or orientation of any subject. Apply detailed, photorealistic clown makeup to each person: white foundation, red round nose, colorful eyeshadow, blue and red painted eyebrows, and lips exaggerated into a friendly smile. Vary makeup slightly per person to preserve uniqueness. Keep the original group composition, lighting, and background intact. Ensure full character consistency—every person should remain instantly recognizable with added clown makeup only. Use realistic blending of paint on the skin, preserving all skin texture and lighting dynamics."
+    },
+        {
+      "name": "Nez rouge de clown",
+      "gender": "g",
+      "style_key": "nez_rouge_de_clown",
+      "description": "Déguisez vous avec un joli nez rouge de clown",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/nez_rouge_de_clown.jpg",
+      "prompt": "garder EXACTEMENT le même nombre de personnes que sur la photo d’origine (ne supprimer personne, ne dupliquer personne, ne rajouter personne). Conserver l’identité de chaque personne (visages/traits/expression/cheveux inchangés, aucune déformation). Appliquer à TOUTES les personnes : petit nez rouge de clown + maquillage très léger + tenue de clown moderne et élégante. Toutes heureuses, bras levés en l’air. Cadrage plan américain serré (torse+tête) pour tout le groupe, composition centrée. Fond : salle de théâtre réaliste, lumière chaude de scène, style photo studio, arrière-plan légèrement flou. Aucun texte/logo.",
+      "variations": 1
     },
     {
       "name": "Clown Effrayant",
