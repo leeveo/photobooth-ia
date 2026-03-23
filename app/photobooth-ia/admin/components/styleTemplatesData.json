@@ -5816,5 +5816,392 @@
         "variations": 1
       }
     ]
+  },
+  {
+    "id": "world-cup-football",
+    "name": "Collection Coupe du Monde de Football",
+    "description": "Transformez-vous en super supporter de votre équipe favorite avec maillot personnalisé et ambiance stade",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/world-cup.jpg",
+    "compatibleWith": ["premium"],
+    "styles": [
+      {
+        "name": "France",
+        "gender": "g",
+        "style_key": "france",
+        "description": "Super supporter de la France - Allez les Bleus !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/france.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of France, celebrating. Add subtle face paint on the cheeks, featuring the France flag colors (Blue, white, red). OUTFIT: Professional-style soccer jerseys in rich royal blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'ALLEZ LES BLEUS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Angleterre",
+        "gender": "g",
+        "style_key": "angleterre",
+        "description": "Super supporter de l'Angleterre - It's Coming Home !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/angleterre.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of England, celebrating. Add subtle face paint on the cheeks, featuring the England flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric. Centered on the chest area of the jersey, add the text 'IT'S COMING HOME' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast navy blue to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Canada",
+        "gender": "g",
+        "style_key": "canada",
+        "description": "Super supporter du Canada - Go Canada Go !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/canada.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Canada, celebrating. Add subtle face paint on the cheeks, featuring the Canada flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO CANADA GO' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "États-Unis",
+        "gender": "g",
+        "style_key": "etatsunis",
+        "description": "Super supporter des États-Unis - Go USA !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/etatsunis.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of USA, celebrating. Add subtle face paint on the cheeks, featuring the USA flag colors (Red, white, blue). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO USA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast navy blue to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Mexique",
+        "gender": "g",
+        "style_key": "mexique",
+        "description": "Super supporter du Mexique - Viva México !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/mexique.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Mexico, celebrating. Add subtle face paint on the cheeks, featuring the Mexico flag colors (Green, white, red). OUTFIT: Professional-style soccer jerseys in deep forest green textured athletic fabric. Centered on the chest area of the jersey, add the text 'VIVA MÉXICO' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the green fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Arabie Saoudite",
+        "gender": "g",
+        "style_key": "arabie",
+        "description": "Super supporter de l'Arabie Saoudite - Go Saudi !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/arabie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Saudi Arabia, celebrating. Add subtle face paint on the cheeks, featuring the Saudi Arabia flag colors (Green, white). OUTFIT: Professional-style soccer jerseys in emerald green textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO SAUDI' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the green fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Australie",
+        "gender": "g",
+        "style_key": "australie",
+        "description": "Super supporter de l'Australie - Go Socceroos !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/australie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Australia, celebrating. Add subtle face paint on the cheeks, featuring the Australia flag colors (Green, gold). OUTFIT: Professional-style soccer jerseys in bright golden-yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO SOCCEROOS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast dark green to ensure maximum readability against the gold fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Japon",
+        "gender": "g",
+        "style_key": "japon",
+        "description": "Super supporter du Japon - Samurai Blue !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/japon.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Japan, celebrating. Add subtle face paint on the cheeks, featuring the Japan flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in deep samurai blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'SAMURAI BLUE' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Jordanie",
+        "gender": "g",
+        "style_key": "jordanie",
+        "description": "Super supporter de la Jordanie - Go Jordan !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/jordanie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Jordan, celebrating. Add subtle face paint on the cheeks, featuring the Jordan flag colors (Black, white, green, red). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO JORDAN' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Ouzbékistan",
+        "gender": "g",
+        "style_key": "ouzbekistan",
+        "description": "Super supporter de l'Ouzbékistan - Go Uzbekistan !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ouzbekistan.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Uzbekistan, celebrating. Add subtle face paint on the cheeks, featuring the Uzbekistan flag colors (Blue, white, green). OUTFIT: Professional-style soccer jerseys in bright white textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO UZBEKISTAN' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast blue to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Qatar",
+        "gender": "g",
+        "style_key": "qatar",
+        "description": "Super supporter du Qatar - Go Qatar !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/qatar.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Qatar, celebrating. Add subtle face paint on the cheeks, featuring the Qatar flag colors (Maroon, white). OUTFIT: Professional-style soccer jerseys in deep maroon textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO QATAR' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the maroon fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Corée du Sud",
+        "gender": "g",
+        "style_key": "coree",
+        "description": "Super supporter de la Corée du Sud - Fighting Korea !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/coree.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of South Korea, celebrating. Add subtle face paint on the cheeks, featuring the South Korea flag colors (White, black, red, blue). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'FIGHTING KOREA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Iran",
+        "gender": "g",
+        "style_key": "iran",
+        "description": "Super supporter de l'Iran - Go Iran !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/iran.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Iran, celebrating. Add subtle face paint on the cheeks, featuring the Iran flag colors (Green, white, red). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO IRAN' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast red to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Afrique du Sud",
+        "gender": "g",
+        "style_key": "afrique",
+        "description": "Super supporter de l'Afrique du Sud - Go Bafana !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/afrique.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of South Africa, celebrating. Add subtle face paint on the cheeks, featuring the South Africa flag colors (Green, yellow, black, red, white, blue). OUTFIT: Professional-style soccer jerseys in bright yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO BAFANA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast green to ensure maximum readability against the yellow fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Algérie",
+        "gender": "g",
+        "style_key": "algerie",
+        "description": "Super supporter de l'Algérie - One Two Three Viva l'Algérie !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/algerie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Algeria, celebrating. Add subtle face paint on the cheeks, featuring the Algeria flag colors (Green, white, red). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric. Centered on the chest area of the jersey, add the text 'ONE TWO THREE' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast green to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Cap-Vert",
+        "gender": "g",
+        "style_key": "cap",
+        "description": "Super supporter du Cap-Vert - Go Tubarões !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cap.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Cape Verde, celebrating. Add subtle face paint on the cheeks, featuring the Cape Verde flag colors (Blue, white, red). OUTFIT: Professional-style soccer jerseys in royal blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO TUBARÕES' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Côte d'Ivoire",
+        "gender": "g",
+        "style_key": "cote",
+        "description": "Super supporter de la Côte d'Ivoire - Allez les Éléphants !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cote.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Ivory Coast, celebrating. Add subtle face paint on the cheeks, featuring the Ivory Coast flag colors (Orange, white, green). OUTFIT: Professional-style soccer jerseys in vibrant orange textured athletic fabric. Centered on the chest area of the jersey, add the text 'ALLEZ LES ÉLÉPHANTS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the orange fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Égypte",
+        "gender": "g",
+        "style_key": "egypte",
+        "description": "Super supporter de l'Égypte - Go Pharaohs !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/egypte.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Egypt, celebrating. Add subtle face paint on the cheeks, featuring the Egypt flag colors (Red, white, black). OUTFIT: Professional-style soccer jerseys in bright red textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO PHARAOHS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Ghana",
+        "gender": "g",
+        "style_key": "ghana",
+        "description": "Super supporter du Ghana - Go Black Stars !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ghana.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Ghana, celebrating. Add subtle face paint on the cheeks, featuring the Ghana flag colors (Red, yellow, green). OUTFIT: Professional-style soccer jerseys in vibrant yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO BLACK STARS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast black to ensure maximum readability against the yellow fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Maroc",
+        "gender": "g",
+        "style_key": "maroc",
+        "description": "Super supporter du Maroc - Dima Maghrib !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/maroc.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Morocco, celebrating. Add subtle face paint on the cheeks, featuring the Morocco flag colors (Red, green). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'DIMAGHRIB' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast green to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Sénégal",
+        "gender": "g",
+        "style_key": "senegal",
+        "description": "Super supporter du Sénégal - Allez les Lions !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/senegal.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Senegal, celebrating. Add subtle face paint on the cheeks, featuring the Senegal flag colors (Green, yellow, red). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric. Centered on the chest area of the jersey, add the text 'ALLEZ LES LIONS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast green to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Tunisie",
+        "gender": "g",
+        "style_key": "tunisie",
+        "description": "Super supporter de la Tunisie - Allez les Aigles !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/tunisie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Tunisia, celebrating. Add subtle face paint on the cheeks, featuring the Tunisia flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'ALLEZ LES AIGLES' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Curaçao",
+        "gender": "g",
+        "style_key": "curacao",
+        "description": "Super supporter de Curaçao - Go Curaçao !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/curacao.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Curaçao, celebrating. Add subtle face paint on the cheeks, featuring the Curaçao flag colors (Blue, yellow). OUTFIT: Professional-style soccer jerseys in royal blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO CURAÇAO' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast yellow to ensure maximum readability against the blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Haïti",
+        "gender": "g",
+        "style_key": "haiti",
+        "description": "Super supporter d'Haïti - Grenier Alaso !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/haiti.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Haiti, celebrating. Add subtle face paint on the cheeks, featuring the Haiti flag colors (Blue, red). OUTFIT: Professional-style soccer jerseys in deep blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'GRENIER ALASO' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Panama",
+        "gender": "g",
+        "style_key": "panama",
+        "description": "Super supporter du Panama - Vamos Panamá !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/panama.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Panama, celebrating. Add subtle face paint on the cheeks, featuring the Panama flag colors (Blue, red). OUTFIT: Professional-style soccer jerseys in bright red textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS PANAMÁ' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Argentine",
+        "gender": "g",
+        "style_key": "argentine",
+        "description": "Super supporter de l'Argentine - Vamos Argentina !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/argentine.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Argentina, celebrating. Add subtle face paint on the cheeks, featuring the Argentina flag colors (Light blue, white). OUTFIT: Professional-style soccer jerseys in sky blue and white vertical striped textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS ARGENTINA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast black to ensure maximum readability against the light fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Brésil",
+        "gender": "g",
+        "style_key": "bresil",
+        "description": "Super supporter du Brésil - Ordem e Progresso !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/bresil.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Brazil, celebrating. Add subtle face paint on the cheeks, featuring the Brazil flag colors (Green, yellow). OUTFIT: Professional-style soccer jerseys in vibrant bright yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'ORDEM E PROGRESSO' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast forest green to ensure maximum readability against the yellow fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Colombie",
+        "gender": "g",
+        "style_key": "colombie",
+        "description": "Super supporter de la Colombie - Vamos Colombia !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/colombie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Colombia, celebrating. Add subtle face paint on the cheeks, featuring the Colombia flag colors (Yellow, blue, red). OUTFIT: Professional-style soccer jerseys in bright yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS COLOMBIA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast royal blue to ensure maximum readability against the yellow fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Équateur",
+        "gender": "g",
+        "style_key": "equateur",
+        "description": "Super supporter de l'Équateur - Vamos Ecuador !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/equateur.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Ecuador, celebrating. Add subtle face paint on the cheeks, featuring the Ecuador flag colors (Yellow, blue, red). OUTFIT: Professional-style soccer jerseys in bright yellow textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS ECUADOR' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast navy blue to ensure maximum readability against the yellow fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Paraguay",
+        "gender": "g",
+        "style_key": "paraguay",
+        "description": "Super supporter du Paraguay - Vamos Paraguay !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/paraguay.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Paraguay, celebrating. Add subtle face paint on the cheeks, featuring the Paraguay flag colors (Red, white, blue). OUTFIT: Professional-style soccer jerseys in red and white vertical striped textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS PARAGUAY' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast royal blue to ensure maximum readability against the striped fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Uruguay",
+        "gender": "g",
+        "style_key": "uruguay",
+        "description": "Super supporter de l'Uruguay - Vamos Uruguay !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/uruguay.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Uruguay, celebrating. Add subtle face paint on the cheeks, featuring the Uruguay flag colors (Light blue, white). OUTFIT: Professional-style soccer jerseys in celestial light blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'VAMOS URUGUAY' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the light blue fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Nouvelle-Zélande",
+        "gender": "g",
+        "style_key": "nz",
+        "description": "Super supporter de la Nouvelle-Zélande - Go All Whites !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/nz.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of New Zealand, celebrating. Add subtle face paint on the cheeks, featuring the New Zealand flag colors (White, black). OUTFIT: Professional-style soccer jerseys in sleek black textured athletic fabric. Centered on the chest area of the jersey, add the text 'GO ALL WHITES' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the black fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Allemagne",
+        "gender": "g",
+        "style_key": "allemagne",
+        "description": "Super supporter de l'Allemagne - Deutschland !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/allemagne.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Germany, celebrating. Add subtle face paint on the cheeks, featuring the Germany flag colors (Black, red, gold). OUTFIT: Professional-style soccer jerseys in clean white textured athletic fabric with subtle black accents. Centered on the chest area of the jersey, add the text 'DEUTSCHLAND' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast black to ensure maximum readability against the white fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Autriche",
+        "gender": "g",
+        "style_key": "autriche",
+        "description": "Super supporter de l'Autriche - Immer Wieder !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/autriche.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Austria, celebrating. Add subtle face paint on the cheeks, featuring the Austria flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'IMMER WIEDER' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Belgique",
+        "gender": "g",
+        "style_key": "belgique",
+        "description": "Super supporter de la Belgique - Red Devils !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/belgique.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Belgium, celebrating. Add subtle face paint on the cheeks, featuring the Belgium flag colors (Red, yellow, black). OUTFIT: Professional-style soccer jerseys in deep red textured athletic fabric. Centered on the chest area of the jersey, add the text 'RED DEVILS' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast black to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Croatie",
+        "gender": "g",
+        "style_key": "croatie",
+        "description": "Super supporter de la Croatie - Vatreni !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/croatie.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Croatia, celebrating. Add subtle face paint on the cheeks, featuring the Croatia flag colors (Red, white). OUTFIT: Professional-style soccer jerseys featuring a classic red and white checkerboard textured athletic fabric. Centered on the chest area of the jersey, add the text 'VATRENI' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast royal blue to ensure maximum readability against the checkered fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Écosse",
+        "gender": "g",
+        "style_key": "ecosse",
+        "description": "Super supporter de l'Écosse - No Scotland No Party !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/ecosse.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Scotland, celebrating. Add subtle face paint on the cheeks, featuring the Scotland flag colors (Blue, white). OUTFIT: Professional-style soccer jerseys in deep navy blue textured athletic fabric. Centered on the chest area of the jersey, add the text 'NO SCOTLAND NO PARTY' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the navy fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Espagne",
+        "gender": "g",
+        "style_key": "espagne",
+        "description": "Super supporter de l'Espagne - Viva España !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/espagne.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Spain, celebrating. Add subtle face paint on the cheeks, featuring the Spain flag colors (Red, yellow). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'VIVA ESPAÑA' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast yellow to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Norvège",
+        "gender": "g",
+        "style_key": "norvege",
+        "description": "Super supporter de la Norvège - Heia Norge !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/norvege.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Norway, celebrating. Add subtle face paint on the cheeks, featuring the Norway flag colors (Red, white, blue). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'HEIA NORGE' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Pays-Bas",
+        "gender": "g",
+        "style_key": "paysbas",
+        "description": "Super supporter des Pays-Bas - Hup Holland Hup !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/paysbas.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Netherlands, celebrating. Add subtle face paint on the cheeks, featuring the Netherlands flag colors (Orange). OUTFIT: Professional-style soccer jerseys in bright orange textured athletic fabric. Centered on the chest area of the jersey, add the text 'HUP HOLLAND HUP' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the orange fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Portugal",
+        "gender": "g",
+        "style_key": "portugal",
+        "description": "Super supporter du Portugal - Força Portugal !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/portugal.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Portugal, celebrating. Add subtle face paint on the cheeks, featuring the Portugal flag colors (Red, green). OUTFIT: Professional-style soccer jerseys in deep red textured athletic fabric. Centered on the chest area of the jersey, add the text 'FORÇA PORTUGAL' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast green to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      },
+      {
+        "name": "Suisse",
+        "gender": "g",
+        "style_key": "suisse",
+        "description": "Super supporter de la Suisse - Hopp Schwiiz !",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/suisse.jpg",
+        "prompt": "High-quality AI transformation of all people present in the image. Please do not add any additional people; only transform the individual(s) currently in the photo. CRITICAL: Maintain the exact facial structures, features, and identities of each person. Do not alter face shapes or eyes. The person/people are now 'Super Supporters' of Switzerland, celebrating. Add subtle face paint on the cheeks, featuring the Switzerland flag colors (Red, white). OUTFIT: Professional-style soccer jerseys in vibrant red textured athletic fabric. Centered on the chest area of the jersey, add the text 'HOPP SCHWIIZ' using a bold, block-style athletic varsity font. Crucially, the text must be seamlessly sublimated into the fabric fibres, appearing as if woven or dyed directly into the cloth, following the natural contours, shadows, and body shapes and jersey textures. The font color must be a stark, high-contrast white to ensure maximum readability against the red fabric. No other logos or branding. Pose: Excitement and joy, celebrating a victory. BACKGROUND: A massive, blurred football stadium during a goal celebration. Bright stadium lights, festive atmosphere with exploding confetti and streamers in the air. High energy, cinematic lighting, 8k resolution.",
+        "variations": 1
+      }
+    ]
   }
 ]
