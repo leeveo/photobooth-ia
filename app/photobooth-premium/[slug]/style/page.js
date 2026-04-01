@@ -688,7 +688,7 @@ export default function PhotoboothStyles({ params }) {
                         </div>
                         {/* Nom du style */}
                         <div className="p-2" style={{ background: selectedStyle?.id === style.id ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)` : 'transparent' }}>
-                          <h4 className="font-bold text-white text-sm tracking-tight truncate" style={{ textShadow: `0 2px 10px ${primaryColor}40` }}>
+                          <h4 className="font-bold text-white text-sm tracking-tight truncate text-center" style={{ textShadow: `0 2px 10px ${primaryColor}40` }}>
                             {style.name}
                           </h4>
                           <div
@@ -797,7 +797,7 @@ export default function PhotoboothStyles({ params }) {
                             style={{ background: selectedStyle?.id === style.id ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)` : 'transparent' }}
                           >
                             <motion.h4
-                              className="font-bold text-white text-xl tracking-tight mb-2"
+                              className="font-bold text-white text-xl tracking-tight mb-2 text-center"
                               style={{ textShadow: `0 2px 10px ${primaryColor}40` }}
                             >
                               {style.name}
