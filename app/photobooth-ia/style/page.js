@@ -194,8 +194,8 @@ export default function Register() {
                         <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='leeveo' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden justify-center'>
-                            <div className='px-12 '>
-                            <ul className='choose mod5 mod'>
+                            <div className='px-2 lg:px-12'>
+                            <ul className='grid grid-cols-2 gap-3 lg:grid-cols-1'>
                             <li className="flex justify-center">
                                 <input
                                 id='choose_style1'
@@ -320,8 +320,8 @@ export default function Register() {
                         <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
-                            <div className='px-12 '>
-                            <ul className='choose mod5 mod'>
+                            <div className='px-2 lg:px-12'>
+                            <ul className='grid grid-cols-2 gap-3 lg:grid-cols-1'>
                             <li className="flex justify-center">
                                 <input
                                 id='choose_style1'
@@ -446,8 +446,8 @@ export default function Register() {
                         <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
-                            <div className='px-12 '>
-                            <ul className='choose mod5 mod'>
+                            <div className='px-2 lg:px-12'>
+                            <ul className='grid grid-cols-2 gap-3 lg:grid-cols-1'>
                             <li className="flex justify-center">
                                 <input
                                 id='choose_style1'
@@ -572,8 +572,8 @@ export default function Register() {
                         <Image src='/photobooth-ia/title-choose.png' width={959} height={130} alt='waibooth' className='w-full' priority />
                         </div>
                         <div className='overflow-hidden'>
-                            <div className='px-12 '>
-                            <ul className='choose mod5 mod'>
+                            <div className='px-2 lg:px-12'>
+                            <ul className='grid grid-cols-2 gap-3 lg:grid-cols-1'>
                             <li className="flex justify-center">
                                 <input
                                 id='choose_style1'
