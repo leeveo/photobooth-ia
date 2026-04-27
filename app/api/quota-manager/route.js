@@ -106,26 +106,39 @@ async function checkQuotaStatus(adminId) {
         monthlyQuota = 3; // Retour au plan gratuit
         isFreePlan = true;
         
-        // Pour les utilisateurs déchus, utiliser la date de création
-        const { data: adminData } = await supabase
-          .from('admin_users')
-          .select('created_at')
-          .eq('id', adminId)
-          .single();
-        quotaResetAt = adminData?.created_at || new Date().toISOString();
+        // 🔧 FIX: Pour les utilisateurs qui perdent leur abonnement,
+        // réinitialiser le compteur au début du mois en cours
+        // au lieu d'utiliser created_at (qui bloquerait les anciens utilisateurs)
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // Si l'utilisateur a un ancien paiement expiré, partir de l'expiration
+        // Sinon partir du début du mois pour les vrais utilisateurs gratuits
+        if (paymentData && paymentData.quota_expires_at) {
+          const expirationDate = new Date(paymentData.quota_expires_at);
+          // Utiliser le plus récent entre expiration et début du mois
+          quotaResetAt = expirationDate > startOfMonth 
+            ? expirationDate.toISOString() 
+            : startOfMonth.toISOString();
+        } else {
+          // Utilisateur gratuit sans paiement : début du mois actuel
+          quotaResetAt = startOfMonth.toISOString();
+        }
+        
+        console.log(`[QUOTA_MANAGER] Plan gratuit - Reset depuis: ${quotaResetAt}`);
       }
     } else {
       // Aucun paiement valide trouvé
       planValidationDetails.hasPayment = false;
       console.log(`[QUOTA_MANAGER] Aucun paiement valide trouvé`);
       
-      // Pour les utilisateurs gratuits, utiliser la date de création
-      const { data: adminData } = await supabase
-        .from('admin_users')
-        .select('created_at')
-        .eq('id', adminId)
-        .single();
-      quotaResetAt = adminData?.created_at || new Date().toISOString();
+      // 🔧 FIX: Pour les utilisateurs gratuits, utiliser le début du mois en cours
+      // au lieu de created_at pour permettre un reset mensuel du quota gratuit
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      quotaResetAt = startOfMonth.toISOString();
+      
+      console.log(`[QUOTA_MANAGER] Utilisateur gratuit - Reset mensuel depuis: ${quotaResetAt}`);
     }
 
     // 2. Calculer la consommation mensuelle - FIX: Utiliser admin_user_id au lieu de project_id

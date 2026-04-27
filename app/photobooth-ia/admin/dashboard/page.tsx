@@ -390,14 +390,20 @@ export default function Dashboard() {
         ]);
 
         let quota = 3; // Quota gratuit par défaut
-        let resetAt = adminResult.data?.created_at || new Date().toISOString();
+        
+        // 🔧 FIX: Pour les utilisateurs gratuits, utiliser le début du mois actuel
+        // au lieu de created_at pour permettre un reset mensuel du quota gratuit
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        let resetAt = startOfMonth.toISOString();
 
         if (!paymentResult.error && paymentResult.data) {
           // Utilisateur payant
           quota = paymentResult.data.photo_quota || 0;
-          // ✅ CORRECTION: Utiliser la date de création du paiement comme début de période
-          // au lieu de photo_quota_reset_at qui est la date de fin
-          resetAt = paymentResult.data.created_at || resetAt;
+          // ✅ FIX CRITIQUE: Utiliser photo_quota_reset_at pour être cohérent avec quota-manager
+          // photo_quota_reset_at indique le début de la période de quota actuelle
+          // (pas la date de fin, mais la date du dernier reset)
+          resetAt = paymentResult.data.photo_quota_reset_at || paymentResult.data.created_at || resetAt;
         }
 
         // Calculer le total des photos addon
