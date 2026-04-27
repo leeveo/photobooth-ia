@@ -41,7 +41,7 @@ export default function ProjectMosaic() {
 
   const supabase = createClientComponentClient();
   const realtimeChannel = useRef(null);
-  const IMAGES_PER_PAGE = 18; // 6 colonnes x 3 lignes = 18 images
+  const IMAGES_PER_PAGE = 24; // 6 colonnes x 4 lignes = 24 images
   const HUGE_PROJECT_LIMIT = 6; // Pour le gros projet, seulement 6 images
 
   // URL de la mosaïque pour le QR code - pointe vers la page PUBLIQUE sans sidebar

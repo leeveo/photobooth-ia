@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import BackToProjectButton from '../../../components/BackToProjectButton';
 
 // Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
 const dataURLtoFile = (dataurl, filename) => {
@@ -1740,7 +1741,12 @@ const generateImageReplicate = async () => {
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
     >
-      
+      <BackToProjectButton 
+        projectSlug={slug}
+        photoboothType="photobooth-simple"
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
 
       {/* Processing Overlay - Design Simple mais Élégant */}
       <AnimatePresence>

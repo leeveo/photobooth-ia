@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import QuotaManager from '../../../../lib/quota-manager';
+import BackToProjectButton from '../../../components/BackToProjectButton';
 
 // Ajouter cette fonction dataURLtoFile améliorée au début de votre fichier
 const dataURLtoFile = (dataurl, filename) => {
@@ -2333,7 +2334,13 @@ const generateImageReplicate = async () => {
     <main 
       className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5 relative"
     >
-      
+      {/* Bouton de retour à la page d'accueil du projet */}
+      <BackToProjectButton 
+        projectSlug={slug}
+        photoboothType="photobooth-premium"
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
 
       {/* Processing Overlay - Design Web 3.0 Premium avec animations ultra-sophistiquées */}
       <AnimatePresence>

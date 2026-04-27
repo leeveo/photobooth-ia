@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import BackToProjectButton from '../../../components/BackToProjectButton';
 
 // Configuration fal.ai
 fal.config({
@@ -533,6 +534,13 @@ export default function CameraCapture({ params }) {
 
   return (
     <div className="fixed inset-0 z-10" style={{ backgroundColor: primaryColor }}>
+      <BackToProjectButton 
+        projectSlug={slug}
+        photoboothType="photobooth2"
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
+
       <div className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5">
         {/* Logo/Header */}
         <motion.div 

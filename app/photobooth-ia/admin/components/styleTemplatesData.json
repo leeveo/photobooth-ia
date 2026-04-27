@@ -5821,7 +5821,7 @@
     "id": "world-cup-football",
     "name": "Collection Coupe du Monde de Football",
     "description": "Transformez-vous en super supporter de votre équipe favorite avec maillot personnalisé et ambiance stade",
-    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/world-cup.jpg",
+    "image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/france.jpg",
     "compatibleWith": ["premium"],
     "styles": [
       {

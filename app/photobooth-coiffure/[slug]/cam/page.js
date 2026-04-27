@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createSupabaseClient } from '@/lib/supabaseClient';
 import { notFound } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import BackToProjectButton from '../../../components/BackToProjectButton';
 
 import QuotaManager from '../../../../lib/quota-manager';
 
@@ -2230,7 +2231,12 @@ export default function CameraCapture({ params }) {
     <main 
       className="flex fixed h-full w-full overflow-hidden flex-col items-center justify-center pt-2 pb-4 px-5 relative"
     >
-      
+      <BackToProjectButton 
+        projectSlug={slug}
+        photoboothType="photobooth-coiffure"
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
 
       {/* Processing Overlay Web 3.0 */}
       <AnimatePresence>

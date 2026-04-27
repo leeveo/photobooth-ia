@@ -7,6 +7,7 @@ import TopLogoGG from '../../components/TopLogoGG';
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import BackToProjectButton from '../../components/BackToProjectButton';
 
 // @snippet:start(client.config)
 fal.config({
@@ -711,6 +712,21 @@ export default function Cam() {
 
     return (
         <main className="flex fixed h-full w-full bg-tautaufest overflow-auto flex-col items-center justify-center pt-2 pb-5 px-5 lg:pt-12 lg:px-20">
+            {/* Bouton de retour à la page d'accueil */}
+            <Link href="/photobooth-ia">
+                <button className="fixed top-4 left-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-white shadow-2xl backdrop-blur-md border border-white/20 transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    background: 'linear-gradient(135deg, #811A53dd 0%, #811A5399 100%)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px #811A5340, inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  }}
+                  title="Retour à l'accueil">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span className="hidden sm:inline">Retour</span>
+                </button>
+            </Link>
+
             <div className={`fixed top-10 w-[100%] mx-auto flex justify-center items-center z-50`}>
             {/* <TopLogoGG></TopLogoGG> */}
             </div>

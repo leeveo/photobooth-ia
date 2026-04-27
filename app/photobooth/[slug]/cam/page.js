@@ -9,6 +9,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import LoadingOverlay from '../../../components/ui/LoadingOverlay';
+import BackToProjectButton from '../../../components/BackToProjectButton';
 
 // Configuration fal.ai
 fal.config({
@@ -595,6 +596,13 @@ export default function CameraCapture({ params }) {
 
   return (
     <div className="relative z-10 w-full h-full">
+      <BackToProjectButton 
+        projectSlug={slug}
+        photoboothType="photobooth"
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
+
       <main 
         className="flex fixed h-full w-full overflow-auto flex-col items-center justify-center pt-2 pb-20 px-5"
         style={{ backgroundColor: primaryColor }}
