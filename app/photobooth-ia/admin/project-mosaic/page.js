@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQRCode } from 'next-qrcode';
 
 export default function ProjectMosaic() {
@@ -28,6 +28,7 @@ export default function ProjectMosaic() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showFullscreenButton, setShowFullscreenButton] = useState(false);
   const [projectDetails, setProjectDetails] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null); // Pour le popup d'image
   const [mosaicSettings, setMosaicSettings] = useState({
     bg_color: '#000000',
     bg_image_url: '',
@@ -67,10 +68,11 @@ export default function ProjectMosaic() {
     setLoading(true);
     setError(null);
 
+    // Déclarer isHugeProject avant le try/catch pour éviter les erreurs de portée
+    const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
+
     try {
       console.log(`Chargement page ${page} pour projet:`, projectId, retryCount > 0 ? `(tentative ${retryCount + 1})` : '');
-
-      const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
       
       if (isHugeProject) {
         // Mode slider : charger une seule image à la fois
@@ -97,12 +99,11 @@ export default function ProjectMosaic() {
         }
         
       } else {
-        // Mode normal : grille 6x3
-        const limit = 18;
+        // Mode normal : grille 6x4
+        const limit = IMAGES_PER_PAGE;
         const offset = (page - 1) * limit;
         
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        console.log(`📥 Chargement de ${limit} images (offset: ${offset})...`);
         
         const result = await supabase
           .from('sessions')
@@ -111,10 +112,7 @@ export default function ProjectMosaic() {
           .is('moderation', null)
           .not('result_s3_url', 'is', null)
           .order('created_at', { ascending: false })
-          .range(offset, offset + limit - 1)
-          .abortSignal(controller.signal);
-
-        clearTimeout(timeoutId);
+          .range(offset, offset + limit - 1);
 
         if (result.error) throw result.error;
 
@@ -131,16 +129,24 @@ export default function ProjectMosaic() {
         const hasMore = sessions.length === limit;
         setTotalPages(hasMore ? page + 1 : page);
         
-        console.log(`Page ${page} chargée: ${images.length} images (limite: ${limit})`);
+        console.log(`Page ${page} chargée: ${images.length} images (limite: ${limit}, hasMore: ${hasMore}, totalPages: ${hasMore ? page + 1 : page})`);
       }
 
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur détectée:', error);
       
+      // Retry automatique pour les erreurs réseau et temporaires
       const maxRetries = isHugeProject ? 3 : 2;
-      if (retryCount < maxRetries && (error.message.includes('500') || error.message.includes('timeout') || error.name === 'AbortError')) {
-        const retryDelay = isHugeProject ? 5000 : 2000;
-        console.log(`Retry dans ${retryDelay}ms... (tentative ${retryCount + 1}/${maxRetries})`);
+      const isRetryableError = 
+        error.message?.includes('500') || 
+        error.message?.includes('timeout') || 
+        error.message?.includes('fetch') ||
+        error.message?.includes('network') ||
+        error.code === 'PGRST301'; // Erreur Supabase timeout
+      
+      if (retryCount < maxRetries && isRetryableError) {
+        const retryDelay = isHugeProject ? 5000 : 3000;
+        console.log(`🔄 Tentative de retry dans ${retryDelay}ms... (${retryCount + 1}/${maxRetries}) - Erreur: ${error.name || error.code}`);
         setTimeout(() => {
           loadSessionImages(page, retryCount + 1);
         }, retryDelay);
@@ -360,22 +366,87 @@ export default function ProjectMosaic() {
     }
   }, [autoPlay, loading, projectId]);
 
+  // Fermeture automatique du popup après 4 secondes
+  useEffect(() => {
+    if (selectedImage) {
+      const timer = setTimeout(() => {
+        setSelectedImage(null);
+      }, 4000); // 4 secondes
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedImage]);
+
+  // Gestionnaire pour ouvrir le popup d'image
+  const handleImageClick = (image) => {
+    setSelectedImage(image);
+  };
+
+  // Gestionnaire pour fermer le popup manuellement
+  const closeImagePopup = () => {
+    setSelectedImage(null);
+  };
+
   if (loading) {
     const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
     return (
-      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      <div className="min-h-screen py-2 px-2" style={getBackgroundStyle()}>
         <div className="flex justify-center items-center min-h-screen">
-          <div className="text-center bg-white/10 backdrop-blur-sm rounded-lg p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white text-lg">
-              {isHugeProject ? 'Chargement optimisé...' : 'Chargement...'}
-            </p>
+          <motion.div 
+            className="text-center bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-12 shadow-2xl max-w-md"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Spinner moderne avec gradient */}
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+              <motion.div 
+                className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 border-r-purple-400"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              ></motion.div>
+            </div>
+            
+            {/* Texte avec animation */}
+            <motion.p 
+              className="text-white text-2xl font-semibold mb-3"
+              animate={{ opacity: [1, 0.6, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {isHugeProject ? 'Chargement optimisé' : 'Chargement des images'}
+            </motion.p>
+            
+            {/* Points animés */}
+            <div className="flex justify-center gap-2 mb-4">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-3 h-3 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.5, 1, 0.5],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                  }}
+                />
+              ))}
+            </div>
+            
             {isHugeProject && (
-              <p className="text-sm text-white/80 mt-2">
-                Mode slider détecté - Patience recommandée
-              </p>
+              <motion.p 
+                className="text-sm text-white/70 mt-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Mode slider détecté • Patience recommandée
+              </motion.p>
             )}
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -383,18 +454,37 @@ export default function ProjectMosaic() {
 
   if (error) {
     return (
-      <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+      <div className="min-h-screen py-2 px-2" style={getBackgroundStyle()}>
         <div className="flex justify-center items-center min-h-screen">
-          <div className="text-center max-w-md mx-auto p-6 bg-white/10 backdrop-blur-sm rounded-lg">
-            <h2 className="text-xl font-semibold text-white mb-2">Erreur</h2>
-            <p className="text-white/90 mb-4">{error}</p>
-            <button 
-              onClick={() => loadSessionImages(currentPage)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          <motion.div 
+            className="text-center max-w-md mx-auto p-8 bg-gradient-to-br from-red-500/20 to-red-600/10 backdrop-blur-md rounded-2xl shadow-2xl border border-red-400/30"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Icône d'erreur animée */}
+            <motion.div
+              className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              Reessayer
-            </button>
-          </div>
+              <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </motion.div>
+            
+            <h2 className="text-2xl font-bold text-white mb-3">Erreur de chargement</h2>
+            <p className="text-white/90 mb-6 text-sm leading-relaxed">{error}</p>
+            
+            <motion.button 
+              onClick={() => loadSessionImages(currentPage)}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              🔄 Réessayer
+            </motion.button>
+          </motion.div>
         </div>
       </div>
     );
@@ -403,7 +493,73 @@ export default function ProjectMosaic() {
   const isHugeProject = projectId === 'b492a7b4-de73-4401-aa53-d98be285d07b';
 
   return (
-    <div className="min-h-screen py-6 px-6" style={getBackgroundStyle()}>
+    <div className="min-h-screen py-2 px-2" style={getBackgroundStyle()}>
+      {/* Popup d'image en plein écran */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={closeImagePopup}
+          >
+            <motion.div
+              className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
+              transition={{ 
+                type: "spring",
+                damping: 25,
+                stiffness: 300,
+                duration: 0.5
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Bouton fermer */}
+              <button
+                onClick={closeImagePopup}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all"
+                title="Fermer (ou cliquez n'importe où)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Image agrandie */}
+              <div className="relative w-full h-full">
+                <Image
+                  src={selectedImage.image_url}
+                  alt={selectedImage.metadata?.fileName || 'Image du projet'}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+
+              {/* Indicateur de fermeture automatique */}
+              <motion.div
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Fermeture automatique dans 4 secondes</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Bouton plein écran - Toujours visible quand supporté */}
       {showFullscreenButton && (
         <motion.button
@@ -586,7 +742,7 @@ export default function ProjectMosaic() {
               </div>
             ) : (
               <motion.div 
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1"
+                className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-1"
                 variants={{
                   hidden: { opacity: 0 },
                   show: { 
@@ -636,7 +792,10 @@ export default function ProjectMosaic() {
                       </div>
                     ) : (
                       // Rendu d'image
-                      <div className="relative w-full h-full">
+                      <div 
+                        className="relative w-full h-full cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => handleImageClick(item)}
+                      >
                         <Image
                           src={item.image_url}
                           alt={item.metadata?.fileName || 'Image du projet'}
@@ -672,7 +831,7 @@ export default function ProjectMosaic() {
                 
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={projectImages.length < IMAGES_PER_PAGE}
+                  disabled={currentPage >= totalPages || loading}
                   className="px-4 py-2 bg-white/20 text-white rounded hover:bg-white/30 disabled:opacity-50 backdrop-blur-sm transition-all"
                 >
                   Suivant →
