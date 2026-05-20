@@ -770,20 +770,6 @@ export default function PhotoboothStyles({ params }) {
                                   className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"
                                   style={{ background: `linear-gradient(to top, ${primaryColor}60, transparent 50%, ${secondaryColor}10)` }}
                                 />
-                                <motion.div
-                                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                  initial={{ scale: 0.8 }}
-                                  whileHover={{ scale: 1 }}
-                                >
-                                  <motion.button
-                                    className="px-8 py-3 rounded-full font-bold shadow-2xl transform transition-all text-lg backdrop-blur-md border border-white/30"
-                                    style={{ backgroundColor: `${secondaryColor}90`, color: primaryColor }}
-                                    whileHover={{ scale: 1.05, boxShadow: `0 15px 30px ${secondaryColor}40` }}
-                                    whileTap={{ scale: 0.95 }}
-                                  >
-                                    ✨ Choisir ce style
-                                  </motion.button>
-                                </motion.div>
                               </>
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
