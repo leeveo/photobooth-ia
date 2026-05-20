@@ -14,7 +14,8 @@ import {
   RiImageLine, 
   RiSettings3Line,
   RiDeleteBin6Line, // Ajout de l'icône de suppression
-  RiFolderZipLine // Icône pour le téléchargement ZIP
+  RiFolderZipLine, // Icône pour le téléchargement ZIP
+  RiSlideshowLine // Icône pour le diaporama
 } from 'react-icons/ri';
 
 export default function ProjectGallery() {
@@ -60,6 +61,13 @@ export default function ProjectGallery() {
   const [zipBatchInfo, setZipBatchInfo] = useState({ total: 0, downloaded: 0, allImages: [] }); // Info sur les lots téléchargés + cache des images
   const [zipLoadingMessage, setZipLoadingMessage] = useState(''); // Message de chargement ZIP
   const [zipLoadingProgress, setZipLoadingProgress] = useState({ loaded: 0, total: 0 }); // Progression chargement images
+  
+  // États pour le diaporama
+  const [showSlideshow, setShowSlideshow] = useState(false);
+  const [slideshowImages, setSlideshowImages] = useState([]);
+  const [currentSlide1, setCurrentSlide1] = useState(0);
+  const [currentSlide2, setCurrentSlide2] = useState(0);
+  const [loadingSlideshow, setLoadingSlideshow] = useState(false);
   
   const supabase = createClientComponentClient();
   const router = useRouter();
@@ -954,6 +962,83 @@ export default function ProjectGallery() {
     }
   }, [selectedProject, projects, zipBatchInfo.allImages]);
 
+  // Fonction pour ouvrir le diaporama
+  const handleOpenSlideshow = async (projectId) => {
+    setLoadingSlideshow(true);
+    setShowSlideshow(true);
+    setCurrentSlide1(0);
+    setCurrentSlide2(0);
+    
+    try {
+      // Charger toutes les images du projet
+      const allImages = [];
+      let lastCreatedAt = null;
+      let hasMore = true;
+      const batchSize = 50;
+      
+      while (hasMore) {
+        let query = supabase
+          .from('sessions')
+          .select('id, result_s3_url, result_image_url, created_at, moderation')
+          .eq('project_id', projectId)
+          .not('result_s3_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(batchSize);
+
+        if (lastCreatedAt) {
+          query = query.lt('created_at', lastCreatedAt);
+        }
+
+        const { data, error } = await query;
+
+        if (error || !data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        // Filtrer les images valides (non modérées)
+        const validImages = data
+          .filter(session => {
+            if (session.moderation === 'M') return false;
+            const url = session.result_s3_url || session.result_image_url;
+            return url && url.trim() !== '' && url !== 'null' && url !== 'undefined';
+          })
+          .map(session => ({
+            id: session.id,
+            url: session.result_s3_url || session.result_image_url,
+            created_at: session.created_at
+          }));
+
+        allImages.push(...validImages);
+        lastCreatedAt = data[data.length - 1].created_at;
+        
+        if (data.length < batchSize) {
+          hasMore = false;
+        }
+      }
+      
+      setSlideshowImages(allImages);
+    } catch (err) {
+      console.error('Erreur chargement images:', err);
+      setError('Impossible de charger les images du diaporama');
+    } finally {
+      setLoadingSlideshow(false);
+    }
+  };
+
+  // Effet pour faire défiler automatiquement les images du diaporama
+  React.useEffect(() => {
+    if (!showSlideshow || slideshowImages.length === 0) return;
+    
+    const timer = setInterval(() => {
+      setCurrentSlide1(prev => (prev + 1) % slideshowImages.length);
+      // Pile 2 commence à la moitié pour afficher des images différentes
+      setCurrentSlide2(prev => (prev + 1) % Math.max(1, Math.floor(slideshowImages.length / 2)));
+    }, 4000); // 4 secondes
+    
+    return () => clearInterval(timer);
+  }, [showSlideshow, slideshowImages.length]);
+
   return (
     <div className="space-y-6">
       {/* Loader global - affiche tant que loading est true */}
@@ -1072,6 +1157,18 @@ export default function ProjectGallery() {
                                 <RiSettings3Line className="h-4 w-4 mr-1" />
                                 <span className="hidden xs:inline">Personnaliser</span>
                                 <span className="inline xs:hidden">Paramètres</span>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenSlideshow(project.id);
+                                }}
+                                className="inline-flex items-center px-2 sm:px-3 py-1 border text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-br from-pink-500 to-orange-600 hover:from-pink-600 hover:to-orange-700 border-transparent"
+                                title="Afficher le diaporama des photos"
+                              >
+                                <RiSlideshowLine className="h-4 w-4 mr-1" />
+                                <span className="hidden xs:inline">Diaporama</span>
+                                <span className="inline xs:hidden">Diapo</span>
                               </button>
                             </td>
                           </tr>
@@ -1906,6 +2003,130 @@ export default function ProjectGallery() {
                       Fermer
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Diaporama */}
+          {showSlideshow && (
+            <div className="fixed z-50 inset-0 overflow-y-auto">
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="fixed inset-0 bg-black bg-opacity-90 transition-opacity" aria-hidden="true"></div>
+                
+                <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-2xl shadow-2xl p-8 max-w-7xl w-full mx-4 text-center">
+                  {/* Bouton fermer */}
+                  <button
+                    onClick={() => {
+                      setShowSlideshow(false);
+                      setSlideshowImages([]);
+                      setCurrentSlide1(0);
+                      setCurrentSlide2(0);
+                    }}
+                    className="absolute top-4 right-4 text-white hover:text-gray-300 bg-red-600 hover:bg-red-700 rounded-full p-2 transition-colors z-10"
+                  >
+                    <RiCloseFill className="h-8 w-8" />
+                  </button>
+
+                  {/* Titre */}
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-bold text-white flex items-center justify-center gap-3">
+                      <RiSlideshowLine className="h-10 w-10 text-pink-500" />
+                      Diaporama
+                    </h2>
+                    <p className="text-gray-400 mt-2">Défilement automatique toutes les 4 secondes</p>
+                  </div>
+
+                  {loadingSlideshow ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                      <div className="relative">
+                        <div className="animate-spin rounded-full h-20 w-20 border-4 border-pink-200"></div>
+                        <div className="absolute top-0 left-0 animate-spin-reverse rounded-full h-20 w-20 border-4 border-transparent border-t-pink-500 border-r-pink-500"></div>
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                          <RiSlideshowLine className="w-8 h-8 text-pink-500 animate-pulse" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-medium text-white animate-pulse">
+                          Chargement des images...
+                        </p>
+                        <p className="text-sm text-gray-400 mt-2">
+                          Préparation du diaporama
+                        </p>
+                      </div>
+                    </div>
+                  ) : slideshowImages.length === 0 ? (
+                    <div className="text-center py-20">
+                      <RiImageLine className="w-20 h-20 mx-auto mb-4 text-gray-500" />
+                      <p className="text-xl text-gray-400">Aucune image trouvée pour ce projet</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Affichage du nombre total d'images */}
+                      <div className="mb-4">
+                        <p className="text-white text-lg">
+                          <span className="font-bold text-pink-500">{slideshowImages.length}</span> images au total
+                        </p>
+                      </div>
+
+                      {/* Deux piles d'images côte à côte */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Pile 1 */}
+                        <div className="relative">
+                          <div className="mb-3">
+                            <h3 className="text-xl font-semibold text-pink-400">Pile 1</h3>
+                            <p className="text-sm text-gray-400">Image {currentSlide1 + 1} / {slideshowImages.length}</p>
+                          </div>
+                          <div className="relative w-full aspect-square bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-4 border-pink-500">
+                            {slideshowImages[currentSlide1] && (
+                              <Image
+                                key={`slide1-${currentSlide1}`}
+                                src={slideshowImages[currentSlide1].url}
+                                alt={`Image ${currentSlide1 + 1}`}
+                                fill
+                                className="object-cover animate-fadeIn"
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                priority
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Pile 2 - commence à la moitié du tableau pour avoir des images différentes */}
+                        <div className="relative">
+                          <div className="mb-3">
+                            <h3 className="text-xl font-semibold text-orange-400">Pile 2</h3>
+                            <p className="text-sm text-gray-400">
+                              Image {((Math.floor(slideshowImages.length / 2) + currentSlide2) % slideshowImages.length) + 1} / {slideshowImages.length}
+                            </p>
+                          </div>
+                          <div className="relative w-full aspect-square bg-gray-800 rounded-xl overflow-hidden shadow-2xl border-4 border-orange-500">
+                            {slideshowImages[(Math.floor(slideshowImages.length / 2) + currentSlide2) % slideshowImages.length] && (
+                              <Image
+                                key={`slide2-${currentSlide2}`}
+                                src={slideshowImages[(Math.floor(slideshowImages.length / 2) + currentSlide2) % slideshowImages.length].url}
+                                alt={`Image ${((Math.floor(slideshowImages.length / 2) + currentSlide2) % slideshowImages.length) + 1}`}
+                                fill
+                                className="object-cover animate-fadeIn"
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                priority
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Barre de progression */}
+                      <div className="mt-8">
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-pink-500 to-orange-500 h-2 rounded-full transition-all duration-4000 ease-linear"
+                            style={{ width: '100%' }}
+                          ></div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
