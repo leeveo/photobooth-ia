@@ -8,9 +8,6 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import './style.css'; // Import CSS for masonry grid
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
 export default function PhotoboothStyles({ params }) {
   const { slug } = params;
@@ -27,10 +24,11 @@ export default function PhotoboothStyles({ params }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // Simplified state for infinite scroll
-  const [visibleCount, setVisibleCount] = useState(50);
+  const [visibleCount, setVisibleCount] = useState(4); // Desktop: 4 styles (2x2)
+  const [visibleCountMobile, setVisibleCountMobile] = useState(50); // Mobile: 50 styles
   const [isScrollEnd, setIsScrollEnd] = useState(false);
   
-  // Effect for infinite scroll - Updated to track scroll position
+  // Effect for infinite scroll - Updated to track scroll position (mobile only)
   useEffect(() => {
     const handleScroll = () => {
       if (scrollRef.current) {
@@ -38,7 +36,7 @@ export default function PhotoboothStyles({ params }) {
         
         // Check if near bottom for infinite scroll
         if (scrollTop + clientHeight >= scrollHeight - 100) {
-          setVisibleCount(prev => Math.min(prev + 10, styles.length));
+          setVisibleCountMobile(prev => Math.min(prev + 10, styles.length));
           setIsScrollEnd(true);
         } else {
           setIsScrollEnd(false);
@@ -263,120 +261,38 @@ export default function PhotoboothStyles({ params }) {
     setShowConfirmModal(false);
   };
   
-  // Flèches personnalisées pour react-slick (centrées, sans doublon visuel)
-  function ArrowLeft(props) {
-    const { className, style, onClick } = props;
-    return (
-      <button
-        type="button"
-        className={className}
-        style={{
-          ...style,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          left: "-40px",
-          zIndex: 2,
-          width: 56,
-          height: 56,
-          background: "rgba(255,255,255,1)",
-          borderRadius: "50%",
-          border: "2px solid #fff",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          padding: 0
-        }}
-        onClick={onClick}
-        aria-label="Précédent"
-      >
-        <svg width="32" height="32" viewBox="8 0 24 24" fill="none" style={{display: "block"}}>
-          <path d="M15.5 19L9.5 12L15.5 5" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-    );
-  }
-
-  function ArrowRight(props) {
-    const { className, style, onClick } = props;
-    return (
-      <button
-        type="button"
-        className={className}
-        style={{
-          ...style,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          right: "-40px",
-          zIndex: 2,
-          width: 56,
-          height: 56,
-          background: "rgba(255,255,255,1)",
-          borderRadius: "50%",
-          border: "2px solid #fff",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          padding: 0
-        }}
-        onClick={onClick}
-        aria-label="Suivant"
-      >
-        <svg width="32" height="32" viewBox="6 0 24 24" fill="none" style={{display: "block"}}>
-          <path d="M8.5 5L14.5 12L8.5 19" stroke="#811A53" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-    );
-  }
-
-  // Ajout d'un useEffect pour masquer les flèches slick par défaut
+  // Ajout d'un useEffect pour styliser la scrollbar
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      .slick-arrow.slick-hidden { display: none !important; }
-      .slick-arrow:not(button) { display: none !important; }
+      /* Scrollbar horizontale personnalisée */
+      .overflow-x-auto::-webkit-scrollbar {
+        height: 12px;
+      }
+      .overflow-x-auto::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        margin: 0 10px;
+      }
+      .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #811A53, #E5E40A);
+        border-radius: 10px;
+        border: 2px solid rgba(255,255,255,0.1);
+      }
+      .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(90deg, #E5E40A, #811A53);
+      }
+      
+      /* Smooth scroll */
+      .overflow-x-auto {
+        scroll-behavior: smooth;
+      }
     `;
     document.head.appendChild(style);
     return () => {
       document.head.removeChild(style);
     };
   }, []);
-
-  // Configuration du carrousel react-slick
-  const sliderSettings = {
-    dots: false,
-    infinite: styles.length > 4,
-    speed: 500,
-    slidesToShow: Math.min(styles.length, 4),
-    slidesToScroll: 1,
-    swipeToSlide: true,
-    nextArrow: <ArrowRight />,
-    prevArrow: <ArrowLeft />,
-    appendArrows: (container) => (
-      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, width: "100%", zIndex: 2, pointerEvents: "none" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", pointerEvents: "auto" }}>
-          {container.props.children}
-        </div>
-      </div>
-    ),
-    responsive: [
-      {
-        breakpoint: 1280,
-        settings: {
-          slidesToShow: Math.min(styles.length, 3),
-        }
-      },
-      {
-        breakpoint: 900,
-        settings: {
-          slidesToShow: Math.min(styles.length, 2),
-        }
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 1,
-        }
-      }
-    ]
-  };
 
   if (loading) {
     return (
@@ -643,7 +559,7 @@ export default function PhotoboothStyles({ params }) {
                   style={{ boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)` }}
                 >
                   <div className="grid grid-cols-2 gap-3">
-                    {styles.slice(0, visibleCount).map((style, index) => (
+                    {styles.slice(0, visibleCountMobile).map((style, index) => (
                       <motion.div
                         key={style.id}
                         className={`cursor-pointer overflow-hidden rounded-2xl backdrop-blur-md bg-white/10 shadow-xl border-2 style-card group relative ${
@@ -719,149 +635,117 @@ export default function PhotoboothStyles({ params }) {
                 </div>
               </div>
 
-              {/* ── DESKTOP : carrousel react-slick (inchangé) ── */}
-              <div className="hidden lg:block" style={{ minHeight: 400 }}>
+              {/* ── DESKTOP/TABLETTE : grille 2x2 avec scroll horizontal ── */}
+              <div className="hidden lg:block">
                 <div
-                  className="relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-4"
-                  style={{
+                  className="relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-6 overflow-x-auto"
+                  style={{ 
                     boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`,
-                    minHeight: 600
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: `${primaryColor} rgba(255,255,255,0.1)`
                   }}
                 >
-                  <Slider {...sliderSettings}>
-                    {styles.map((style, index) => (
-                      <div key={style.id} className="px-2">
-                        <motion.div
-                          className={`cursor-pointer overflow-hidden rounded-3xl backdrop-blur-md bg-white/10 shadow-xl hover:shadow-2xl transition-all transform duration-500 border-2 style-card group ${
-                            selectedStyle?.id === style.id
-                              ? 'border-white scale-105 shadow-2xl'
-                              : 'border-white/20 hover:scale-[1.02] hover:border-white/40'
-                          }`}
-                          onClick={() => handleStyleSelect(style)}
-                          style={{
-                            boxShadow: selectedStyle?.id === style.id
-                              ? `0 25px 60px ${secondaryColor}40, 0 0 0 3px ${secondaryColor}30`
-                              : `0 15px 40px ${primaryColor}20`
-                          }}
-                          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ duration: 0.5, delay: index * 0.05, type: "spring", damping: 15 }}
-                          whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                        >
-                          {/* Image agrandie et non croppée */}
-                          <div
-                            className="relative overflow-hidden"
-                            style={{ height: 400, display: "flex", alignItems: "center", justifyContent: "center", background: "#222" }}
-                          >
-                            {style.preview_image ? (
-                              <>
-                                <motion.img
-                                  src={style.preview_image}
-                                  alt={style.name}
-                                  className="object-contain w-full h-full transition-all duration-700 group-hover:scale-105"
-                                  style={{ maxHeight: "100%", maxWidth: "100%" }}
-                                  onError={(e) => {
-                                    console.error(`Failed to load image for style ${style.name}`);
-                                    e.target.style.display = 'none';
-                                  }}
-                                  whileHover={{ scale: 1.08 }}
-                                />
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                                  style={{ background: `linear-gradient(to top, ${primaryColor}60, transparent 50%, ${secondaryColor}10)` }}
-                                />
-                              </>
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
-                                <span className="text-gray-500 text-lg">Aucune image</span>
-                              </div>
-                            )}
-                          </div>
-                          {/* Enhanced style information */}
+                  <div className="flex gap-6" style={{ width: 'max-content' }}>
+                    {/* Grouper les styles par paquets de 4 (2x2) */}
+                    {Array.from({ length: Math.ceil(styles.length / 4) }).map((_, pageIndex) => (
+                      <div key={pageIndex} className="grid grid-cols-2 gap-6" style={{ minWidth: '900px' }}>
+                        {styles.slice(pageIndex * 4, pageIndex * 4 + 4).map((style, index) => (
                           <motion.div
-                            className="p-6 relative"
-                            style={{ background: selectedStyle?.id === style.id ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)` : 'transparent' }}
+                            key={style.id}
+                            className={`cursor-pointer overflow-hidden rounded-3xl backdrop-blur-md bg-white/10 shadow-xl hover:shadow-2xl transition-all transform duration-500 border-2 style-card group ${
+                              selectedStyle?.id === style.id
+                                ? 'border-white scale-105 shadow-2xl'
+                                : 'border-white/20 hover:scale-[1.02] hover:border-white/40'
+                            }`}
+                            onClick={() => handleStyleSelect(style)}
+                            style={{
+                              boxShadow: selectedStyle?.id === style.id
+                                ? `0 25px 60px ${secondaryColor}40, 0 0 0 3px ${secondaryColor}30`
+                                : `0 15px 40px ${primaryColor}20`,
+                              width: '420px',
+                              height: '500px'
+                            }}
+                            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.5, delay: (pageIndex * 4 + index) * 0.05, type: "spring", damping: 15 }}
+                            whileHover={{ y: -8, transition: { duration: 0.2 } }}
                           >
-                            <motion.h4
-                              className="font-bold text-white text-xl tracking-tight mb-2 text-center"
-                              style={{ textShadow: `0 2px 10px ${primaryColor}40` }}
+                            {/* Image agrandie et non croppée */}
+                            <div
+                              className="relative overflow-hidden"
+                              style={{ height: 350, display: "flex", alignItems: "center", justifyContent: "center", background: "#222" }}
                             >
-                              {style.name}
-                            </motion.h4>
-                            {style.description && (
-                              <motion.p className="text-white/80 text-base line-clamp-2">
-                                {style.description}
-                              </motion.p>
-                            )}
+                              {style.preview_image ? (
+                                <>
+                                  <motion.img
+                                    src={style.preview_image}
+                                    alt={style.name}
+                                    className="object-contain w-full h-full transition-all duration-700 group-hover:scale-105"
+                                    style={{ maxHeight: "100%", maxWidth: "100%" }}
+                                    onError={(e) => {
+                                      console.error(`Failed to load image for style ${style.name}`);
+                                      e.target.style.display = 'none';
+                                    }}
+                                    whileHover={{ scale: 1.08 }}
+                                  />
+                                  <motion.div
+                                    className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                                    style={{ background: `linear-gradient(to top, ${primaryColor}60, transparent 50%, ${secondaryColor}10)` }}
+                                  />
+                                </>
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                                  <span className="text-gray-500 text-lg">Aucune image</span>
+                                </div>
+                              )}
+                            </div>
+                            {/* Enhanced style information */}
                             <motion.div
-                              className="absolute bottom-0 left-0 right-0 h-1 rounded-b-3xl"
-                              style={{ background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }}
-                              initial={{ scaleX: 0 }}
-                              animate={{ scaleX: selectedStyle?.id === style.id ? 1 : 0 }}
-                              transition={{ duration: 0.3 }}
-                            />
-                          </motion.div>
-                          {/* Enhanced selection badge */}
-                          {selectedStyle?.id === style.id && (
-                            <motion.div
-                              className="absolute top-4 right-4 backdrop-blur-md text-sm font-bold px-4 py-2 rounded-full border border-white/30"
-                              style={{ backgroundColor: `${secondaryColor}90`, color: primaryColor, boxShadow: `0 8px 25px ${secondaryColor}40` }}
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                              transition={{ type: "spring", damping: 15, stiffness: 300 }}
+                              className="p-4 relative"
+                              style={{ background: selectedStyle?.id === style.id ? `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}05)` : 'transparent' }}
                             >
-                              ✨ Sélectionné
+                              <motion.h4
+                                className="font-bold text-white text-xl tracking-tight mb-2 text-center"
+                                style={{ textShadow: `0 2px 10px ${primaryColor}40` }}
+                              >
+                                {style.name}
+                              </motion.h4>
+                              {style.description && (
+                                <motion.p className="text-white/80 text-sm line-clamp-2 text-center">
+                                  {style.description}
+                                </motion.p>
+                              )}
+                              <motion.div
+                                className="absolute bottom-0 left-0 right-0 h-1 rounded-b-3xl"
+                                style={{ background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }}
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: selectedStyle?.id === style.id ? 1 : 0 }}
+                                transition={{ duration: 0.3 }}
+                              />
                             </motion.div>
-                          )}
-                        </motion.div>
+                            {/* Enhanced selection badge */}
+                            {selectedStyle?.id === style.id && (
+                              <motion.div
+                                className="absolute top-4 right-4 backdrop-blur-md text-sm font-bold px-4 py-2 rounded-full border border-white/30"
+                                style={{ backgroundColor: `${secondaryColor}90`, color: primaryColor, boxShadow: `0 8px 25px ${secondaryColor}40` }}
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ type: "spring", damping: 15, stiffness: 300 }}
+                              >
+                                ✨ Sélectionné
+                              </motion.div>
+                            )}
+                          </motion.div>
+                        ))}
                       </div>
                     ))}
-                  </Slider>
+                  </div>
                 </div>
               </div>
 
             </div>
           )}
         </motion.div>
-        
-        {/* Enhanced "Load more" button */}
-        {visibleCount < styles.length && (
-          <div className="mt-8 flex justify-center">
-            <motion.button
-              onClick={() => setVisibleCount(prev => Math.min(prev + 10, styles.length))}
-              className="px-10 py-5 backdrop-blur-md hover:backdrop-blur-lg text-white rounded-2xl font-bold transition-all text-lg border border-white/20 relative overflow-hidden group"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor}20, ${secondaryColor}15)`,
-                boxShadow: `0 15px 35px ${primaryColor}25`
-              }}
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: `0 20px 50px ${primaryColor}35`
-              }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-            >
-              {/* Animated background shine */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  delay: 2,
-                  repeatDelay: 3
-                }}
-              />
-              
-              <span className="relative z-10">
-                🎨 Afficher plus de styles ({styles.length - visibleCount} restants)
-              </span>
-            </motion.button>
-          </div>
-        )}
         
         {/* Confirmation modal - Responsive version */}
         <AnimatePresence>
