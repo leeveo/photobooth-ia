@@ -553,7 +553,7 @@ export default function PhotoboothStyles({ params }) {
               </p>
             </motion.div>
           ) : (
-            <div className="w-full mx-auto relative">
+            <div className="w-full mx-auto relative flex justify-center">
               {/* Grille 2x2 avec scroll horizontal pour TOUS les devices */}
               <div
                 ref={horizontalScrollRef}
@@ -561,19 +561,20 @@ export default function PhotoboothStyles({ params }) {
                 style={{ 
                   boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`,
                   scrollbarWidth: 'thin',
-                  scrollbarColor: `${primaryColor} rgba(255,255,255,0.1)`
+                  scrollbarColor: `${primaryColor} rgba(255,255,255,0.1)`,
+                  maxWidth: '100%'
                 }}
               >
-                <div className="flex gap-4 lg:gap-6" style={{ width: 'max-content' }}>
+                <div className="flex gap-4 lg:gap-6 justify-center" style={{ width: 'max-content', minWidth: '100%' }}>
                   {/* Grouper les styles par paquets de 4 (2x2) */}
                   {Array.from({ length: Math.ceil(visibleCount / 4) }).map((_, pageIndex) => (
                     <div 
                       key={pageIndex} 
-                      className="grid grid-cols-2 gap-3 lg:gap-6" 
+                      className="grid grid-cols-2 gap-3 lg:gap-6 mx-auto" 
                       style={{ 
                         minWidth: '320px',
-                        width: '90vw',
-                        maxWidth: '900px'
+                        width: 'clamp(320px, 90vw, 920px)',
+                        maxWidth: '920px'
                       }}
                     >
                       {styles.slice(pageIndex * 4, pageIndex * 4 + 4).map((style, index) => (
