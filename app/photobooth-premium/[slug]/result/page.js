@@ -862,8 +862,8 @@ export default function Result({ params }) {
               </div>
             )}
 
-            {/* Bouton partage - SEULEMENT si pas de capture de données OU si email désactivé */}
-            {settings?.enable_qr_codes && (!project?.datacapture || !project?.email_enabled) && (
+            {/* Bouton partage/QR Code - Toujours affiché si QR codes activés */}
+            {settings?.enable_qr_codes && (
               <div className="flex flex-col items-center">
                 <motion.button 
                   onClick={handleShare}
