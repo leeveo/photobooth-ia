@@ -828,32 +828,6 @@ export default function Result({ params }) {
         {/* Modern Action Buttons - Circular design like coiffure page */}
         {imageResultAI && (
           <div className="mt-8 flex justify-center items-start gap-12 px-4">
-            {/* Bouton de téléchargement */}
-            <div className="flex flex-col items-center">
-              <motion.a 
-                href={imageResultAI}
-                download={`photo-${project?.name || 'photobooth'}-${Date.now()}.jpg`}
-                className="flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all"
-                style={{ 
-                  backgroundColor: primaryColor, 
-                  color: '#fff',
-                  border: `3px solid ${secondaryColor}`,
-                  boxShadow: `0 4px 16px 0 ${primaryColor}55`,
-                  width: '80px',
-                  height: '80px',
-                  textDecoration: 'none'
-                }}
-                whileHover={{ scale: 1.1, y: -4 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                title="Télécharger ma photo"
-              >
-                <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg>
-              </motion.a>
-            </div>
-
             {/* Bouton email - SEULEMENT si email activé ET capture de données requise */}
             {settings?.enable_qr_codes && project?.datacapture && project?.email_enabled && (
               <div className="flex flex-col items-center">
