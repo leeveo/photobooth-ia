@@ -232,15 +232,20 @@ export default function Result({ params }) {
     fetchProjectData();
   }, [slug]); // Seulement dépend de slug
   
-  const handleShare = async () => {
+  // Fonction pour le bouton email - ouvre le formulaire de capture de données
+  const handleEmailShare = () => {
     if (!imageResultAI) {
       setError("Aucune image à partager");
       return;
     }
-    
-    // Vérifier si la capture de données est requise
-    if (project?.datacapture && !showDataCapture) {
-      setShowDataCapture(true);
+    // Afficher directement le formulaire de capture de données
+    setShowDataCapture(true);
+  };
+  
+  // Fonction pour le bouton QR code - affiche directement le QR code
+  const handleQRShare = async () => {
+    if (!imageResultAI) {
+      setError("Aucune image à partager");
       return;
     }
     
@@ -832,7 +837,7 @@ export default function Result({ params }) {
             {settings?.enable_qr_codes && project?.datacapture && project?.email_enabled && (
               <div className="flex flex-col items-center">
                 <motion.button 
-                  onClick={handleShare}
+                  onClick={handleEmailShare}
                   disabled={loadingUpload}
                   className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
                   style={{ 
@@ -866,7 +871,7 @@ export default function Result({ params }) {
             {settings?.enable_qr_codes && (
               <div className="flex flex-col items-center">
                 <motion.button 
-                  onClick={handleShare}
+                  onClick={handleQRShare}
                   disabled={loadingUpload}
                   className={`flex flex-col items-center justify-center p-6 rounded-full shadow-lg transition-all ${loadingUpload ? 'opacity-70' : ''}`}
                   style={{ 
