@@ -282,6 +282,12 @@ export default function PhotoboothStyles({ params }) {
       .overflow-x-auto {
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+      }
+      
+      /* Snap pour chaque groupe de 4 styles */
+      .flex-shrink-0 {
+        scroll-snap-align: start;
       }
       
       /* Cacher scrollbar sur mobile mais garder la fonctionnalité */
@@ -553,28 +559,26 @@ export default function PhotoboothStyles({ params }) {
               </p>
             </motion.div>
           ) : (
-            <div className="w-full mx-auto relative flex justify-center">
+            <div className="w-full mx-auto relative">
               {/* Grille 2x2 avec scroll horizontal pour TOUS les devices */}
               <div
                 ref={horizontalScrollRef}
-                className="relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-4 lg:p-6 overflow-x-auto"
+                className="relative backdrop-blur-sm bg-white/5 rounded-3xl border border-white/10 p-4 lg:p-6 overflow-x-auto overflow-y-hidden"
                 style={{ 
                   boxShadow: `0 20px 60px ${primaryColor}15, inset 0 1px 0 rgba(255,255,255,0.1)`,
                   scrollbarWidth: 'thin',
-                  scrollbarColor: `${primaryColor} rgba(255,255,255,0.1)`,
-                  maxWidth: '100%'
+                  scrollbarColor: `${primaryColor} rgba(255,255,255,0.1)`
                 }}
               >
-                <div className="flex gap-4 lg:gap-6 justify-center" style={{ width: 'max-content', minWidth: '100%' }}>
+                <div className="flex gap-6" style={{ width: 'auto' }}>
                   {/* Grouper les styles par paquets de 4 (2x2) */}
                   {Array.from({ length: Math.ceil(visibleCount / 4) }).map((_, pageIndex) => (
                     <div 
                       key={pageIndex} 
-                      className="grid grid-cols-2 gap-3 lg:gap-6 mx-auto" 
+                      className="grid grid-cols-2 gap-3 lg:gap-6 flex-shrink-0" 
                       style={{ 
-                        minWidth: '320px',
-                        width: 'clamp(320px, 90vw, 920px)',
-                        maxWidth: '920px'
+                        width: '100%',
+                        minWidth: '100%'
                       }}
                     >
                       {styles.slice(pageIndex * 4, pageIndex * 4 + 4).map((style, index) => (
