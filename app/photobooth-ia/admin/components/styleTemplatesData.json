@@ -1948,6 +1948,42 @@
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/music_grunge.jpg",
       "prompt": "While keeping exactly the same facial features, make it with grunge outfit clothes and flannel shirt.",
       "variations": 1
+    },
+    {
+      "name": "Disco 70s Waibooth",
+      "gender": "g",
+      "style_key": "music_disco70s_waibooth",
+      "description": "Scène disco 70's énergique avec looks pailletés et piste lumineuse",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/waibooth-Disco2-Waibooth.jpg",
+      "prompt": "Sujet: Les personnes de la photo originale, gardant exactement leur nombre et leurs traits faciaux reconnaissables, sont en train de danser joyeusement. Vêtements: Elles sont habillées de tenues disco éblouissantes : pantalons pattes d'éph', chemises à paillettes scintillantes, combishorts en velours aux couleurs fluo éclatantes (rose fuchsia, jaune canari, bleu électrique, vert émeraude). Arrière-plan: L'action se déroule sur une piste de danse bondée d'un club disco des années 70. L'atmosphère est électrique, chargée d'énergie et de mouvement. Pas de DJ visible. Éclairage et Effets: Boules à facettes: Plusieurs boules à facettes géantes suspendues au plafond projettent des milliers de points lumineux mobiles sur les danseurs et l'environnement. Lumières néon: Des néons aux couleurs vives (orange, violet, vert) dessinent des motifs géométriques et des mots d'ordre disco (\"DISCO FEVER\", \"DANCE NIGHT\") sur les murs. Éclairage de piste: La piste de danse est illuminée de carreaux colorés qui clignotent en rythme avec la musique invisible. Effets de mouvement: Des trainées lumineuses et un flou de mouvement subtil suggèrent la rapidité et l'énergie des danseurs. Couleurs: Dominante de couleurs chaudes et saturées, contrastant avec des éclats de couleurs froides et électriques. Ambiance tamisée mais percutante. Textures: Paillettes, velours, lycra, verre miroir des boules à facettes. Vibe: Joyeuse, énergique, nostalgique, festive, libératrice. Composition: Plan moyen ou plan d'ensemble capturant le dynamisme de la scène et la connexion entre les danseurs. Note additionnelle: L'IA doit veiller à ce que les visages des personnes originales restent identifiables tout en les intégrant parfaitement à l'esthétique disco 70's. L'objectif est de les faire paraître comme si elles faisaient partie de la fête d'origine, et non simplement superposées sur un fond.",
+      "variations": 1
+    },
+    {
+      "name": "DJ Festival Waibooth",
+      "gender": "g",
+      "style_key": "music_dj_festival_waibooth",
+      "description": "DJ en action avec foule festive et ambiance festival en plein air",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/waibooth-DJ2-waibooth.jpg",
+      "prompt": "Photo ultra-réaliste d'un DJ en action. DJ principal arborant un sourire radieux et l'expression de joie la plus sincère, porte un t-shirt blanc et un casque audio professionnel. Son bras est levé en l'air, signe de pure excitation. Public : Les autres personnes présentes sur la photo, toutes souriantes et enjouées, dansent avec enthousiasme derrière le DJ, créant une ambiance de fête inoubliable. Leurs traits du visage sont préservés à l'identique. Premier plan : Des platines Pioneer de pointe sont installées sur une scène, prêtes à être utilisées. Ambiance : La scène est baignée d'une lumière d'ambiance vibrante, avec une dominante rouge et qui bougent au rythme de la musique. La foule en arrière-plan est en délire, les mains en l'air et les visages illuminés. L'énergie est palpable et contagieuse. Détails additionnels : la scène se passe en festival, en extérieur et dans la nature en arrière-plan. La photo est nette, claire et capture parfaitement l'essence de la scène. Il y a un léger effet de profondeur f: 2.0",
+      "variations": 1
+    },
+    {
+      "name": "Reggae Stars Waibooth",
+      "gender": "g",
+      "style_key": "music_reggae_stars_waibooth",
+      "description": "Têtes d'affiche reggae sur scène avec ambiance festival nocturne",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/waibooth-Reage-waibooth.jpg",
+      "prompt": "[STRUCTURE DE PRÉSERVATION D'IDENTITÉ & ATTITUDE] Nombre de personnes : Impérativement identique à la photo originale. (Strictly maintain the exact same number of people from the source image). Traits faciaux : Préservation intégrale de la physionomie des sujets. Les visages doivent rester parfaitement reconnaissables. Expression : Tous les sujets affichent un sourire large, radieux et authentique. Ils rayonnent de joie et de charisme, comme des stars de la musique en pleine communion avec leur public. [STYLE ET PERSONNAGES (STARS)] Sujets : Les personnes sont transformées en têtes d'affiche de reggae (stars). Attributs : Chaque personne se voit attribuer des dreadlocks naturelles, longues et texturées, soignées et volumineuses. Tenues : Vêtements de scène \"haute couture\" inspirés du reggae et de la culture Rasta (vestes en cuir ou denim brodées de motifs complexes, textiles organiques haut de gamme, bijoux audacieux en or et aux couleurs panafricaines, accessoires distinctifs mais élégants). L'allure générale est celle de professionnels de la musique établis. Pose : Plan moyen dynamique, capturant l'interaction charismatique entre les membres du groupe sur scène. [ENVIRONNEMENT ET ARRIÈRE-PLAN] Décor : Grande scène de festival en plein air, de nuit, face à une foule immense et floutée. Fond : Une forêt dense et profonde, dont les arbres se détachent majestueusement sur un ciel nocturne étoilé. La forêt est subtilement éclairée à sa lisière. Ambiance : Festive, chaleureuse, électrique et triomphante. Brouillard de scène texturé capturant la lumière. [ÉCLAIRAGE ET COULEURS] Lumières : Éclairage de concert professionnel et dynamique. Faisceaux puissants (or chaud, ambre, vert émeraude, rouge rubis) illuminant les visages souriants des stars. Rendus : Effets de lumière \"star\" (lens flare contrôlé, bokeh de lumières du public en arrière-plan). Contraste marqué entre la scène vibrante et la profondeur de la forêt nocturne. [QUALITÉ ARTISTIQUE] Rendu cinématographique haut de gamme, photoréaliste mais stylisé, texture de peau naturelle, détails textiles riches, atmosphère vibrante et joyeuse.",
+      "variations": 1
+    },
+    {
+      "name": "Rock Gothique Waibooth",
+      "gender": "g",
+      "style_key": "music_rock_gothic_waibooth",
+      "description": "Performance rock-gothique urbaine avec éclairage dramatique",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/waibooth-Rock-waibooth.jpg",
+      "prompt": "Sujet et Identité : Conserver exactement le même nombre de personnes que sur la photo originale. Les visages et les traits distinctifs doivent rester parfaitement reconnaissables et inchangés. Chaque personne est vêtue d'un perfecto en cuir noir texturé et de vêtements sombres de style rock. Appliquer un maquillage subtilement gothique (yeux charbonneux, teint travaillé, esthétique dark-chic). Action et Pose : Les sujets sont représentés en pleine action, sautant dynamiquement dans les airs en jouant un accord puissant sur une guitare électrique (type Gibson ou Fender noire). La posture doit être énergique, capturant l'essence d'un concert de rock en direct. Environnement et Ambiance : L'arrière-plan est un univers urbain et industriel, dominé par une palette de gris profonds, de charbon et de noir. Utiliser des textures de béton brut ou de briques sombres. Style Artistique et Lumière : Éclairage dramatique de type scène (chiaroscuro) avec des contrastes marqués. Atmosphère cinématographique et légèrement granuleuse. Le rendu final doit être une oeuvre d'art stylisée \"Rock-Gothique\" tout en préservant l'intégrité physique et l'identité des utilisateurs initiaux.",
+      "variations": 1
     }
   ]
 },
