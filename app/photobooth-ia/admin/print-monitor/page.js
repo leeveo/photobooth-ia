@@ -157,12 +157,26 @@ export default function PrintMonitor() {
       try {
         const projectIdToQuery = String(selectedProject).trim();
         
-        // ÉTAPE 1: Charger TOUTES les sessions (sans limite) pour avoir le total
-        const { data: allSessionsData, error: allSessionsError } = await supabase
+        // ÉTAPE 1: Charger les sessions (limite 500) pour avoir le total
+        let { data: allSessionsData, error: allSessionsError } = await supabase
           .from('sessions')
           .select('id, result_s3_url, result_image_url, created_at, moderation')
           .eq('project_id', projectIdToQuery)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(500);
+
+        // Fallback si la colonne 'moderation' n'existe pas en production (erreur 500)
+        if (allSessionsError) {
+          console.warn('⚠️ Retry sans moderation:', allSessionsError);
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('sessions')
+            .select('id, result_s3_url, result_image_url, created_at')
+            .eq('project_id', projectIdToQuery)
+            .order('created_at', { ascending: false })
+            .limit(500);
+          allSessionsData = fallbackData;
+          allSessionsError = fallbackError;
+        }
 
         if (allSessionsError) {
           console.warn('⚠️ Erreur chargement sessions:', allSessionsError);
@@ -237,7 +251,7 @@ export default function PrintMonitor() {
           const startRange = (currentPage - 1) * ITEMS_PER_PAGE;
           const endRange = startRange + ITEMS_PER_PAGE - 1;
           
-          const { data: sessionsData, error: sessionsError } = await supabase
+          let { data: sessionsData, error: sessionsError } = await supabase
             .from('sessions')
             .select('id, result_s3_url, result_image_url, created_at, moderation')
             .eq('project_id', projectIdToQuery)
@@ -245,8 +259,15 @@ export default function PrintMonitor() {
             .range(startRange, endRange);
 
           if (sessionsError) {
-            console.warn('⚠️ Erreur refresh sessions:', sessionsError);
-            return;
+            // Fallback sans moderation
+            const { data: fb, error: fbErr } = await supabase
+              .from('sessions')
+              .select('id, result_s3_url, result_image_url, created_at')
+              .eq('project_id', projectIdToQuery)
+              .order('created_at', { ascending: false })
+              .range(startRange, endRange);
+            if (fbErr) { console.warn('⚠️ Erreur refresh sessions:', fbErr); return; }
+            sessionsData = fb;
           }
 
           const allImages = [];
