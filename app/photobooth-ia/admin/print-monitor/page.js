@@ -62,6 +62,7 @@ export default function PrintMonitor() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const pollingRef = useRef(null);
+  const printJobsPollingRef = useRef(null);
   const audioRef = useRef(null);
 
   // ⚠️ Détecter le mode kiosque au chargement
@@ -390,28 +391,34 @@ export default function PrintMonitor() {
     };
   }, [isMonitoring, selectedProject, pollingInterval, checkForNewImages]);
 
-  // Fonction d'impression
-  const printImage = useCallback(async (imageData) => {
+  // Fonction d'impression (supporte plusieurs copies)
+  const printImage = useCallback(async (imageData, copies = 1) => {
     try {
-      console.log('🖨️ [PRINT] Impression de l\'image:', imageData.id);
-      
-      // Utiliser la fonction printImageToAirPrint du fichier clientPrint.js
-      await printImageToAirPrint(imageData.image_url);
-      
+      const copiesCount = Math.max(1, Math.min(5, copies));
+      console.log(`🖨️ [PRINT] Impression de l'image: ${imageData.id} (${copiesCount} copie(s))`);
+
+      for (let i = 0; i < copiesCount; i++) {
+        await printImageToAirPrint(imageData.image_url);
+        if (i < copiesCount - 1) {
+          // Attendre 1.5s entre chaque impression pour ne pas saturer l'imprimante
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+
       // Ajouter à l'historique
       setPrintHistory(prev => [{
         id: imageData.id,
         image_url: imageData.image_url,
         printed_at: new Date().toISOString(),
-        status: 'success'
-      }, ...prev].slice(0, 100)); // Garder max 100 entrées
-      
-      console.log('✅ [PRINT] Impression réussie');
+        status: 'success',
+        copies: copiesCount
+      }, ...prev].slice(0, 100));
+
+      console.log(`✅ [PRINT] ${copiesCount} impression(s) réussie(s)`);
       return true;
     } catch (error) {
       console.error('❌ [PRINT] Erreur impression:', error);
-      
-      // Ajouter à l'historique avec erreur
+
       setPrintHistory(prev => [{
         id: imageData.id,
         image_url: imageData.image_url,
@@ -419,27 +426,92 @@ export default function PrintMonitor() {
         status: 'error',
         error: error.message
       }, ...prev].slice(0, 100));
-      
+
       return false;
     }
   }, []);
 
-  // Process print queue
+  // Vérifier les demandes d'impression front-office (print_logs status=pending)
+  const checkForPrintJobs = useCallback(async () => {
+    if (!selectedProject) return;
+
+    try {
+      const projectIdToQuery = String(selectedProject).trim();
+
+      const { data: jobs, error: jobsError } = await supabase
+        .from('print_logs')
+        .select('id, image_url, metadata')
+        .eq('project_id', projectIdToQuery)
+        .eq('status', 'pending')
+        .order('printed_at', { ascending: true })
+        .limit(5);
+
+      if (jobsError) {
+        console.warn('⚠️ Erreur lecture print_logs:', jobsError);
+        return;
+      }
+
+      if (!jobs || jobs.length === 0) return;
+
+      for (const job of jobs) {
+        const copies = job.metadata?.copies || 1;
+        console.log(`🖨️ [JOBS] Traitement job ${job.id} - ${copies} copie(s)`);
+
+        // Marquer comme 'processing' avant d'imprimer
+        await supabase
+          .from('print_logs')
+          .update({ status: 'processing' })
+          .eq('id', job.id);
+
+        const imageData = { id: job.id, image_url: job.image_url };
+        const success = await printImage(imageData, copies);
+
+        // Notification sonore
+        playNotificationSound();
+
+        // Mettre à jour le statut final
+        await supabase
+          .from('print_logs')
+          .update({ status: success ? 'success' : 'failed' })
+          .eq('id', job.id);
+      }
+    } catch (err) {
+      console.error('❌ Erreur traitement print jobs:', err);
+    }
+  }, [selectedProject, supabase, printImage, playNotificationSound]);
+
+  // Process print queue (images détectées par autoprint)
   useEffect(() => {
     if (printQueue.length > 0 && autoprint) {
       const nextImage = printQueue[0];
-      
-      // Imprimer l'image
-      printImage(nextImage).then(() => {
-        // Retirer de la queue
+      printImage(nextImage, 1).then(() => {
         setPrintQueue(prev => prev.slice(1));
       });
     }
   }, [printQueue, autoprint, printImage]);
 
+  // Démarrer/arrêter le polling des demandes d'impression front-office
+  useEffect(() => {
+    if (isMonitoring && selectedProject) {
+      checkForPrintJobs();
+      printJobsPollingRef.current = setInterval(checkForPrintJobs, 3000);
+    } else {
+      if (printJobsPollingRef.current) {
+        clearInterval(printJobsPollingRef.current);
+        printJobsPollingRef.current = null;
+      }
+    }
+
+    return () => {
+      if (printJobsPollingRef.current) {
+        clearInterval(printJobsPollingRef.current);
+      }
+    };
+  }, [isMonitoring, selectedProject, checkForPrintJobs]);
+
   // Impression manuelle
   const handleManualPrint = useCallback((imageData) => {
-    printImage(imageData);
+    printImage(imageData, 1);
   }, [printImage]);
 
   // Toggle monitoring

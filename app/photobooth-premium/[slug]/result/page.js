@@ -438,25 +438,50 @@ export default function Result({ params }) {
     localStorage.removeItem('resulAIBase64');
   };
   
-  // Fonction pour ouvrir le popup d'impression
+  // Fonction pour ouvrir le popup d'impression (sélection du nombre de copies)
   const handlePrint = () => {
-    // Afficher le popup d'impression en cours
-    setShowPrintPopup(true);
-    setPrinting(true);
     setPrintError(false);
-    
-    console.log('🖨️ Impression en cours via le serveur print-monitor...');
-    
-    // Fermer automatiquement le popup après 5 secondes et rediriger vers l'accueil
-    setTimeout(() => {
-      setShowPrintPopup(false);
-      setPrinting(false);
-      // Redirection vers la page d'accueil du photobooth
-      window.location.href = `/photobooth-premium/${slug}/`;
-    }, 5000);
+    setPrintSuccess(false);
+    setPrinting(false);
+    setPrintCopies(1);
+    setShowPrintPopup(true);
   };
-  
-  // Fonction handleConfirmPrint supprimée - l'impression se fait maintenant via print-monitor
+
+  // Fonction pour confirmer l'impression et envoyer la demande au back-office
+  const handleConfirmPrint = async () => {
+    if (!imageResultAI || !project) return;
+
+    setPrinting(true);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('print_logs')
+        .insert({
+          project_id: project.id,
+          image_url: imageResultAI,
+          status: 'pending',
+          metadata: { copies: printCopies }
+        });
+
+      if (insertError) throw insertError;
+
+      console.log(`🖨️ Demande d'impression envoyée : ${printCopies} copie(s)`);
+      setPrinting(false);
+      setPrintSuccess(true);
+
+      // Fermer et rediriger après 3 secondes
+      setTimeout(() => {
+        setShowPrintPopup(false);
+        setPrintSuccess(false);
+        window.location.href = `/photobooth-premium/${slug}/`;
+      }, 3000);
+
+    } catch (err) {
+      console.error('❌ Erreur envoi impression:', err);
+      setPrinting(false);
+      setPrintError(true);
+    }
+  };
   
   if (loading) {
     return (
