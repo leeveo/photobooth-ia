@@ -392,7 +392,7 @@ export default function PhotoboothStyles({ params }) {
         style={{ background: "transparent" }} // <-- Ajouté pour forcer la transparence du fond
       >
         {/* Enhanced logo and welcome message */}
-        <div className="flex flex-col items-center mb-10 relative">
+        <div className="flex flex-col items-center mb-20 relative">
           {/* Animated halo behind logo */}
           <motion.div
             className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-64 rounded-full opacity-20"
