@@ -388,7 +388,7 @@ export default function PhotoboothStyles({ params }) {
       />
 
       {/* Main content with enhanced backdrop */}
-      <div className="relative z-10 w-full px-2 sm:px-4 md:px-6 lg:px-8 pt-20 pb-8 lg:pt-28 lg:pb-12 flex flex-col flex-grow"
+      <div className="relative z-10 w-full px-2 sm:px-4 md:px-6 lg:px-8 pt-28 pb-8 lg:pt-36 lg:pb-12 flex flex-col flex-grow"
         style={{ background: "transparent" }} // <-- Ajouté pour forcer la transparence du fond
       >
         {/* Enhanced logo and welcome message */}
@@ -541,7 +541,7 @@ export default function PhotoboothStyles({ params }) {
         
         {/* Enhanced styles selection section */}
         <motion.div 
-          className="mb-8 flex-grow flex flex-col items-center relative"
+          className="mt-8 lg:mt-12 mb-8 flex-grow flex flex-col items-center relative"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.8 }}
