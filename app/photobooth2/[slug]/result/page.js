@@ -639,7 +639,7 @@ export default function Result({ params }) {
                     </div>
 
                     <button
-                      onClick={() => setPrintCopies(Math.min(5, printCopies + 1))}
+                      onClick={() => setPrintCopies(Math.min(2, printCopies + 1))}
                       className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110"
                       style={{
                         background: 'rgba(107, 114, 128, 0.1)',

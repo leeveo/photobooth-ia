@@ -415,7 +415,7 @@ export default function PrintMonitor() {
   // Fonction d'impression (supporte plusieurs copies)
   const printImage = useCallback(async (imageData, copies = 1) => {
     try {
-      const copiesCount = Math.max(1, Math.min(5, copies));
+      const copiesCount = Math.max(1, Math.min(2, copies));
       console.log(`🖨️ [PRINT] Impression de l'image: ${imageData.id} (${copiesCount} copie(s))`);
 
       for (let i = 0; i < copiesCount; i++) {
