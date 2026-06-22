@@ -4240,6 +4240,42 @@
         "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/football_intro.jpg",
         "prompt": "Make this into a professional soccer team  with explosive lighting and bold team branding.",
         "variations": 1
+      },
+      {
+        "name": "Licorne",
+        "gender": "g",
+        "style_key": "sport_licorne",
+        "description": "Scène de conte de fées avec une licorne majestueuse dans une clairière magique",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cheval_Western.png",
+        "prompt": "Maintain same number of people from the original input image Do NOT alter modify or change the facial features age facial structure or expression of the subject. The person must remain 100 recognisable as their original self. High-quality artistic transformation. The exact same person from the original photo is depicted astride a magnificent white unicorn, seated naturally as one would ride a horse, with their legs positioned on either side of the creature's back. The unicorn has a sparkling prismatic horn and a flowing, iridescent mane. The subject's clothing is automatically transformed into detailed, ethereal fairy-tale attire: a shimmering tunic made of silk and natural fibers adorned with subtle leaf patterns and bioluminescent crystals. The setting is a mystical, sun-dappled forest clear with vibrant rainbow light reflecting off the moss and trees. Soft, enchanting glow, 8k, photorealistic details in an illustrative style.",
+        "variations": 1
+      },
+      {
+        "name": "Cowboy",
+        "gender": "g",
+        "style_key": "sport_cowboy",
+        "description": "Scène de western épique avec chevaux au galop dans un canyon",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cheval_Licorne.png",
+        "prompt": "Maintain same number of people from the original input image. Add a riding helmet to each person, fitting naturally with their current hairstyle and head position. Each person also has a traditional cowboy hat hanging down on their upper back, secured around their neck by a visible stampede string. Each person is in a dynamic riding posture, seamlessly integrated as if riding a powerful Paint Horse (tobiano pattern, brown and white coat) at a fast gallop. There is one horse per person. Keep the subjects' original smiling expressions. Full western attire on the subjects. Place them in a cinematic epic Wild West canyon landscape with towering red rock formations and steep cliffs. A winding dirt trail visible in the background. High velocity dust and sand clouds kicked up realistically by the horses' hooves around the lower third of the frame. Lighting: Cinematic adventure movie photography style, wide angle lens (24mm feel) with a deep depth of field. Breathtaking golden hour blazing sunset lighting, creating powerful rim light on the subjects' hats and horses' manes. Warm, vibrant and dynamic color palette; deep oranges, warm browns, cinematic teals in the sky shadows. High texture detail on the leather, horse coat, and desert rocks. Do NOT alter, modify or change the facial features, age, facial structure or expression of the subjects. The persons must remain 100% recognisable as their original selves.",
+        "variations": 1
+      },
+      {
+        "name": "Cyberpunk",
+        "gender": "g",
+        "style_key": "sport_cyberpunk",
+        "description": "Individus stylisés et experts en technologie sur des chevaux cybernétiques dans une mégalopole futuriste",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cheval_cyber.png",
+        "prompt": "Maintain same number of people from the original input image. Do NOT alter, modify, or change the facial features or facial structure. The individuals must remain 100% recognizable as their original self, with wide, genuine smiles and expressions of happiness. Ultra-detailed 3D render of the subjects from USER IMAGE as stylized, tech-savvy individuals. Preserve original facial features and glasses, placing each subject on their own high-tech cybernetic horse with glowing blue and violet neon circuit patterns. Set against a dark, nocturnal futuristic megacity background with glowing holographic advertisements. Immersive gamer ambiance, dynamic lighting, sharp details, cinematic sci-fi photo style. no brand on the wall.",
+        "variations": 1
+      },
+      {
+        "name": "Anime",
+        "gender": "g",
+        "style_key": "sport_anime_horse",
+        "description": "Scène d'action anime japonais des années 80 avec personnages à cheval",
+        "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/cheval_anime.png",
+        "prompt": "Maintain same number of people from the original input image Do NOT alter modify or change the facial features age facial structure or expression of the subject The person must remain 100 recognisable as their original self. Style 1980s Japanese anime cel-shaded illustration Aesthetic of Attacker You.Action and Composition A dynamic action-oriented scene featuring RETAIN EXACT COUNT person people based on the uploaded photo riding a powerful brown horse Subject Details The faces and specific facial features of the RETAIN EXACT COUNT person people from the uploaded photo must be perfectly preserved within the anime art style making them immediately recognizable The riders are dressed in specialized 1980s Japanese anime equestrian uniforms adapted from image 2 png e g retro-styled jodhpur pants colorful polo shirts with popped collars classic high leather boots and authentic anime riding helmets with chinstraps Environment A dense lush vintage anime forest trail exactly matching the detailed natural beauty and composition of image 2 png Dynamic Effects Sharp motion lines emphasizing speed as in image 2 png dust clouds being kicked up by the horse hooves and soft dappled sunlight filtering through the canopy Color Palette Nostalgic and rich classic anime colors with sharp line work and cinematic composition The image has the distinctive textured quality of a vintage anime celluloid print High fidelity to the identity of every person in the original photo is required",
+        "variations": 1
       }
     ]
   },
