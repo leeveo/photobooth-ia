@@ -221,32 +221,6 @@ export default function PhotoboothProject({ params }) {
       )}
 
       <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative z-10">
-        {/* Header with logo */}
-        <motion.div 
-          className="w-full flex justify-center mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="w-[280px] h-[180px] relative">
-            {project.logo_url ? (
-              <Image 
-                src={project.logo_url} 
-                fill
-                alt={project.name} 
-                className="object-contain drop-shadow-2xl" 
-                priority 
-              />
-            ) : (
-              <h1 
-                className="text-4xl font-bold text-center" 
-                style={{ color: secondaryColor }}
-              >
-                {project.name}
-              </h1>
-            )}
-          </div>
-        </motion.div>
 
         {/* Main content */}
         <div className="max-w-6xl mx-auto">
@@ -275,59 +249,15 @@ export default function PhotoboothProject({ params }) {
             </motion.p>
           </motion.div>
 
-          {/* RGPD consent block - affiché uniquement si le projet a un texte RGPD */}
-          {project?.rgpd_text && (
-            <motion.div
-              className="flex justify-center mb-6 px-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.85 }}
-            >
-              <div
-                className="max-w-2xl w-full rounded-2xl p-5"
-                style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  border: `2px solid ${secondaryColor}55`,
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                {/* Aperçu du texte RGPD */}
-                <p className="text-white/80 text-sm leading-relaxed mb-4 max-h-24 overflow-y-auto">
-                  {project.rgpd_text}
-                </p>
-                {/* Checkbox de consentement */}
-                <label
-                  className="flex items-start gap-3 cursor-pointer select-none"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={rgpdAccepted}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setRgpdAccepted(e.target.checked);
-                    }}
-                    className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-gray-300 cursor-pointer"
-                    style={{ accentColor: secondaryColor }}
-                  />
-                  <span className="text-white font-semibold text-sm leading-snug">
-                    J'accepte les conditions de traitement de mes données personnelles{' '}
-                    <span style={{ color: secondaryColor }}>*</span>
-                  </span>
-                </label>
-              </div>
-            </motion.div>
-          )}
-
           {/* Start button with modern hover effect */}
           <motion.div 
-            className="flex justify-center items-center mt-4 mb-8"
+            className="flex justify-center items-center mt-12 mb-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.9 }}
           >
             <div 
-              className={`relative group ${project?.rgpd_text && !rgpdAccepted ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+              className="relative group cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStartExperience();
@@ -340,8 +270,7 @@ export default function PhotoboothProject({ params }) {
                 }}
               ></div>
               <button 
-                disabled={!!(project?.rgpd_text && !rgpdAccepted)}
-                className="relative px-24 py-8 text-5xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl disabled:pointer-events-none"
+                className="relative px-24 py-8 text-5xl font-bold rounded-xl transition-all duration-300 transform group-hover:scale-105 shadow-xl"
                 style={{ 
                   backgroundColor: secondaryColor, 
                   color: primaryColor 
