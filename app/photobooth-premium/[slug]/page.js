@@ -18,7 +18,6 @@ export default function PhotoboothProject({ params }) {
   const [settings, setSettings] = useState(null);
   const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [rgpdAccepted, setRgpdAccepted] = useState(false);
   
   // Check if we're in fullscreen mode on mount and when it changes
   useEffect(() => {
@@ -157,7 +156,6 @@ export default function PhotoboothProject({ params }) {
   };
 
   const handleStartExperience = () => {
-    if (project?.rgpd_text && !rgpdAccepted) return;
     router.push(`/photobooth-premium/${slug}/style`);
   };
 
