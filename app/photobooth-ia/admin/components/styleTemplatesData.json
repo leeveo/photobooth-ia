@@ -1984,6 +1984,15 @@
       "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/waibooth-Rock-waibooth.jpg",
       "prompt": "Sujet et Identité : Conserver exactement le même nombre de personnes que sur la photo originale. Les visages et les traits distinctifs doivent rester parfaitement reconnaissables et inchangés. Chaque personne est vêtue d'un perfecto en cuir noir texturé et de vêtements sombres de style rock. Appliquer un maquillage subtilement gothique (yeux charbonneux, teint travaillé, esthétique dark-chic). Action et Pose : Les sujets sont représentés en pleine action, sautant dynamiquement dans les airs en jouant un accord puissant sur une guitare électrique (type Gibson ou Fender noire). La posture doit être énergique, capturant l'essence d'un concert de rock en direct. Environnement et Ambiance : L'arrière-plan est un univers urbain et industriel, dominé par une palette de gris profonds, de charbon et de noir. Utiliser des textures de béton brut ou de briques sombres. Style Artistique et Lumière : Éclairage dramatique de type scène (chiaroscuro) avec des contrastes marqués. Atmosphère cinématographique et légèrement granuleuse. Le rendu final doit être une oeuvre d'art stylisée \"Rock-Gothique\" tout en préservant l'intégrité physique et l'identité des utilisateurs initiaux.",
       "variations": 1
+    },
+    {
+      "name": "Hip Hop 90s Waibooth",
+      "gender": "g",
+      "style_key": "music_hiphop_90s_waibooth",
+      "description": "Style hip-hop années 90 avec look urbain et graffiti",
+      "preview_image": "https://leeveostockage.s3.eu-west-3.amazonaws.com/style/Waiboth-HipHop.jpg",
+      "prompt": "Maintain the same number of people from the original input image Do NOT alter, modify or change the facial features, age, facial structure or expression of the subject The person must remain 100% recognizable as their original self. A realistic, high-fidelity portrait of the subjects from the original photo, keeping their exact faces, features, ethnicities, expressions, and likenesses perfectly intact. The subjects are looking directly at the camera and look happy. Their outfits are transformed into a classic 90s hip-hop style: each subject wears a varsity bomber jacket and a baseball cap from New-York Yankees or Lakers or Raiders. They are styled with large gold chains, and the central subject holds a vintage cassette tape. The background is a brick wall covered in urban graffiti with stacks of vinyl records. At the top of the image, the text 'ROCK EN SEINE' is written like a graffiti. The final image has a distressed border and a grainy, vintage 90s poster texture.",
+      "variations": 1
     }
   ]
 },
